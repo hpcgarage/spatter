@@ -1,12 +1,10 @@
-__kernel void sgp(__global double* restrict target, 
+__kernel void scatter(__global double* restrict target, 
                   __global long*   restrict ti,
                   __global double* restrict source,
                   __global long*   restrict si,
                   long ts, 
                   long ss, 
-                  long tis, 
-                  long sis, 
-                  long n,
+                  long n, 
                   long ws,
                   long R,
                   long B)
@@ -19,8 +17,8 @@ __kernel void sgp(__global double* restrict target,
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
       sr = source + s * (ss);
-      tir = ti    + s * (tis);
-      sir = si    + s * (sis);
+      tir = ti    + s * (n);
+      sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
         tr[0] = sr[0];
 	    	tr[tir[i]] = sr[sir[i]];
@@ -32,8 +30,8 @@ __kernel void sgp(__global double* restrict target,
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
       sr = source + s * (ss);
-      tir = ti    + s * (tis);
-      sir = si[s] + s * (sis);
+      tir = ti    + s * (n);
+      sir = si[s] + s * (n);
 	    for(long i = 0; i < n; i++){
 	    	tr[tir[i]] = sr[sir[i]];
 	    }
