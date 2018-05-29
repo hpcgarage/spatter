@@ -1,4 +1,4 @@
-__kernel void sgp(__global double* restrict target, 
+__kernel void sg(__global double* restrict target, 
                   __global long*   restrict ti,
                   __global double* restrict source,
                   __global long*   restrict si,
@@ -20,10 +20,9 @@ __kernel void sgp(__global double* restrict target,
       tir = ti    + s * (n);
       sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
-        tr[0] = sr[0];
 	    	tr[tir[i]] = sr[sir[i]];
 	    }
-      //s = ((s-1) % ws + ws) % ws;
+      s = ((s-1) % ws + ws) % ws;
     }
   }
   else{

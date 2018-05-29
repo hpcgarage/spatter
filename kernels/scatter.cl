@@ -12,18 +12,16 @@ __kernel void scatter(__global double* restrict target,
   //int s = ws - 1;
   int s = 0;
   __global double *tr, *sr;
-  __global long   *tir, *sir;
+  __global long   *tir;
   if(B == 1){
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
       sr = source + s * (ss);
       tir = ti    + s * (n);
-      sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
-        tr[0] = sr[0];
-	    	tr[tir[i]] = sr[sir[i]];
+	    	tr[tir[i]] = sr[i];
 	    }
-      //s = ((s-1) % ws + ws) % ws;
+      s = ((s-1) % ws + ws) % ws;
     }
   }
   else{
@@ -31,9 +29,8 @@ __kernel void scatter(__global double* restrict target,
       tr = target + s * (ts);
       sr = source + s * (ss);
       tir = ti    + s * (n);
-      sir = si[s] + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[sir[i]];
+	    	tr[tir[i]] = sr[i];
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
