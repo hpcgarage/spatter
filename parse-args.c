@@ -13,8 +13,21 @@
 #define BLOCK  1003
 #define SEED   1004
 
-#define STRING_SIZE 100
 #define INTERACTIVE "INTERACTIVE"
+
+extern char platform_string[STRING_SIZE];
+extern char device_string[STRING_SIZE];
+extern char kernel_file[STRING_SIZE];
+extern char kernel_name[STRING_SIZE];
+
+extern size_t source_len;
+extern size_t target_len;
+extern size_t index_len;
+extern size_t block_len;
+extern size_t seed;
+extern int json_flag;
+
+
 void error(char *what, int code){
     printf("Error: ");
     printf("%s", what);
@@ -32,7 +45,7 @@ void parse_args(int argc, char **argv)
     json_flag = 0;
     static int verbose_flag  = 0;
     static int platform_flag = 0;
-    enum sg_backend backend = INVALID;
+    extern enum sg_backend backend;
     source_len = 0;
     target_len = 0;
     index_len  = 0;

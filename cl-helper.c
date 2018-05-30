@@ -208,7 +208,7 @@ const char *CHOOSE_INTERACTIVELY = "INTERACTIVE";
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 void create_context_on(const char *plat_name, const char*dev_name, cl_uint idx,
-    cl_context *ctx, cl_command_queue *queue, int enable_profiling)
+    cl_context *ctx, cl_command_queue *queue, cl_device_id *return_device, int enable_profiling)
 {
   char dev_sel_buf[MAX_NAME_LEN];
   char platform_sel_buf[MAX_NAME_LEN];
@@ -349,6 +349,7 @@ void create_context_on(const char *plat_name, const char*dev_name, cl_uint idx,
             if (queue)
             {
               *queue = clCreateCommandQueue(*ctx, dev, qprops, &status);
+              *return_device = dev;
               CHECK_CL_ERROR(status, "clCreateCommandQueue");
             }
 

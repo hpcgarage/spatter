@@ -115,8 +115,9 @@ void print_platforms_devices();
  * compiler option.
  */
 extern const char *CHOOSE_INTERACTIVELY;
-void create_context_on(const char *plat_name, const char*dev_name, cl_uint
-    idx, cl_context *ctx, cl_command_queue *queue, int enable_profiling);
+void create_context_on(const char *plat_name, const char *dev_name, cl_uint
+    idx, cl_context *ctx, cl_command_queue *queue, cl_device_id *return_device, 
+    int enable_profiling);
 
 /* Read contents of file 'filename'.
  * Return as a new string. You must free the string when you're done with it.
