@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
+#include "kernels/openmp_kernels.h"
 #include "cl-helper.h"
 #include "parse-args.h"
 #include "sgtype.h"
@@ -149,10 +151,25 @@ int main(int argc, char **argv)
               0, NULL, &e)); 
     clWaitForEvents(1, &e);
 
+
     /* Validate results */
     clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
             target.host_ptr, 0, NULL, &e);
     clWaitForEvents(1, &e);
+
+    SGTYPE *target_backup_host = (SGTYPE*) alloc(target.size); 
+    memcpy(target_backup_host, target.host_ptr, target.size);
+
+    sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+            target.block_len, source.block_len, index_len, worksets, R, 
+            block_len);
+
+    for (size_t i = 0; i < target.len * worksets; i++){
+        if (target.host_ptr[i] != target_backup_host[i]){
+            printf(":(\n");
+        }
+    }
+
     /* Print output */
     
     for(int i = 0; i < source.len * worksets; i++){

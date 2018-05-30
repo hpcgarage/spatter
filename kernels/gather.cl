@@ -28,7 +28,7 @@ __kernel void gather(__global double* restrict target,
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
       sr = source + s * (ss);
-      sir = si[s] + s * (n);
+      sir = si + s * (n);
 	    for(long i = 0; i < n; i++){
 	    	tr[i] = sr[sir[i]];
 	    }
