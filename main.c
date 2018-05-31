@@ -9,7 +9,7 @@
 #include "sgbuf.h"
 
 #define alloc(size) aligned_alloc(64, size)
-
+/*
 void random_data(SGTYPE *buf, size_t len){
     for(size_t i = 0; i < len; i++){
         buf[i] = rand() % 10; 
@@ -32,7 +32,7 @@ cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, v
     CHECK_CL_ERROR(err, "clCreateBuffer");
     return buf;
 }
-
+*/
 
 enum sg_backend backend = INVALID;
 
