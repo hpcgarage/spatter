@@ -1,3 +1,10 @@
+/** @file cl-helper.h
+ *  @author Andreas Kloeckner
+ *  @brief Provies helper functions for OpenCL
+ *
+ *  Minor edits and doxygen added by Patrick Lavin
+ */
+
 /*
  * Copyright (c) 2010, 2012 Andreas Kloeckner
  *
@@ -36,7 +43,7 @@
 #include <CL/cl.h>
 #endif
 
-/* An error check macro for OpenCL.
+/** @brief An error check macro for OpenCL.
  *
  * Usage:
  * CHECK_CL_ERROR(status_code_from_a_cl_operation, "function_name")
@@ -54,9 +61,9 @@
     abort(); \
   }
 
-/* A more automated error check macro for OpenCL, for use with clXxxx
- * functions that return status codes. (Not all of them do, notably 
- * clCreateXxx do not.)
+/** @brief A more automated error check macro for OpenCL. 
+ * For use with clXxxx functions that return status codes. 
+ * (Not all of them do, notably clCreateXxx do not.)
  *
  * Usage:
  * CALL_CL_GUARDED(clFunction, (arg1, arg2));
@@ -72,7 +79,8 @@
     CHECK_CL_ERROR(status_code, #NAME); \
   }
 
-/* An error check macro for Unix system functions. If "COND" is true, then the
+/** @brief An error check macro for Unix system functions. 
+ * If "COND" is true, then the
  * last system error ("errno") is printed along with MSG, which is supposed to
  * be a string describing what you were doing.
  *
@@ -86,16 +94,18 @@
     abort(); \
   }
 
-/* Return a string describing the OpenCL error code 'e'.
+/** @brief Return a string describing the OpenCL error code 'e'.
  */
 const char *cl_error_to_str(cl_int e);
 
-/* Print a list of available OpenCL platforms and devices
+/** @brief Print a list of available OpenCL platforms and devices
  * to standard output.
  */
 void print_platforms_devices();
 
-/* Create an OpenCL context and a matching command queue on a platform from a
+extern const char *CHOOSE_INTERACTIVELY;
+/** @brief Create an OpenCL context and a matching command queue. 
+ * on a platform from a
  * vendor whose name contains 'plat_name' on a device whose name contains
  * 'dev_name'. Both 'plat_name' and 'dev_name' may be NULL, indicating no
  * preference in the matter.
@@ -114,12 +124,11 @@ void print_platforms_devices();
  * You may do so by passing the -DCL_HELPER_FORCE_INTERACTIVE
  * compiler option.
  */
-extern const char *CHOOSE_INTERACTIVELY;
 void create_context_on(const char *plat_name, const char *dev_name, cl_uint
     idx, cl_context *ctx, cl_command_queue *queue, cl_device_id *return_device, 
     int enable_profiling);
 
-/* Read contents of file 'filename'.
+/** @brief  Read contents of file 'filename'.
  * Return as a new string. You must free the string when you're done with it.
  *
  * This function always succeeds. (If an error occurs, the program
@@ -127,7 +136,7 @@ void create_context_on(const char *plat_name, const char *dev_name, cl_uint
  */
 char *read_file(const char *filename);
 
-/* Create a new OpenCL kernel from the code in the string 'knl'.
+/** @brief Create a new OpenCL kernel from the code in the string 'knl'.
  * 'knl_name' is the name of the kernel function, and 'options',
  * if not NULL, is a string containing compiler flags.
  *
@@ -140,10 +149,11 @@ char *read_file(const char *filename);
 cl_kernel kernel_from_string(cl_context ctx, 
     char const *knl, char const *knl_name, char const *options);
 
-/* Print information about a device, found from either the
- * queue or the device_id.
+/** @brief Print information about a device.
  */
 void print_device_info(cl_device_id device);
+/** @brief Print information about a device associated with a queue.
+ */
 void print_device_info_from_queue(cl_command_queue queue);
 
 #define SET_1_KERNEL_ARG(knl, arg0) \

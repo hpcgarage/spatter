@@ -25,6 +25,8 @@ extern size_t target_len;
 extern size_t index_len;
 extern size_t block_len;
 extern size_t seed;
+extern size_t R;
+extern size_t N;
 extern int json_flag;
 
 
@@ -66,6 +68,8 @@ void parse_args(int argc, char **argv)
         {"index-len",   required_argument, NULL, INDEX},
         {"block-len",   required_argument, NULL, BLOCK},
         {"seed",        required_argument, NULL, SEED},
+        {"runs",        required_argument, NULL, 'R'},
+        {"loops",       required_argument, NULL, 'N'},
         {"interactive", no_argument,       0, 'i'},
         {0, 0, 0, 0}
     };  
@@ -117,6 +121,12 @@ void parse_args(int argc, char **argv)
                 break;
             case SEED:
                 sscanf(optarg, "%zu", &seed);
+                break;
+            case 'R':
+                sscanf(optarg, "%zu", &R);
+                break;
+            case 'N':
+                sscanf(optarg, "%zu", &N);
                 break;
             default:
                 break;

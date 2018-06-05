@@ -9,30 +9,6 @@
 #include "sgbuf.h"
 
 #define alloc(size) aligned_alloc(64, size)
-/*
-void random_data(SGTYPE *buf, size_t len){
-    for(size_t i = 0; i < len; i++){
-        buf[i] = rand() % 10; 
-    }
-}
-
-void linear_indices(cl_ulong *idx, size_t len, size_t worksets){
-    cl_ulong *idx_cur = idx;
-    for(size_t j = 0; j < worksets; j++){
-        for(size_t i = 0; i < len; i++){
-            idx_cur[i] = i;
-        }
-        idx_cur = idx_cur + len;
-    }
-}
-
-cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr){
-    cl_int err;
-    cl_mem buf = clCreateBuffer(context, flags, size, host_ptr, &err);
-    CHECK_CL_ERROR(err, "clCreateBuffer");
-    return buf;
-}
-*/
 
 enum sg_backend backend = INVALID;
 
@@ -46,6 +22,8 @@ size_t target_len;
 size_t index_len;
 size_t block_len;
 size_t seed;
+size_t R = 10;
+size_t N = 100;
 
 int json_flag;
 
@@ -136,11 +114,10 @@ int main(int argc, char **argv)
     target.dev_ptr = clCreateBufferSafe(context, flags, target.size, NULL); 
 
     /* Run Kernel */
-    size_t R = 100;
     
     SET_10_KERNEL_ARGS(sgp, target.dev_ptr, ti.dev_ptr, source.dev_ptr, 
             si.dev_ptr, target.block_len, source.block_len, 
-            index_len, worksets, R, block_len);
+            index_len, worksets, N, block_len);
 
     cl_uint work_dim = 1;
     size_t global_work_size = 1;
