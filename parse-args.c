@@ -49,6 +49,7 @@ void parse_args(int argc, char **argv)
     static int verbose_flag  = 0;
     static int platform_flag = 0;
     extern enum sg_backend backend;
+    extern enum sg_kernel kernel;
     source_len = 0;
     target_len = 0;
     index_len  = 0;
@@ -108,6 +109,15 @@ void parse_args(int argc, char **argv)
                 break;
             case 'g':
                 safestrcopy(kernel_name, optarg);
+                if (!strcasecmp("SG", optarg)) {
+                    kernel = SG;
+                }
+                else if (!strcasecmp("SCATTER", optarg)) {
+                    kernel = SCATTER;
+                }
+                else if (!strcasecmp("GATHER", optarg)) {
+                    kernel = GATHER;
+                }
                 break;
             case SOURCE:
                 sscanf(optarg, "%zu", &source_len);
@@ -140,7 +150,7 @@ void parse_args(int argc, char **argv)
     /* Check argument coherency */
 
     //Check backend
-    if(backend != INVALID){
+    if(backend != INVALID_BACKEND){
         if(backend == OPENCL){
             if(platform_string[0] == '\0'){
                 safestrcopy(platform_string, INTERACTIVE);
@@ -152,7 +162,7 @@ void parse_args(int argc, char **argv)
             }
         }
     }
-    else if(backend == INVALID){
+    else if(backend == INVALID_BACKEND){
         error("SGBench backend not specified or invalid", 1);
     }
 

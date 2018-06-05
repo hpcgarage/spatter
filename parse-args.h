@@ -18,9 +18,16 @@ void parse_args(int argc, char **argv);
  */
 enum sg_backend
 {
-    OPENCL, /** OpenCL Backend */
-    OPENMP, /** OpenMP CPU Backend */
-    INVALID /** Used as a default backend */
+    OPENCL, /**< OpenCL Backend */
+    OPENMP, /**< OpenMP CPU Backend */
+    INVALID_BACKEND /**< Used as a default backend */
+};
+enum sg_kernel
+{
+    SCATTER, 
+    GATHER, 
+    SG,    
+    INVALID_KERNEL
 };
 
 #endif 
