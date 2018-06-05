@@ -5,12 +5,23 @@ This is a microbenchmark for timing a Scatter/Gather kernel on CPU. OpenMP is us
 For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do not reuse data much, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search  for new approaches to better utilize what little memory bandwidth is available. 
 
 With this benchmark, we aim to characterize the performance of memory systems in a novel way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures. We will use these results to predict the impact of new memory access primitives. 
-### Building
-Building requires `libpapi` and a blas library to be installed. To build, type:  
 
+### Building
+Currently we have a basic Makefile and a supported CMake infrastructure. 
+
+To build with Make:
 ```
 make
 ```
+
+To build with CMake:
+```
+mkdir -p build && cd build
+cmake ..
+make
+```
+
+[comment]: # (Building with PAPI support requires  `libpapi` to be installed.)  
 
 ### Usage
 A minimal run of sgbench should specify the following 

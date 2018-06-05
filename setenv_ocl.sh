@@ -10,10 +10,10 @@ USERNAME=`whoami`
 PREVPATH=/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/snap/bin
 PREVLIB=/usr/lib/x86_64-linux-gnu:/usr/local/lib:/usr/lib64:/usr/lib
 
-if [ -z $1 ]
+if [[ -z $1 || $1 -eq 2 ]]
 then
-        echo "Please enter 1, 2, 3, or 4 (Intel SDK 2016, AMD, CUDA) as an argument"
-        exit
+        echo "Please enter 1, 3, or 4 (Intel SDK, CUDA, OCLGrind) as an argument"
+        return
 fi
 
 if [ $1 == "1" ];

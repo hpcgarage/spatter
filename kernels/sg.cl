@@ -1,3 +1,6 @@
+/* 
+Generalized version of scatter and gather operations 
+*/
 __kernel void sg(__global double* restrict target, 
                   __global long*   restrict ti,
                   __global double* restrict source,
@@ -13,6 +16,8 @@ __kernel void sg(__global double* restrict target,
   int s = 0;
   __global double *tr, *sr;
   __global long   *tir, *sir;
+  
+  //not blocked version
   if(B == 1){
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
@@ -24,7 +29,7 @@ __kernel void sg(__global double* restrict target,
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
-  }
+  }//TODO: Implement blocked version
   else{
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
