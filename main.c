@@ -133,10 +133,10 @@ int main(int argc, char **argv)
 
         cl_ulong start = 0, end = 0;
         size_t retsize;
-        clGetEventInfo(e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start,
-                &retsize);
-        clGetEventInfo(e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end,
-                &retsize);
+        CALL_CL_GUARDED(clGetEventProfilingInfo, (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), 
+                    &start,&retsize));
+        CALL_CL_GUARDED(clGetEventProfilingInfo, (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), 
+                    &end,&retsize));
 
         cl_ulong time_ns = end - start;
         double time_s = time_ns / 1000000000.;
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     }
     //printf("\n");
     for (int i = 0; i < target.len * worksets; i++) {
-        //printf("%.0lf ", target.host_ptr[i]);
+        //printf("%.1lf ", target.host_ptr[i]);
     }
     //printf("\n");
     printf("done\n");
