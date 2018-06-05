@@ -1,6 +1,3 @@
-#all:
-#	gcc *.c kernels/openmp_kernels.c -o sgbench -lOpenCL -fopenmp
-#
 USEPAPI=0
 
 CC=gcc
@@ -26,7 +23,7 @@ all: *.c
 	$(CC) -DUSEPAPI=${USEPAPI} -O3 ${CL_CFLAGS} ${CL_LDFLAGS} -o ${EXE} *.c kernels/openmp_kernels.c -fopenmp ${LIBS}
 
 debug: *.c
-	$(CC) -g -std=gnu99 -o ${EXE} kernels/openmp_kernels.c
+	$(CC) -g -std=gnu99 -o ${EXE} *.c kernels/openmp_kernels.c
 
 clean:
 	rm -rf ${EXE}
