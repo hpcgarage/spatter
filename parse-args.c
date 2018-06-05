@@ -7,11 +7,12 @@
 #include <time.h>
 #include "parse-args.h"
 
-#define SOURCE 1000
-#define TARGET 1001 
-#define INDEX  1002
-#define BLOCK  1003
-#define SEED   1004
+#define SOURCE     1000
+#define TARGET     1001 
+#define INDEX      1002
+#define BLOCK      1003
+#define SEED       1004
+#define VALIDATE   1005
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -28,6 +29,7 @@ extern size_t seed;
 extern size_t R;
 extern size_t N;
 extern int json_flag;
+extern int validate_flag;
 
 
 void error(char *what, int code){
@@ -44,7 +46,6 @@ void safestrcopy(char *dest, char *src){
 
 void parse_args(int argc, char **argv)
 {
-    json_flag = 0;
     static int verbose_flag  = 0;
     static int platform_flag = 0;
     extern enum sg_backend backend;
@@ -70,6 +71,7 @@ void parse_args(int argc, char **argv)
         {"seed",        required_argument, NULL, SEED},
         {"runs",        required_argument, NULL, 'R'},
         {"loops",       required_argument, NULL, 'N'},
+        {"validate",    no_argument, &validate_flag, 1},
         {"interactive", no_argument,       0, 'i'},
         {0, 0, 0, 0}
     };  

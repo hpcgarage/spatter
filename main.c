@@ -25,7 +25,7 @@ size_t seed;
 size_t R = 10;
 size_t N = 100;
 
-int json_flag;
+int json_flag = 0, validate_flag = 0;
 
 int main(int argc, char **argv)
 {
@@ -123,38 +123,55 @@ int main(int argc, char **argv)
     size_t global_work_size = 1;
     size_t local_work_size = 1;
     cl_event e;
-    CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
-               &global_work_size, &local_work_size, 
-              0, NULL, &e)); 
-    clWaitForEvents(1, &e);
+    for (int i = 0; i < R; i++) {
+        
+        CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
+                   &global_work_size, &local_work_size, 
+                  0, NULL, &e)); 
+        clWaitForEvents(1, &e);
 
+        cl_ulong start = 0, end = 0;
+        size_t retsize;
+        clGetEventInfo(e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start,
+                &retsize);
+        clGetEventInfo(e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end,
+                &retsize);
+
+        cl_ulong time_ns = end - start;
+        double time_s = time_ns / 1000000000.;
+        printf("time (seconds): %lf\n", time_s);
+
+    }
 
     /* Validate results */
-    clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
-            target.host_ptr, 0, NULL, &e);
-    clWaitForEvents(1, &e);
+    if(validate_flag) {
 
-    SGTYPE *target_backup_host = (SGTYPE*) alloc(target.size); 
-    memcpy(target_backup_host, target.host_ptr, target.size);
+        clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
+                target.host_ptr, 0, NULL, &e);
+        clWaitForEvents(1, &e);
 
-    sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-            target.block_len, source.block_len, index_len, worksets, R, 
-            block_len);
+        SGTYPE *target_backup_host = (SGTYPE*) alloc(target.size); 
+        memcpy(target_backup_host, target.host_ptr, target.size);
 
-    for (size_t i = 0; i < target.len * worksets; i++){
-        if (target.host_ptr[i] != target_backup_host[i]){
-            printf(":(\n");
+        sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                target.block_len, source.block_len, index_len, worksets, R, 
+                block_len);
+
+        for (size_t i = 0; i < target.len * worksets; i++) {
+            if (target.host_ptr[i] != target_backup_host[i]) {
+                printf(":(\n");
+            }
         }
     }
 
     /* Print output */
     
-    for(int i = 0; i < source.len * worksets; i++){
-        //printf("%.0lf ", source.host_ptr[i]);
+    for (int i = 0; i < source.len * worksets; i++) {
+        printf("%.0lf ", source.host_ptr[i]);
     }
     //printf("\n");
-    for(int i = 0; i < target.len * worksets; i++){
-        //printf("%.0lf ", target.host_ptr[i]);
+    for (int i = 0; i < target.len * worksets; i++) {
+        printf("%.0lf ", target.host_ptr[i]);
     }
     //printf("\n");
     printf("done\n");
