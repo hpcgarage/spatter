@@ -123,6 +123,7 @@ int main(int argc, char **argv)
     size_t global_work_size = 1;
     size_t local_work_size = 1;
     cl_event e;
+
     for (int i = 0; i < R; i++) {
         
         CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
@@ -167,11 +168,11 @@ int main(int argc, char **argv)
     /* Print output */
     
     for (int i = 0; i < source.len * worksets; i++) {
-        printf("%.0lf ", source.host_ptr[i]);
+        //printf("%.0lf ", source.host_ptr[i]);
     }
     //printf("\n");
     for (int i = 0; i < target.len * worksets; i++) {
-        printf("%.0lf ", target.host_ptr[i]);
+        //printf("%.0lf ", target.host_ptr[i]);
     }
     //printf("\n");
     printf("done\n");
