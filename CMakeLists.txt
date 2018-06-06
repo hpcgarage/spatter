@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.5)
 #list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(sgbench C CXX)
@@ -17,6 +17,23 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 include_directories($ENV{OCL_INCL})
 link_directories($ENV{OCL_LIB})
 
-add_executable(sgbench *.c kernels/*.c)
+#Glob for the source files and headers in the current directory and kernels
+file (GLOB C_FILES *.c kernels/*.c)
+file (GLOB H_FILES *.h)
+set (SOURCE_FILES ${C_FILES} ${H_FILES})
 
+#Specify the executable and source files
+add_executable(sgbench ${SOURCE_FILES})
+
+#Link with OpenCL
 target_link_libraries (sgbench LINK_PUBLIC OpenCL)
+
+#Copy over the OpenCL kernels used with the binary
+file (GLOB OCL_KERNELS kernels/*.cl)
+file(COPY ${OCL_KERNELS}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/kernels/)
+
+#Copy over the test scripts 
+file (GLOB TEST_SCRIPTS *.sh)
+file(COPY ${TEST_SCRIPTS}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
