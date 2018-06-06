@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 
     if (backend == OPENCL) {
 
-        for (int i = 0; i < R; i++) {
+        for (int i = 0; i <= R; i++) {
             
             CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
                        &global_work_size, &local_work_size, 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
-            printf("time (seconds): %lf\n", time_s);
+            if (i!=0) printf("time (seconds): %lf\n", time_s);
 
         }
 

@@ -30,7 +30,9 @@ __kernel void scatter(__global double* restrict target,
       sr = source + s * (ss);
       tir = ti    + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[i];
+          for(long b = 0; b < B; b++){
+            tr[tir[i]+b] = sr[i+b];
+          }
 	    }
       s = ((s-1) % ws + ws) % ws;
     }

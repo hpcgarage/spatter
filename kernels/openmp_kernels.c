@@ -34,7 +34,9 @@ void sg_omp(double* restrict target,
       tir = ti    + s * (n);
       sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[sir[i]];
+          for(int b = 0; b < B; b++){
+	    	tr[tir[i]+b] = sr[sir[i]+b];
+          }
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
@@ -62,8 +64,8 @@ void scatter_omp(double* restrict target,
       tir = ti    + s * (n);
 #pragma omp parallel for
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[i];
-	    }
+	        tr[tir[i]] = sr[i];
+        }
       s = ((s-1) % ws + ws) % ws;
     }
   }
@@ -73,6 +75,9 @@ void scatter_omp(double* restrict target,
       sr = source + s * (ss);
       tir = ti    + s * (n);
 	    for(long i = 0; i < n; i++){
+          for(int b = 0; b < B; b++){
+	        tr[tir[i]+b] = sr[i+b];
+          }
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
@@ -100,7 +105,7 @@ void gather_omp(double* restrict target,
       sir = si    + s * (n);
 #pragma omp parallel for
 	    for(long i = 0; i < n; i++){
-	    	tr[i] = sr[sir[i]];
+	      tr[i] = sr[sir[i]];
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
@@ -111,6 +116,9 @@ void gather_omp(double* restrict target,
       sr = source + s * (ss);
       sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
+          for(int b = 0; b < B; b++){
+	    	tr[i+b] = sr[sir[i]+b];
+          } 
 	    }
       s = ((s-1) % ws + ws) % ws;
     }

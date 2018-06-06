@@ -37,7 +37,9 @@ __kernel void sg(__global double* restrict target,
       tir = ti    + s * (n);
       sir = si + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[sir[i]];
+          for(long b = 0; b < B; b++){
+	    	tr[tir[i]+b] = sr[sir[i]+b];
+          }
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
