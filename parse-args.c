@@ -28,15 +28,16 @@ extern size_t block_len;
 extern size_t seed;
 extern size_t R;
 extern size_t N;
+extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
-
+extern int verbose_flag;
 
 void error(char *what, int code){
     printf("Error: ");
     printf("%s", what);
     printf("\n");
-    exit(code);
+    if(code) exit(code);
 }
 
 void safestrcopy(char *dest, char *src){
@@ -46,7 +47,6 @@ void safestrcopy(char *dest, char *src){
 
 void parse_args(int argc, char **argv)
 {
-    static int verbose_flag  = 0;
     static int platform_flag = 0;
     extern enum sg_backend backend;
     extern enum sg_kernel kernel;
@@ -72,6 +72,7 @@ void parse_args(int argc, char **argv)
         {"seed",        required_argument, NULL, SEED},
         {"runs",        required_argument, NULL, 'R'},
         {"loops",       required_argument, NULL, 'N'},
+        {"workers",     required_argument, NULL, 'W'},
         {"validate",    no_argument, &validate_flag, 1},
         {"interactive", no_argument,       0, 'i'},
         {0, 0, 0, 0}
@@ -82,7 +83,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "i",
+    	c = getopt_long_only (argc, argv, "W:",
                          long_options, &option_index);
 
         switch(c){
@@ -140,6 +141,9 @@ void parse_args(int argc, char **argv)
             case 'N':
                 sscanf(optarg, "%zu", &N);
                 break;
+            case 'W':
+                workers = atoi(optarg);
+                break;
             default:
                 break;
 
@@ -178,6 +182,10 @@ void parse_args(int argc, char **argv)
     }
     if(block_len < 1){
         error("Invalid index-len", 1);
+    }
+    if (workers < 1){
+        error("Too few workers. Changing to 1.", 0);
+        workers = 1;
     }
 
     /* Seed rand */

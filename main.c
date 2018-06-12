@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <omp.h>
 #include "kernels/openmp_kernels.h"
 #include "cl-helper.h"
 #include "parse-args.h"
@@ -26,11 +27,12 @@ size_t block_len;
 size_t seed;
 size_t R = 10;
 size_t N = 100;
+size_t workers = 1;
 
-int json_flag = 0, validate_flag = 0;
+int json_flag = 0, validate_flag = 0, verbose_flag = 0;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size, idx_size, bytes_moved usable_bandwidth loops runs\n");
+    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
 }
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
@@ -46,11 +48,12 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     printf(SGOPSTRING);
 
     printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
+    printf("%zu ", worksets);
 
     size_t bytes_moved = idx_size * block_len * sizeof(SGTYPE) / worksets * N;
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu", N, R);
+    printf("%zu %zu %zu", N, R, workers);
 
     printf("\n");
 
@@ -158,6 +161,8 @@ int main(int argc, char **argv)
 
     }
 
+    /* Begin benchmark */
+    if (verbose_flag) print_header();
     if (backend == OPENCL) {
 
         for (int i = 0; i <= R; i++) {
@@ -186,6 +191,7 @@ int main(int argc, char **argv)
 
     if (backend == OPENMP) {
 
+        omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
             zero_time();
             switch (kernel) {
@@ -203,6 +209,9 @@ int main(int argc, char **argv)
                     gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
+                    break;
+                default:
+                    printf("Error: Unable to determine kernel\n");
                     break;
             }
             double time_ms = get_time();
