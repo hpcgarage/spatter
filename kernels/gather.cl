@@ -1,6 +1,7 @@
-__kernel void gather(__global double* restrict target, 
+#include "sgtype.h"
+__kernel void gather(__global SGTYPE_CL* restrict target, 
                   __global long*   restrict ti,
-                  __global double* restrict source,
+                  __global SGTYPE_CL* restrict source,
                   __global long*   restrict si,
                   long ts, 
                   long ss, 
@@ -11,7 +12,7 @@ __kernel void gather(__global double* restrict target,
 {
   //int s = ws - 1;
   int s = 0;
-  __global double *tr, *sr;
+  __global SGTYPE_CL *tr, *sr;
   __global long   *sir;
   if(B == 1){
     for(long r = 0; r < R; r++){
@@ -19,7 +20,7 @@ __kernel void gather(__global double* restrict target,
       sr = source + s * (ss);
       sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[i] = sr[sir[i]];
+	    	tr[i] SGOP sr[sir[i]];
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
@@ -31,7 +32,7 @@ __kernel void gather(__global double* restrict target,
       sir = si + s * (n);
 	    for(long i = 0; i < n; i++){
           for(long b = 0; b < B; b++){
-	    	tr[i+b] = sr[sir[i]+b];
+	    	tr[i+b] SGOP sr[sir[i]+b];
           }
 	    }
       s = ((s-1) % ws + ws) % ws;

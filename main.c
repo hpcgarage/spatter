@@ -29,6 +29,33 @@ size_t N = 100;
 
 int json_flag = 0, validate_flag = 0;
 
+void print_header(){
+    printf("backend kernel op time source_size target_size, idx_size, bytes_moved usable_bandwidth loops runs\n");
+}
+
+/** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
+ */
+void report_time(double time, size_t source_size, size_t target_size, size_t idx_size, size_t worksets){
+    if(backend == OPENMP) printf("OPENMP ");
+    if(backend == OPENCL) printf("OPENCL ");
+
+    if(kernel == SCATTER) printf("SCATTER ");
+    if(kernel == GATHER) printf("GATHER ");
+    if(kernel == SG) printf("SG ");
+
+    printf(SGOPSTRING);
+
+    printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
+
+    size_t bytes_moved = idx_size * block_len * sizeof(SGTYPE) / worksets * N;
+    double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
+    printf("%zu %lf ", bytes_moved, usable_bandwidth);
+    printf("%zu %zu", N, R);
+
+    printf("\n");
+
+}
+
 int main(int argc, char **argv)
 {
     cl_context context;
@@ -149,7 +176,7 @@ int main(int argc, char **argv)
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
-            if (i!=0) printf("time (seconds): %lf\n", time_s);
+            if (i!=0) report_time(time_s, source.size, target.size, si.size, worksets);
 
         }
 
@@ -157,30 +184,29 @@ int main(int argc, char **argv)
 
     /* Time OpenMP Kernel */
 
-
     if (backend == OPENMP) {
 
-        for (int i = 0; i < R; i++) {
+        for (int i = 0; i <= R; i++) {
             zero_time();
             switch (kernel) {
                 case SG:
                     sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, R, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
                 case SCATTER:
                     scatter_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, R, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
                 case GATHER:
                     gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, R, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
             }
             double time_ms = get_time();
-            printf("time (seconds): %lf\n", time_ms / 1000.);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets);
 
         }
 
@@ -220,16 +246,4 @@ int main(int argc, char **argv)
             }
         }
     }
-
-    /* Print output */
-    
-    for (int i = 0; i < source.len * worksets; i++) {
-        //printf("%.0lf ", source.host_ptr[i]);
-    }
-    //printf("\n");
-    for (int i = 0; i < target.len * worksets; i++) {
-        //printf("%.1lf ", target.host_ptr[i]);
-    }
-    //printf("\n");
-    printf("done\n");
 }

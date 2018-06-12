@@ -22,6 +22,7 @@ enum sg_backend
     OPENMP, /**< OpenMP CPU Backend */
     INVALID_BACKEND /**< Used as a default backend */
 };
+
 enum sg_kernel
 {
     SCATTER, 

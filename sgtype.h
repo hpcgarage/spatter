@@ -6,4 +6,7 @@
 #ifndef SGTYPE_H
 #define SGTYPE_H
 #define SGTYPE cl_double /**< The data type which will be operated on*/
+#define SGTYPE_CL double /**< The data type which will be operated on*/
+#define SGOP =
+#define SGOPSTRING "COPY"
 #endif

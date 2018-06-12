@@ -1,9 +1,10 @@
 /* 
 Generalized version of scatter and gather operations 
 */
-__kernel void sg(__global double* restrict target, 
+#include "sgtype.h"
+__kernel void sg(__global SGTYPE_CL* restrict target, 
                   __global long*   restrict ti,
-                  __global double* restrict source,
+                  __global SGTYPE_CL* restrict source,
                   __global long*   restrict si,
                   long ts, 
                   long ss, 
@@ -14,7 +15,7 @@ __kernel void sg(__global double* restrict target,
 {
   //int s = ws - 1;
   int s = 0;
-  __global double *tr, *sr;
+  __global SGTYPE_CL *tr, *sr;
   __global long   *tir, *sir;
   
   //not blocked version
@@ -25,7 +26,7 @@ __kernel void sg(__global double* restrict target,
       tir = ti    + s * (n);
       sir = si    + s * (n);
 	    for(long i = 0; i < n; i++){
-	    	tr[tir[i]] = sr[sir[i]];
+	    	tr[tir[i]] SGOP sr[sir[i]];
 	    }
       s = ((s-1) % ws + ws) % ws;
     }
@@ -38,7 +39,7 @@ __kernel void sg(__global double* restrict target,
       sir = si + s * (n);
 	    for(long i = 0; i < n; i++){
           for(long b = 0; b < B; b++){
-	    	tr[tir[i]+b] = sr[sir[i]+b];
+	    	tr[tir[i]+b] SGOP sr[sir[i]+b];
           }
 	    }
       s = ((s-1) % ws + ws) % ws;
