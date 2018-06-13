@@ -31,7 +31,7 @@ extern size_t N;
 extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
-extern int verbose_flag;
+extern int print_header_flag;
 
 void error(char *what, int code){
     printf("Error: ");
@@ -59,22 +59,22 @@ void parse_args(int argc, char **argv)
 	static struct option long_options[] =
     {
     	/* These options set a flag. */
-        {"verbose",     no_argument,       &verbose_flag, 1},
-        {"backend",     required_argument, NULL, 'b'},
-        {"cl-platform", required_argument, NULL, 'p'},
-        {"cl-device",   required_argument, NULL, 'd'},
-        {"kernel-file", required_argument, NULL, 'f'},
-        {"kernel-name", required_argument, NULL, 'g'},
-        {"source-len",  required_argument, NULL, SOURCE},
-        {"target-len",  required_argument, NULL, TARGET},
-        {"index-len",   required_argument, NULL, INDEX},
-        {"block-len",   required_argument, NULL, BLOCK},
-        {"seed",        required_argument, NULL, SEED},
-        {"runs",        required_argument, NULL, 'R'},
-        {"loops",       required_argument, NULL, 'N'},
-        {"workers",     required_argument, NULL, 'W'},
-        {"validate",    no_argument, &validate_flag, 1},
-        {"interactive", no_argument,       0, 'i'},
+        {"no-print-header", no_argument, &print_header_flag, 0},
+        {"backend",         required_argument, NULL, 'b'},
+        {"cl-platform",     required_argument, NULL, 'p'},
+        {"cl-device",       required_argument, NULL, 'd'},
+        {"kernel-file",     required_argument, NULL, 'f'},
+        {"kernel-name",     required_argument, NULL, 'g'},
+        {"source-len",      required_argument, NULL, SOURCE},
+        {"target-len",      required_argument, NULL, TARGET},
+        {"index-len",       required_argument, NULL, INDEX},
+        {"block-len",       required_argument, NULL, BLOCK},
+        {"seed",            required_argument, NULL, SEED},
+        {"runs",            required_argument, NULL, 'R'},
+        {"loops",           required_argument, NULL, 'N'},
+        {"workers",         required_argument, NULL, 'W'},
+        {"validate",        no_argument, &validate_flag, 1},
+        {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
     };  
 

@@ -1,10 +1,10 @@
 #include <omp.h>
 #include "../cl-helper.h"
 #include "../sgtype.h"
-void sg_omp(SGTYPE* restrict target, 
-            long*   restrict ti,
-            SGTYPE* restrict source,
-            long*   restrict si,
+void sg_omp(SGTYPE_C* restrict target, 
+            long*     restrict ti,
+            SGTYPE_C* restrict source,
+            long*     restrict si,
             long ts, 
             long ss, 
             long n, 
@@ -13,8 +13,8 @@ void sg_omp(SGTYPE* restrict target,
             long B)
 {
   int s = 0;
-  SGTYPE *tr, *sr;
-  long   *tir, *sir;
+  SGTYPE_C *tr, *sr;
+  long     *tir, *sir;
   if(B == 1){
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
@@ -44,10 +44,10 @@ void sg_omp(SGTYPE* restrict target,
   }
 }
 
-void scatter_omp(SGTYPE* restrict target, 
-            long*   restrict ti,
-            SGTYPE* restrict source,
-            long*   restrict si,
+void scatter_omp(SGTYPE_C* restrict target, 
+            long*     restrict ti,
+            SGTYPE_C* restrict source,
+            long*     restrict si,
             long ts, 
             long ss, 
             long n, 
@@ -56,8 +56,8 @@ void scatter_omp(SGTYPE* restrict target,
             long B)
 {
   int s = 0;
-  SGTYPE *tr, *sr;
-  long   *tir;
+  SGTYPE_C *tr, *sr;
+  long     *tir;
   if(B == 1){
     for(long r = 0; r < R; r++){
       tr = target + s * (ts);
@@ -85,10 +85,10 @@ void scatter_omp(SGTYPE* restrict target,
   }
 }
 
-void gather_omp(SGTYPE* restrict target, 
-            long*   restrict ti,
-            SGTYPE* restrict source,
-            long*   restrict si,
+void gather_omp(SGTYPE_C* restrict target, 
+            long*     restrict ti,
+            SGTYPE_C* restrict source,
+            long*     restrict si,
             long ts, 
             long ss, 
             long n, 
@@ -97,7 +97,7 @@ void gather_omp(SGTYPE* restrict target,
             long B)
 {
   int s = 0;
-  SGTYPE *tr, *sr;
+  SGTYPE_C *tr, *sr;
   long   *sir;
   if(B == 1){
     for(long r = 0; r < R; r++){

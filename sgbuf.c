@@ -2,7 +2,7 @@
 #include "sgbuf.h"
 #include "cl-helper.h"
 
-void random_data(SGTYPE *buf, size_t len){
+void random_data(SGTYPE_C *buf, size_t len){
     for(size_t i = 0; i < len; i++){
         buf[i] = rand() % 10; 
     }

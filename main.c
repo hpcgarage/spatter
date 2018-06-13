@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <omp.h>
+#include <ctype.h>
 #include "kernels/openmp_kernels.h"
 #include "cl-helper.h"
 #include "parse-args.h"
@@ -29,10 +30,18 @@ size_t R = 10;
 size_t N = 100;
 size_t workers = 1;
 
-int json_flag = 0, validate_flag = 0, verbose_flag = 0;
+int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
+    if (backend == OPENCL) printf("backend platform device kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
+    if (backend == OPENMP) printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
+}
+
+void make_upper (char* s) {
+    while (*s) {
+        *s = toupper(*s);
+        s++;
+    }
 }
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
@@ -40,6 +49,12 @@ void print_header(){
 void report_time(double time, size_t source_size, size_t target_size, size_t idx_size, size_t worksets){
     if(backend == OPENMP) printf("OPENMP ");
     if(backend == OPENCL) printf("OPENCL ");
+
+    if(backend == OPENCL){
+        make_upper(platform_string);
+        make_upper(device_string);
+        printf("%s %s ", platform_string, device_string);
+    }
 
     if(kernel == SCATTER) printf("SCATTER ");
     if(kernel == GATHER) printf("GATHER ");
@@ -50,7 +65,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
     printf("%zu ", worksets);
 
-    size_t bytes_moved = idx_size * block_len * sizeof(SGTYPE) / worksets * N;
+    size_t bytes_moved = idx_size * block_len * sizeof(SGTYPE_C) / worksets * N;
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
     printf("%zu %zu %zu", N, R, workers);
@@ -102,7 +117,7 @@ int main(int argc, char **argv)
     /* Determine how many worksets we will need to flush the cache */
     if (backend == OPENMP) {
         worksets = cpu_flush_size / 
-            ((source.len + target.len) * sizeof(SGTYPE) 
+            ((source.len + target.len) * sizeof(SGTYPE_C) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
     }
     else if (backend == OPENCL) {
@@ -110,13 +125,13 @@ int main(int argc, char **argv)
                 sizeof(device_cache_size), &device_cache_size, NULL); 
         device_flush_size = device_cache_size * 8;
         worksets = device_flush_size / 
-            ((source.len + target.len) * sizeof(SGTYPE) 
+            ((source.len + target.len) * sizeof(SGTYPE_C) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
     }
 
     /* These are the total size of the data allocated for each buffer */
-    source.size = worksets * block_len * source.len * sizeof(SGTYPE);
-    target.size = worksets * block_len * target.len * sizeof(SGTYPE);
+    source.size = worksets * block_len * source.len * sizeof(SGTYPE_C);
+    target.size = worksets * block_len * target.len * sizeof(SGTYPE_C);
     si.size     = worksets * si.len * sizeof(cl_ulong);
     ti.size     = worksets * ti.len * sizeof(cl_ulong);
 
@@ -132,8 +147,8 @@ int main(int argc, char **argv)
     }
 
     /* Create buffers on host */
-    source.host_ptr = (SGTYPE*) alloc(source.size); 
-    target.host_ptr = (SGTYPE*) alloc(target.size); 
+    source.host_ptr = (SGTYPE_C*) alloc(source.size); 
+    target.host_ptr = (SGTYPE_C*) alloc(target.size); 
     si.host_ptr = (cl_ulong*) alloc(si.size); 
     ti.host_ptr = (cl_ulong*) alloc(ti.size); 
 
@@ -162,7 +177,7 @@ int main(int argc, char **argv)
     }
 
     /* Begin benchmark */
-    if (verbose_flag) print_header();
+    if (print_header_flag) print_header();
     if (backend == OPENCL) {
 
         for (int i = 0; i <= R; i++) {
@@ -227,7 +242,7 @@ int main(int argc, char **argv)
                 target.host_ptr, 0, NULL, &e);
         clWaitForEvents(1, &e);
 
-        SGTYPE *target_backup_host = (SGTYPE*) alloc(target.size); 
+        SGTYPE_C *target_backup_host = (SGTYPE_C*) alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
         switch (kernel) {

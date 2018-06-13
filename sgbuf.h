@@ -13,11 +13,11 @@
 /** @brief Describes a buffer object containing data to be scattered/gathered 
  */
 typedef struct sgDataBuf_t{
-    SGTYPE *host_ptr; /**< Points to data on the host (CPU) */
-    cl_mem dev_ptr;   /**< Points to data on the device if using the OCL backend */
-    size_t len;       /**< The length of the buffers (in blocks) */
-    size_t size;      /**< The size of the buffer (in bytes) */
-    size_t block_len; /**< The length of a block (number of SGTYPEs in a workset */
+    SGTYPE_C *host_ptr; /**< Points to data on the host (CPU) */
+    cl_mem dev_ptr;     /**< Points to data on the device if using the OCL backend */
+    size_t len;         /**< The length of the buffers (in blocks) */
+    size_t size;        /**< The size of the buffer (in bytes) */
+    size_t block_len;   /**< The length of a block (number of SGTYPEs in a workset */
 }sgDataBuf;
 
 /** @brief Describes a buffer object describing how data will be scattered/gathered */
@@ -32,7 +32,7 @@ typedef struct sgIndexBuf_t{
  *  @param buf Data buffer to be filled, should be pre-allocated
  *  @param len Length of buf
  */
-void random_data(SGTYPE *buf, size_t len);
+void random_data(SGTYPE_C *buf, size_t len);
 
 /** @brief Fill an index buffer with the indices [0:len-1] 
  *  @param idx The index buffer
