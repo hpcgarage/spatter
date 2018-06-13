@@ -18,10 +18,10 @@ OP
 
 #kernel = scatter/gather/s+g
 
-for BLKSIZE
+for B in BLKSIZE
 do
 
-    for SRCSIZE
+    for S in SRCSIZE
     do
 
         for KERNEL
