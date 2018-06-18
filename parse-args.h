@@ -31,4 +31,10 @@ enum sg_kernel
     INVALID_KERNEL
 };
 
+enum sg_op
+{
+    OP_COPY,
+    OP_ACCUM
+};
+
 #endif 

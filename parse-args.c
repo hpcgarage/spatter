@@ -33,6 +33,8 @@ extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
 
+extern enum sg_op op;
+
 void error(char *what, int code){
     printf("Error: ");
     printf("%s", what);
@@ -73,6 +75,7 @@ void parse_args(int argc, char **argv)
         {"runs",            required_argument, NULL, 'R'},
         {"loops",           required_argument, NULL, 'N'},
         {"workers",         required_argument, NULL, 'W'},
+        {"op",              required_argument, NULL, 'o'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
@@ -118,6 +121,15 @@ void parse_args(int argc, char **argv)
                 }
                 else if (!strcasecmp("GATHER", optarg)) {
                     kernel = GATHER;
+                }
+                break;
+            case 'o':
+                if (!strcasecmp("COPY", optarg)) { 
+                    op = OP_COPY;
+                } else if (!strcasecmp("ACCUM", optarg)) {
+                    op = OP_ACCUM;
+                } else {
+                    error("Unrecognzied op type", 1);
                 }
                 break;
             case SOURCE:

@@ -15,6 +15,7 @@
 
 enum sg_backend backend = INVALID_BACKEND;
 enum sg_kernel  kernel  = INVALID_KERNEL;
+enum sg_op      op      = OP_COPY;
 
 char platform_string[STRING_SIZE];
 char device_string[STRING_SIZE];
@@ -60,7 +61,8 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     if(kernel == GATHER) printf("GATHER ");
     if(kernel == SG) printf("SG ");
 
-    printf(SGOPSTRING);
+    if(op == OP_COPY) printf("COPY ");
+    if(op == OP_ACCUM) printf("ACCUM ");
 
     printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
     printf("%zu ", worksets);
@@ -168,8 +170,6 @@ int main(int argc, char **argv)
         flags = CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY;
         target.dev_ptr = clCreateBufferSafe(context, flags, target.size, NULL); 
 
-        /* Time OpenCL Kernel */
-        
         SET_10_KERNEL_ARGS(sgp, target.dev_ptr, ti.dev_ptr, source.dev_ptr, 
                 si.dev_ptr, target.block_len, source.block_len, 
                 index_len, worksets, N, block_len);
@@ -178,6 +178,8 @@ int main(int argc, char **argv)
 
     /* Begin benchmark */
     if (print_header_flag) print_header();
+    
+    /* Time OpenCL Kernel */
     if (backend == OPENCL) {
 
         for (int i = 0; i <= R; i++) {
@@ -211,17 +213,32 @@ int main(int argc, char **argv)
             zero_time();
             switch (kernel) {
                 case SG:
-                    sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                    if (op == OP_COPY) 
+                        sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
+                        block_len);
+                    else 
+                        sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
                 case SCATTER:
-                    scatter_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                    if (op == OP_COPY)
+                        scatter_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
+                        block_len);
+                    else
+                        scatter_accum_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
                 case GATHER:
-                    gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                    if (op == OP_COPY)
+                        gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        target.block_len, source.block_len, index_len, worksets, N, 
+                        block_len);
+                    else
+                        gather_accum_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         target.block_len, source.block_len, index_len, worksets, N, 
                         block_len);
                     break;
