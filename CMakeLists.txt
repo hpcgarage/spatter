@@ -34,6 +34,6 @@ file(COPY ${OCL_KERNELS}
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/kernels/)
 
 #Copy over the test scripts 
-file (GLOB TEST_SCRIPTS *.sh)
+file (GLOB TEST_SCRIPTS tests/*.sh)
 file(COPY ${TEST_SCRIPTS}
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
