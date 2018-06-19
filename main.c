@@ -64,7 +64,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     if(op == OP_COPY) printf("COPY ");
     if(op == OP_ACCUM) printf("ACCUM ");
 
-    printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
+    printf("%lf %zu %zu %zu ", time, source_size, target_size, idx_size);
     printf("%zu ", worksets);
 
     size_t bytes_moved = idx_size * sizeof(SGTYPE_C) / worksets * N;
