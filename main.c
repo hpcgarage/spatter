@@ -67,7 +67,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     printf(" %lf %zu %zu %zu ", time, source_size, target_size, idx_size);
     printf("%zu ", worksets);
 
-    size_t bytes_moved = idx_size * block_len * sizeof(SGTYPE_C) / worksets * N;
+    size_t bytes_moved = idx_size * sizeof(SGTYPE_C) / worksets * N;
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
     printf("%zu %zu %zu", N, R, workers);
@@ -132,14 +132,14 @@ int main(int argc, char **argv)
     }
 
     /* These are the total size of the data allocated for each buffer */
-    source.size = worksets * block_len * source.len * sizeof(SGTYPE_C);
-    target.size = worksets * block_len * target.len * sizeof(SGTYPE_C);
+    source.size = worksets * source.len * sizeof(SGTYPE_C);
+    target.size = worksets * target.len * sizeof(SGTYPE_C);
     si.size     = worksets * si.len * sizeof(cl_ulong);
     ti.size     = worksets * ti.len * sizeof(cl_ulong);
 
     /* This is the number of SGTYPEs in a workset */
-    source.block_len = block_len * source.len;
-    target.block_len = block_len * target.len;
+    source.block_len = source.len;
+    target.block_len = target.len;
 
     /* Create the kernel */
     if (backend == OPENCL) {
