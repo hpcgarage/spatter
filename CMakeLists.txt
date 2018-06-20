@@ -10,11 +10,12 @@ project(sgbench C CXX)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 # Enable OpenMP
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
 
 #Point the compiler to the include and library directories
 include_directories($ENV{OCL_INCL})
+#include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
 link_directories($ENV{OCL_LIB})
 
 #Glob for the source files and headers in the current directory and kernels
