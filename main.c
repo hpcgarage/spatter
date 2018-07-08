@@ -255,6 +255,9 @@ int main(int argc, char **argv)
     /* Validate results  -- OPENMP assumed correct*/
     if(validate_flag && backend == OPENCL) {
 
+        global_work_size = workers;
+        printf("workers %zu\n", workers);
+
         clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
                 target.host_ptr, 0, NULL, &e);
         clWaitForEvents(1, &e);
