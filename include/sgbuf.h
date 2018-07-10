@@ -8,7 +8,7 @@
 #define SGBUF_H
 
 #include "sgtype.h"
-#include "opencl/cl-helper.h"
+#include "../opencl/cl-helper.h"
 
 /** @brief Describes a buffer object containing data to be scattered/gathered 
  */

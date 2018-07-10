@@ -10,15 +10,15 @@ project(sgbench C CXX)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 # Enable OpenMP
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 
 # Enable OpenCL 
 IF ( USE_OPENCL )
 	ADD_DEFINITIONS( -DUSE_OPENCL )     
 	#Point the compiler to the include and library directories
-	include_directories($ENV{OCL_INCL})
+	include_directories($ENV{OCL_INCL} opencl)
 	#include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
 	link_directories($ENV{OCL_LIB})
 	#Pull the OpenCL-specific files into the build
@@ -33,6 +33,14 @@ IF ( USE_OPENCL )
 	MESSAGE( "Using OpenCL" ) 
 ENDIF()
 
+# Enable OpenMP 
+IF ( USE_OPENMP )
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+ENDIF()
+
+#Include the location of stddef.h
+#include_directories(/usr/include/linux/)
 
 #Glob for the source files and headers in the current directory and kernels
 file (GLOB C_FILES *.c src/*.c kernels/*.c)

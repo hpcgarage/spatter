@@ -1,5 +1,4 @@
-#include <omp.h>
-#include "../sgtype.h"
+#include "openmp_kernels.h"
 
 void sg_omp(SGTYPE_C* restrict target, 
             long*     restrict ti,

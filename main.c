@@ -91,10 +91,12 @@ int main(int argc, char **argv)
 
     size_t cpu_cache_size = 30720 * 1000; 
     size_t cpu_flush_size = cpu_cache_size * 8;
-    cl_ulong device_cache_size = 0;
+    #ifdef USE_OPENCL
+	cl_ulong device_cache_size = 0;
+    	cl_uint work_dim = 1;
+    #endif
     size_t device_flush_size = 0;
     size_t worksets = 1;
-    cl_uint work_dim = 1;
     size_t global_work_size = 1;
     size_t local_work_size = 1;
     
@@ -110,9 +112,9 @@ int main(int argc, char **argv)
     */
 
     /* Create a context and corresponding queue */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
     	initialize_dev_ocl(platform_string, device_string);
-    }
+    #endif
 
     source.len = source_len;
     target.len = target_len;
@@ -146,11 +148,11 @@ int main(int argc, char **argv)
     target.block_len = target.len;
 
     /* Create the kernel */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
         kernel_string = read_file(kernel_file);
         sgp = kernel_from_string(context, kernel_string, kernel_name, NULL);
         free(kernel_string);
-    }
+    #endif
 
     /* Create buffers on host */
     source.host_ptr = (SGTYPE_C*) alloc(source.size); 
@@ -163,28 +165,23 @@ int main(int argc, char **argv)
     linear_indices(si.host_ptr, si.len, worksets);
     linear_indices(ti.host_ptr, ti.len, worksets);
 
+
     /* Create buffers on device and transfer data from host */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
+	create_dev_buffers_ocl(source, target, si, ti, index_len, block_len, worksets, N);
 
-        flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
-        source.dev_ptr = clCreateBufferSafe(context, flags, source.size, source.host_ptr);
-        si.dev_ptr = clCreateBufferSafe(context, flags, si.size, si.host_ptr);
-        ti.dev_ptr = clCreateBufferSafe(context, flags, ti.size, ti.host_ptr);
-
-        flags = CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY;
-        target.dev_ptr = clCreateBufferSafe(context, flags, target.size, NULL); 
-
-        SET_10_KERNEL_ARGS(sgp, target.dev_ptr, ti.dev_ptr, source.dev_ptr, 
-                si.dev_ptr, target.block_len, source.block_len, 
-                index_len, worksets, N, block_len);
-
-    }
+    #endif
+    
+    /* =======================================
+	Benchmark Execution
+       =======================================
+    */
 
     /* Begin benchmark */
     if (print_header_flag) print_header();
     
     /* Time OpenCL Kernel */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
 
         for (int i = 0; i <= R; i++) {
             
@@ -206,11 +203,12 @@ int main(int argc, char **argv)
 
         }
 
-    }
+    #endif // USE_OPENMP
+
 
     /* Time OpenMP Kernel */
 
-    if (backend == OPENMP) {
+    #ifdef USE_OPENMP
 
         omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
@@ -255,8 +253,11 @@ int main(int argc, char **argv)
 
         }
 
-    }
-    /* Validate results  -- OPENMP assumed correct*/
+    #endif // USE_OPENMP
+    
+
+    /* Validation - TBD
+    // Validate results  -- OPENMP assumed correct
     if(validate_flag && backend == OPENCL) {
 
         clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
@@ -291,4 +292,5 @@ int main(int argc, char **argv)
             }
         }
     }
+    */
 }
