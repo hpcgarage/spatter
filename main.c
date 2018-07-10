@@ -5,11 +5,16 @@
 #include <omp.h>
 #include <ctype.h>
 #include "kernels/openmp_kernels.h"
-#include "cl-helper.h"
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "mytime.h"
+
+#if defined( USE_OPENCL )
+	#include "opencl/ocl-backend.h"
+#elif defined( USE_OPENMP )
+	#include "openmp/omp-backend.h"
+#endif
 
 #define alloc(size) aligned_alloc(64, size)
 
@@ -78,11 +83,6 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
 
 int main(int argc, char **argv)
 {
-    cl_context context;
-    cl_command_queue queue;
-    cl_device_id device;
-    cl_mem_flags flags; 
-    cl_kernel sgp;
 
     sgDataBuf  source;
     sgDataBuf  target;
@@ -97,7 +97,6 @@ int main(int argc, char **argv)
     cl_uint work_dim = 1;
     size_t global_work_size = 1;
     size_t local_work_size = 1;
-    cl_event e;
     
     char *kernel_string;
 
@@ -105,10 +104,14 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
 
+    /* =======================================
+	Initalization
+       =======================================
+    */
+
     /* Create a context and corresponding queue */
     if (backend == OPENCL) {
-        create_context_on(platform_string, device_string, 0, 
-                      &context, &queue, &device, 1);
+    	initialize_dev_ocl(platform_string, device_string);
     }
 
     source.len = source_len;
@@ -116,7 +119,8 @@ int main(int argc, char **argv)
     si.len     = index_len;
     ti.len     = index_len;
 
-    /* Determine how many worksets we will need to flush the cache */
+    /* TBD - cache flushing
+    // Determine how many worksets we will need to flush the cache
     if (backend == OPENMP) {
         worksets = cpu_flush_size / 
             ((source.len + target.len) * sizeof(SGTYPE_C) 
@@ -129,7 +133,7 @@ int main(int argc, char **argv)
         worksets = device_flush_size / 
             ((source.len + target.len) * sizeof(SGTYPE_C) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
-    }
+    }*/
 
     /* These are the total size of the data allocated for each buffer */
     source.size = worksets * source.len * sizeof(SGTYPE_C);

@@ -13,15 +13,31 @@ project(sgbench C CXX)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -I${CMAKE_CURRENT_SOURCE_DIR}")
 
-#Point the compiler to the include and library directories
-include_directories($ENV{OCL_INCL})
-#include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
-link_directories($ENV{OCL_LIB})
+
+# Enable OpenCL 
+IF ( USE_OPENCL )
+	ADD_DEFINITIONS( -DUSE_OPENCL )     
+	#Point the compiler to the include and library directories
+	include_directories($ENV{OCL_INCL})
+	#include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
+	link_directories($ENV{OCL_LIB})
+	#Pull the OpenCL-specific files into the build
+	file (GLOB BACKEND_C_FILES opencl/*.c)
+	file (GLOB BACKEND_H_FILES opencl/*.h)
+
+	#Copy over the OpenCL kernels used with the binary
+	file (GLOB OCL_KERNELS kernels/*.cl)
+	file(COPY ${OCL_KERNELS}
+	     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/kernels/)
+
+	MESSAGE( "Using OpenCL" ) 
+ENDIF()
+
 
 #Glob for the source files and headers in the current directory and kernels
-file (GLOB C_FILES *.c kernels/*.c)
-file (GLOB H_FILES *.h)
-set (SOURCE_FILES ${C_FILES} ${H_FILES})
+file (GLOB C_FILES *.c src/*.c kernels/*.c)
+file (GLOB H_FILES include/*.h)
+set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES})
 
 #Specify the executable and source files
 add_executable(sgbench ${SOURCE_FILES})
@@ -29,10 +45,6 @@ add_executable(sgbench ${SOURCE_FILES})
 #Link with OpenCL
 target_link_libraries (sgbench LINK_PUBLIC OpenCL)
 
-#Copy over the OpenCL kernels used with the binary
-file (GLOB OCL_KERNELS kernels/*.cl)
-file(COPY ${OCL_KERNELS}
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/kernels/)
 
 #Copy over the test scripts 
 file (GLOB TEST_SCRIPTS tests/*.sh)
