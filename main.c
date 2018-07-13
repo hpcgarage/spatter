@@ -169,7 +169,6 @@ int main(int argc, char **argv)
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
 	create_dev_buffers_ocl(source, target, si, ti, index_len, block_len, worksets, N);
-
     #endif
     
     /* =======================================
@@ -203,12 +202,13 @@ int main(int argc, char **argv)
 
         }
 
-    #endif // USE_OPENMP
+    #endif // USE_OPENCL
 
 
     /* Time OpenMP Kernel */
 
-    #ifdef USE_OPENMP
+    //#ifdef USE_OPENMP
+	printf("Running OMP");
 
         omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 
         }
 
-    #endif // USE_OPENMP
+    //#endif // USE_OPENMP
     
 
     /* Validation - TBD

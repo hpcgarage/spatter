@@ -37,13 +37,17 @@ ENDIF()
 IF ( USE_OPENMP )
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
+	file (GLOB BACKEND_C_FILES openmp/*.c)
+	file (GLOB BACKEND_H_FILES openmp/*.h)
+
 ENDIF()
 
 #Include the location of stddef.h
 #include_directories(/usr/include/linux/)
 
 #Glob for the source files and headers in the current directory and kernels
-file (GLOB C_FILES *.c src/*.c kernels/*.c)
+file (GLOB C_FILES *.c src/*.c)
 file (GLOB H_FILES include/*.h)
 set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES})
 
