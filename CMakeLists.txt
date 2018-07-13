@@ -9,7 +9,7 @@ project(sgbench C CXX)
 # Turn warnings into errors
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-# Enable OpenMP
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -26,8 +26,8 @@ IF ( USE_OPENCL )
 	file (GLOB BACKEND_H_FILES opencl/*.h)
 
 	#Copy over the OpenCL kernels used with the binary
-	file (GLOB OCL_KERNELS kernels/*.cl)
-	file(COPY ${OCL_KERNELS}
+	file (GLOB OCL_KERNELS opencl/*.cl)
+	file(COPY ${OCL_KERNELS} include/sgtype.h
 	     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/kernels/)
 
 	MESSAGE( "Using OpenCL" ) 

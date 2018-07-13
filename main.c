@@ -4,7 +4,7 @@
 #include <string.h>
 #include <omp.h>
 #include <ctype.h>
-#include "kernels/openmp_kernels.h"
+#include "openmp/openmp_kernels.h"
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
     /* Time OpenMP Kernel */
 
-    //#ifdef USE_OPENMP
+    #ifdef USE_OPENMP
 	printf("Running OMP");
 
         omp_set_num_threads(workers);
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 
         }
 
-    //#endif // USE_OPENMP
+    #endif // USE_OPENMP
     
 
     /* Validation - TBD
