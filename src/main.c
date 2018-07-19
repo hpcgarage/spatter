@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <omp.h>
 #include <ctype.h>
-#include "openmp/openmp_kernels.h"
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "mytime.h"
 
 #if defined( USE_OPENCL )
-	#include "opencl/ocl-backend.h"
+	#include "../opencl/ocl-backend.h"
 #elif defined( USE_OPENMP )
-	#include "openmp/omp-backend.h"
+	#include <omp.h>
+	#include "../openmp/omp-backend.h"
+	#include "../openmp/openmp_kernels.h"
 #endif
 
 #define alloc(size) aligned_alloc(64, size)
@@ -208,8 +208,6 @@ int main(int argc, char **argv)
     /* Time OpenMP Kernel */
 
     #ifdef USE_OPENMP
-	printf("Running OMP");
-
         omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
             zero_time();
