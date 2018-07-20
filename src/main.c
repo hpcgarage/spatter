@@ -16,7 +16,7 @@
 	#include "../openmp/openmp_kernels.h"
 #endif
 
-#define alloc(size) aligned_alloc(64, size)
+#define ALIGNMENT (64)
 
 enum sg_backend backend = INVALID_BACKEND;
 enum sg_kernel  kernel  = INVALID_KERNEL;
@@ -35,6 +35,7 @@ size_t seed;
 size_t R = 10;
 size_t N = 100;
 size_t workers = 1;
+size_t vector_len = 1;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
@@ -48,6 +49,19 @@ void make_upper (char* s) {
         *s = toupper(*s);
         s++;
     }
+}
+
+long posmod (long i, long n) {
+    return (i % n + n) % n;
+}
+
+void *sg_safe_cpu_alloc (size_t size) {
+    void *ptr = aligned_alloc (ALIGNMENT, size);
+    if (!ptr) {
+        printf("Falied to allocate memory on cpu\n");
+        exit(1);
+    }
+    return ptr;
 }
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
@@ -142,8 +156,9 @@ int main(int argc, char **argv)
     target.size = worksets * target.len * sizeof(SGTYPE_C);
     si.size     = worksets * si.len * sizeof(cl_ulong);
     ti.size     = worksets * ti.len * sizeof(cl_ulong);
-
+    
     /* This is the number of SGTYPEs in a workset */
+    //TODO: remove since this is obviously useless
     source.block_len = source.len;
     target.block_len = target.len;
 
@@ -155,20 +170,19 @@ int main(int argc, char **argv)
     #endif
 
     /* Create buffers on host */
-    source.host_ptr = (SGTYPE_C*) alloc(source.size); 
-    target.host_ptr = (SGTYPE_C*) alloc(target.size); 
-    si.host_ptr = (cl_ulong*) alloc(si.size); 
-    ti.host_ptr = (cl_ulong*) alloc(ti.size); 
+    source.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(source.size); 
+    target.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+    si.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(ti.size); 
 
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len * worksets);
-    linear_indices(si.host_ptr, si.len, worksets);
-    linear_indices(ti.host_ptr, ti.len, worksets);
-
+    linear_indices(si.host_ptr, si.len, worksets, source.len / si.len);
+    linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len);
 
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
-	create_dev_buffers_ocl(source, target, si, ti, index_len, block_len, worksets, N);
+	create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
     #endif
     
     /* =======================================
@@ -182,7 +196,19 @@ int main(int argc, char **argv)
     /* Time OpenCL Kernel */
     #ifdef USE_OPENCL
 
+        size_t current_ws = worksets-1;
+        long os = 0, ot = 0, oi = 0;
+
+        global_work_size = si.len / vector_len;
+        
         for (int i = 0; i <= R; i++) {
+             
+            ot = current_ws * target.len;
+            os = current_ws * source.len;
+            oi = current_ws * si.len;
+
+            SET_7_KERNEL_ARGS(sgp, target.dev_ptr, source.dev_ptr,
+                    ti.dev_ptr, si.dev_ptr, ot, os, oi);
             
             CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
                        &global_work_size, &local_work_size, 
@@ -191,14 +217,17 @@ int main(int argc, char **argv)
 
             cl_ulong start = 0, end = 0;
             size_t retsize;
+
             CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start,&retsize));
+                    (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
             CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end,&retsize));
+                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, &retsize));
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
             if (i!=0) report_time(time_s, source.size, target.size, si.size, worksets);
+
+            current_ws = posmod(current_ws-1, worksets);
 
         }
 
@@ -258,11 +287,14 @@ int main(int argc, char **argv)
     // Validate results  -- OPENMP assumed correct
     if(validate_flag && backend == OPENCL) {
 
+        global_work_size = workers;
+        printf("workers %zu\n", workers);
+
         clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
                 target.host_ptr, 0, NULL, &e);
         clWaitForEvents(1, &e);
 
-        SGTYPE_C *target_backup_host = (SGTYPE_C*) alloc(target.size); 
+        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
         switch (kernel) {

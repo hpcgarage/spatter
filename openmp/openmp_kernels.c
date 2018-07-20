@@ -240,6 +240,7 @@ void gather_accum_omp(SGTYPE_C* restrict target,
       tr = target + s * (ts);
       sr = source + s * (ss);
       sir = si    + s * (n);
+#pragma omp parallel for
 	    for(long i = 0; i < n; i++){
           for(int b = 0; b < B; b++){
 	    	tr[i+b] += sr[sir[i]+b];

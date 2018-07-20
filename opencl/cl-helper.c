@@ -99,6 +99,8 @@ const char *cl_error_to_str(cl_int e)
     case CL_INVALID_GLOBAL_WORK_SIZE: return "invalid global work size";
 #endif
 
+    case -9999: return "Illegal read or write to a buffer";
+
     default: return "invalid/unknown error code";
   }
 }
