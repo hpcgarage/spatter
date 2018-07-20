@@ -157,12 +157,6 @@ int main(int argc, char **argv)
     si.size     = worksets * si.len * sizeof(cl_ulong);
     ti.size     = worksets * ti.len * sizeof(cl_ulong);
     
-    printf("Lengths: \n\tsource: %zu\n\ttarget: %zu\n\tsi: %zu\n\tti: %zu\n", 
-            source.len, target.len, si.len, ti.len);
-
-    printf("Sizes: \n\tsource: %zu\n\ttarget: %zu\n\tsi: %zu\n\tti: %zu\n", 
-            source.size, target.size, si.size, ti.size);
-
     /* This is the number of SGTYPEs in a workset */
     //TODO: remove since this is obviously useless
     source.block_len = source.len;
