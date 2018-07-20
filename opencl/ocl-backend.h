@@ -21,6 +21,6 @@
 
 void initialize_dev_ocl(char* platform_string, char* device_string);
 
-void create_dev_buffers_ocl(sgDataBuf source, sgDataBuf target, sgIndexBuf si, sgIndexBuf ti, size_t index_len, size_t block_len, size_t worksets, size_t N);
+void create_dev_buffers_ocl(sgDataBuf *source, sgDataBuf *target, sgIndexBuf *si, sgIndexBuf *ti, size_t block_len);
 
 #endif //end OCL_BACKEND

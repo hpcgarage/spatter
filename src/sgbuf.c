@@ -7,11 +7,11 @@ void random_data(SGTYPE_C *buf, size_t len){
     }
 }
 
-void linear_indices(cl_ulong *idx, size_t len, size_t worksets){
+void linear_indices(cl_ulong *idx, size_t len, size_t worksets, size_t stride){
     cl_ulong *idx_cur = idx;
     for(size_t j = 0; j < worksets; j++){
         for(size_t i = 0; i < len; i++){
-            idx_cur[i] = i;
+            idx_cur[i] = i * stride;
         }
         idx_cur = idx_cur + len;
     }
