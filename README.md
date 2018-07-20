@@ -14,10 +14,10 @@ To build with Make:
 make
 ```
 
-To build with CMake:
+To build with CMake from the main source directory:
 ```
-mkdir -p build && cd build
-cmake ..
+./configure/configure_ocl
+cd build_ocl
 make
 ```
 

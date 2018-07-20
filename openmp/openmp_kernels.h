@@ -1,6 +1,9 @@
 #ifndef OMP_KERNELS_H
 #define OMP_KERNELS_H
-#include "../sgtype.h"
+
+#include <omp.h>
+#include "../include/sgtype.h"
+
 void sg_omp(SGTYPE_C* restrict target, 
             long*     restrict ti,
             SGTYPE_C* restrict source,

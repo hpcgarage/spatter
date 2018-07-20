@@ -2,14 +2,19 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <omp.h>
 #include <ctype.h>
-#include "kernels/openmp_kernels.h"
-#include "cl-helper.h"
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "mytime.h"
+
+#if defined( USE_OPENCL )
+	#include "../opencl/ocl-backend.h"
+#elif defined( USE_OPENMP )
+	#include <omp.h>
+	#include "../openmp/omp-backend.h"
+	#include "../openmp/openmp_kernels.h"
+#endif
 
 #define alloc(size) aligned_alloc(64, size)
 
@@ -78,11 +83,6 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
 
 int main(int argc, char **argv)
 {
-    cl_context context;
-    cl_command_queue queue;
-    cl_device_id device;
-    cl_mem_flags flags; 
-    cl_kernel sgp;
 
     sgDataBuf  source;
     sgDataBuf  target;
@@ -91,13 +91,14 @@ int main(int argc, char **argv)
 
     size_t cpu_cache_size = 30720 * 1000; 
     size_t cpu_flush_size = cpu_cache_size * 8;
-    cl_ulong device_cache_size = 0;
+    #ifdef USE_OPENCL
+	cl_ulong device_cache_size = 0;
+    	cl_uint work_dim = 1;
+    #endif
     size_t device_flush_size = 0;
     size_t worksets = 1;
-    cl_uint work_dim = 1;
     size_t global_work_size = 1;
     size_t local_work_size = 1;
-    cl_event e;
     
     char *kernel_string;
 
@@ -105,18 +106,23 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
 
+    /* =======================================
+	Initalization
+       =======================================
+    */
+
     /* Create a context and corresponding queue */
-    if (backend == OPENCL) {
-        create_context_on(platform_string, device_string, 0, 
-                      &context, &queue, &device, 1);
-    }
+    #ifdef USE_OPENCL
+    	initialize_dev_ocl(platform_string, device_string);
+    #endif
 
     source.len = source_len;
     target.len = target_len;
     si.len     = index_len;
     ti.len     = index_len;
 
-    /* Determine how many worksets we will need to flush the cache */
+    /* TBD - cache flushing
+    // Determine how many worksets we will need to flush the cache
     if (backend == OPENMP) {
         worksets = cpu_flush_size / 
             ((source.len + target.len) * sizeof(SGTYPE_C) 
@@ -129,7 +135,7 @@ int main(int argc, char **argv)
         worksets = device_flush_size / 
             ((source.len + target.len) * sizeof(SGTYPE_C) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
-    }
+    }*/
 
     /* These are the total size of the data allocated for each buffer */
     source.size = worksets * source.len * sizeof(SGTYPE_C);
@@ -142,11 +148,11 @@ int main(int argc, char **argv)
     target.block_len = target.len;
 
     /* Create the kernel */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
         kernel_string = read_file(kernel_file);
         sgp = kernel_from_string(context, kernel_string, kernel_name, NULL);
         free(kernel_string);
-    }
+    #endif
 
     /* Create buffers on host */
     source.host_ptr = (SGTYPE_C*) alloc(source.size); 
@@ -159,28 +165,22 @@ int main(int argc, char **argv)
     linear_indices(si.host_ptr, si.len, worksets);
     linear_indices(ti.host_ptr, ti.len, worksets);
 
+
     /* Create buffers on device and transfer data from host */
-    if (backend == OPENCL) {
-
-        flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
-        source.dev_ptr = clCreateBufferSafe(context, flags, source.size, source.host_ptr);
-        si.dev_ptr = clCreateBufferSafe(context, flags, si.size, si.host_ptr);
-        ti.dev_ptr = clCreateBufferSafe(context, flags, ti.size, ti.host_ptr);
-
-        flags = CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY;
-        target.dev_ptr = clCreateBufferSafe(context, flags, target.size, NULL); 
-
-        SET_10_KERNEL_ARGS(sgp, target.dev_ptr, ti.dev_ptr, source.dev_ptr, 
-                si.dev_ptr, target.block_len, source.block_len, 
-                index_len, worksets, N, block_len);
-
-    }
+    #ifdef USE_OPENCL
+	create_dev_buffers_ocl(source, target, si, ti, index_len, block_len, worksets, N);
+    #endif
+    
+    /* =======================================
+	Benchmark Execution
+       =======================================
+    */
 
     /* Begin benchmark */
     if (print_header_flag) print_header();
     
     /* Time OpenCL Kernel */
-    if (backend == OPENCL) {
+    #ifdef USE_OPENCL
 
         for (int i = 0; i <= R; i++) {
             
@@ -202,12 +202,12 @@ int main(int argc, char **argv)
 
         }
 
-    }
+    #endif // USE_OPENCL
+
 
     /* Time OpenMP Kernel */
 
-    if (backend == OPENMP) {
-
+    #ifdef USE_OPENMP
         omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
             zero_time();
@@ -251,8 +251,11 @@ int main(int argc, char **argv)
 
         }
 
-    }
-    /* Validate results  -- OPENMP assumed correct*/
+    #endif // USE_OPENMP
+    
+
+    /* Validation - TBD
+    // Validate results  -- OPENMP assumed correct
     if(validate_flag && backend == OPENCL) {
 
         global_work_size = workers;
@@ -290,4 +293,5 @@ int main(int argc, char **argv)
             }
         }
     }
+    */
 }

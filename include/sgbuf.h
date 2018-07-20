@@ -8,13 +8,15 @@
 #define SGBUF_H
 
 #include "sgtype.h"
-#include "cl-helper.h"
+#include "../opencl/cl-helper.h"
 
 /** @brief Describes a buffer object containing data to be scattered/gathered 
  */
 typedef struct sgDataBuf_t{
     SGTYPE_C *host_ptr; /**< Points to data on the host (CPU) */
+    #ifdef USE_OPENCL
     cl_mem dev_ptr;     /**< Points to data on the device if using the OCL backend */
+    #endif	
     size_t len;         /**< The length of the buffers (in blocks) */
     size_t size;        /**< The size of the buffer (in bytes) */
     size_t block_len;   /**< The length of a block (number of SGTYPEs in a workset */
@@ -22,8 +24,14 @@ typedef struct sgDataBuf_t{
 
 /** @brief Describes a buffer object describing how data will be scattered/gathered */
 typedef struct sgIndexBuf_t{
+    #ifdef USE_OPENCL
     cl_ulong *host_ptr; /**< Points to an index buffer on the host (CPU) */
     cl_mem dev_ptr;     /**< Points to an index buffer on the device if using the OCL backend */
+    #else    
+    unsigned long *host_ptr;
+    unsigned long dev_ptr;
+
+    #endif
     size_t len;         /**< The length of the buffer (number of cl_ulongs) */
     size_t size;        /**< The size of the buffer (in bytes) */
 }sgIndexBuf;
@@ -47,6 +55,9 @@ void linear_indices(cl_ulong *idx, size_t len, size_t worksets);
  *  @param size The size of the buffer to be allocated
  *  @param host_ptr The location from which to copy the data from, if not null and the proper flags are set. 
  */
+
+#ifdef USE_OPENCL
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr);
+#endif
 
 #endif
