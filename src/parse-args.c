@@ -13,6 +13,7 @@
 #define BLOCK      1003
 #define SEED       1004
 #define VALIDATE   1005
+#define VECTOR     1006
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -26,6 +27,7 @@ extern size_t target_len;
 extern size_t index_len;
 extern size_t block_len;
 extern size_t seed;
+extern size_t vector_len;
 extern size_t R;
 extern size_t N;
 extern size_t workers;
@@ -72,6 +74,7 @@ void parse_args(int argc, char **argv)
         {"index-len",       required_argument, NULL, INDEX},
         {"block-len",       required_argument, NULL, BLOCK},
         {"seed",            required_argument, NULL, SEED},
+        {"vector-len",      required_argument, NULL, VECTOR},
         {"runs",            required_argument, NULL, 'R'},
         {"loops",           required_argument, NULL, 'N'},
         {"workers",         required_argument, NULL, 'W'},
@@ -146,6 +149,13 @@ void parse_args(int argc, char **argv)
                 break;
             case SEED:
                 sscanf(optarg, "%zu", &seed);
+                break;
+            case VECTOR:
+                sscanf(optarg, "%zu", &vector_len);
+                if (vector_len < 1) {
+                    printf("Invalid vector len\n");
+                    exit(1);
+                }
                 break;
             case 'R':
                 sscanf(optarg, "%zu", &R);
