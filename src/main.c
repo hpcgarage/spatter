@@ -10,7 +10,8 @@
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
-#elif defined( USE_OPENMP )
+#endif
+#if defined( USE_OPENMP )
 	#include <omp.h>
 	#include "../openmp/omp-backend.h"
 	#include "../openmp/openmp_kernels.h"
@@ -126,6 +127,8 @@ int main(int argc, char **argv)
     size_t worksets = 1;
     size_t global_work_size = 1;
     size_t local_work_size = 1;
+    size_t current_ws;
+    long os, ot, oi;
     
     char *kernel_string;
 
@@ -206,11 +209,13 @@ int main(int argc, char **argv)
     /* Begin benchmark */
     if (print_header_flag) print_header();
     
+    current_ws = worksets-1;
     /* Time OpenCL Kernel */
     #ifdef USE_OPENCL
 
-        size_t current_ws = worksets-1;
-        long os = 0, ot = 0, oi = 0;
+        os = 0; 
+        ot = 0; 
+        oi = 0;
 
         global_work_size = si.len / vector_len;
         cl_ulong start = 0, end = 0; 
@@ -250,46 +255,49 @@ int main(int argc, char **argv)
     /* Time OpenMP Kernel */
 
     #ifdef USE_OPENMP
+        current_ws = worksets-1;
         omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
+
+            ot = current_ws * target.len;
+            os = current_ws * source.len;
+            oi = current_ws * si.len;
+
             zero_time();
+
             switch (kernel) {
                 case SG:
                     if (op == OP_COPY) 
                         sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        index_len, ot, os, oi, block_len);
                     else 
                         sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        index_len, ot, os, oi, block_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-                        scatter_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len, ot, os, oi, block_len);
                     else
-                        scatter_accum_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len, ot, os, oi, block_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-                        gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len, ot, os, oi, block_len);
                     else
-                        gather_accum_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        target.block_len, source.block_len, index_len, worksets, N, 
-                        block_len);
+                        gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len, ot, os, oi, block_len);
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");
                     break;
             }
+
             double time_ms = get_time();
             if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets);
+            current_ws = posmod(current_ws-1, worksets);
 
         }
 
@@ -299,12 +307,11 @@ int main(int argc, char **argv)
     // Validate results 
     if(validate_flag) {
 
-
-        if (backend == OPENCL) {
-            clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
-                 target.host_ptr, 0, NULL, &e);
-            clWaitForEvents(1, &e);
-        }
+#ifdef USE_OPENCL
+        clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
+            target.host_ptr, 0, NULL, &e);
+        clWaitForEvents(1, &e);
+#endif
 
         SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.len * sizeof(SGTYPE_C)); 
         memcpy(target_backup_host, target.host_ptr, target.size);
