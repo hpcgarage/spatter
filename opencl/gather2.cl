@@ -1,7 +1,7 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable 
 __kernel void gather(__global double2* restrict target, 
                      __global double*  restrict source, 
-                     __global long2*   restrict index,
+                     __global long2*   restrict ti,
                      __global long2*   restrict si,
                      long ot, long os, long oi)
 {
