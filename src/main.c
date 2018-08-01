@@ -95,6 +95,19 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
 
 }
 
+void print_data(double *buf, size_t len){
+    for (size_t i = 0; i < len; i++){
+        printf("%.0lf ", buf[i]);
+    }
+    printf("\n");
+}
+void print_sizet(size_t *buf, size_t len){
+    for (size_t i = 0; i < len; i++){
+        printf("%zu ", buf[i]);
+    }
+    printf("\n");
+}
+
 int main(int argc, char **argv)
 {
 
@@ -200,28 +213,28 @@ int main(int argc, char **argv)
         long os = 0, ot = 0, oi = 0;
 
         global_work_size = si.len / vector_len;
-        
+        cl_ulong start = 0, end = 0; 
         for (int i = 0; i <= R; i++) {
              
+            start = 0; end = 0;
             ot = current_ws * target.len;
             os = current_ws * source.len;
             oi = current_ws * si.len;
 
+           cl_event e = 0; 
+
             SET_7_KERNEL_ARGS(sgp, target.dev_ptr, source.dev_ptr,
                     ti.dev_ptr, si.dev_ptr, ot, os, oi);
-            
+
             CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
                        &global_work_size, &local_work_size, 
                       0, NULL, &e)); 
             clWaitForEvents(1, &e);
 
-            cl_ulong start = 0, end = 0;
-            size_t retsize;
-
             CALL_CL_GUARDED(clGetEventProfilingInfo, 
                     (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
             CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, &retsize));
+                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
@@ -283,44 +296,42 @@ int main(int argc, char **argv)
     #endif // USE_OPENMP
     
 
-    /* Validation - TBD
-    // Validate results  -- OPENMP assumed correct
-    if(validate_flag && backend == OPENCL) {
+    // Validate results 
+    if(validate_flag) {
 
-        global_work_size = workers;
-        printf("workers %zu\n", workers);
 
-        clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
-                target.host_ptr, 0, NULL, &e);
-        clWaitForEvents(1, &e);
+        if (backend == OPENCL) {
+            clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
+                 target.host_ptr, 0, NULL, &e);
+            clWaitForEvents(1, &e);
+        }
 
-        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.len * sizeof(SGTYPE_C)); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
         switch (kernel) {
             case SG:
-                sg_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                    target.block_len, source.block_len, index_len, worksets, R, 
-                    block_len);
+                for (size_t i = 0; i < index_len; i++){
+                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[si.host_ptr[i]];
+                }
                 break;
             case SCATTER:
-                scatter_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                    target.block_len, source.block_len, index_len, worksets, R, 
-                    block_len);
+                for (size_t i = 0; i < index_len; i++){
+                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[i];
+                }
                 break;
             case GATHER:
-                gather_omp(target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                    target.block_len, source.block_len, index_len, worksets, R, 
-                    block_len);
+                for (size_t i = 0; i < index_len; i++){
+                    target.host_ptr[i] = source.host_ptr[si.host_ptr[i]];
+                }
                 break;
         }
 
 
-        for (size_t i = 0; i < target.len * worksets; i++) {
+        for (size_t i = 0; i < target.len; i++) {
             if (target.host_ptr[i] != target_backup_host[i]) {
                 printf(":(\n");
             }
         }
     }
-    */
 }
