@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
+//#include "ocl-kernel-gen.h"
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
@@ -19,10 +20,12 @@
 
 #define ALIGNMENT (64)
 
+//SGBench specific enums
 enum sg_backend backend = INVALID_BACKEND;
 enum sg_kernel  kernel  = INVALID_KERNEL;
 enum sg_op      op      = OP_COPY;
 
+//Strings defining program behavior
 char platform_string[STRING_SIZE];
 char device_string[STRING_SIZE];
 char kernel_file[STRING_SIZE];
@@ -67,7 +70,7 @@ void *sg_safe_cpu_alloc (size_t size) {
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(double time, size_t source_size, size_t target_size, size_t idx_size, size_t worksets){
+void report_time(double time, size_t source_size, size_t target_size, size_t index_len, size_t worksets){
     if(backend == OPENMP) printf("OPENMP ");
     if(backend == OPENCL) printf("OPENCL ");
 
@@ -84,10 +87,10 @@ void report_time(double time, size_t source_size, size_t target_size, size_t idx
     if(op == OP_COPY) printf("COPY ");
     if(op == OP_ACCUM) printf("ACCUM ");
 
-    printf("%lf %zu %zu %zu ", time, source_size, target_size, idx_size);
+    printf("%lf %zu %zu %zu ", time, source_size, target_size, index_len);
     printf("%zu ", worksets);
 
-    size_t bytes_moved = idx_size * sizeof(SGTYPE_C) / worksets * N;
+    size_t bytes_moved = 2 * index_len * sizeof(SGTYPE_C);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
     printf("%zu %zu %zu", N, R, workers);
@@ -180,9 +183,12 @@ int main(int argc, char **argv)
 
     /* Create the kernel */
     #ifdef USE_OPENCL
+        //kernel_string = ocl_kernel_gen(index_len, vector_len, kernel);
         kernel_string = read_file(kernel_file);
         sgp = kernel_from_string(context, kernel_string, kernel_name, NULL);
-        free(kernel_string);
+        if (kernel_string) {
+            free(kernel_string);
+        }
     #endif
 
     /* Create buffers on host */
@@ -243,7 +249,7 @@ int main(int argc, char **argv)
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
-            if (i!=0) report_time(time_s, source.size, target.size, si.size, worksets);
+            if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
 
             current_ws = posmod(current_ws-1, worksets);
 
@@ -321,17 +327,23 @@ int main(int argc, char **argv)
         switch (kernel) {
             case SG:
                 for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[si.host_ptr[i]];
+                    for (size_t b = 0; b < block_len; b++) {
+                        target.host_ptr[ti.host_ptr[i+b]] = source.host_ptr[si.host_ptr[i+b]];
+                    }
                 }
                 break;
             case SCATTER:
                 for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[i];
+                    for (size_t b = 0; b < block_len; b++) {
+                        target.host_ptr[ti.host_ptr[i+b]] = source.host_ptr[i+b];
+                    }
                 }
                 break;
             case GATHER:
                 for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[i] = source.host_ptr[si.host_ptr[i]];
+                    for (size_t b = 0; b < block_len; b++) {
+                        target.host_ptr[i+b] = source.host_ptr[si.host_ptr[i+b]];
+                    }
                 }
                 break;
         }
