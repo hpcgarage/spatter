@@ -308,9 +308,11 @@ int main(int argc, char **argv)
     if(validate_flag) {
 
 #ifdef USE_OPENCL
-        clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
-            target.host_ptr, 0, NULL, &e);
-        clWaitForEvents(1, &e);
+        if (backend == OPENCL) {
+            clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
+                target.host_ptr, 0, NULL, &e);
+            clWaitForEvents(1, &e);
+        }
 #endif
 
         SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.len * sizeof(SGTYPE_C)); 
