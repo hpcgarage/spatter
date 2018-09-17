@@ -20,6 +20,7 @@ enum sg_backend
 {
     OPENCL, /**< OpenCL Backend */
     OPENMP, /**< OpenMP CPU Backend */
+    CUDA,   /**< CUDA Backend */
     INVALID_BACKEND /**< Used as a default backend */
 };
 

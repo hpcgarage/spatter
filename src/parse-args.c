@@ -100,6 +100,9 @@ void parse_args(int argc, char **argv)
                 else if(!strcasecmp("OPENMP", optarg)){
                     backend = OPENMP;
                 }
+                else if(!strcasecmp("CUDA", optarg)){
+                    backend = CUDA;
+                }
                 break;
             case 'p':
                 safestrcopy(platform_string, optarg);

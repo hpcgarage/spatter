@@ -1,7 +1,17 @@
-cmake_minimum_required (VERSION 3.5)
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
 
-project(sgbench C CXX)
+#Set cuda compiler
+IF( USE_CUDA )
+    set(CMAKE_CUDA_COMPILER /usr/local/cuda-9.2/bin//nvcc)
+    set(CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
+ENDIF()
+
+#Declare project languages
+IF( USE_CUDA )
+    project(sgbench C CXX CUDA)
+ELSE()
+    project(sgbench C CXX)
+ENDIF()
 
 #Debug function to check all the variables in the CMakeFile 
 macro(print_all_variables)
@@ -22,7 +32,6 @@ endmacro()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
-
 
 # Enable OpenCL 
 IF ( USE_OPENCL )
@@ -55,6 +64,17 @@ IF ( USE_OPENMP )
 	#Pull the OpenMP-specific files and kernels into the build
 	file (GLOB BACKEND_C_FILES openmp/*.c)
 	file (GLOB BACKEND_H_FILES openmp/*.h)
+    MESSAGE( "Using OpenMP" )
+ENDIF()
+
+# Enable CUDA 
+IF( USE_CUDA )
+    ADD_DEFINITIONS( -DUSE_CUDA )
+    include_directories(../cuda/)
+    file (GLOB CUDA_CU_FILES cuda/*.cu)
+    file (GLOB CUDA_CU_FILES cuda/*.c)
+    file (GLOB CUDA_H_FILES  cuda/*.h)
+    message( "Using Cuda" )
 ENDIF()
 
 #Include the location of stddef.h
@@ -63,7 +83,9 @@ ENDIF()
 #Glob for the source files and headers in the current directory and kernels
 file (GLOB C_FILES src/*.c)
 file (GLOB H_FILES include/*.h)
-set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES})
+#message( ${CUDA_CU_FILES} )
+message( "CU FILES" )
+set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES} ${CUDA_CU_FILES} ${CUDA_C_FILES})
 
 #Specify the executable and source files
 add_executable(sgbench ${SOURCE_FILES})

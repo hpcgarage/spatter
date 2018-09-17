@@ -8,7 +8,10 @@
 #define SGBUF_H
 
 #include "sgtype.h"
+//TODO: make this include conditional
+//#ifdef USE_OPENCL
 #include "../opencl/cl-helper.h"
+//#endif
 
 /** @brief Describes a buffer object containing data to be scattered/gathered 
  */
@@ -16,7 +19,9 @@ typedef struct sgDataBuf_t{
     SGTYPE_C *host_ptr; /**< Points to data on the host (CPU) */
     #ifdef USE_OPENCL
     cl_mem dev_ptr;     /**< Points to data on the device if using the OCL backend */
-    #endif	
+    #elif defined USE_CUDA
+    SGTYPE_C *dev_ptr;
+    #endif    
     size_t len;         /**< The length of the buffers (in blocks) */
     size_t size;        /**< The size of the buffer (in bytes) */
     size_t block_len;   /**< The length of a block (number of SGTYPEs in a workset */
@@ -26,10 +31,10 @@ typedef struct sgDataBuf_t{
 typedef struct sgIndexBuf_t{
     #ifdef USE_OPENCL
     cl_ulong *host_ptr; /**< Points to an index buffer on the host (CPU) */
-    cl_mem dev_ptr;     /**< Points to an index buffer on the device if using the OCL backend */
-    #else    
+    cl_mem dev_ptr;     /**< Points to an index buffer on the device if using the OCL backend */ 
+    #else
     unsigned long *host_ptr;
-    unsigned long dev_ptr;
+    unsigned long *dev_ptr;
 
     #endif
     size_t len;         /**< The length of the buffer (number of cl_ulongs) */
@@ -59,6 +64,8 @@ void linear_indices(cl_ulong *idx, size_t len, size_t worksets, size_t stride);
 
 #ifdef USE_OPENCL
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr);
+#elif defined USE_CUDA
+//double* cudaCreateBufferSafe(
 #endif
 
 #endif

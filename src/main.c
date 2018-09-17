@@ -17,6 +17,10 @@
 	#include "../openmp/omp-backend.h"
 	#include "../openmp/openmp_kernels.h"
 #endif
+#if defined ( USE_CUDA )
+    #include <cuda.h>
+    #include "../cuda/cuda-backend.h"
+#endif
 
 #define ALIGNMENT (64)
 
@@ -135,6 +139,15 @@ int main(int argc, char **argv)
     
     char *kernel_string;
 
+    #ifdef USE_CUDA
+        printf("Using cuda\n");
+#define dim (3)
+        unsigned int grid[dim]  = {2,2,2};
+        unsigned int block[dim] = {2,1,1};
+        my_kernel_wrapper(dim , grid, block);
+        exit(0);
+    #endif
+
     /* Parse command line arguments */
     parse_args(argc, argv);
 
@@ -205,7 +218,11 @@ int main(int argc, char **argv)
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
 	create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
+    #elif defined USE_CUDA
+    create_dev_buffers_cuda(&source, &target, &si, &ti, block_len);
+    printf("ran this\n");
     #endif
+
     
     /* =======================================
 	Benchmark Execution
