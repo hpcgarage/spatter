@@ -20,7 +20,7 @@ __global__ void scatter(double* target,
     tr[tir[gid]] = sr[gid];
 }
 
-int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
+extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
     if (!grid || !block || dim == 0 || dim > 3) {
         return 1;
     }

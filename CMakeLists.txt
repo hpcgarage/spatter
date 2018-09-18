@@ -72,7 +72,7 @@ IF( USE_CUDA )
     ADD_DEFINITIONS( -DUSE_CUDA )
     include_directories(../cuda/)
     file (GLOB CUDA_CU_FILES cuda/*.cu)
-    file (GLOB CUDA_CU_FILES cuda/*.c)
+    file (GLOB CUDA_C_FILES cuda/*.c)
     file (GLOB CUDA_H_FILES  cuda/*.h)
     message( "Using Cuda" )
 ENDIF()
@@ -83,7 +83,7 @@ ENDIF()
 #Glob for the source files and headers in the current directory and kernels
 file (GLOB C_FILES src/*.c)
 file (GLOB H_FILES include/*.h)
-#message( ${CUDA_CU_FILES} )
+message( ${CUDA_CU_FILES} )
 message( "CU FILES" )
 set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES} ${CUDA_CU_FILES} ${CUDA_C_FILES})
 
@@ -96,6 +96,10 @@ add_executable(sgbench ${SOURCE_FILES})
 #Link with the appropriate libraries
 IF ( USE_OPENCL )
 	target_link_libraries (sgbench LINK_PUBLIC OpenCL)
+ENDIF()
+If ( USE_CUDA )
+    find_library(CUDART_LIBRARY cudart HINTS /usr/local/cuda-9.2/targets/x86_64-linux/lib/)
+    target_link_libraries (sgbench LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF()
 
 #Copy over the test scripts 
