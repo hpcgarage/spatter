@@ -8,4 +8,6 @@ void create_dev_buffers_cuda(sgDataBuf* source, sgDataBuf* target,
                             size_t block_len){
     cudaMalloc((void **)&(source->dev_ptr), source->size);
     cudaMalloc((void **)&(target->dev_ptr), target->size);
+    cudaMalloc((void **)&(si->dev_ptr), si->size);
+    cudaMalloc((void **)&(ti->dev_ptr), ti->size);
 }

@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 //#include "ocl-kernel-gen.h"
 #include "parse-args.h"
 #include "sgtype.h"
@@ -141,11 +142,6 @@ int main(int argc, char **argv)
 
     #ifdef USE_CUDA
         printf("Using cuda\n");
-#define dim (3)
-        unsigned int grid[dim]  = {2,2,2};
-        unsigned int block[dim] = {2,1,1};
-        my_kernel_wrapper(dim , grid, block);
-        exit(0);
     #endif
 
     /* Parse command line arguments */
@@ -207,8 +203,13 @@ int main(int argc, char **argv)
     /* Create buffers on host */
     source.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(source.size); 
     target.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+#ifdef USE_CUDA
+    si.host_ptr = (long*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (long*) sg_safe_cpu_alloc(ti.size); 
+#elif defined USE_OPENCL
     si.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(si.size); 
     ti.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(ti.size); 
+#endif
 
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len * worksets);
@@ -218,9 +219,13 @@ int main(int argc, char **argv)
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
 	create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
+
     #elif defined USE_CUDA
     create_dev_buffers_cuda(&source, &target, &si, &ti, block_len);
-    printf("ran this\n");
+    cudaMemcpy(source.dev_ptr, source.host_ptr, source.size, cudaMemcpyHostToDevice);
+    cudaMemcpy(si.dev_ptr, si.host_ptr, si.size, cudaMemcpyHostToDevice);
+    cudaMemcpy(ti.dev_ptr, ti.host_ptr, ti.size, cudaMemcpyHostToDevice);
+    cudaDeviceSynchronize();
     #endif
 
     
@@ -273,6 +278,52 @@ int main(int argc, char **argv)
         }
 
     #endif // USE_OPENCL
+
+    #ifdef USE_CUDA
+
+        os = 0; 
+        ot = 0; 
+        oi = 0;
+
+        global_work_size = si.len / vector_len;
+        long start = 0, end = 0; 
+        for (int i = 0; i <= R; i++) {
+             
+            start = 0; end = 0;
+            ot = current_ws * target.len;
+            os = current_ws * source.len;
+            oi = current_ws * si.len;
+            
+            unsigned int grid[1]  = {global_work_size/local_work_size};
+            unsigned int block[1] = {local_work_size};
+            
+            scatter_wrapper(1, grid, block, target.dev_ptr, source.dev_ptr, 
+                   ti.dev_ptr, si.dev_ptr, ot, os, oi); 
+            cudaDeviceSynchronize();
+           //cl_event e = 0; 
+
+            //SET_7_KERNEL_ARGS(sgp, target.dev_ptr, source.dev_ptr,
+            //        ti.dev_ptr, si.dev_ptr, ot, os, oi);
+/*
+            CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
+                       &global_work_size, &local_work_size, 
+                      0, NULL, &e)); 
+            clWaitForEvents(1, &e);
+
+            CALL_CL_GUARDED(clGetEventProfilingInfo, 
+                    (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
+            CALL_CL_GUARDED(clGetEventProfilingInfo, 
+                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
+*/
+            //cl_ulong time_ns = end - start;
+            //double time_s = time_ns / 1000000000.;
+            //if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
+
+            current_ws = posmod(current_ws-1, worksets);
+
+        }
+
+    #endif // USE_CUDA
 
 
     /* Time OpenMP Kernel */
@@ -338,7 +389,16 @@ int main(int argc, char **argv)
         }
 #endif
 
-        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.len * sizeof(SGTYPE_C)); 
+#ifdef USE_CUDA
+        cudaError_t cerr;
+        cerr = cudaMemcpy(target.host_ptr, target.dev_ptr, target.size, cudaMemcpyDeviceToHost);
+        if(cerr != cudaSuccess){
+            printf("transfer failed\n");
+        }
+        cudaDeviceSynchronize();
+#endif
+
+        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
         switch (kernel) {
@@ -368,6 +428,7 @@ int main(int argc, char **argv)
 
         for (size_t i = 0; i < target.len; i++) {
             if (target.host_ptr[i] != target_backup_host[i]) {
+                printf("%zu: host %lf, device %lf\n", i, target.host_ptr[i], target_backup_host[i]);
                 printf(":(\n");
             }
         }

@@ -42,7 +42,6 @@ extern "C" void my_kernel_wrapper(uint dim, uint* grid, uint* block){
     dim3 grid_dim, block_dim;
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return;
 
-    printf("running kernel\n");
     my_kernel<<<grid_dim,block_dim>>>();
     cudaDeviceSynchronize();
 }
@@ -54,4 +53,5 @@ extern "C" void scatter_wrapper(uint dim, uint* grid, uint* block,
     dim3 grid_dim, block_dim;
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return;
     scatter<<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+
 }
