@@ -140,10 +140,6 @@ int main(int argc, char **argv)
     
     char *kernel_string;
 
-    #ifdef USE_CUDA
-        printf("Using cuda\n");
-    #endif
-
     /* Parse command line arguments */
     parse_args(argc, argv);
 
@@ -156,6 +152,13 @@ int main(int argc, char **argv)
     /* Create a context and corresponding queue */
     #ifdef USE_OPENCL
     	initialize_dev_ocl(platform_string, device_string);
+    #endif
+
+    #ifdef USE_CUDA
+        struct cudaDeviceProp prop;
+        cudaGetDeviceProperties(&prop, 0);
+        //printf("device name: %s\n", prop.name);
+        cudaSetDevice(0);
     #endif
 
     source.len = source_len;
@@ -293,31 +296,17 @@ int main(int argc, char **argv)
             ot = current_ws * target.len;
             os = current_ws * source.len;
             oi = current_ws * si.len;
+#define arr_len (1) 
+            unsigned int grid[arr_len]  = {global_work_size/local_work_size};
+            unsigned int block[arr_len] = {local_work_size};
             
-            unsigned int grid[1]  = {global_work_size/local_work_size};
-            unsigned int block[1] = {local_work_size};
-            
-            scatter_wrapper(1, grid, block, target.dev_ptr, source.dev_ptr, 
+            float time_ms = cuda_sg_wrapper(kernel, block_len, vector_len, 
+                    arr_len, grid, block, target.dev_ptr, source.dev_ptr, 
                    ti.dev_ptr, si.dev_ptr, ot, os, oi); 
             cudaDeviceSynchronize();
-           //cl_event e = 0; 
 
-            //SET_7_KERNEL_ARGS(sgp, target.dev_ptr, source.dev_ptr,
-            //        ti.dev_ptr, si.dev_ptr, ot, os, oi);
-/*
-            CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
-                       &global_work_size, &local_work_size, 
-                      0, NULL, &e)); 
-            clWaitForEvents(1, &e);
-
-            CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
-            CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
-*/
-            //cl_ulong time_ns = end - start;
-            //double time_s = time_ns / 1000000000.;
-            //if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
+            double time_s = time_ms / 1000.;
+            if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
 
             current_ws = posmod(current_ws-1, worksets);
 

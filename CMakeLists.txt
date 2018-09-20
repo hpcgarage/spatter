@@ -83,8 +83,6 @@ ENDIF()
 #Glob for the source files and headers in the current directory and kernels
 file (GLOB C_FILES src/*.c)
 file (GLOB H_FILES include/*.h)
-message( ${CUDA_CU_FILES} )
-message( "CU FILES" )
 set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES} ${CUDA_CU_FILES} ${CUDA_C_FILES})
 
 #Specify the executable and source files
