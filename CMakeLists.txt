@@ -1,8 +1,9 @@
+#3.8 is specified since this is the first version with CUDA support
 cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
 
 #Set cuda compiler
 IF( USE_CUDA )
-    set(CMAKE_CUDA_COMPILER /usr/local/cuda-9.2/bin//nvcc)
+    set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     set(CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF()
 
@@ -70,7 +71,11 @@ ENDIF()
 # Enable CUDA 
 IF( USE_CUDA )
     ADD_DEFINITIONS( -DUSE_CUDA )
-    include_directories(../cuda/)
+    include_directories(cuda)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
+    set(CMAKE_CUDA_FLAGS "${CUDA_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include" )   
+ 
     file (GLOB CUDA_CU_FILES cuda/*.cu)
     file (GLOB CUDA_C_FILES cuda/*.c)
     file (GLOB CUDA_H_FILES  cuda/*.h)
@@ -96,7 +101,7 @@ IF ( USE_OPENCL )
 	target_link_libraries (sgbench LINK_PUBLIC OpenCL)
 ENDIF()
 If ( USE_CUDA )
-    find_library(CUDART_LIBRARY cudart HINTS /usr/local/cuda-9.2/targets/x86_64-linux/lib/)
+    find_library(CUDART_LIBRARY cudart HINTS /usr/local/cuda/targets/x86_64-linux/lib/)
     target_link_libraries (sgbench LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF()
 

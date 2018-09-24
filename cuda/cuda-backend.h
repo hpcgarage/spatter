@@ -2,6 +2,8 @@
 #define CUDA_BACKEND_H
 #include <cuda_runtime.h>
 #include "../include/parse-args.h"
+#include "sgbuf.h"
+
 extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
 extern float cuda_sg_wrapper(enum sg_kernel kernel, size_t block_len, 

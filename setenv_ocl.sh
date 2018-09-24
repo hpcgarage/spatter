@@ -7,7 +7,7 @@ USERNAME=`whoami`
 #Ubuntu 14.04
 #PREVPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #Ubuntu 16.04
-PREVPATH=/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/snap/bin
+PREVPATH=/home/$USERNAME/local/cmake/bin:/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/home/$USERNAME/bin:/home/$USERNAME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/snap/bin
 PREVLIB=/usr/lib/x86_64-linux-gnu:/usr/local/lib:/usr/lib64:/usr/lib
 
 if [[ -z $1 || $1 -eq 2 ]]
