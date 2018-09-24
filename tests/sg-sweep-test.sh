@@ -1,44 +1,45 @@
 # Authors: Jeffrey Young, Patrick Lavin
-# Last Modified: June 12, 2018
+# Last Modified: September 24, 2018
 # Do a sweep over multiple iterations and options for the benchmark
+
+#Print out each command for debugging purposes
+set -x
 
 #Output file
 OUTPUT=$1
-#Num workers
-WORKERS="1 2 4"
-#Block sizes to sweep
+
 BLKSIZE="1 2 4 8 16 32"
 #source length
 SRCSIZE=`seq 10 15`
-#dest length
-DST=$((2**10))
-#index length
-IDX=$((2**10))
+#Specify the sparsity pattern used
+SPARSITY="1 2 3 4 6 8 12 16 24 32 48 64 96 128"
+#Specify the vector length - OpenCL allows for specifying double16 for example
+VECTOR="1 2 4 8 16"
+#Specify the backend - openmp, cuda, opencl
+BACKEND=cuda
+#The number of iterations to run
+NUM_RUNS=10
 
-#op - accumulate versus standard
-OP="COPY ACCUM"
 
-#kernel = scatter/gather/s+g
+#Specify a large region to be used for the "sparse space
+IDX_LEN=$((2**20))
 
-for B in $BLKSIZE
+for S in $SPARSITY
 do
+   for V in $VECTOR
+   do
+	#Specify the length of the source space
+	SRC_LEN=$IDX_LEN
+	#Specify the target length to scatter to or gather into
+	DST_LEN=$(($IDX_LEN*S))
 
-    for S in $SRCSIZE
-    do
-        SRC=$((2**S))
-
-        for O in $OP
-        do
-            for W in $WORKERS
-            do
-                CL_HELPER_NO_COMPILER_OUTPUT_NAG=1 ./sgbench --backend=opencl --source-len=$SRC --target-len=$DST --index-len=$IDX --kernel-file=kernels/sg.cl --kernel-name=sg --cl-platform=nvidia --cl-device=titan --runs=10 --block-len=$B -W$W --op=$O
-
-            done
-        done
-
-    done
+	#Special handling for the OpenCL case
+	if [ "$BACKEND" -eq "opencl" ]
+	then
+   	    CL_HELPER_NO_COMPILER_OUTPUT_NAG=1 ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --cl-platform=nvidia --cl-device=titan --runs=$NUM_RUNS --vector-len=$V
+        else
+   	    ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --runs=$NUM_RUNS --vector-len=$V
+        fi
+   done
 
 done
-
-#execute the test script with nested for loops
-#./test-ocl.sh <all of these parameters
