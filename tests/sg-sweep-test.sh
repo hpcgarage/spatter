@@ -38,9 +38,9 @@ do
 	#Special handling for the OpenCL case
 	if [ "${BACKEND}" == "opencl" ]
 	then
-   	    CL_HELPER_NO_COMPILER_OUTPUT_NAG=1 ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -kernel-file=kernels/scatter${V}.cl --kernel-name=scatter --cl-platform=nvidia --cl-device=titan --runs=$NUM_RUNS --vector-len=$V &>> $OUTPUT_FILE
+   	    CL_HELPER_NO_COMPILER_OUTPUT_NAG=1 ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -kernel-file=kernels/scatter${V}.cl --kernel-name=scatter --cl-platform=nvidia --cl-device=titan --runs=$NUM_RUNS --validate --vector-len=$V &>> $OUTPUT_FILE
         else
-   	    ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --runs=$NUM_RUNS --vector-len=$V &>> $OUTPUT_FILE
+   	    ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --runs=$NUM_RUNS --validate --vector-len=$V &>> $OUTPUT_FILE
         fi
    done
 
