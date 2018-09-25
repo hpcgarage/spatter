@@ -49,8 +49,7 @@ size_t vector_len = 1;
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    if (backend == OPENCL) printf("backend platform device kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
-    if (backend == OPENMP) printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth loops runs workers\n");
+    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len\n");
 }
 
 void make_upper (char* s) {
@@ -75,15 +74,10 @@ void *sg_safe_cpu_alloc (size_t size) {
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(double time, size_t source_size, size_t target_size, size_t index_len, size_t worksets){
+void report_time(double time, size_t source_size, size_t target_size, size_t index_size, size_t worksets, size_t vector_len){
     if(backend == OPENMP) printf("OPENMP ");
     if(backend == OPENCL) printf("OPENCL ");
-
-    if(backend == OPENCL){
-        make_upper(platform_string);
-        make_upper(device_string);
-        printf("%s %s ", platform_string, device_string);
-    }
+    if(backend == CUDA) printf("CUDA ");
 
     if(kernel == SCATTER) printf("SCATTER ");
     if(kernel == GATHER) printf("GATHER ");
@@ -92,13 +86,13 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     if(op == OP_COPY) printf("COPY ");
     if(op == OP_ACCUM) printf("ACCUM ");
 
-    printf("%lf %zu %zu %zu ", time, source_size, target_size, index_len);
+    printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
     printf("%zu ", worksets);
 
     size_t bytes_moved = 2 * index_len * sizeof(SGTYPE_C);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu %zu", N, R, workers);
+    printf("%zu %zu", workers, vector_len);
 
     printf("\n");
 
@@ -249,6 +243,7 @@ int main(int argc, char **argv)
         oi = 0;
 
         global_work_size = si.len / vector_len;
+        assert(global_work_size > 0);
         cl_ulong start = 0, end = 0; 
         for (int i = 0; i <= R; i++) {
              
@@ -274,7 +269,7 @@ int main(int argc, char **argv)
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
-            if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
+            if (i!=0) report_time(time_s, source.size, target.size, si.size, worksets, vector_len);
 
             current_ws = posmod(current_ws-1, worksets);
 
@@ -287,6 +282,7 @@ int main(int argc, char **argv)
         os = 0; 
         ot = 0; 
         oi = 0;
+        current_ws = worksets-1;
 
         global_work_size = si.len / vector_len;
         long start = 0, end = 0; 
@@ -306,7 +302,7 @@ int main(int argc, char **argv)
             cudaDeviceSynchronize();
 
             double time_s = time_ms / 1000.;
-            if (i!=0) report_time(time_s, source.size, target.size, index_len, worksets);
+            if (i!=0) report_time(time_s, source.size, target.size, si.size, worksets, vector_len);
 
             current_ws = posmod(current_ws-1, worksets);
 
@@ -359,7 +355,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = get_time();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets, vector_len);
             current_ws = posmod(current_ws-1, worksets);
 
         }
@@ -415,10 +411,15 @@ int main(int argc, char **argv)
         }
 
 
+        int num_err = 0;
         for (size_t i = 0; i < target.len; i++) {
             if (target.host_ptr[i] != target_backup_host[i]) {
                 printf("%zu: host %lf, device %lf\n", i, target.host_ptr[i], target_backup_host[i]);
-                printf(":(\n");
+                num_err++;
+            }
+            if (num_err > 99) {
+                printf("Too many errors. Exiting.\n");
+                exit(1);
             }
         }
     }

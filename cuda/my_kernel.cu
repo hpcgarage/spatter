@@ -158,21 +158,21 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
     else if(kernel == GATHER)
     {
         if (vector_len == 1)
-            scatter_t<1><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<1><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 2)
-            scatter_t<2><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<2><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 4)
-            scatter_t<4><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<4><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 5)
-            scatter_t<5><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<5><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 8)
-            scatter_t<8><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<8><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 16)
-            scatter_t<16><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<16><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 32)
-            scatter_t<32><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<32><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else if (vector_len == 64)
-            scatter_t<64><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
+            gather_t<64><<<grid_dim,block_dim>>>(target, source, ti, si, ot, os, oi);
         else 
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
