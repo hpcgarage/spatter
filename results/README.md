@@ -25,7 +25,7 @@ bytes_moved:
     The number of data bytes moved during a run of the kernel
 
 usabled_bandwidth:
-    This bandwidth does not account for bandwidth spend on index buffers. It is `bytes_moved/time 
+    This bandwidth does not account for bandwidth spend on index buffers. It is bytes_moved/time/1024/1024, which is MiB/s
      
 omp_threads:
     Meaningful only if using OpenMP backend
