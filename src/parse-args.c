@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include "parse-args.h"
+#include "backend-support-tests.h"
 
 #define SOURCE     1000
 #define TARGET     1001 
@@ -13,7 +14,6 @@
 #define BLOCK      1003
 #define SEED       1004
 #define VALIDATE   1005
-#define VECTOR     1006
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -37,10 +37,16 @@ extern int print_header_flag;
 
 extern enum sg_op op;
 
+FILE *err_file;
+
 void error(char *what, int code){
-    printf("Error: ");
-    printf("%s", what);
-    printf("\n");
+    if (code)
+        fprintf(err_file, "Error: ");
+    else
+        fprintf(err_file, "Warning: ");
+
+    fprintf(err_file, "%s", what);
+    fprintf(err_file, "\n");
     if(code) exit(code);
 }
 
@@ -59,26 +65,35 @@ void parse_args(int argc, char **argv)
     index_len  = 0;
     block_len  = 1;
     seed       = time(NULL); 
+    err_file   = stderr;
+
+    size_t generic_len = 0;
+    size_t sparsity = 1;
+    int supress_errors = 0;
 
 	static struct option long_options[] =
     {
     	/* These options set a flag. */
         {"no-print-header", no_argument, &print_header_flag, 0},
+        {"nph",             no_argument, &print_header_flag, 0},
         {"backend",         required_argument, NULL, 'b'},
         {"cl-platform",     required_argument, NULL, 'p'},
         {"cl-device",       required_argument, NULL, 'd'},
         {"kernel-file",     required_argument, NULL, 'f'},
-        {"kernel-name",     required_argument, NULL, 'g'},
+        {"kernel-name",     required_argument, NULL, 'k'},
         {"source-len",      required_argument, NULL, SOURCE},
         {"target-len",      required_argument, NULL, TARGET},
         {"index-len",       required_argument, NULL, INDEX},
         {"block-len",       required_argument, NULL, BLOCK},
         {"seed",            required_argument, NULL, SEED},
-        {"vector-len",      required_argument, NULL, VECTOR},
+        {"vector-len",      required_argument, NULL, 'v'},
+        {"generic-len",     required_argument, NULL, 'l'},
         {"runs",            required_argument, NULL, 'R'},
         {"loops",           required_argument, NULL, 'N'},
         {"workers",         required_argument, NULL, 'W'},
         {"op",              required_argument, NULL, 'o'},
+        {"sparsity",        required_argument, NULL, 's'},
+        {"supress-errors",  no_argument,       NULL, 'q'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
@@ -89,7 +104,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:",
                          long_options, &option_index);
 
         switch(c){
@@ -117,7 +132,7 @@ void parse_args(int argc, char **argv)
             case 'f':
                 safestrcopy(kernel_file, optarg);
                 break;
-            case 'g':
+            case 'k':
                 safestrcopy(kernel_name, optarg);
                 if (!strcasecmp("SG", optarg)) {
                     kernel = SG;
@@ -153,7 +168,7 @@ void parse_args(int argc, char **argv)
             case SEED:
                 sscanf(optarg, "%zu", &seed);
                 break;
-            case VECTOR:
+            case 'v':
                 sscanf(optarg, "%zu", &vector_len);
                 if (vector_len < 1) {
                     printf("Invalid vector len\n");
@@ -167,7 +182,16 @@ void parse_args(int argc, char **argv)
                 sscanf(optarg, "%zu", &N);
                 break;
             case 'W':
-                workers = atoi(optarg);
+                sscanf(optarg, "%zu", &workers);
+                break;
+            case 'l':
+                sscanf(optarg,"%zu", &generic_len);
+                break;
+            case 's':
+                sscanf(optarg,"%zu", &sparsity);
+                break;
+            case 'q':
+                err_file = fopen("/dev/null", "w");
                 break;
             default:
                 break;
@@ -177,6 +201,24 @@ void parse_args(int argc, char **argv)
     }
 
     /* Check argument coherency */
+    if(backend == INVALID_BACKEND){
+        if (sg_cuda_support()) {
+            backend = CUDA;
+            error ("No backend specified, guessing CUDA", 0);
+        }
+        else if (sg_opencl_support()) {
+            backend = OPENCL;
+            error ("No backend specified, guessing OpenCL", 0);
+        }
+        else if (sg_openmp_support()) { 
+            backend = OPENMP;
+            error ("No backend specified, guessing OpenMP", 0);
+        }
+        else
+        {
+            error ("No backends available! Please recompile sgbench with at least one backend.", 1);
+        }
+    }
 
     //Check backend
     if(backend != INVALID_BACKEND){
@@ -191,20 +233,57 @@ void parse_args(int argc, char **argv)
             }
         }
     }
-    else if(backend == INVALID_BACKEND){
-        error("SGBench backend not specified or invalid", 1);
+
+    if (kernel == INVALID_KERNEL) {
+        error("Kernel unspecified, guess GATHER", 0);
+        kernel = GATHER;
     }
 
     //Check buffer lengths
-    if(source_len <= 0){
-        error("Unspecified or invalid source-len", 1);
+    if (generic_len <= 0){
+
+        if (source_len <= 0 && target_len <= 0 && index_len <= 0) {
+            error ("Please specifiy at least one of : src_len, target_len, idx_len", 1);
+        }
+        if (source_len > 0 && target_len <= 0) {
+            target_len = source_len;
+        }
+        if (source_len > 0 && index_len <= 0) {
+            index_len = source_len;
+        }
+        if (target_len > 0 && source_len <= 0) {
+            source_len = target_len;
+        }
+        if (target_len > 0 && index_len <= 0) {
+            index_len = target_len;
+        }
+        if (index_len > 0 && source_len <= 0) {
+            source_len = index_len;
+        }
+        if (index_len > 0 && target_len <= 0) {
+            target_len = index_len;
+        }
     }
-    if(target_len <= 0){
-        error("Unspecified or invalid target-len", 1);
+    else{
+        if (source_len > 0 || target_len > 0 || index_len > 0) {
+            error ("If you specify a generic length, source_len, target_len, and index_len will be ignored.", 0);
+        }
+
+        index_len = generic_len;
+        if (kernel == SCATTER) {
+            target_len = generic_len * sparsity;
+            source_len = generic_len;
+        }
+        else if (kernel == GATHER) {
+            target_len = generic_len;    
+            source_len = generic_len * sparsity;
+        }
+        else if (kernel == SG) {
+            target_len = generic_len * sparsity;
+            source_len = generic_len * sparsity;
+        }
     }
-    if(index_len <= 0){
-        error("Unspecified or invalid index-len", 1);
-    }
+
     if(block_len < 1){
         error("Invalid index-len", 1);
     }
