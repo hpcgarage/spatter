@@ -1,6 +1,7 @@
 The result format is as follows:
 
-```backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len```
+```
+backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len
 
 backend:
     CUDA, OPENMP, or OPENCL
@@ -31,3 +32,4 @@ omp_threads:
 
 vector_len:
     The number of elements copied by a single work item (OpenCL) or thread (CUDA)  
+```
