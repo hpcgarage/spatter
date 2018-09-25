@@ -101,7 +101,7 @@ IF ( USE_OPENCL )
 	target_link_libraries (sgbench LINK_PUBLIC OpenCL)
 ENDIF()
 If ( USE_CUDA )
-    find_library(CUDART_LIBRARY cudart HINTS /usr/local/cuda/targets/x86_64-linux/lib/)
+    find_library(CUDART_LIBRARY cudart HINTS /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda-9.2/lib64/)
     target_link_libraries (sgbench LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF()
 
