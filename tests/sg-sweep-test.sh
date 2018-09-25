@@ -39,9 +39,20 @@ do
 	if [ "${BACKEND}" == "opencl" ]
 	then
    	    CL_HELPER_NO_COMPILER_OUTPUT_NAG=1 ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -kernel-file=kernels/scatter${V}.cl --kernel-name=scatter --cl-platform=nvidia --cl-device=titan --runs=$NUM_RUNS --validate --vector-len=$V &>> $OUTPUT_FILE
-        else
-   	    ./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --runs=$NUM_RUNS --validate --vector-len=$V &>> $OUTPUT_FILE
-        fi
+    else
+        echo -n
+   	    #./sgbench --backend=$BACKEND --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN --kernel-name=scatter --runs=$NUM_RUNS --validate --vector-len=$V &>> $OUTPUT_FILE
+    fi
    done
+
+   if [ "${BACKEND}" == "cuda" ]
+   then
+        ./sgbench --backend=cuda --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=scatter --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+
+        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$SRC_LEN --index-len=$IDX_LEN -validate --kernel-name=gather --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+
+        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=sg --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+
+   fi
 
 done
