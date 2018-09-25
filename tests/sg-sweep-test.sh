@@ -20,6 +20,9 @@ BACKEND=$2
 #The number of iterations to run
 NUM_RUNS=10
 
+OUTPUT_SCATTER=sg_${BACKEND}_${DEVICE_NAME}_SCATTER.ssv
+OUTPUT_GATHER=sg_${BACKEND}_${DEVICE_NAME}_GATHER.ssv
+OUTPUT_SG=sg_${BACKEND}_${DEVICE_NAME}_SG.ssv
 
 #Specify a large region to be used for the "sparse space
 IDX_LEN=$((2**20))
@@ -33,7 +36,6 @@ do
 	#Specify the target length to scatter to or gather into
 	DST_LEN=$(($IDX_LEN*S))
 
-	OUTPUT_FILE=sg_${BACKEND}_${DEVICE_NAME}.ssv
 
 	#Special handling for the OpenCL case
 	if [ "${BACKEND}" == "opencl" ]
@@ -47,11 +49,11 @@ do
 
    if [ "${BACKEND}" == "cuda" ]
    then
-        ./sgbench --backend=cuda --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=scatter --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+        ./sgbench --backend=cuda --source-len=$SRC_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=scatter --vector-len=$V --no-print-header &>> $OUTPUT_SCATTER
 
-        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$SRC_LEN --index-len=$IDX_LEN -validate --kernel-name=gather --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$SRC_LEN --index-len=$IDX_LEN -validate --kernel-name=gather --vector-len=$V --no-print-header &>> $OUTPUT_GATHER
 
-        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=sg --vector-len=$V --no-print-header &>> $OUTPUT_FILE
+        ./sgbench --backend=cuda --source-len=$DST_LEN --target-len=$DST_LEN --index-len=$IDX_LEN -validate --kernel-name=sg --vector-len=$V --no-print-header &>> $OUTPUT_SG
 
    fi
 
