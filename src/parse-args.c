@@ -67,6 +67,11 @@ void parse_args(int argc, char **argv)
     seed       = time(NULL); 
     err_file   = stderr;
 
+    safestrcopy(platform_string, "NONE");
+    safestrcopy(device_string,   "NONE");
+    safestrcopy(kernel_file,     "NONE");
+    safestrcopy(kernel_name,     "NONE");
+
     size_t generic_len = 0;
     size_t sparsity = 1;
     int supress_errors = 0;
@@ -104,7 +109,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:",
                          long_options, &option_index);
 
         switch(c){
@@ -220,23 +225,34 @@ void parse_args(int argc, char **argv)
         }
     }
 
-    //Check backend
-    if(backend != INVALID_BACKEND){
-        if(backend == OPENCL){
-            if(platform_string[0] == '\0'){
-                safestrcopy(platform_string, INTERACTIVE);
-                safestrcopy(device_string, INTERACTIVE);
-            }
-            if(device_string[0] == '\0'){
-                safestrcopy(platform_string, INTERACTIVE);
-                safestrcopy(device_string, INTERACTIVE);
-            }
+    if(backend == OPENCL){
+        if(!strcasecmp(platform_string, "NONE")){
+            safestrcopy(platform_string, INTERACTIVE);
+            safestrcopy(device_string, INTERACTIVE);
+        }
+        if(!strcasecmp(device_string, "NONE")){
+            safestrcopy(platform_string, INTERACTIVE);
+            safestrcopy(device_string, INTERACTIVE);
         }
     }
 
     if (kernel == INVALID_KERNEL) {
         error("Kernel unspecified, guess GATHER", 0);
         kernel = GATHER;
+        safestrcopy(kernel_name, "gather");
+    }
+
+    if (kernel == SCATTER) {
+        sprintf(kernel_name, "%s%zu", "scatter", vector_len);
+    } else if (kernel == GATHER) {
+        sprintf(kernel_name, "%s%zu", "gather", vector_len);
+    } else if (kernel == SG) {
+        sprintf(kernel_name, "%s%zu", "sg", vector_len);
+    }
+
+    if (!strcasecmp(kernel_file, "NONE")) {
+        error("Kernel file unspecified, guessing kernels_vector.cl", 0);
+        safestrcopy(kernel_file, "kernels/kernels_vector.cl");
     }
 
     //Check buffer lengths
@@ -285,7 +301,7 @@ void parse_args(int argc, char **argv)
     }
 
     if(block_len < 1){
-        error("Invalid index-len", 1);
+        error("Invalid block-len", 1);
     }
     if (workers < 1){
         error("Too few workers. Changing to 1.", 0);
