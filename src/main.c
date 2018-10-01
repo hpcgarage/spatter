@@ -179,9 +179,14 @@ int main(int argc, char **argv)
     /* These are the total size of the data allocated for each buffer */
     source.size = worksets * source.len * sizeof(SGTYPE_C);
     target.size = worksets * target.len * sizeof(SGTYPE_C);
-    si.size     = worksets * si.len * sizeof(cl_ulong);
-    ti.size     = worksets * ti.len * sizeof(cl_ulong);
-    
+    #ifdef USE_OPENCL
+       si.size     = worksets * si.len * sizeof(cl_ulong);
+       ti.size     = worksets * ti.len * sizeof(cl_ulong);
+    #else
+       si.size     = worksets * si.len * sizeof(SGTYPE_C);
+       ti.size     = worksets * ti.len * sizeof(SGTYPE_C);
+    #endif
+
     /* This is the number of SGTYPEs in a workset */
     //TODO: remove since this is obviously useless
     source.block_len = source.len;

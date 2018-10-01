@@ -7,11 +7,14 @@
 #ifndef SGBUF_H
 #define SGBUF_H
 
+//Include rand()
+#include <stdlib.h>
+
 #include "sgtype.h"
 //TODO: make this include conditional
-//#ifdef USE_OPENCL
+#if defined( USE_OPENCL)
 #include "../opencl/cl-helper.h"
-//#endif
+#endif
 
 /** @brief Describes a buffer object containing data to be scattered/gathered 
  */
