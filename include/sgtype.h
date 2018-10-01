@@ -15,7 +15,7 @@
 #define SGTYPE_CL double    /**< The kernel data type corresponding to SGTYPE_C*/
 
 #ifndef USE_OPENCL
-	typedef double cl_ulong;
+	typedef unsigned long cl_ulong;
 #endif
 
 #endif //endif SGTYPE
