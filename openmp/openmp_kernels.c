@@ -18,13 +18,13 @@ void sg_omp(
 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[sir[i]];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[sir[i]+b];
@@ -49,13 +49,13 @@ void scatter_omp(
   long     *tir = ti     + oi; 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[i];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[i+b];
@@ -81,13 +81,13 @@ void gather_omp(
 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[i] = sr[sir[i]];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[i+b] = sr[sir[i]+b];
@@ -113,13 +113,13 @@ void sg_accum_omp(
 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] += sr[sir[i]];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] += sr[sir[i]+b];
@@ -144,13 +144,13 @@ void scatter_accum_omp(
   long     *tir = ti     + oi; 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] += sr[i];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] += sr[i+b];
@@ -176,13 +176,13 @@ void gather_accum_omp(
 
 
   if(B == 1){
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
 	    tr[i] += sr[sir[i]];
 	}
   }
   else{
-#pragma omp parallel for
+#pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
         for(int b = 0; b < B; b++){
 	        tr[i+b] += sr[sir[i]+b];

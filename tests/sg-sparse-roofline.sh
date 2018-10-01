@@ -6,7 +6,7 @@
 #set -x
 
 SCRIPT='./'`basename "$0"`
-USAGE='\nUsage: \n  '$SCRIPT' openmmp\n  '$SCRIPT' cuda <device>\n  '$SCRIPT' opencl <device> <platform>\n\n'
+USAGE='\nUsage: \n  '$SCRIPT' openmmp <device> \n  '$SCRIPT' cuda <device>\n  '$SCRIPT' opencl <device> <platform>\n\n'
 
 # Check arguments to script.
 if [ $# -lt 1 ]; then
@@ -19,10 +19,10 @@ BACKEND=$1
 
 
 #User specified identifier to clarify the output
-if [ $BACKEND == "cuda" ]; 
+if [ $BACKEND == "cuda" ] || [ $BACKEND == "openmp" ] ; 
 then
     if [ $# -lt 2 ]; then
-        echo -new $USAGE
+        echo -ne $USAGE
         exit
     fi
     DEVICE=$2
@@ -73,8 +73,15 @@ do
             ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
             ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
             ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
+        elif [ "${BACKEND}" == "openmp" ]
+        then
+            export OMP_SCHEDULE="static,"$V
+            echo $OMP_SCHEDULE
+            ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
+            ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
+            ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
         else 
-            echo "Only CUDA is supported for this script."
+            echo "Unknown backend" 
         fi
     done
 

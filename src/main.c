@@ -200,7 +200,11 @@ int main(int argc, char **argv)
     /* Create buffers on host */
     source.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(source.size); 
     target.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+
 #ifdef USE_CUDA
+    si.host_ptr = (long*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (long*) sg_safe_cpu_alloc(ti.size); 
+#elif defined USE_OPENMP
     si.host_ptr = (long*) sg_safe_cpu_alloc(si.size); 
     ti.host_ptr = (long*) sg_safe_cpu_alloc(ti.size); 
 #elif defined USE_OPENCL
