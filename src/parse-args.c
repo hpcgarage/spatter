@@ -8,6 +8,10 @@
 #include "parse-args.h"
 #include "backend-support-tests.h"
 
+#ifdef USE_CUDA 
+#include "cuda-backend.h"
+#endif
+
 #define SOURCE     1000
 #define TARGET     1001 
 #define INDEX      1002
@@ -243,6 +247,15 @@ void parse_args(int argc, char **argv)
             safestrcopy(platform_string, INTERACTIVE);
             safestrcopy(device_string, INTERACTIVE);
         }
+    }
+
+    if (backend == CUDA) {
+        int dev = find_device_cuda(device_string);
+        if (dev == -1) {
+            error("Specified CUDA device not found or no device specified. Using device 0", 0);
+            dev = 0;
+        }
+        cudaSetDevice(0);
     }
 
     if (kernel == INVALID_KERNEL) {

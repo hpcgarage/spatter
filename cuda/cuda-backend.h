@@ -16,4 +16,6 @@ extern float cuda_sg_wrapper(enum sg_kernel kernel, size_t block_len,
 void create_dev_buffers_cuda(sgDataBuf *source, sgDataBuf *targt, 
                              sgIndexBuf *si, sgIndexBuf *ti, 
                              size_t block_len);
+
+int find_device_cuda(char *name);
 #endif

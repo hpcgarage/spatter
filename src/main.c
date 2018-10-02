@@ -150,15 +150,6 @@ int main(int argc, char **argv)
     }
     #endif
 
-    #ifdef USE_CUDA
-        if (backend == CUDA) {
-            struct cudaDeviceProp prop;
-            cudaGetDeviceProperties(&prop, 0);
-            //printf("device name: %s\n", prop.name);
-            cudaSetDevice(0);
-        }
-    #endif
-
     source.len = source_len;
     target.len = target_len;
     si.len     = index_len;
