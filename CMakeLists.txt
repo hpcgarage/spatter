@@ -1,17 +1,27 @@
 #3.8 is specified since this is the first version with CUDA support
 cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
 
+#Set default values
+SET( USE_CUDA   0 CACHE BOOL "If set, builds with CUDA support")
+SET( USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
+SET( USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
+
+#Check for support for at least one backend
+IF( NOT( USE_CUDA OR USE_OPENCL OR USE_OPENMP))
+    MESSAGE( FATAL_ERROR "You must build with support for at least one backend. Pass at least one of -DUSE_CUDA=1 -DUSE_OPENCL=1 or -DUSE_OPENMP=1 to cmake." )
+ENDIF()
+
 #Set cuda compiler
 IF( USE_CUDA )
-    set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-    set(CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
+    SET(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+    SET(CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF()
 
 #Declare project languages
 IF( USE_CUDA )
-    project(sgbench C CXX CUDA)
+    PROJECT(sgbench C CXX CUDA)
 ELSE()
-    project(sgbench C CXX)
+    PROJECT(sgbench C CXX)
 ENDIF()
 
 #Debug function to check all the variables in the CMakeFile 
@@ -25,14 +35,14 @@ macro(print_all_variables)
 endmacro()
 
 # Use the 2011 standards for C and C++
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # Turn warnings into errors
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Enable OpenCL 
 IF ( USE_OPENCL )
@@ -59,8 +69,8 @@ IF ( USE_OPENMP )
 	ADD_DEFINITIONS( -DUSE_OPENMP )
 	#Standard includes and libraries are probably ok for standard OMP     
 	include_directories(openmp)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 	#Pull the OpenMP-specific files and kernels into the build
 	file (GLOB BACKEND_C_FILES openmp/*.c)
@@ -72,9 +82,9 @@ ENDIF()
 IF( USE_CUDA )
     ADD_DEFINITIONS( -DUSE_CUDA )
     include_directories(cuda)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
-    set(CMAKE_CUDA_FLAGS "${CUDA_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include" )   
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
+    SET(CMAKE_CUDA_FLAGS "${CUDA_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include" )   
  
     file (GLOB CUDA_CU_FILES cuda/*.cu)
     file (GLOB CUDA_C_FILES cuda/*.c)
@@ -88,7 +98,7 @@ ENDIF()
 #Glob for the source files and headers in the current directory and kernels
 file (GLOB C_FILES src/*.c)
 file (GLOB H_FILES include/*.h)
-set (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES} ${CUDA_CU_FILES} ${CUDA_C_FILES})
+SET (SOURCE_FILES ${C_FILES} ${H_FILES} ${BACKEND_C_FILES} ${BACKEND_H_FILES} ${CUDA_CU_FILES} ${CUDA_C_FILES})
 
 #Specify the executable and source files
 add_executable(sgbench ${SOURCE_FILES})
