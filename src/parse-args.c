@@ -113,7 +113,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:",
                          long_options, &option_index);
 
         switch(c){
@@ -249,6 +249,7 @@ void parse_args(int argc, char **argv)
         }
     }
 
+    #ifdef USE_CUDA
     if (backend == CUDA) {
         int dev = find_device_cuda(device_string);
         if (dev == -1) {
@@ -257,6 +258,7 @@ void parse_args(int argc, char **argv)
         }
         cudaSetDevice(0);
     }
+    #endif
 
     if (kernel == INVALID_KERNEL) {
         error("Kernel unspecified, guess GATHER", 0);
