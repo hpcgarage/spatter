@@ -6,6 +6,8 @@ SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
 
+ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
+
 # Check for support for at least one backend
 IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP))
     MESSAGE (
