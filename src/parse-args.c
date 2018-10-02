@@ -251,7 +251,7 @@ void parse_args(int argc, char **argv)
     }
 
     if (!strcasecmp(kernel_file, "NONE")) {
-        error("Kernel file unspecified, guessing kernels_vector.cl", 0);
+        error("Kernel file unspecified, guessing kernels/kernels_vector.cl", 0);
         safestrcopy(kernel_file, "kernels/kernels_vector.cl");
     }
 
