@@ -115,12 +115,21 @@ void parse_args(int argc, char **argv)
         switch(c){
             case 'b':
                 if(!strcasecmp("OPENCL", optarg)){
+                    if (!sg_opencl_support()) {
+                        error("You did not compile with support for OpenCL", 1);
+                    }
                     backend = OPENCL;
                 }
                 else if(!strcasecmp("OPENMP", optarg)){
+                    if (!sg_openmp_support()) {
+                        error("You did not compile with support for OpenMP", 1);
+                    }
                     backend = OPENMP;
                 }
                 else if(!strcasecmp("CUDA", optarg)){
+                    if (!sg_cuda_support()) {
+                        error("You did not compile with support for CUDA", 1);
+                    }
                     backend = CUDA;
                 }
                 break;

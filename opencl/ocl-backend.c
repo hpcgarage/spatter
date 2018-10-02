@@ -17,11 +17,11 @@ void create_dev_buffers_ocl(sgDataBuf *source, sgDataBuf *target, sgIndexBuf *si
 {
 
         flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
-        source->dev_ptr = clCreateBufferSafe(context, flags, source->size, source->host_ptr);
-        si->dev_ptr = clCreateBufferSafe(context, flags, si->size, si->host_ptr);
-        ti->dev_ptr = clCreateBufferSafe(context, flags, ti->size, ti->host_ptr);
+        source->dev_ptr_opencl = clCreateBufferSafe(context, flags, source->size, source->host_ptr);
+        si->dev_ptr_opencl = clCreateBufferSafe(context, flags, si->size, si->host_ptr);
+        ti->dev_ptr_opencl = clCreateBufferSafe(context, flags, ti->size, ti->host_ptr);
 
         flags = CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY;
-        target->dev_ptr = clCreateBufferSafe(context, flags, target->size, NULL); 
+        target->dev_ptr_opencl = clCreateBufferSafe(context, flags, target->size, NULL); 
 
 }

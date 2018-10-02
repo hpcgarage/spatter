@@ -57,8 +57,8 @@ IF (USE_OPENCL)
     # include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
     LINK_DIRECTORIES ($ENV{OCL_LIB})
     # Pull the OpenCL-specific files into the build
-    FILE (GLOB BACKEND_C_FILES opencl/*.c)
-    FILE (GLOB BACKEND_H_FILES opencl/*.h)
+    FILE (GLOB BACKEND_C_FILES_CL opencl/*.c)
+    FILE (GLOB BACKEND_H_FILES_CL opencl/*.h)
 
     # Copy over the OpenCL kernels used with the binary
     FILE (GLOB OCL_KERNELS opencl/*.cl)
@@ -83,8 +83,8 @@ IF (USE_OPENMP)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
     # Pull the OpenMP-specific files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES openmp/*.c)
-    FILE (GLOB BACKEND_H_FILES openmp/*.h)
+    FILE (GLOB BACKEND_C_FILES_OMP openmp/*.c)
+    FILE (GLOB BACKEND_H_FILES_OMP openmp/*.h)
     MESSAGE ("Using OpenMP")
 ENDIF ()
 
@@ -96,8 +96,11 @@ IF (USE_CUDA)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
     SET (
         CMAKE_CUDA_FLAGS
-        "${CUDA_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
+    IF (USE_OPENMP)
+        SET (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
+    ENDIF ()
 
     FILE (GLOB CUDA_CU_FILES cuda/*.cu)
     FILE (GLOB CUDA_C_FILES cuda/*.c)
@@ -114,8 +117,10 @@ SET (
     SOURCE_FILES
     ${C_FILES}
     ${H_FILES}
-    ${BACKEND_C_FILES}
-    ${BACKEND_H_FILES}
+    ${BACKEND_C_FILES_CL}
+    ${BACKEND_H_FILES_CL}
+    ${BACKEND_C_FILES_OMP}
+    ${BACKEND_H_FILES_OMP}
     ${CUDA_CU_FILES}
     ${CUDA_C_FILES}
 )
@@ -126,9 +131,14 @@ ADD_EXECUTABLE (sgbench ${SOURCE_FILES})
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
+IF (USE_OPENMP)
+    TARGET_LINK_LIBRARIES (sgbench LINK_PUBLIC gomp)
+ENDIF ()
+
 IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (sgbench LINK_PUBLIC OpenCL)
 ENDIF ()
+
 IF (USE_CUDA)
     FIND_LIBRARY (
         CUDART_LIBRARY cudart
@@ -142,9 +152,7 @@ ENDIF ()
 FILE (GLOB TEST_SCRIPTS tests/*.sh)
 FILE (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-
-# Note - This file can be reformatted with 
-# cmake-format CMakeLists.txt -i --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4  --separate-ctrl-name-with-space --separate-fn-name-with-space 
-# If you do not have cmake-format installed, install it with 
-# pip install --user cmake_format
-  
+# Note - This file can be reformatted with cmake-format CMakeLists.txt -i
+# --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4
+# --separate-ctrl-name-with-space --separate-fn-name-with-space If you do not
+# have cmake-format installed, install it with pip install --user cmake_format

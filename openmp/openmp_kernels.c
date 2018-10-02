@@ -1,9 +1,9 @@
 #include "openmp_kernels.h"
 
 void sg_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -11,8 +11,8 @@ void sg_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
   long     *sir = si     + oi; 
 
@@ -34,9 +34,9 @@ void sg_omp(
 }
 
 void scatter_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -44,8 +44,8 @@ void scatter_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
 
   if(B == 1){
@@ -65,9 +65,9 @@ void scatter_omp(
 }
 
 void gather_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -75,8 +75,8 @@ void gather_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *sir = si     + oi; 
 
 
@@ -96,9 +96,9 @@ void gather_omp(
   }
 }
 void sg_accum_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -106,8 +106,8 @@ void sg_accum_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
   long     *sir = si     + oi; 
 
@@ -129,9 +129,9 @@ void sg_accum_omp(
 }
 
 void scatter_accum_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -139,8 +139,8 @@ void scatter_accum_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
 
   if(B == 1){
@@ -160,9 +160,9 @@ void scatter_accum_omp(
 }
 
 void gather_accum_omp(
-            SGTYPE_C* restrict target, 
+            sgData_t* restrict target, 
             long*     restrict ti,
-            SGTYPE_C* restrict source,
+            sgData_t* restrict source,
             long*     restrict si,
             size_t n,
             long ot, 
@@ -170,8 +170,8 @@ void gather_accum_omp(
             long oi, 
             long B)
 {
-  SGTYPE_C *tr  = target + ot;
-  SGTYPE_C *sr  = source + os;
+  sgData_t *tr  = target + ot;
+  sgData_t *sr  = source + os;
   long     *sir = si     + oi; 
 
 
