@@ -8,7 +8,7 @@
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
-#include "mytime.h"
+#include "sgtime.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
             os = current_ws * source.len;
             oi = current_ws * si.len;
 
-            zero_time();
+            sg_zero_time();
 
             switch (kernel) {
                 case SG:
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
                     break;
             }
 
-            double time_ms = get_time();
+            double time_ms = sg_get_time_ms();
             if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets, vector_len);
             current_ws = posmod(current_ws-1, worksets);
 

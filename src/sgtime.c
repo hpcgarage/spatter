@@ -1,14 +1,14 @@
-#include "mytime.h"
+#include "sgtime.h"
 
 struct timespec t;
 
-void zero_time(void){
+void sg_zero_time(void){
   //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
   clock_gettime(CLOCK_MONOTONIC, &t);
 }
 
 //Returns ms since zero time
-double get_time(void){
+double sg_get_time_ms(void){
   struct timespec s;
   //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &s);
   clock_gettime(CLOCK_MONOTONIC, &s);
