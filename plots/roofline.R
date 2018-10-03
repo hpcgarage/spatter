@@ -54,7 +54,7 @@ data = read.table('v0.1/scatter/cuda/p100/sg_sparse_roofline_cuda_p100_SCATTER.s
 colnames(data) = c('backend', 'kernel', 'op', 
                    'time', 'source_size', 'target_size', 
                    'idx_size', 'worksets', 'bytes_moved', 
-                   'usable_bandwidth', 'omp_threads', 'vector_len')
+                   'usable_bandwidth', 'omp_threads', 'vector_len','block_dim')
 
 #Determine sparsity regardless of what kernel was run
 data$density = pmax(data$target_size / data$idx_size, data$source_size/data$idx_size)
