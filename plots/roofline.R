@@ -16,6 +16,9 @@ if(length(args) < 4 || args[1] == "-h") {
 } 
 
 filename = args[1]
+
+#split_filename = strsplit(filename, "_")
+
 backend = args[2]
 device = args[3]
 mode = as.numeric(args[4])
@@ -50,7 +53,7 @@ if (mode == 0){
 #p100peak  = 539486.884
 #titanpeak = 434231.942
 
-data = read.table('v0.1/scatter/cuda/p100/sg_sparse_roofline_cuda_p100_SCATTER.ssv')
+data = read.table(filename)
 colnames(data) = c('backend', 'kernel', 'op', 
                    'time', 'source_size', 'target_size', 
                    'idx_size', 'worksets', 'bytes_moved', 
