@@ -45,11 +45,12 @@ size_t R = 10;
 size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
+size_t local_work_size = 1;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len\n");
+    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len block_dim\n");
 }
 
 void make_upper (char* s) {
@@ -92,7 +93,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu", workers, vector_len);
+    printf("%zu %zu %zu", workers, vector_len, local_work_size);
 
     printf("\n");
 
@@ -128,7 +129,6 @@ int main(int argc, char **argv)
     size_t device_flush_size = 0;
     size_t worksets = 1;
     size_t global_work_size = 1;
-    size_t local_work_size = 1;
     size_t current_ws;
     long os, ot, oi;
     

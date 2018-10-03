@@ -47,6 +47,8 @@ VECTOR="1 2 4 8 16 32 64"
 SPARSITY="1 2 4 8 16 32 64 128"
 #Specify the backend - openmp, cuda, opencl
 
+BLOCK="1 2 4 8 16"
+
 SCRIPTNAME=sg_sparse_roofline
 
 O_S=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SCATTER.ssv
@@ -65,14 +67,20 @@ do
     do
         if [ "${BACKEND}" == "cuda" ]
         then
-            ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
-            ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
-            ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
+            for B in $BLOCK;
+            do
+                ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B>> $O_S
+                ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B>> $O_G
+                ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B>> $O_SG
+            done
         elif [ "${BACKEND}" == "opencl" ]
         then
-            ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
-            ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
-            ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
+            for B in $BLOCK;
+            do
+                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B >> $O_S
+                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B >> $O_G
+                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B >> $O_SG
+            done
         elif [ "${BACKEND}" == "openmp" ]
         then
             export OMP_SCHEDULE="static,"$V

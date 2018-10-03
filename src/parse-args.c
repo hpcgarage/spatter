@@ -34,6 +34,7 @@ extern size_t seed;
 extern size_t vector_len;
 extern size_t R;
 extern size_t N;
+extern size_t local_work_size;
 extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
@@ -102,6 +103,7 @@ void parse_args(int argc, char **argv)
         {"workers",         required_argument, NULL, 'W'},
         {"op",              required_argument, NULL, 'o'},
         {"sparsity",        required_argument, NULL, 's'},
+        {"local-work-size", required_argument, NULL, 'z'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
@@ -113,7 +115,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:",
                          long_options, &option_index);
 
         switch(c){
@@ -207,6 +209,9 @@ void parse_args(int argc, char **argv)
                 break;
             case 's':
                 sscanf(optarg,"%zu", &sparsity);
+                break;
+            case 'z':
+                sscanf(optarg,"%zu", &local_work_size);
                 break;
             case 'q':
                 err_file = fopen("/dev/null", "w");
