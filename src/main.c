@@ -47,6 +47,8 @@ size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
 
+unsigned int shmem = 0;
+
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
@@ -93,7 +95,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu %zu", workers, vector_len, local_work_size);
+    printf("%zu %zu %zu %u", workers, vector_len, local_work_size, shmem);
 
     printf("\n");
 
@@ -147,6 +149,17 @@ int main(int argc, char **argv)
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
     	initialize_dev_ocl(platform_string, device_string);
+    }
+    #endif
+
+    #ifdef USE_CUDA 
+    if (backend == CUDA) {
+        /*
+        struct cudaDeviceProp prop;
+        cudaGetDeviceProperties(&prop, 1);
+
+        printf("sm's: %d\n", prop.multiProcessorCount);
+        */
     }
     #endif
 
@@ -323,7 +336,7 @@ int main(int argc, char **argv)
             
             float time_ms = cuda_sg_wrapper(kernel, block_len, vector_len, 
                     arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
-                   ti.dev_ptr_cuda, si.dev_ptr_cuda, ot, os, oi); 
+                   ti.dev_ptr_cuda, si.dev_ptr_cuda, ot, os, oi, shmem); 
             cudaDeviceSynchronize();
 
             double time_s = time_ms / 1000.;

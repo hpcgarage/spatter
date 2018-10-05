@@ -35,7 +35,11 @@ O_S=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SCATTER.ssv
 O_G=${SCRIPTNAME}_${BACKEND}_${DEVICE}_GATHER.ssv
 O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 
-NVPLOG=log.txt
+R=$RANDOM
+
+NVPLOG=log$R.txt
+TMP1=tmp1$R
+TMP2=tmp2$R
 NVPOPT='--aggregate-mode off --log-file '$NVPLOG' --csv --metrics achieved_occupancy'
 WHICH=`seq -s',' 15 3 42`
 
@@ -49,22 +53,22 @@ do
         for logM in $SHMEM;
         do
             M=$((2**logM))
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k scatter -nph -q -v16 -z$B -m$M > temp1.ssv
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > temp2.txt
-            paste -d' ' temp1.ssv temp2.txt >> $O_S
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k scatter -nph -q -v16 -z$B -m$M > $TMP1
+            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            paste -d' ' $TMP1 $TMP2 >> $O_S
 
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k gather  -nph -q -v16 -z$B -m$M > temp1.ssv
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > temp2.txt
-            paste -d' ' temp1.ssv temp2.txt >> $O_G
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k gather  -nph -q -v16 -z$B -m$M > $TMP1
+            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            paste -d' ' $TMP1 $TMP2 >> $O_G
 
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k sg      -nph -q -v16 -z$B -m$M > temp1.ssv
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > temp2.txt
-            paste -d' ' temp1.ssv temp2.txt >> $O_SG
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k sg      -nph -q -v16 -z$B -m$M > $TMP1
+            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            paste -d' ' $TMP1 $TMP2 >> $O_SG
         done
     done
 done
 
-rm $NVPLOG temp1.ssv temp2.txt
+rm $NVPLOG $TMP1 $TMP2 
 
 # cat log.txt | cut -sd',' -m$WHICH | sed '/^$/d' | tr ',' '\n'
 

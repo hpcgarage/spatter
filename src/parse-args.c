@@ -39,7 +39,7 @@ extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
-
+extern unsigned int shmem;
 extern enum sg_op op;
 
 FILE *err_file;
@@ -104,6 +104,7 @@ void parse_args(int argc, char **argv)
         {"op",              required_argument, NULL, 'o'},
         {"sparsity",        required_argument, NULL, 's'},
         {"local-work-size", required_argument, NULL, 'z'},
+        {"shared-mem",      required_argument, NULL, 'm'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
@@ -115,7 +116,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:",
                          long_options, &option_index);
 
         switch(c){
@@ -212,6 +213,9 @@ void parse_args(int argc, char **argv)
                 break;
             case 'z':
                 sscanf(optarg,"%zu", &local_work_size);
+                break;
+            case 'm':
+                sscanf(optarg,"%u", &shmem);
                 break;
             case 'q':
                 err_file = fopen("/dev/null", "w");

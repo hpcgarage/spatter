@@ -11,7 +11,7 @@ extern float cuda_sg_wrapper(enum sg_kernel kernel, size_t block_len,
                        uint dim, uint* grid, uint* block, 
                        double* target, double *source, 
                        long* ti, long* si, 
-                       long ot, long os, long oi);
+                       long ot, long os, long oi, unsigned int shmem);
 
 void create_dev_buffers_cuda(sgDataBuf *source, sgDataBuf *targt, 
                              sgIndexBuf *si, sgIndexBuf *ti, 
