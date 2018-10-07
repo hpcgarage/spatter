@@ -79,6 +79,7 @@ ENDIF ()
 IF (USE_OPENMP)
     # enable pragma regions in the code for OpenMP
     ADD_DEFINITIONS (-DUSE_OPENMP)
+    ADD_DEFINITIONS (-DUSE_OMP_SIMD)
     # Standard includes and libraries are probably ok for standard OMP
     INCLUDE_DIRECTORIES (openmp)
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
