@@ -16,6 +16,9 @@ if(length(args) < 4 || args[1] == "-h") {
 } 
 
 filename = args[1]
+
+#split_filename = strsplit(filename, "_")
+
 backend = args[2]
 device = args[3]
 mode = as.numeric(args[4])
@@ -54,7 +57,7 @@ data = read.table(filename)
 colnames(data) = c('backend', 'kernel', 'op', 
                    'time', 'source_size', 'target_size', 
                    'idx_size', 'worksets', 'bytes_moved', 
-                   'usable_bandwidth', 'omp_threads', 'vector_len')
+                   'usable_bandwidth', 'omp_threads', 'vector_len','block_dim')
 
 #Determine sparsity regardless of what kernel was run
 data$density = pmax(data$target_size / data$idx_size, data$source_size/data$idx_size)

@@ -8,6 +8,10 @@
 #include "parse-args.h"
 #include "backend-support-tests.h"
 
+#ifdef USE_CUDA 
+#include "cuda-backend.h"
+#endif
+
 #define SOURCE     1000
 #define TARGET     1001 
 #define INDEX      1002
@@ -30,11 +34,12 @@ extern size_t seed;
 extern size_t vector_len;
 extern size_t R;
 extern size_t N;
+extern size_t local_work_size;
 extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
-
+extern unsigned int shmem;
 extern enum sg_op op;
 
 FILE *err_file;
@@ -98,6 +103,8 @@ void parse_args(int argc, char **argv)
         {"workers",         required_argument, NULL, 'W'},
         {"op",              required_argument, NULL, 'o'},
         {"sparsity",        required_argument, NULL, 's'},
+        {"local-work-size", required_argument, NULL, 'z'},
+        {"shared-mem",      required_argument, NULL, 'm'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
@@ -109,18 +116,27 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:",
                          long_options, &option_index);
 
         switch(c){
             case 'b':
                 if(!strcasecmp("OPENCL", optarg)){
+                    if (!sg_opencl_support()) {
+                        error("You did not compile with support for OpenCL", 1);
+                    }
                     backend = OPENCL;
                 }
                 else if(!strcasecmp("OPENMP", optarg)){
+                    if (!sg_openmp_support()) {
+                        error("You did not compile with support for OpenMP", 1);
+                    }
                     backend = OPENMP;
                 }
                 else if(!strcasecmp("CUDA", optarg)){
+                    if (!sg_cuda_support()) {
+                        error("You did not compile with support for CUDA", 1);
+                    }
                     backend = CUDA;
                 }
                 break;
@@ -195,6 +211,12 @@ void parse_args(int argc, char **argv)
             case 's':
                 sscanf(optarg,"%zu", &sparsity);
                 break;
+            case 'z':
+                sscanf(optarg,"%zu", &local_work_size);
+                break;
+            case 'm':
+                sscanf(optarg,"%u", &shmem);
+                break;
             case 'q':
                 err_file = fopen("/dev/null", "w");
                 break;
@@ -236,6 +258,17 @@ void parse_args(int argc, char **argv)
         }
     }
 
+    #ifdef USE_CUDA
+    if (backend == CUDA) {
+        int dev = find_device_cuda(device_string);
+        if (dev == -1) {
+            error("Specified CUDA device not found or no device specified. Using device 0", 0);
+            dev = 0;
+        }
+        cudaSetDevice(0);
+    }
+    #endif
+
     if (kernel == INVALID_KERNEL) {
         error("Kernel unspecified, guess GATHER", 0);
         kernel = GATHER;
@@ -251,7 +284,7 @@ void parse_args(int argc, char **argv)
     }
 
     if (!strcasecmp(kernel_file, "NONE")) {
-        error("Kernel file unspecified, guessing kernels_vector.cl", 0);
+        error("Kernel file unspecified, guessing kernels/kernels_vector.cl", 0);
         safestrcopy(kernel_file, "kernels/kernels_vector.cl");
     }
 

@@ -1,14 +1,14 @@
 #include "sgtype.h"
 #include "sgbuf.h"
 
-void random_data(SGTYPE_C *buf, size_t len){
+void random_data(sgData_t *buf, size_t len){
     for(size_t i = 0; i < len; i++){
         buf[i] = rand() % 10; 
     }
 }
 
-void linear_indices(cl_ulong *idx, size_t len, size_t worksets, size_t stride){
-    cl_ulong *idx_cur = idx;
+void linear_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride){
+    sgIdx_t *idx_cur = idx;
     for(size_t j = 0; j < worksets; j++){
         for(size_t i = 0; i < len; i++){
             idx_cur[i] = i * stride;
@@ -17,8 +17,8 @@ void linear_indices(cl_ulong *idx, size_t len, size_t worksets, size_t stride){
     }
 }
 
-void random_indices(cl_ulong *idx, size_t len, size_t worksets){
-    cl_ulong *idx_cur = idx;
+void random_indices(sgIdx_t *idx, size_t len, size_t worksets){
+    sgIdx_t *idx_cur = idx;
     for(size_t j = 0; j < worksets; j++){
         for(size_t i = 0; i < len; i++){
             idx_cur[i] = rand()%len;

@@ -12,8 +12,8 @@ __kernel void scatter1(__global double* restrict target,
     tr[tir[gid]] = sr[gid];
 }
 
-__kernel void scatter2(__global double2* restrict target, 
-                     __global double*  restrict source, 
+__kernel void scatter2(__global double* restrict target, 
+                     __global double2*  restrict source, 
                      __global long2*   restrict ti,
                      __global long2*   restrict si,
                      long ot, long os, long oi)
@@ -29,8 +29,8 @@ __kernel void scatter2(__global double2* restrict target,
     tr[idx.s1] = buf.s1;
 }
 
-__kernel void scatter4(__global double4* restrict target, 
-                     __global double*  restrict source, 
+__kernel void scatter4(__global double* restrict target, 
+                     __global double4*  restrict source, 
                      __global long4*   restrict ti,
                      __global long4*   restrict si,
                      long ot, long os, long oi)
@@ -48,8 +48,8 @@ __kernel void scatter4(__global double4* restrict target,
     tr[idx.s3] = buf.s3;
 }
 
-__kernel void scatter8(__global double8* restrict target, 
-                     __global double*  restrict source, 
+__kernel void scatter8(__global double* restrict target, 
+                     __global double8*  restrict source, 
                      __global long8*   restrict ti,
                      __global long8*   restrict si,
                      long ot, long os, long oi)
@@ -71,8 +71,8 @@ __kernel void scatter8(__global double8* restrict target,
     tr[idx.s7] = buf.s7;
 }
 
-__kernel void scatter16(__global double16* restrict target, 
-                     __global double*   restrict source, 
+__kernel void scatter16(__global double* restrict target, 
+                     __global double16*   restrict source, 
                      __global long16*   restrict ti,
                      __global long16*   restrict si,
                      long ot, long os, long oi)
@@ -102,6 +102,82 @@ __kernel void scatter16(__global double16* restrict target,
     tr[idx.sf] = buf.sf;
 }
 
+__kernel void scatter32(__global double* restrict target, 
+                     __global double16*   restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 2*get_global_id(0);
+    __global double* tr = target + ot; 
+    __global double16*  sr = source + os / 32;     
+    __global long16*  tir = ti     + oi / 32;
+
+    double16 buf[2];
+    long16 idx[2];
+
+    for(int i = 0; i < 2; i++){
+        buf[i] = sr[gid+i];
+        idx[i] = tir[gid+i];
+    }
+
+    for(int i = 0; i < 2; i++){
+        tr[idx[i].s0] = buf[i].s0;
+        tr[idx[i].s1] = buf[i].s1;
+        tr[idx[i].s2] = buf[i].s2;
+        tr[idx[i].s3] = buf[i].s3;
+        tr[idx[i].s4] = buf[i].s4;
+        tr[idx[i].s5] = buf[i].s5;
+        tr[idx[i].s6] = buf[i].s6;
+        tr[idx[i].s7] = buf[i].s7;
+        tr[idx[i].s8] = buf[i].s8;
+        tr[idx[i].s9] = buf[i].s9;
+        tr[idx[i].sa] = buf[i].sa;
+        tr[idx[i].sb] = buf[i].sb;
+        tr[idx[i].sc] = buf[i].sc;
+        tr[idx[i].sd] = buf[i].sd;
+        tr[idx[i].se] = buf[i].se;
+        tr[idx[i].sf] = buf[i].sf;
+    }
+}
+
+__kernel void scatter64(__global double* restrict target, 
+                     __global double16*   restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 4*get_global_id(0);
+    __global double* tr = target + ot; 
+    __global double16*  sr = source + os / 64;     
+    __global long16*  tir = ti     + oi / 64;
+
+    double16 buf[4];
+    long16 idx[4];
+
+    for(int i = 0; i < 4; i++){
+        buf[i] = sr[gid+i];
+        idx[i] = tir[gid+i];
+    }
+    for(int i = 0; i < 4; i++){
+        tr[idx[i].s0] = buf[i].s0;
+        tr[idx[i].s1] = buf[i].s1;
+        tr[idx[i].s2] = buf[i].s2;
+        tr[idx[i].s3] = buf[i].s3;
+        tr[idx[i].s4] = buf[i].s4;
+        tr[idx[i].s5] = buf[i].s5;
+        tr[idx[i].s6] = buf[i].s6;
+        tr[idx[i].s7] = buf[i].s7;
+        tr[idx[i].s8] = buf[i].s8;
+        tr[idx[i].s9] = buf[i].s9;
+        tr[idx[i].sa] = buf[i].sa;
+        tr[idx[i].sb] = buf[i].sb;
+        tr[idx[i].sc] = buf[i].sc;
+        tr[idx[i].sd] = buf[i].sd;
+        tr[idx[i].se] = buf[i].se;
+        tr[idx[i].sf] = buf[i].sf;
+    }
+}
 __kernel void gather1(__global double* restrict target, 
                      __global double* restrict source, 
                      __global long* restrict ti,
@@ -213,6 +289,92 @@ __kernel void gather16(__global double16* restrict target,
     tr[gid] = buf;
 }
 
+__kernel void gather32(__global double16* restrict target, 
+                     __global double*   restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 2*get_global_id(0);
+    __global double16* tr = target + ot / 32; 
+    __global double*  sr = source + os;     
+    __global long16*  sir = si     + oi / 32;
+
+    double16 buf[2]; 
+    long16 idx[2]; 
+    
+    for(int i = 0; i < 2; i++){
+        buf[i] = 0;
+        idx[i] = sir[gid+i];
+    }
+    
+    for(int i = 0; i < 2; i++){
+        buf[i].s0 = sr[idx[i].s0];
+        buf[i].s1 = sr[idx[i].s1];
+        buf[i].s2 = sr[idx[i].s2];
+        buf[i].s3 = sr[idx[i].s3];
+        buf[i].s4 = sr[idx[i].s4];
+        buf[i].s5 = sr[idx[i].s5];
+        buf[i].s6 = sr[idx[i].s6];
+        buf[i].s7 = sr[idx[i].s7];
+        buf[i].s8 = sr[idx[i].s8];
+        buf[i].s9 = sr[idx[i].s9];
+        buf[i].sa = sr[idx[i].sa];
+        buf[i].sb = sr[idx[i].sb];
+        buf[i].sc = sr[idx[i].sc];
+        buf[i].sd = sr[idx[i].sd];
+        buf[i].se = sr[idx[i].se];
+        buf[i].sf = sr[idx[i].sf];
+    }
+
+    for(int i = 0; i < 2; i++){
+        tr[gid+i] = buf[i];
+    }
+}
+
+__kernel void gather64(__global double16* restrict target, 
+                     __global double*   restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 4*get_global_id(0);
+    __global double16* tr = target + ot / 64; 
+    __global double*  sr = source + os;     
+    __global long16*  sir = si     + oi / 64;
+
+    double16 buf[4]; 
+    long16 idx[4]; 
+    
+    for(int i = 0; i < 4; i++){
+        buf[i] = 0;
+        idx[i] = sir[gid+i];
+    }
+    
+    for(int i = 0; i < 4; i++){
+        buf[i].s0 = sr[idx[i].s0];
+        buf[i].s1 = sr[idx[i].s1];
+        buf[i].s2 = sr[idx[i].s2];
+        buf[i].s3 = sr[idx[i].s3];
+        buf[i].s4 = sr[idx[i].s4];
+        buf[i].s5 = sr[idx[i].s5];
+        buf[i].s6 = sr[idx[i].s6];
+        buf[i].s7 = sr[idx[i].s7];
+        buf[i].s8 = sr[idx[i].s8];
+        buf[i].s9 = sr[idx[i].s9];
+        buf[i].sa = sr[idx[i].sa];
+        buf[i].sb = sr[idx[i].sb];
+        buf[i].sc = sr[idx[i].sc];
+        buf[i].sd = sr[idx[i].sd];
+        buf[i].se = sr[idx[i].se];
+        buf[i].sf = sr[idx[i].sf];
+    }
+
+    for(int i = 0; i < 4; i++){
+        tr[gid+i] = buf[i];
+    }
+}
+
 __kernel void sg1(__global double* restrict target, 
                      __global double* restrict source, 
                      __global long* restrict ti,
@@ -319,4 +481,84 @@ __kernel void sg16(__global double* restrict target,
     tr[tidx.sd] = sr[sidx.sd];
     tr[tidx.se] = sr[sidx.se];
     tr[tidx.sf] = sr[sidx.sf];
+}
+
+__kernel void sg32(__global double* restrict target, 
+                     __global double*  restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 2*get_global_id(0);
+    __global double* tr = target + ot; 
+    __global double*  sr = source + os;     
+    __global long16*  sir = si     + oi / 32;
+    __global long16*  tir = ti     + oi / 32;
+
+    long16 sidx[2]; 
+    long16 tidx[2];
+    
+    for(int i = 0; i < 2; i++){
+        sidx[i] = sir[gid+i];
+        tidx[i] = tir[gid+i];
+    }
+
+    for(int i = 0; i < 2; i++){ 
+        tr[tidx[i].s0] = sr[sidx[i].s0];
+        tr[tidx[i].s1] = sr[sidx[i].s1];
+        tr[tidx[i].s2] = sr[sidx[i].s2];
+        tr[tidx[i].s3] = sr[sidx[i].s3];
+        tr[tidx[i].s4] = sr[sidx[i].s4];
+        tr[tidx[i].s5] = sr[sidx[i].s5];
+        tr[tidx[i].s6] = sr[sidx[i].s6];
+        tr[tidx[i].s7] = sr[sidx[i].s7];
+        tr[tidx[i].s8] = sr[sidx[i].s8];
+        tr[tidx[i].s9] = sr[sidx[i].s9];
+        tr[tidx[i].sa] = sr[sidx[i].sa];
+        tr[tidx[i].sb] = sr[sidx[i].sb];
+        tr[tidx[i].sc] = sr[sidx[i].sc];
+        tr[tidx[i].sd] = sr[sidx[i].sd];
+        tr[tidx[i].se] = sr[sidx[i].se];
+        tr[tidx[i].sf] = sr[sidx[i].sf];
+    }
+}
+
+__kernel void sg64(__global double* restrict target, 
+                     __global double*  restrict source, 
+                     __global long16*   restrict ti,
+                     __global long16*   restrict si,
+                     long ot, long os, long oi)
+{
+    int gid = 4*get_global_id(0);
+    __global double* tr = target + ot; 
+    __global double*  sr = source + os;     
+    __global long16*  sir = si     + oi / 64;
+    __global long16*  tir = ti     + oi / 64;
+
+    long16 sidx[4]; 
+    long16 tidx[4];
+    
+    for(int i = 0; i < 4; i++){
+        sidx[i] = sir[gid+i];
+        tidx[i] = tir[gid+i];
+    }
+
+    for(int i = 0; i < 4; i++){ 
+        tr[tidx[i].s0] = sr[sidx[i].s0];
+        tr[tidx[i].s1] = sr[sidx[i].s1];
+        tr[tidx[i].s2] = sr[sidx[i].s2];
+        tr[tidx[i].s3] = sr[sidx[i].s3];
+        tr[tidx[i].s4] = sr[sidx[i].s4];
+        tr[tidx[i].s5] = sr[sidx[i].s5];
+        tr[tidx[i].s6] = sr[sidx[i].s6];
+        tr[tidx[i].s7] = sr[sidx[i].s7];
+        tr[tidx[i].s8] = sr[sidx[i].s8];
+        tr[tidx[i].s9] = sr[sidx[i].s9];
+        tr[tidx[i].sa] = sr[sidx[i].sa];
+        tr[tidx[i].sb] = sr[sidx[i].sb];
+        tr[tidx[i].sc] = sr[sidx[i].sc];
+        tr[tidx[i].sd] = sr[sidx[i].sd];
+        tr[tidx[i].se] = sr[sidx[i].se];
+        tr[tidx[i].sf] = sr[sidx[i].sf];
+    }
 }

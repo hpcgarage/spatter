@@ -1,0 +1,65 @@
+$ export OMP_NUM_THREADS=112
+$ export OMP_PROC_BIND=spread
+========
+ ./omp-stream-default-gnu -n 1000 -s 125000000
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 1000 times
+Precision: double
+Array size: 1000.0 MB (=1.0 GB)
+Total size: 3000.0 MB (=3.0 GB)
+Function    MBytes/sec  Min (sec)   Max         Average
+Copy        104701.117  0.01910     0.04242     0.02063
+Mul         98034.737   0.02040     0.13346     0.02302
+Add         108684.323  0.02760     0.15811     0.03128
+Triad       112219.062  0.02673     0.13949     0.03040
+Dot         114171.966  0.01752     0.14126     0.02104
+==========
+./omp-stream-gnu-tx2 -n 1000 -s 125000000
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 1000 times
+Precision: double
+Array size: 1000.0 MB (=1.0 GB)
+Total size: 3000.0 MB (=3.0 GB)
+Function    MBytes/sec  Min (sec)   Max         Average
+Copy        120892.708  0.01654     0.13021     0.01743
+Mul         141585.783  0.01413     0.02842     0.02448
+Add         125963.627  0.02382     0.15216     0.03121
+Triad       116906.190  0.02566     0.15132     0.03228
+Dot         116420.690  0.01718     0.04420     0.02492
+============
+
+$ export OMP_PROC_BIND=close
+============
+[jyoung9@wombat5 BabelStream]$ ./omp-stream-default-gnu -n 1000 -s 125000000
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 1000 times
+Precision: double
+Array size: 1000.0 MB (=1.0 GB)
+Total size: 3000.0 MB (=3.0 GB)
+Function    MBytes/sec  Min (sec)   Max         Average
+Copy        86916.529   0.02301     0.02528     0.02348
+Mul         87555.443   0.02284     0.02632     0.02317
+Add         88358.705   0.03395     0.04027     0.03430
+Triad       88332.325   0.03396     0.03980     0.03424
+Dot         85502.982   0.02339     0.17102     0.02450
+==========
+[jyoung9@wombat5 BabelStream]$ ./omp-stream-gnu-tx2 -n 1000 -s 125000000
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 1000 times
+Precision: double
+Array size: 1000.0 MB (=1.0 GB)
+Total size: 3000.0 MB (=3.0 GB)
+Function    MBytes/sec  Min (sec)   Max         Average
+Copy        87031.073   0.02298     0.02676     0.02349
+Mul         87570.030   0.02284     0.02631     0.02314
+Add         88340.648   0.03396     0.03761     0.03429
+Triad       88202.135   0.03401     0.03738     0.03423
+Dot         85867.103   0.02329     0.16533     0.02445

@@ -8,7 +8,7 @@
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
-#include "mytime.h"
+#include "sgtime.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -45,11 +45,14 @@ size_t R = 10;
 size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
+size_t local_work_size = 1;
+
+unsigned int shmem = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len\n");
+    printf("backend kernel op time source_size target_size idx_size worksets bytes_moved usable_bandwidth omp_threads vector_len block_dim\n");
 }
 
 void make_upper (char* s) {
@@ -89,10 +92,17 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
     printf("%zu ", worksets);
 
-    size_t bytes_moved = 2 * index_len * sizeof(SGTYPE_C);
+    size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu", workers, vector_len);
+
+    //How many threads were used - currently refers to CPU systems
+    size_t worker_threads = workers;
+    #ifdef USE_OPENMP
+	worker_threads = omp_get_max_threads();
+    #endif
+
+    printf("%zu %zu %zu %u", worker_threads, vector_len, local_work_size, shmem);
 
     printf("\n");
 
@@ -128,7 +138,6 @@ int main(int argc, char **argv)
     size_t device_flush_size = 0;
     size_t worksets = 1;
     size_t global_work_size = 1;
-    size_t local_work_size = 1;
     size_t current_ws;
     long os, ot, oi;
     
@@ -145,14 +154,20 @@ int main(int argc, char **argv)
 
     /* Create a context and corresponding queue */
     #ifdef USE_OPENCL
+    if (backend == OPENCL) {
     	initialize_dev_ocl(platform_string, device_string);
+    }
     #endif
 
-    #ifdef USE_CUDA
+    #ifdef USE_CUDA 
+    if (backend == CUDA) {
+        /*
         struct cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, 0);
-        //printf("device name: %s\n", prop.name);
-        cudaSetDevice(0);
+        cudaGetDeviceProperties(&prop, 1);
+
+        printf("sm's: %d\n", prop.multiProcessorCount);
+        */
+    }
     #endif
 
     source.len = source_len;
@@ -164,7 +179,7 @@ int main(int argc, char **argv)
     // Determine how many worksets we will need to flush the cache
     if (backend == OPENMP) {
         worksets = cpu_flush_size / 
-            ((source.len + target.len) * sizeof(SGTYPE_C) 
+            ((source.len + target.len) * sizeof(sgData_t) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
     }
     else if (backend == OPENCL) {
@@ -172,50 +187,61 @@ int main(int argc, char **argv)
                 sizeof(device_cache_size), &device_cache_size, NULL); 
         device_flush_size = device_cache_size * 8;
         worksets = device_flush_size / 
-            ((source.len + target.len) * sizeof(SGTYPE_C) 
+            ((source.len + target.len) * sizeof(sgData_t) 
             + (si.len + ti.len) * sizeof(cl_ulong)) + 1;
     }*/
 
     /* These are the total size of the data allocated for each buffer */
-    source.size = worksets * source.len * sizeof(SGTYPE_C);
-    target.size = worksets * target.len * sizeof(SGTYPE_C);
-    #ifdef USE_OPENCL
-       si.size     = worksets * si.len * sizeof(cl_ulong);
-       ti.size     = worksets * ti.len * sizeof(cl_ulong);
-    #else
-       si.size     = worksets * si.len * sizeof(SGTYPE_C);
-       ti.size     = worksets * ti.len * sizeof(SGTYPE_C);
-    #endif
+    source.size = worksets * source.len * sizeof(sgData_t);
+    target.size = worksets * target.len * sizeof(sgData_t);
 
-    /* This is the number of SGTYPEs in a workset */
+    /*
+    #ifdef USE_OPENCL
+       si.size     = worksets * si.len * sizeof(sgIdx_t);
+       ti.size     = worksets * ti.len * sizeof(sgIdx_t);
+    #else
+       si.size     = worksets * si.len * sizeof(sgIdx_t);
+       ti.size     = worksets * ti.len * sizeof(sgIdx_t);
+    #endif
+    */
+   si.size     = worksets * si.len * sizeof(sgIdx_t);
+   ti.size     = worksets * ti.len * sizeof(sgIdx_t);
+
+    /* This is the number of sgData_t's in a workset */
     //TODO: remove since this is obviously useless
     source.block_len = source.len;
     target.block_len = target.len;
 
     /* Create the kernel */
     #ifdef USE_OPENCL
+    if (backend == OPENCL) {
         //kernel_string = ocl_kernel_gen(index_len, vector_len, kernel);
         kernel_string = read_file(kernel_file);
         sgp = kernel_from_string(context, kernel_string, kernel_name, NULL);
         if (kernel_string) {
             free(kernel_string);
         }
+    }
     #endif
 
     /* Create buffers on host */
-    source.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(source.size); 
-    target.host_ptr = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+    source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
+    target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
 
+    /*
 #ifdef USE_CUDA
-    si.host_ptr = (long*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (long*) sg_safe_cpu_alloc(ti.size); 
+    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 #elif defined USE_OPENMP
-    si.host_ptr = (long*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (long*) sg_safe_cpu_alloc(ti.size); 
+    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 #elif defined USE_OPENCL
-    si.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (cl_ulong*) sg_safe_cpu_alloc(ti.size); 
+    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 #endif
+*/
+    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
+    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len * worksets);
@@ -224,14 +250,19 @@ int main(int argc, char **argv)
 
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
-	create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
+    if (backend == OPENCL) {
+        create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
+    }
+    #endif
 
-    #elif defined USE_CUDA
-    create_dev_buffers_cuda(&source, &target, &si, &ti, block_len);
-    cudaMemcpy(source.dev_ptr, source.host_ptr, source.size, cudaMemcpyHostToDevice);
-    cudaMemcpy(si.dev_ptr, si.host_ptr, si.size, cudaMemcpyHostToDevice);
-    cudaMemcpy(ti.dev_ptr, ti.host_ptr, ti.size, cudaMemcpyHostToDevice);
-    cudaDeviceSynchronize();
+    #ifdef USE_CUDA
+    if (backend == CUDA) {
+        create_dev_buffers_cuda(&source, &target, &si, &ti, block_len);
+        cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
+        cudaMemcpy(si.dev_ptr_cuda, si.host_ptr, si.size, cudaMemcpyHostToDevice);
+        cudaMemcpy(ti.dev_ptr_cuda, ti.host_ptr, ti.size, cudaMemcpyHostToDevice);
+        cudaDeviceSynchronize();
+    }
     #endif
 
     
@@ -243,10 +274,12 @@ int main(int argc, char **argv)
     /* Begin benchmark */
     if (print_header_flag) print_header();
     
-    current_ws = worksets-1;
+
     /* Time OpenCL Kernel */
     #ifdef USE_OPENCL
+    if (backend == OPENCL) {
 
+        current_ws = worksets-1;
         os = 0; 
         ot = 0; 
         oi = 0;
@@ -263,8 +296,8 @@ int main(int argc, char **argv)
 
            cl_event e = 0; 
 
-            SET_7_KERNEL_ARGS(sgp, target.dev_ptr, source.dev_ptr,
-                    ti.dev_ptr, si.dev_ptr, ot, os, oi);
+            SET_7_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
+                    ti.dev_ptr_opencl, si.dev_ptr_opencl, ot, os, oi);
 
             CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
                        &global_work_size, &local_work_size, 
@@ -284,14 +317,17 @@ int main(int argc, char **argv)
 
         }
 
+    }
     #endif // USE_OPENCL
 
+    /* Time CUDA Kernel */
     #ifdef USE_CUDA
+    if (backend == CUDA) {
 
+        current_ws = worksets-1;
         os = 0; 
         ot = 0; 
         oi = 0;
-        current_ws = worksets-1;
 
         global_work_size = si.len / vector_len;
         long start = 0, end = 0; 
@@ -306,8 +342,8 @@ int main(int argc, char **argv)
             unsigned int block[arr_len] = {local_work_size};
             
             float time_ms = cuda_sg_wrapper(kernel, block_len, vector_len, 
-                    arr_len, grid, block, target.dev_ptr, source.dev_ptr, 
-                   ti.dev_ptr, si.dev_ptr, ot, os, oi); 
+                    arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
+                   ti.dev_ptr_cuda, si.dev_ptr_cuda, ot, os, oi, shmem); 
             cudaDeviceSynchronize();
 
             double time_s = time_ms / 1000.;
@@ -317,21 +353,24 @@ int main(int argc, char **argv)
 
         }
 
+    }
     #endif // USE_CUDA
 
 
-    /* Time OpenMP Kernel */
 
+    /* Time OpenMP Kernel */
     #ifdef USE_OPENMP
+    if (backend == OPENMP) {
+
         current_ws = worksets-1;
-        omp_set_num_threads(workers);
+        //omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
 
             ot = current_ws * target.len;
             os = current_ws * source.len;
             oi = current_ws * si.len;
 
-            zero_time();
+            sg_zero_time();
 
             switch (kernel) {
                 case SG:
@@ -344,16 +383,27 @@ int main(int argc, char **argv)
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-                        scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, ot, os, oi, block_len);
+                        #ifdef USE_OMP_SIMD
+				scatter_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+         	               	index_len, ot, os, oi, block_len);
+                        #else
+				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len, ot, os, oi, block_len);
+			#endif
+				
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-                        gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        #ifdef USE_OMP_SIMD
+                        gather_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
+                        #else
+				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len, ot, os, oi, block_len);
+			#endif
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
@@ -363,12 +413,12 @@ int main(int argc, char **argv)
                     break;
             }
 
-            double time_ms = get_time();
+            double time_ms = sg_get_time_ms();
             if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, worksets, vector_len);
             current_ws = posmod(current_ws-1, worksets);
 
         }
-
+    }
     #endif // USE_OPENMP
     
 
@@ -377,22 +427,24 @@ int main(int argc, char **argv)
 
 #ifdef USE_OPENCL
         if (backend == OPENCL) {
-            clEnqueueReadBuffer(queue, target.dev_ptr, 1, 0, target.size, 
+            clEnqueueReadBuffer(queue, target.dev_ptr_opencl, 1, 0, target.size, 
                 target.host_ptr, 0, NULL, &e);
             clWaitForEvents(1, &e);
         }
 #endif
 
 #ifdef USE_CUDA
-        cudaError_t cerr;
-        cerr = cudaMemcpy(target.host_ptr, target.dev_ptr, target.size, cudaMemcpyDeviceToHost);
-        if(cerr != cudaSuccess){
-            printf("transfer failed\n");
+        if (backend == CUDA) {
+            cudaError_t cerr;
+            cerr = cudaMemcpy(target.host_ptr, target.dev_ptr_cuda, target.size, cudaMemcpyDeviceToHost);
+            if(cerr != cudaSuccess){
+                printf("transfer failed\n");
+            }
+            cudaDeviceSynchronize();
         }
-        cudaDeviceSynchronize();
 #endif
 
-        SGTYPE_C *target_backup_host = (SGTYPE_C*) sg_safe_cpu_alloc(target.size); 
+        sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
         switch (kernel) {
