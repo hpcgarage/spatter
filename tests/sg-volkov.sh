@@ -53,16 +53,19 @@ do
         for logM in $SHMEM;
         do
             M=$((2**logM))
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k scatter -nph -q -v16 -z$B -m$M > $TMP1
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            ./sgbench -l$LEN -s$S -k scatter -nph -q -v16 -z$B -m$M > $TMP1
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k scatter -nph -q -v16 -z$B -m$M > /dev/null
+            cat $NVPLOG | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
             paste -d' ' $TMP1 $TMP2 >> $O_S
 
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k gather  -nph -q -v16 -z$B -m$M > $TMP1
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            ./sgbench -l$LEN -s$S -k gather  -nph -q -v16 -z$B -m$M > $TMP1
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k gather  -nph -q -v16 -z$B -m$M > /dev/null
+            cat $NVPLOG | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
             paste -d' ' $TMP1 $TMP2 >> $O_G
 
-            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k sg      -nph -q -v16 -z$B -m$M > $TMP1
-            cat log.txt | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
+            ./sgbench -l$LEN -s$S -k sg      -nph -q -v16 -z$B -m$M > $TMP1
+            nvprof $NVPOPT ./sgbench -l$LEN -s$S -k sg      -nph -q -v16 -z$B -m$M > /dev/null
+            cat $NVPLOG | cut -sd',' -f$WHICH | sed '/^$/d' | tr ',' '\n' > $TMP2
             paste -d' ' $TMP1 $TMP2 >> $O_SG
         done
     done
