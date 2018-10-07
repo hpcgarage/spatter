@@ -45,7 +45,8 @@ echo backend=${BACKEND} device=${DEVICE}, platform=${PLATFORM}
 VECTOR="1 2 4 8 16 32 64"
 #Specify the sparsities you want to test for 
 SPARSITY="1 2 4 8 16 32 64 128"
-#Specify the backend - openmp, cuda, opencl
+#Note that this number of threads is specific to TX2, Cavium
+NUMTHREADS="14 28 56 112"
 
 BLOCK="1 2 4 8 16"
 
@@ -83,11 +84,17 @@ do
             done
         elif [ "${BACKEND}" == "openmp" ]
         then
-            export OMP_SCHEDULE="static,"$V
-            echo $OMP_SCHEDULE
-            ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
-            ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
-            ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
+	    export OMP_PROC_BIND=spread
+    	    for N in $NUMTHREADS;
+	    do
+	       export OMP_NUM_THREADS=$N
+           
+	       export OMP_SCHEDULE="static,"$V
+               echo $OMP_SCHEDULE
+               ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
+               ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
+               ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
+	    done
         else 
             echo "Unknown backend" 
         fi
