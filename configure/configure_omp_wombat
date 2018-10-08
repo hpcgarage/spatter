@@ -14,6 +14,7 @@ cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CXX_STD=11 \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
+	-D USE_OMP_SIMD=1 \
 	-D USE_CUDA=0 \
 	..    
 

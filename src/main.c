@@ -95,7 +95,14 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
     double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
     printf("%zu %lf ", bytes_moved, usable_bandwidth);
-    printf("%zu %zu %zu %u", workers, vector_len, local_work_size, shmem);
+
+    //How many threads were used - currently refers to CPU systems
+    size_t worker_threads = workers;
+    #ifdef USE_OPENMP
+	worker_threads = omp_get_max_threads();
+    #endif
+
+    printf("%zu %zu %zu %u", worker_threads, vector_len, local_work_size, shmem);
 
     printf("\n");
 
@@ -356,7 +363,7 @@ int main(int argc, char **argv)
     if (backend == OPENMP) {
 
         current_ws = worksets-1;
-        omp_set_num_threads(workers);
+        //omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
 
             ot = current_ws * target.len;
@@ -376,16 +383,27 @@ int main(int argc, char **argv)
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-                        scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, ot, os, oi, block_len);
+                        #ifdef USE_OMP_SIMD
+				scatter_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+         	               	index_len, ot, os, oi, block_len);
+                        #else
+				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len, ot, os, oi, block_len);
+			#endif
+				
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-                        gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        #ifdef USE_OMP_SIMD
+                        gather_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
+                        #else
+				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len, ot, os, oi, block_len);
+			#endif
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
