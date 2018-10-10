@@ -1,0 +1,17 @@
+export OMP_NUM_THREADS=24
+export OMP_PLACES=threads
+export OMP_PROC_BIND=true
+./omp-stream -n 1000 -s $((2**25))
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 1000 times
+Precision: double
+Array size: 268.4 MB (=0.3 GB)
+Total size: 805.3 MB (=0.8 GB)
+Function    MBytes/sec  Min (sec)   Max         Average
+Copy        66283.829   0.00810     0.01271     0.00822
+Mul         63033.593   0.00852     0.01334     0.00868
+Add         72237.977   0.01115     0.02004     0.01142
+Triad       72848.454   0.01105     0.01633     0.01126
+Dot         103093.810  0.00521     0.01415     0.00541

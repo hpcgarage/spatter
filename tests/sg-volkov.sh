@@ -25,7 +25,7 @@ echo backend=${BACKEND} device=${DEVICE}, platform=${PLATFORM}
 SPARSITY="1 2 4 8 16 32 64 128"
 #Specify the backend - openmp, cuda, opencl
 
-BLOCK="1 2 4 8 16"
+BLOCK=`seq 0 11`
 
 SHMEM=`seq 0 15 | tac`
 
@@ -48,8 +48,9 @@ LEN=$((2**20))
 
 for S in $SPARSITY;
 do
-    for B in $BLOCK;
+    for logB in $BLOCK;
     do
+        B=$((2**logB));
         for logM in $SHMEM;
         do
             M=$((2**logM))
