@@ -14,17 +14,8 @@ void sg_omp(
             long ot, 
             long os, 
             long oi, 
-            long B);
-void sg_omp_simd(
-            sgData_t* restrict target, 
-            long*     restrict ti,
-            sgData_t* restrict source,
-            long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B);
+            long B,
+	    int simd);
 void scatter_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -34,17 +25,8 @@ void scatter_omp(
             long ot, 
             long os, 
             long oi, 
-            long B);
-void scatter_omp_simd(
-            sgData_t* restrict target, 
-            long*     restrict ti,
-            sgData_t* restrict source,
-            long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B);
+            long B,
+	    int simd);
 void gather_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -54,17 +36,8 @@ void gather_omp(
             long ot, 
             long os, 
             long oi, 
-            long B);
-void gather_omp_simd(
-            sgData_t* restrict target, 
-            long*     restrict ti,
-            sgData_t* restrict source,
-            long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B);
+            long B,
+	    int simd);
 void sg_accum_omp(
             sgData_t* restrict target, 
             long*     restrict ti,

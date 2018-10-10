@@ -46,6 +46,8 @@ size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
+//Boolean flag to specify OMP SIMD optimizations; 1 = enabled
+size_t use_simd = 1;
 
 unsigned int shmem = 0;
 
@@ -376,34 +378,23 @@ int main(int argc, char **argv)
                 case SG:
                     if (op == OP_COPY) 
                         sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, ot, os, oi, block_len);
+                        index_len, ot, os, oi, block_len, use_simd);
                     else 
                         sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-                        #ifdef USE_OMP_SIMD
-				scatter_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-         	               	index_len, ot, os, oi, block_len);
-                        #else
 				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, ot, os, oi, block_len);
-			#endif
-				
+	                        index_len, ot, os, oi, block_len, use_simd);
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-                        #ifdef USE_OMP_SIMD
-                        gather_omp_simd (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, ot, os, oi, block_len);
-                        #else
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, ot, os, oi, block_len);
-			#endif
+	                        index_len, ot, os, oi, block_len, use_simd);
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
