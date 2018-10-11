@@ -44,8 +44,18 @@ OUTPUTFILE=babelstream_${SYSDESC}_${BACKEND}.txt
 #Set the number of iterations to run BabelStream
 N=100
 echo "Running BabelStream with n = $N"
+
+#NUMACTL can be used to run on just one socket but it may conflict with OpenMP env settings
+#NUMACTL=numactl -N 0 -l
+NUMACTL=
+
+#OpenMP settings to place STREAM on local threads
+export OMP_PLACES=threads
+export OMP_PROC_BIND=close
+export OMP_DISPLAY_ENV=VERBOSE
+
 #Run OpenMP version of BabelStream on one socket using local allocation
-numactl -N 0 -l ./${EXE} -n $N -s $((2**25)) &> ${OUTPUTFILE}
+${NUMACTL} ./${EXE} -n $N -s $((2**25)) &> ${OUTPUTFILE}
 
 RESULTSDIR=../../results/babelStream/${BACKEND}
 cp ${OUTPUTFILE} ${RESULTSDIR}
