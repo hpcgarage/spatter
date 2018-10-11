@@ -89,8 +89,8 @@ do
         elif [ "${BACKEND}" == "openmp" ]
         then
 	    #Attempt to reinforce socket binding with OpenMP if numactl is not available
-	    export OMP_PROC_BIND=close
-	    export OMP_PLACES=threads
+	    export OMP_PROC_BIND=master
+	    export OMP_PLACES=sockets
    	    export OMP_DISPLAY_ENV=VERBOSE
     	    
 	    #for N in $NUMTHREADS;
