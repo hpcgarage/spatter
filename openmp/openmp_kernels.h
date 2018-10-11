@@ -14,8 +14,7 @@ void sg_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd);
+            long B);
 void scatter_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -25,8 +24,7 @@ void scatter_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd);
+            long B);
 void gather_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -36,8 +34,7 @@ void gather_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd);
+            long B);
 void sg_accum_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
