@@ -19,7 +19,7 @@ void sg_omp(
   long     *sir = si     + oi; 
 
   if(B == 1){
-#pragma omp parallel for simd simdlen(SIMD)
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[sir[i]];
 	}
@@ -27,7 +27,7 @@ void sg_omp(
   else{
 #pragma omp parallel for
 	for(long i = 0; i < n; i++){
-	#pragma omp simd simdlen(SIMD)
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[sir[i]+b];
         }
@@ -51,7 +51,7 @@ void scatter_omp(
   long     *tir = ti     + oi; 
 
   if(B == 1){
-#pragma omp parallel for simd simdlen(SIMD)
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[i];
 	}
@@ -59,7 +59,7 @@ void scatter_omp(
   else{
 #pragma omp parallel for
 	for(long i = 0; i < n; i++){
-	#pragma omp simd simdlen(SIMD)
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[i+b];
         }
@@ -85,7 +85,7 @@ void gather_omp(
 
 
   if(B == 1){
-#pragma omp parallel for simd simdlen(SIMD)
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[i] = sr[sir[i]];
 	}
@@ -93,7 +93,7 @@ void gather_omp(
   else{
 #pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
-	#pragma omp simd simdlen(SIMD)
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[i+b] = sr[sir[i]+b];
         }
