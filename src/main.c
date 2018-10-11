@@ -48,6 +48,7 @@ size_t vector_len = 1;
 size_t local_work_size = 1;
 
 unsigned int shmem = 0;
+int random_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
@@ -245,8 +246,8 @@ int main(int argc, char **argv)
 
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len * worksets);
-    linear_indices(si.host_ptr, si.len, worksets, source.len / si.len);
-    linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len);
+    linear_indices(si.host_ptr, si.len, worksets, source.len / si.len, random_flag);
+    linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len, random_flag);
 
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL

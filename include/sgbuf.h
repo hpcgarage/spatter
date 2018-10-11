@@ -57,7 +57,7 @@ void random_data(sgData_t *buf, size_t len);
  *  @param worksets The number of worksets
  *  @param gap The stride of the indices
  */
-void linear_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride);
+void linear_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, int randomize);
 
 /** @brief A helper function to create buffers on devices 
  *  @param context The OpenCL context on which the buffer will be created
