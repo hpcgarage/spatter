@@ -1,12 +1,16 @@
 #!/bin/bash
 #Download and run STREAM and BabelStream
+#Usage: ./run-babel-stream.sh condesa-SNB openmp
+#Usage2: ./run-babel-stream.sh wingtip-P100 opencl
 
+#Global variables - assign the commandline parameters here
 BSTREAM=3.3
 SYSDESC=$1
 BACKEND=$2
 
+
 download_bs(){
-#Download BabelStream stable release
+#Download BabelStream stable release and untar it
 wget --no-check-certificate https://github.com/UoB-HPC/BabelStream/archive/v${BSTREAM}.tar.gz
 tar xvzf v${BSTREAM}.tar.gz
 }
@@ -22,7 +26,6 @@ fi
 }
 
 run_bs(){
-#Check for an identifier for the output
 
 cd BabelStream-${BSTREAM}
 
@@ -49,7 +52,7 @@ cp ${OUTPUTFILE} ${RESULTSDIR}
 }
 
 clean_bs(){
-#Go up one level and remove this test dir
+#Go up one level and remove this test dir and the tarball
 cd ..
 rm -rf BabelStream-${BSTREAM}
 rm v${BSTREAM}.tar.gz 
