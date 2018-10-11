@@ -74,9 +74,9 @@ do
         then
             for B in $BLOCK;
             do
-                ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B>> $O_S
-                ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B>> $O_G
-                ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B>> $O_SG
+                ./sgbench -l $LEN -d $DEVICE -s $S -k scatter -v $V --nph -q 1 -z $B>> $O_S
+                ./sgbench -l $LEN -d $DEVICE -s $S -k gather  -v $V --nph -q 1 -z $B>> $O_G
+                ./sgbench -l $LEN -d $DEVICE -s $S -k sg      -v $V --nph -q 1 -z $B>> $O_SG
             done
         elif [ "${BACKEND}" == "opencl" ]
         then
