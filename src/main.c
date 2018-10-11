@@ -46,8 +46,6 @@ size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
-//Boolean flag to specify OMP SIMD optimizations; 1 = enabled
-size_t use_simd = 1;
 
 unsigned int shmem = 0;
 
@@ -378,7 +376,7 @@ int main(int argc, char **argv)
                 case SG:
                     if (op == OP_COPY) 
                         sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, ot, os, oi, block_len, use_simd);
+                        index_len, ot, os, oi, block_len);
                     else 
                         sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
@@ -386,7 +384,7 @@ int main(int argc, char **argv)
                 case SCATTER:
                     if (op == OP_COPY)
 				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, ot, os, oi, block_len, use_simd);
+	                        index_len, ot, os, oi, block_len);
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);
@@ -394,7 +392,7 @@ int main(int argc, char **argv)
                 case GATHER:
                     if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, ot, os, oi, block_len, use_simd);
+	                        index_len, ot, os, oi, block_len);
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
                         index_len, ot, os, oi, block_len);

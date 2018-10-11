@@ -1,5 +1,7 @@
 #include "openmp_kernels.h"
 
+#define SIMD 4
+
 void sg_omp(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -9,54 +11,28 @@ void sg_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd)
+            long B)
 {
   sgData_t *tr  = target + ot;
   sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
   long     *sir = si     + oi; 
 
-//Use SIMD pragmas
-if(simd == 1)
-{
   if(B == 1){
-	#pragma omp simd
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[sir[i]];
 	}
   }
   else{
-  #pragma omp parallel for schedule(runtime)
+#pragma omp parallel for
 	for(long i = 0; i < n; i++){
-	#pragma omp simd
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[sir[i]+b];
         }
 	}
   }
-
-}
-else //Use parallel for
-{
-
-  if(B == 1){
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-	    tr[tir[i]] = sr[sir[i]];
-	}
-  }
-  else{
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-        for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] = sr[sir[i]+b];
-        }
-	}
-  }
-}//end parallel for
-
-
 }
 
 void scatter_omp(
@@ -68,50 +44,27 @@ void scatter_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd)
+            long B)
 {
   sgData_t *tr  = target + ot;
   sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
 
-//Use SIMD pragmas
-if(simd == 1)
-{
   if(B == 1){
-#pragma omp simd
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[i];
 	}
   }
   else{
-#pragma omp parallel for schedule(runtime)
+#pragma omp parallel for
 	for(long i = 0; i < n; i++){
-	#pragma omp simd
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[tir[i]+b] = sr[i+b];
         }
 	}
   }
-
-}
-else //Use parallel for
-{
-  if(B == 1){
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-	    tr[tir[i]] = sr[i];
-	}
-  }
-  else{
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-        for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] = sr[i+b];
-        }
-	}
-  }
-}
 
 }
 
@@ -124,19 +77,15 @@ void gather_omp(
             long ot, 
             long os, 
             long oi, 
-            long B,
-	    int simd)
+            long B)
 {
   sgData_t *tr  = target + ot;
   sgData_t *sr  = source + os;
   long     *sir = si     + oi; 
 
 
-//Use SIMD pragmas
-if(simd == 1)
-{
   if(B == 1){
-#pragma omp simd
+#pragma omp parallel for simd safelen(SIMD)
 	for(long i = 0; i < n; i++){
 	    tr[i] = sr[sir[i]];
 	}
@@ -144,31 +93,13 @@ if(simd == 1)
   else{
 #pragma omp parallel for schedule(runtime)
 	for(long i = 0; i < n; i++){
-	#pragma omp simd
+	#pragma omp simd safelen(SIMD)
         for(int b = 0; b < B; b++){
 	        tr[i+b] = sr[sir[i]+b];
         }
 	}
   }
 
-}
-else //Use parallel for
-{
-  if(B == 1){
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-	    tr[i] = sr[sir[i]];
-	}
-  }
-  else{
-#pragma omp parallel for schedule(runtime)
-	for(long i = 0; i < n; i++){
-        for(int b = 0; b < B; b++){
-	        tr[i+b] = sr[sir[i]+b];
-        }
-	}
-  }
-}//end parallel for
 }
 
 void sg_accum_omp(
