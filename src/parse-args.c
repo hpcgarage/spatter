@@ -265,7 +265,7 @@ void parse_args(int argc, char **argv)
             error("Specified CUDA device not found or no device specified. Using device 0", 0);
             dev = 0;
         }
-        cudaSetDevice(0);
+        cudaSetDevice(dev);
     }
     #endif
 
