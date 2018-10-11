@@ -1,0 +1,32 @@
+
+OPENMP DISPLAY ENVIRONMENT BEGIN
+  _OPENMP = '201307'
+  OMP_DYNAMIC = 'FALSE'
+  OMP_NESTED = 'FALSE'
+  OMP_NUM_THREADS = '12'
+  OMP_SCHEDULE = 'DYNAMIC'
+  OMP_PROC_BIND = 'MASTER'
+  OMP_PLACES = '{0:12},{12:12}'
+  OMP_STACKSIZE = '140725723021128'
+  OMP_WAIT_POLICY = 'PASSIVE'
+  OMP_THREAD_LIMIT = '4294967295'
+  OMP_MAX_ACTIVE_LEVELS = '2147483647'
+  OMP_CANCELLATION = 'FALSE'
+  OMP_DEFAULT_DEVICE = '0'
+  GOMP_CPU_AFFINITY = ''
+  GOMP_STACKSIZE = '140725723021128'
+  GOMP_SPINCOUNT = '300000'
+OPENMP DISPLAY ENVIRONMENT END
+BabelStream
+Version: 3.3
+Implementation: OpenMP
+Running kernels 100 times
+Precision: double
+Array size: 268.4 MB (=0.3 GB)
+Total size: 805.3 MB (=0.8 GB)
+Function    MBytes/sec  Min (sec)   Max         Average     
+Copy        37164.195   0.01445     0.01916     0.01561     
+Mul         36325.977   0.01478     0.01861     0.01604     
+Add         41144.740   0.01957     0.02508     0.02145     
+Triad       41413.157   0.01945     0.02615     0.02132     
+Dot         57744.043   0.00930     0.01515     0.00992     
