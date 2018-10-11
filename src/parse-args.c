@@ -39,6 +39,7 @@ extern size_t workers;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
+extern int random_flag;
 extern unsigned int shmem;
 extern enum sg_op op;
 
@@ -106,6 +107,7 @@ void parse_args(int argc, char **argv)
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
         {"supress-errors",  no_argument,       NULL, 'q'},
+        {"random",          no_argument,       NULL, 'y'},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
@@ -116,7 +118,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:y",
                          long_options, &option_index);
 
         switch(c){
@@ -213,6 +215,9 @@ void parse_args(int argc, char **argv)
                 break;
             case 'z':
                 sscanf(optarg,"%zu", &local_work_size);
+                break;
+            case 'y':
+                random_flag = 1;
                 break;
             case 'm':
                 sscanf(optarg,"%u", &shmem);
