@@ -3,11 +3,11 @@
 #Usage: ./run-stream.sh condesa-SNB openmp
 #Usage2: ./run-stream.sh wingtip-P100 opencl
 
+#set -x
+
 #Global variables - assign the commandline parameters here
 STREAM=STREAM
 SYSDESC=$1
-BACKEND=$2
-
 
 download_stream(){
 #Download Stream git repo
@@ -34,8 +34,11 @@ cd STREAM
 #Change the default GCC/GFortran
 sed -i -e 's/gcc-4.9/gcc/g' Makefile
 sed -i -e 's/gfortran-4.9/gfortran/g' Makefile
-#Update the flags
+
+#Update the flags to set size and iterations
 sed -i -e 's|CFLAGS = -O2 -fopenmp|CFLAGS = -O2 -fopenmp -DSTREAM_ARRAY_SIZE=126000000 -DNTIMES=100|g' Makefile
+#Tuned for ThunderX2 systems
+#sed -i -e 's|CFLAGS = -O2 -fopenmp|CFLAGS = -O2 -fopenmp -mtune=-mcpu=thunderx2t99 -mtune=thunderx2t99 -DSTREAM_ARRAY_SIZE=126000000 -DNTIMES=100|g' Makefile
 
 
 #Just build the C executable
@@ -44,12 +47,21 @@ make ${EXE}
 
 OUTPUTFILE=stream_${SYSDESC}.txt
 
-echo "Running STREAM with n = $N"
-#Run OpenMP version of BabelStream on one socket using local allocation
-numactl -N 0 -l ./${EXE} &> ${OUTPUTFILE}
+#NUMACTL can be used to run on just one socket but it may conflict with OpenMP env settings
+#NUMACTL=numactl -N 0 -l
+NUMACTL=
 
-RESULTSDIR=../../results/STREAM/
-cp ${OUTPUTFILE} ${RESULTSDIR}
+#OpenMP settings to place STREAM on local threads
+export OMP_PLACES=threads
+export OMP_PROC_BIND=close
+export OMP_DISPLAY_ENV=VERBOSE
+
+#Run OpenMP version of BabelStream on one socket using local allocation
+echo "Running STREAM with n = $N"
+${NUMACTL} ./${EXE} &> ${OUTPUTFILE}
+
+RESULTSDIR=../../results/STREAM
+cp ${OUTPUTFILE} ${RESULTSDIR}/.
 
 #Go back to base directory
 cd ..
@@ -63,4 +75,4 @@ rm -rf STREAM
 check_param
 download_stream
 run_stream
-#clean_stream
+clean_stream
