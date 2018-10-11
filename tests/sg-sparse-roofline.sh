@@ -57,7 +57,8 @@ O_G=${SCRIPTNAME}_${BACKEND}_${DEVICE}_GATHER.ssv
 O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 
 #Use numactl to allocate memory locally and only use one socket
-NUMACTL="numactl -N 0 -l"
+#NUMACTL="numactl -N 0 -l"
+NUMACTL=
 
 #Specify a large region to be used for the "sparse space
 LEN=$((2**20))

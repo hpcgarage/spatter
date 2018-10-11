@@ -1,65 +1,34 @@
-$ export OMP_NUM_THREADS=112
-$ export OMP_PROC_BIND=spread
-========
- ./omp-stream-default-gnu -n 1000 -s 125000000
-BabelStream
-Version: 3.3
-Implementation: OpenMP
-Running kernels 1000 times
-Precision: double
-Array size: 1000.0 MB (=1.0 GB)
-Total size: 3000.0 MB (=3.0 GB)
-Function    MBytes/sec  Min (sec)   Max         Average
-Copy        104701.117  0.01910     0.04242     0.02063
-Mul         98034.737   0.02040     0.13346     0.02302
-Add         108684.323  0.02760     0.15811     0.03128
-Triad       112219.062  0.02673     0.13949     0.03040
-Dot         114171.966  0.01752     0.14126     0.02104
-==========
-./omp-stream-gnu-tx2 -n 1000 -s 125000000
-BabelStream
-Version: 3.3
-Implementation: OpenMP
-Running kernels 1000 times
-Precision: double
-Array size: 1000.0 MB (=1.0 GB)
-Total size: 3000.0 MB (=3.0 GB)
-Function    MBytes/sec  Min (sec)   Max         Average
-Copy        120892.708  0.01654     0.13021     0.01743
-Mul         141585.783  0.01413     0.02842     0.02448
-Add         125963.627  0.02382     0.15216     0.03121
-Triad       116906.190  0.02566     0.15132     0.03228
-Dot         116420.690  0.01718     0.04420     0.02492
-============
+$ ./omp-stream-gnu-tx2 -n 100 -s $((2**25))
 
-$ export OMP_PROC_BIND=close
-============
-[jyoung9@wombat5 BabelStream]$ ./omp-stream-default-gnu -n 1000 -s 125000000
+OPENMP DISPLAY ENVIRONMENT BEGIN
+  _OPENMP = '201511'
+  OMP_DYNAMIC = 'FALSE'
+  OMP_NESTED = 'FALSE'
+  OMP_NUM_THREADS = '112'
+  OMP_SCHEDULE = 'DYNAMIC'
+  OMP_PROC_BIND = 'TRUE'
+  OMP_PLACES = '{0:112},{112:112}'
+  OMP_STACKSIZE = '0'
+  OMP_WAIT_POLICY = 'PASSIVE'
+  OMP_THREAD_LIMIT = '4294967295'
+  OMP_MAX_ACTIVE_LEVELS = '2147483647'
+  OMP_CANCELLATION = 'FALSE'
+  OMP_DEFAULT_DEVICE = '0'
+  OMP_MAX_TASK_PRIORITY = '0'
+  GOMP_CPU_AFFINITY = ''
+  GOMP_STACKSIZE = '0'
+  GOMP_SPINCOUNT = '300000'
+OPENMP DISPLAY ENVIRONMENT END
 BabelStream
 Version: 3.3
 Implementation: OpenMP
-Running kernels 1000 times
+Running kernels 100 times
 Precision: double
-Array size: 1000.0 MB (=1.0 GB)
-Total size: 3000.0 MB (=3.0 GB)
+Array size: 268.4 MB (=0.3 GB)
+Total size: 805.3 MB (=0.8 GB)
 Function    MBytes/sec  Min (sec)   Max         Average
-Copy        86916.529   0.02301     0.02528     0.02348
-Mul         87555.443   0.02284     0.02632     0.02317
-Add         88358.705   0.03395     0.04027     0.03430
-Triad       88332.325   0.03396     0.03980     0.03424
-Dot         85502.982   0.02339     0.17102     0.02450
-==========
-[jyoung9@wombat5 BabelStream]$ ./omp-stream-gnu-tx2 -n 1000 -s 125000000
-BabelStream
-Version: 3.3
-Implementation: OpenMP
-Running kernels 1000 times
-Precision: double
-Array size: 1000.0 MB (=1.0 GB)
-Total size: 3000.0 MB (=3.0 GB)
-Function    MBytes/sec  Min (sec)   Max         Average
-Copy        87031.073   0.02298     0.02676     0.02349
-Mul         87570.030   0.02284     0.02631     0.02314
-Add         88340.648   0.03396     0.03761     0.03429
-Triad       88202.135   0.03401     0.03738     0.03423
-Dot         85867.103   0.02329     0.16533     0.02445
+Copy        171229.989  0.00314     0.00943     0.00348
+Mul         171025.710  0.00314     0.00643     0.00338
+Add         171436.581  0.00470     0.00799     0.00499
+Triad       173130.886  0.00465     0.00563     0.00483
+Dot         165227.451  0.00325     0.00547     0.00351
