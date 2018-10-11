@@ -60,7 +60,7 @@ O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 #NUMACTL="numactl -N 0 -l"
 NUMACTL=
 
-#Specify a large region to be used for the "sparse space
+#Specify a large region to be used for the "sparse" space
 LEN=$((2**22))
 
 export CL_HELPER_NO_COMPILER_OUTPUT_NAG=1
@@ -89,8 +89,8 @@ do
         elif [ "${BACKEND}" == "openmp" ]
         then
 	    #Attempt to reinforce socket binding with OpenMP if numactl is not available
-	    export OMP_PROC_BIND=true
-	    export OMP_PLACES=sockets
+	    export OMP_PROC_BIND=close
+	    export OMP_PLACES=threads
    	    export OMP_DISPLAY_ENV=VERBOSE
     	    
 	    #for N in $NUMTHREADS;
