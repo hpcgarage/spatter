@@ -61,7 +61,7 @@ O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 NUMACTL=
 
 #Specify a large region to be used for the "sparse space
-LEN=$((2**20))
+LEN=$((2**22))
 
 export CL_HELPER_NO_COMPILER_OUTPUT_NAG=1
 
