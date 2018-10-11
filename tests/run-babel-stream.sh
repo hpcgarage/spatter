@@ -50,8 +50,8 @@ echo "Running BabelStream with n = $N"
 NUMACTL=
 
 #OpenMP settings to place STREAM on local threads
-export OMP_PLACES=threads
-export OMP_PROC_BIND=close
+export OMP_PLACES=sockets
+export OMP_PROC_BIND=master
 export OMP_DISPLAY_ENV=VERBOSE
 
 #Run OpenMP version of BabelStream on one socket using local allocation
