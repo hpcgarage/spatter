@@ -1,7 +1,21 @@
 #!/bin/bash
-#This script runs the R plotting script on the commandline and places output with the data
+# Authors: Jeffrey Young, Patrick Lavin
+# Last Modified: October 11, 2018
+#This script organizes data into the correct results directories
 
-set -x
+#Print out each command for debugging purposes
+#set -x
+
+SCRIPT='./'`basename "$0"`
+USAGE='\nUsage: \n  '$SCRIPT' <BACKEND=openmp/cuda/opencl> <SYSTEM_DESCRIPTION> <DEVICE=cpu/gpu/knl> \n  Ex: '$SCRIPT' cuda octane-k40 gpu\n\n'
+
+# Check arguments to script.
+if [ $# -lt 3 ]; then
+    echo -ne $USAGE
+    exit
+fi
+
+#User specifies backend
 
 #Backend language
 BACKEND=$1
@@ -34,4 +48,5 @@ fi
 echo $FULLRESULT
 
 mv sg_sparse_roofline_${BACKEND}_${SYS}_${OPUPPER}.ssv  ${FULLRESULT}/.
+mv sg_rdm_roofline_${BACKEND}_${SYS}_${OPUPPER}.ssv  ${FULLRESULT}/.
 done
