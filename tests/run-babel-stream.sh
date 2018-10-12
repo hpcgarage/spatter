@@ -13,6 +13,7 @@ download_bs(){
 #Download BabelStream stable release and untar it
 wget --no-check-certificate https://github.com/UoB-HPC/BabelStream/archive/v${BSTREAM}.tar.gz
 tar xvzf v${BSTREAM}.tar.gz
+rm v${BSTREAM}.tar.gz 
 }
 
 
@@ -20,7 +21,7 @@ check_param()
 {
 #Check to make sure two arguments were passed
 if [ -z "$SYSDESC" ] || [ -z "$BACKEND" ]; then 
-echo "Please pass an identifier like '<machinename-CPU/CPU>' as the first argument and 'openmp' or 'opencl' as the second argument"
+echo "Please pass an identifier like '<machinename-CPU/CPU>' as the first argument and 'openmp', 'cuda', or 'opencl' as the second argument"
 	exit 1
 fi
 }
@@ -35,10 +36,16 @@ then
 	#Intel compiler
 	#COMPILER=INTEL make -f OpenMP.make
 	EXE=omp-stream
-else
+elif [ ${BACKEND} == "opencl" ];
+then
 	make -f OpenCL.make
 	BACKEND=opencl
 	EXE=opencl-stream
+elif [ ${BACKEND} == "cuda" ];
+then
+	make -f CUDA.make
+	BACKEND=cuda
+	EXE=cuda-stream
 fi
 
 OUTPUTFILE=babelstream_${SYSDESC}_${BACKEND}.txt
@@ -67,7 +74,6 @@ clean_bs(){
 #Go up one level and remove this test dir and the tarball
 cd ..
 rm -rf BabelStream-${BSTREAM}
-rm v${BSTREAM}.tar.gz 
 }
 
 #Execute each function or comment out specific functions
