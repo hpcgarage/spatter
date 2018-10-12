@@ -32,6 +32,8 @@ cd BabelStream-${BSTREAM}
 if [ ${BACKEND} == "openmp" ]; 
 then
 	make -f OpenMP.make
+	#Intel compiler
+	#COMPILER=INTEL make -f OpenMP.make
 	EXE=omp-stream
 else
 	make -f OpenCL.make
@@ -72,4 +74,4 @@ rm v${BSTREAM}.tar.gz
 check_param
 download_bs
 run_bs
-clean_bs
+#clean_bs
