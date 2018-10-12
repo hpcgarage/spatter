@@ -1,0 +1,15 @@
+BabelStream
+Version: 3.3
+Implementation: CUDA
+Running kernels 100 times
+Precision: double
+Array size: 268.4 MB (=0.3 GB)
+Total size: 805.3 MB (=0.8 GB)
+Using CUDA device Quadro GV100
+Driver: 9000
+Function    MBytes/sec  Min (sec)   Max         Average     
+Copy        591349.584  0.00091     0.00092     0.00091     
+Mul         587382.905  0.00091     0.00092     0.00092     
+Add         615700.246  0.00131     0.00132     0.00131     
+Triad       614349.848  0.00131     0.00133     0.00132     
+Dot         650032.463  0.00083     0.00084     0.00083     
