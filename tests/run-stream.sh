@@ -33,12 +33,16 @@ cd STREAM
 
 #Change the default GCC/GFortran
 sed -i -e 's/gcc-4.9/gcc/g' Makefile
+#Intel compiler
+#sed -i -e 's/gcc-4.9/icpc/g' Makefile
 sed -i -e 's/gfortran-4.9/gfortran/g' Makefile
 
-#Update the flags to set size and iterations
+#Update the flags in the Makefile to set size and iterations
 sed -i -e 's|CFLAGS = -O2 -fopenmp|CFLAGS = -O2 -fopenmp -DSTREAM_ARRAY_SIZE=126000000 -DNTIMES=100|g' Makefile
 #Tuned for ThunderX2 systems
 #sed -i -e 's|CFLAGS = -O2 -fopenmp|CFLAGS = -O2 -fopenmp -mtune=-mcpu=thunderx2t99 -mtune=thunderx2t99 -DSTREAM_ARRAY_SIZE=126000000 -DNTIMES=100|g' Makefile
+#Tuned for Intel KNL
+#sed -i -e 's|CFLAGS = -O2 -fopenmp|CFLAGS = -O2 -xHost -qopt-streaming-stores=always -qopenmp -DSTREAM_ARRAY_SIZE=126000000 -DNTIMES=100|g' Makefile
 
 
 #Just build the C executable
@@ -75,4 +79,4 @@ rm -rf STREAM
 check_param
 download_stream
 run_stream
-clean_stream
+#clean_stream
