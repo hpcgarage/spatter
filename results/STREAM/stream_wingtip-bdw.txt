@@ -1,0 +1,52 @@
+
+OPENMP DISPLAY ENVIRONMENT BEGIN
+  _OPENMP = '201307'
+  OMP_DYNAMIC = 'FALSE'
+  OMP_NESTED = 'FALSE'
+  OMP_NUM_THREADS = '12'
+  OMP_SCHEDULE = 'DYNAMIC'
+  OMP_PROC_BIND = 'MASTER'
+  OMP_PLACES = '{0:12},{12:12}'
+  OMP_STACKSIZE = '140733452574532'
+  OMP_WAIT_POLICY = 'PASSIVE'
+  OMP_THREAD_LIMIT = '4294967295'
+  OMP_MAX_ACTIVE_LEVELS = '2147483647'
+  OMP_CANCELLATION = 'FALSE'
+  OMP_DEFAULT_DEVICE = '0'
+  GOMP_CPU_AFFINITY = ''
+  GOMP_STACKSIZE = '140733452574532'
+  GOMP_SPINCOUNT = '300000'
+OPENMP DISPLAY ENVIRONMENT END
+-------------------------------------------------------------
+STREAM version $Revision: 5.10 $
+-------------------------------------------------------------
+This system uses 8 bytes per array element.
+-------------------------------------------------------------
+Array size = 126000000 (elements), Offset = 0 (elements)
+Memory per array = 961.3 MiB (= 0.9 GiB).
+Total memory required = 2883.9 MiB (= 2.8 GiB).
+Each kernel will be executed 100 times.
+ The *best* time for each kernel (excluding the first iteration)
+ will be used to compute the reported bandwidth.
+-------------------------------------------------------------
+Number of Threads requested = 12
+Number of Threads counted = 12
+-------------------------------------------------------------
+Your clock granularity/precision appears to be 1 microseconds.
+Each test below will take on the order of 40854 microseconds.
+   (= 40854 clock ticks)
+Increase the size of the arrays if this shows that
+you are not getting at least 20 clock ticks per test.
+-------------------------------------------------------------
+WARNING -- The above is only a rough guideline.
+For best results, please be sure you know the
+precision of your system timer.
+-------------------------------------------------------------
+Function    Best Rate MB/s  Avg time     Min time     Max time
+Copy:           36297.5     0.061770     0.055541     0.069085
+Scale:          36506.5     0.062229     0.055223     0.071292
+Add:            41697.0     0.080436     0.072523     0.088218
+Triad:          41393.5     0.079740     0.073055     0.087316
+-------------------------------------------------------------
+Solution Validates: avg error less than 1.000000e-13 on all three arrays
+-------------------------------------------------------------
