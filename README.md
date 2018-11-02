@@ -38,7 +38,7 @@ The only required argument to spatter is the amount of data to move. It will gue
 ```
 
 ### Arguments
-Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), 
+Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), -v (the work per thread) and -z (the CUDA/OpenCL block size).
 ```
 ./spatter <arguments>
     -b, --backend=<backend>
