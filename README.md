@@ -11,8 +11,10 @@ Spatter supports the following primitives.
 
 Scatter:
     A[j[:]] = B[:]
+
 Gather:
     A[:] = B[i[:]]
+
 SG:
     A[j[:]] = B[i[:]]
 
@@ -37,6 +39,7 @@ The only required argument to spatter is the amount of data to move. It will gue
 
 ### Arguments
 Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), 
+```
 ./spatter <arguments>
     -b, --backend=<backend>
         Specify backend: OpenCL or OpenMP
