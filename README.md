@@ -1,4 +1,4 @@
-## Spatter Benchmark {#mainpage}
+## Spatter Benchmark
 This is a microbenchmark for timing Scatter/Gather kernels on CPUs and GPUs. 
 
 ## Purpose 
