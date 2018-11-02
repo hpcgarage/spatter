@@ -41,6 +41,7 @@ size_t target_len;
 size_t index_len;
 size_t block_len;
 size_t seed;
+size_t wrap = 1;
 size_t R = 10;
 size_t N = 100;
 size_t workers = 1;
@@ -148,6 +149,7 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
 
+
     /* =======================================
 	Initalization
        =======================================
@@ -195,6 +197,31 @@ int main(int argc, char **argv)
     /* These are the total size of the data allocated for each buffer */
     source.size = worksets * source.len * sizeof(sgData_t);
     target.size = worksets * target.len * sizeof(sgData_t);
+
+    si.stride = source.len / si.len;
+    ti.stride = target.len / ti.len;
+
+    if (kernel == GATHER || kernel == SG) {
+        if(wrap > si.stride) {
+            wrap = si.stride;
+        }
+    }
+    if (kernel == SCATTER || kernel == SG) {
+        if(wrap > ti.stride) { 
+            wrap = ti.stride;
+        }
+    }
+
+    if (wrap > 1){
+        if (kernel == GATHER || kernel == SG) {
+            source.size = source.size / wrap;
+            source.len = source.len / wrap;
+        }
+        if (kernel == SCATTER || kernel == SG) {
+            target.size = target.size / wrap;
+            target.len = target.len / wrap;
+        }
+    }
 
     /*
     #ifdef USE_OPENCL
@@ -246,8 +273,23 @@ int main(int argc, char **argv)
 
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len * worksets);
-    linear_indices(si.host_ptr, si.len, worksets, source.len / si.len, random_flag);
-    linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len, random_flag);
+    //linear_indices(si.host_ptr, si.len, worksets, source.len / si.len, random_flag);
+    //linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len, random_flag);
+
+    if (wrap > 1) {
+        wrap_indices(si.host_ptr, si.len, worksets, si.stride, wrap);
+        wrap_indices(ti.host_ptr, ti.len, worksets, ti.stride, wrap);
+    } else {
+        linear_indices(si.host_ptr, si.len, worksets, si.stride, random_flag);
+        linear_indices(ti.host_ptr, ti.len, worksets, ti.stride, random_flag);
+    }
+
+    /*
+    for(size_t kk = 0; kk < si.len; kk++){
+        printf("%zu ", si.host_ptr[kk]);
+    }
+    printf("\n");
+    */
 
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
