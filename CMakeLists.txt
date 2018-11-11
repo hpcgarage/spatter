@@ -24,9 +24,9 @@ ENDIF ()
 
 # Declare project languages
 IF (USE_CUDA)
-    PROJECT (sgbench C CXX CUDA)
+    PROJECT (spatter C CXX CUDA)
 ELSE ()
-    PROJECT (sgbench C CXX)
+    PROJECT (spatter C CXX)
 ENDIF ()
 
 # Debug function to check all the variables in the CMakeFile
@@ -129,17 +129,17 @@ SET (
 )
 
 # Specify the executable and source files
-ADD_EXECUTABLE (sgbench ${SOURCE_FILES})
+ADD_EXECUTABLE (spatter ${SOURCE_FILES})
 
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
 IF (USE_OPENMP)
-    TARGET_LINK_LIBRARIES (sgbench LINK_PUBLIC gomp)
+    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC gomp)
 ENDIF ()
 
 IF (USE_OPENCL)
-    TARGET_LINK_LIBRARIES (sgbench LINK_PUBLIC OpenCL)
+    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC OpenCL)
 ENDIF ()
 
 IF (USE_CUDA)
@@ -148,7 +148,7 @@ IF (USE_CUDA)
         HINTS
             /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda-9.2/lib64/
     )
-    TARGET_LINK_LIBRARIES (sgbench LINK_PUBLIC ${CUDART_LIBRARY})
+    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF ()
 
 # Copy over the test scripts

@@ -43,6 +43,7 @@ typedef struct sgIndexBuf_t{
 
     size_t len;           /**< The length of the buffer (number of sgIdx_t's) */
     size_t size;          /**< The size of the buffer (in bytes) */
+    size_t stride;
 }sgIndexBuf;
 
 /** @brief Fill buf with random values.
@@ -59,6 +60,7 @@ void random_data(sgData_t *buf, size_t len);
  */
 void linear_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, int randomize);
 
+void wrap_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, size_t wrap);
 /** @brief A helper function to create buffers on devices 
  *  @param context The OpenCL context on which the buffer will be created
  *  @param flags The flags to use in the call to clCreateBuffer

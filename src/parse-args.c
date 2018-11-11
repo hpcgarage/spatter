@@ -30,6 +30,7 @@ extern size_t source_len;
 extern size_t target_len;
 extern size_t index_len;
 extern size_t block_len;
+extern size_t wrap;
 extern size_t seed;
 extern size_t vector_len;
 extern size_t R;
@@ -102,6 +103,7 @@ void parse_args(int argc, char **argv)
         {"runs",            required_argument, NULL, 'R'},
         {"loops",           required_argument, NULL, 'N'},
         {"workers",         required_argument, NULL, 'W'},
+        {"wrap",            required_argument, NULL, 'w'},
         {"op",              required_argument, NULL, 'o'},
         {"sparsity",        required_argument, NULL, 's'},
         {"local-work-size", required_argument, NULL, 'z'},
@@ -118,7 +120,7 @@ void parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:y",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:yw:",
                          long_options, &option_index);
 
         switch(c){
@@ -206,6 +208,9 @@ void parse_args(int argc, char **argv)
                 break;
             case 'W':
                 sscanf(optarg, "%zu", &workers);
+                break;
+            case 'w':
+                sscanf(optarg, "%zu", &wrap);
                 break;
             case 'l':
                 sscanf(optarg,"%zu", &generic_len);
