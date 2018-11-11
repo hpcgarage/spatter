@@ -53,7 +53,7 @@ Steps:
 
 4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
 
-![Alt text](resources/gather_comparison.eps?raw=true "Title")
+![Alt text](resources/gather_comparison.png?raw=true "Title")
 
 ### Arguments
 Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), -v (the work per thread) and -z (the CUDA/OpenCL block size).
