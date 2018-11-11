@@ -67,44 +67,25 @@ export CL_HELPER_NO_COMPILER_OUTPUT_NAG=1
 
 for S in $SPARSITY;
 do
-    echo "Running at density 1/"$SPARSITY".
+    echo "Running at density 1/"$S
     for V in $VECTOR;
     do
         if [ "${BACKEND}" == "cuda" ]
         then
             for B in $BLOCK;
             do
-                ./sgbench -l $LEN -d $DEVICE -s $S -k scatter -v $V --nph -q 1 -z $B>> $O_S
-                ./sgbench -l $LEN -d $DEVICE -s $S -k gather  -v $V --nph -q 1 -z $B>> $O_G
-                ./sgbench -l $LEN -d $DEVICE -s $S -k sg      -v $V --nph -q 1 -z $B>> $O_SG
+                ./spatter -l $LEN -d $DEVICE -s $S -k scatter -v $V --nph -q 1 -z $B>> $O_S
+                ./spatter -l $LEN -d $DEVICE -s $S -k gather  -v $V --nph -q 1 -z $B>> $O_G
+                ./spatter -l $LEN -d $DEVICE -s $S -k sg      -v $V --nph -q 1 -z $B>> $O_SG
             done
         elif [ "${BACKEND}" == "opencl" ]
         then
             for B in $BLOCK;
             do
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B >> $O_S
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B >> $O_G
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B >> $O_SG
+                ./spatter -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B >> $O_S
+                ./spatter -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B >> $O_G
+                ./spatter -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B >> $O_SG
             done
-        elif [ "${BACKEND}" == "openmp" ]
-        then
-	    #Attempt to reinforce socket binding with OpenMP if numactl is not available
-	    export OMP_PROC_BIND=master
-	    export OMP_PLACES=sockets
-   	    export OMP_DISPLAY_ENV=VERBOSE
-    	    
-	    #for N in $NUMTHREADS;
-	    #do
-	      # export OMP_NUM_THREADS=$N
-           
-	       #export OMP_SCHEDULE="static,"$V
-               #echo $OMP_SCHEDULE
-               $NUMACTL ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
-               $NUMACTL ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
-               $NUMACTL ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG
-	    #done
-        else 
-            echo "Unknown backend" 
         fi
     done
 

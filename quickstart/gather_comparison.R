@@ -1,6 +1,7 @@
 library(ggplot2)
 library(tools)
 library("RColorBrewer")
+options(warn=-1)
 
 args = commandArgs(trailingOnly=TRUE)
 printf <- function(...) cat(sprintf(...))
@@ -72,6 +73,9 @@ if(length(args) > 2){
 
     temp$usable_bandwidth = temp$usable_bandwidth * MiBtoMB
     device = (strsplit(args[i],"_"))[[1]][5]
+    if (device == "cuda") {
+        device = (strsplit(args[i],"_"))[[1]][6]
+    }
     device_names = c(device_names, device)
     temp$dev = device
     temp$bw_pct = (temp$usable_bandwidth / subset(dev_bw, dev==device)$bw) * 100

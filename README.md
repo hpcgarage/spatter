@@ -47,9 +47,9 @@ Steps:
 
 1. You will need the bandwidth of your GPU. If you don't know it, you can go to `tests/run_babel_stream.sh` and run it. The results will be in `tests/BabelStream-3.3/babelstream_DEVICENAME_cuda.txt`. Note the max copy bandwidth.
 
-2. Go to your build folder and run `sparsity_test.sh`. This will take a while. (But it will be optimized soon!) 
+2. Go to your build folder (`build_cuda`) and run `sparsity_test.sh`. This will take a while. (But it will be optimized soon!) 
 
-3. Go to the `quickstart` directory (sibling of your build directory) and run `./gather_comparison.sh ../build/GATHER_FILE.sh sg_sparse_roofline_cuda_user_GATHER.ssv <BANDWIDTH>`, where BANDWIDTH is the bandwidth from step 1. 
+3. Go to the `quickstart` directory (sibling of your build directory) and run `./gather_comparison.sh ../build_cuda/sg_sparse_roofline_cuda_user_GATHER.ssv BANDWIDTH`, where BANDWIDTH is the bandwidth from step 1. 
 
 4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
 
