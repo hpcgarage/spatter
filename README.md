@@ -51,7 +51,10 @@ Steps:
 
 3. Go to the `quickstart` directory (sibling of your build directory) and run `./gather_comparison.sh ../build/GATHER_FILE.sh sg_sparse_roofline_cuda_user_GATHER.ssv <BANDWIDTH>`, where BANDWIDTH is the bandwidth from step 1. 
 
-4. This will produce `gather_comparison.eps` in the `quickstart` directory.
+4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
+
+![Alt text](resources/gather_comparison.eps?raw=true "Title")
+
 ### Arguments
 Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), -v (the work per thread) and -z (the CUDA/OpenCL block size).
 ```
