@@ -1,0 +1,10 @@
+#!/bin/bash
+
+count=`ls -1q ../devices/*.dev | wc -l`
+
+echo "Spatter is aware of the following $count devices..."
+
+for d in `ls ../devices/*.dev`;
+do
+    echo $d | cut -d/ -f3 | cut -d. -f1 | sed 's/^/  /'
+done
