@@ -7,7 +7,7 @@ For some time now, memory has been the bottleneck in modern computers. As CPUs g
 With this benchmark, we aim to characterize the performance of memory systems in a novel way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures. We will use these results to predict the impact of new memory access primitives. 
 
 ### Kernels
-Spatter supports the following primitives.
+Spatter supports the following primitives:
 
 Scatter:
     `A[j[:]] = B[:]`
@@ -15,8 +15,14 @@ Scatter:
 Gather:
     `A[:] = B[i[:]]`
 
-SG:
+S+G:
     `A[j[:]] = B[i[:]]`
+    
+![Gather Comparison](resources/sgexplain2.png?raw=true "Gather Comparison")
+    
+This diagram depicts the full Scatter+Gather. Gather performs on the top half of this diagram and Scatter the second half.
+
+
 
 ### Building
 CMake is required to build Spatter
@@ -31,7 +37,7 @@ or use one of the other configure scripts to compile with different backends.
 
 ### Quick Start
 
-The only required argument to spatter is the amount of data to move. It will guess all other arguments such as kernel and device. 
+The only required argument to spatter is the amount of data to move. It will guess all other arguments such as kernel and device. However, this produces data for a single sparsity (default is 1) and doesn't do any tuning. To obtain more useful output, continue on to the next section.
 
 ```
 ./spatter -l 2048
@@ -53,7 +59,7 @@ Steps:
 
 4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
 
-![Alt text](resources/gather_comparison.png?raw=true "Gather Comparison")
+![Gather Comparison](resources/gather_comparison.png?raw=true "Gather Comparison")
 
 ### Arguments
 Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), -v (the work per thread) and -z (the CUDA/OpenCL block size).
