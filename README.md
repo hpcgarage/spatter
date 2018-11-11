@@ -10,13 +10,13 @@ With this benchmark, we aim to characterize the performance of memory systems in
 Spatter supports the following primitives.
 
 Scatter:
-    A[j[:]] = B[:]
+    `A[j[:]] = B[:]`
 
 Gather:
-    A[:] = B[i[:]]
+    `A[:] = B[i[:]]`
 
 SG:
-    A[j[:]] = B[i[:]]
+    `A[j[:]] = B[i[:]]`
 
 ### Building
 CMake is required to build Spatter
