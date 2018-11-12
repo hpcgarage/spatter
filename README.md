@@ -1,5 +1,5 @@
 ## Spatter Benchmark
-This is a microbenchmark for timing Scatter/Gather kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter). Please submit an issue on Github if you run into any issues.
+This is a microbenchmark for timing Scatter/Gather kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter) and read more abut Spatter in our recently submitted [paper](https://arxiv.org/abs/1811.03743). Please submit an issue on Github if you run into any issues.
 
 ## Purpose 
 For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do not reuse data much, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search  for new approaches to better utilize what little memory bandwidth is available. 
