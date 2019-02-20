@@ -127,8 +127,8 @@ SET (
 ADD_EXECUTABLE (spatter ${SOURCE_FILES})
 
 # Use the 2011 standards for C and C++.
-set_property(TARGET spatter PROPERTY C_STANDARD 11)
-set_property(TARGET spatter PROPERTY CXX_STANDARD 11)
+SET_PROPERTY (TARGET spatter PROPERTY C_STANDARD 11)
+SET_PROPERTY (TARGET spatter PROPERTY CXX_STANDARD 11)
 
 
 # Print out debug info print_all_variables()
