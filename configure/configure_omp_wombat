@@ -10,7 +10,7 @@ rm -rf CMake*
 #Specify the ThunderX2 flags to tune for the TX2 architecture
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_CXX_COMPILER=armclang \
-	-D CMAKE_CXX_FLAGS="-mcpu=thunderx2t99 -mtune=thunderx2t99 -O3 -fopenmp" \
+	-D CMAKE_CXX_FLAGS="-mcpu=thunderx2t99 -mtune=thunderx2t99 -O3" \
 	-D CXX_STD=11 \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \

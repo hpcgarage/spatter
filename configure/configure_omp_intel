@@ -8,8 +8,10 @@ rm -rf CMake*
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
+	-D CMAKE_C_COMPILER=icc \
 	-D CMAKE_CXX_COMPILER=icpc \
-	-D CMAKE_CXX_FLAGS="-O3 -openmp" \
+	-D CMAKE_C_FLAGS="-O3" \
+	-D CMAKE_CXX_FLAGS="-O3" \
 	-D CXX_STD=11 \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
