@@ -53,6 +53,19 @@ void wrap_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, size
     }
 }
 
+//Mostly Stride-1
+void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t gap){
+    sgIdx_t *idx_cur = idx;
+    for(size_t j = 0; j < worksets; j++){
+        for(size_t i = 0; i < len; i++){
+
+            idx_cur[i] = (i / run) * gap + (i % run);
+        }
+        idx_cur = idx_cur + len;
+    }
+
+}
+
 #ifdef USE_OPENCL
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr){
     cl_int err;
