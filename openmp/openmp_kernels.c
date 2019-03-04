@@ -20,6 +20,7 @@ void sg_omp(
 
   if(B == 1){
 #pragma omp parallel for simd safelen(SIMD)
+#pragma prefervector
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[sir[i]];
 	}
@@ -85,7 +86,9 @@ void gather_omp(
 
 
   if(B == 1){
+//Users may want to set a specific safelen value like 32
 #pragma omp parallel for simd safelen(SIMD)
+#pragma prefervector
 	for(long i = 0; i < n; i++){
 	    tr[i] = sr[sir[i]];
 	}
