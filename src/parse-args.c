@@ -317,7 +317,17 @@ void parse_args(int argc, char **argv)
     }
 
     //Check buffer lengths
-    if (generic_len <= 0){
+    if (generic_len && ms1_flag) {
+        if (kernel == SCATTER) {
+            source_len = generic_len;
+            target_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
+            index_len = generic_len;
+        } else if (kernel == GATHER) {
+            target_len = generic_len;
+            source_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
+            index_len = generic_len;
+        }
+    } else if (generic_len <= 0){
 
         if (source_len <= 0 && target_len <= 0 && index_len <= 0) {
             error ("Please specifiy at least one of : src_len, target_len, idx_len", 1);

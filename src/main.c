@@ -279,7 +279,7 @@ int main(int argc, char **argv)
     //linear_indices(si.host_ptr, si.len, worksets, source.len / si.len, random_flag);
     //linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len, random_flag);
 
-    if (ms1_indices) {
+    if (ms1_flag) {
         if (kernel == SCATTER) {
             linear_indices(si.host_ptr, si.len, worksets, 1, 0);
             ms1_indices(ti.host_ptr, ti.len, worksets, ms1_run, ms1_gap);
