@@ -153,15 +153,17 @@ int main(int argc, char **argv)
 
     /* Parse command line arguments */
     parse_args(argc, argv);
-
+/*
 
     if (config_flag) {
         struct trace t;
         read_trace(&t, config_file);
         reweight_trace(t);
         print_trace(t);
-        exit(1);
+        //exit(1);
+        
     }
+    */
 
     /* =======================================
 	Initalization
