@@ -21,6 +21,7 @@
 #define MS1_PATTERN 1006
 #define MS1_GAP     1007
 #define MS1_RUN     1008
+#define CONFIG_FILE 1009
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -28,6 +29,7 @@ extern char platform_string[STRING_SIZE];
 extern char device_string[STRING_SIZE];
 extern char kernel_file[STRING_SIZE];
 extern char kernel_name[STRING_SIZE];
+extern char config_file[STRING_SIZE];
 
 extern size_t source_len;
 extern size_t target_len;
@@ -43,6 +45,7 @@ extern size_t workers;
 extern size_t ms1_gap;
 extern size_t ms1_run;
 extern int ms1_flag;
+extern int config_flag;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
@@ -117,6 +120,7 @@ void parse_args(int argc, char **argv)
         {"ms1-pattern",     no_argument,       NULL, MS1_PATTERN},
         {"ms1-gap",         required_argument, NULL, MS1_GAP},
         {"ms1-run",         required_argument, NULL, MS1_RUN},
+        {"config-file",     required_argument, NULL, CONFIG_FILE},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"random",          no_argument,       NULL, 'y'},
         {"validate",        no_argument, &validate_flag, 1},
@@ -247,6 +251,10 @@ void parse_args(int argc, char **argv)
                 break;
             case MS1_GAP:
                 sscanf(optarg, "%zu", &ms1_gap);
+                break;
+            case CONFIG_FILE:
+                safestrcopy(config_file, optarg);
+                config_flag = 1;
                 break;
             default:
                 break;

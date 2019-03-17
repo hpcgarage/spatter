@@ -9,6 +9,7 @@
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "sgtime.h"
+#include "trace-util.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -35,6 +36,7 @@ char platform_string[STRING_SIZE];
 char device_string[STRING_SIZE];
 char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
+char config_file[STRING_SIZE];
 
 size_t source_len;
 size_t target_len;
@@ -53,6 +55,7 @@ size_t ms1_run = 0;
 unsigned int shmem = 0;
 int random_flag = 0;
 int ms1_flag = 0;
+int config_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
@@ -152,6 +155,13 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
 
+    if (config_flag) {
+        struct trace t;
+        read_trace(&t, config_file);
+        reweight_trace(t);
+        print_trace(t);
+        exit(1);
+    }
 
     /* =======================================
 	Initalization
