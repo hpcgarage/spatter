@@ -43,11 +43,6 @@ MACRO (print_all_variables)
     )
 ENDMACRO ()
 
-# Use the 2011 standards for C and C++ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}
-# -std=c11") SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") Turn warnings
-# into errors SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
-# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -132,7 +127,6 @@ SET (
 
 # Specify the executable and source files
 ADD_EXECUTABLE (spatter ${SOURCE_FILES})
-
 
 # Print out debug info print_all_variables()
 

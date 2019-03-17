@@ -47,9 +47,12 @@ size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
+size_t ms1_gap = 0; 
+size_t ms1_run = 0;
 
 unsigned int shmem = 0;
 int random_flag = 0;
+int ms1_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
@@ -276,12 +279,25 @@ int main(int argc, char **argv)
     //linear_indices(si.host_ptr, si.len, worksets, source.len / si.len, random_flag);
     //linear_indices(ti.host_ptr, ti.len, worksets, target.len / ti.len, random_flag);
 
-    if (wrap > 1) {
-        wrap_indices(si.host_ptr, si.len, worksets, si.stride, wrap);
-        wrap_indices(ti.host_ptr, ti.len, worksets, ti.stride, wrap);
+    if (ms1_flag) {
+        if (kernel == SCATTER) {
+            linear_indices(si.host_ptr, si.len, worksets, 1, 0);
+            ms1_indices(ti.host_ptr, ti.len, worksets, ms1_run, ms1_gap);
+        }else if (kernel == GATHER) {
+            ms1_indices(si.host_ptr, si.len, worksets, ms1_run, ms1_gap);
+            linear_indices(ti.host_ptr, ti.len, worksets, 1, 0);
+        } else {
+            printf("MS1 pattern is only supported for scatter and gather\n");
+            exit(1);
+        }
     } else {
-        linear_indices(si.host_ptr, si.len, worksets, si.stride, random_flag);
-        linear_indices(ti.host_ptr, ti.len, worksets, ti.stride, random_flag);
+        if (wrap > 1) {
+            wrap_indices(si.host_ptr, si.len, worksets, si.stride, wrap);
+            wrap_indices(ti.host_ptr, ti.len, worksets, ti.stride, wrap);
+        } else {
+            linear_indices(si.host_ptr, si.len, worksets, si.stride, random_flag);
+            linear_indices(ti.host_ptr, ti.len, worksets, ti.stride, random_flag);
+        }
     }
 
     /*

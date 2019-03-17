@@ -1,0 +1,19 @@
+# Configure file for compiling with Cray (CCE) OpenMP
+# Execute from the main directory using ./configure/configure_omp_cce
+
+BUILD_DIR=build_omp_cce
+
+mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+rm -rf CMake* 
+
+#Make sure to use tabs rather than spaces for newline entries
+cmake -D CMAKE_BUILD_TYPE=Release \
+	-D CMAKE_C_COMPILER=cc \
+	-D CMAKE_CXX_COMPILER=CC \
+	-D CMAKE_CXX_FLAGS="-hlist=m" \
+	-D CMAKE_C_FLAGS="-hlist=m" \
+	-D CXX_STD=11 \
+	-D USE_OPENCL=0 \
+	-D USE_OPENMP=1 \
+	-D USE_CUDA=0 \
+	..    

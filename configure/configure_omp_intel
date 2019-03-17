@@ -10,9 +10,7 @@ rm -rf CMake*
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_C_COMPILER=icc \
 	-D CMAKE_CXX_COMPILER=icpc \
-	-D CMAKE_C_FLAGS="-O3" \
-	-D CMAKE_CXX_FLAGS="-O3" \
-	-D CXX_STD=11 \
+	-D CMAKE_CXX_FLAGS="-O3 -openmp" \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \

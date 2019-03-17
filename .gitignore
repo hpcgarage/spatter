@@ -3,3 +3,7 @@
 sgbench
 docs/*
 build/*
+build_cuda/
+build_ocl/
+build_omp/
+build_omp_arm/

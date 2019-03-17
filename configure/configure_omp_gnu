@@ -9,8 +9,7 @@ rm -rf CMake*
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_CXX_COMPILER=g++ \
-	-D CMAKE_CXX_FLAGS="-O3" \
-	-D CXX_STD=11 \
+	-D CMAKE_CXX_FLAGS="-O3 -fopenmp" \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
