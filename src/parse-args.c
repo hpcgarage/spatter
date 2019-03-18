@@ -5,6 +5,7 @@
 #include <strings.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 #include "parse-args.h"
 #include "backend-support-tests.h"
 

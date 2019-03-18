@@ -318,8 +318,8 @@ int main(int argc, char **argv)
 
            cl_event e = 0; 
 
-            SET_7_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
-                    ti.dev_ptr_opencl, si.dev_ptr_opencl, 0, 0, 0);
+            SET_4_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
+                    ti.dev_ptr_opencl, si.dev_ptr_opencl);
 
             CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
                        &global_work_size, &local_work_size, 
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
             
             float time_ms = cuda_sg_wrapper(kernel, block_len, vector_len, 
                     arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
-                   ti.dev_ptr_cuda, si.dev_ptr_cuda, 0, 0, 0, shmem); 
+                   ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
             cudaDeviceSynchronize();
 
             double time_s = time_ms / 1000.;
@@ -382,26 +382,26 @@ int main(int argc, char **argv)
                 case SG:
                     if (op == OP_COPY) 
                         sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, 0, 0, 0, block_len);
+                        index_len, block_len);
                     else 
                         sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, 0, 0, 0, block_len);
+                        index_len, block_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
 				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, 0, 0, 0, block_len);
+	                        index_len, block_len);
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, 0, 0, 0, block_len);
+                        index_len, block_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, 0, 0, 0, block_len);
+	                        index_len, block_len);
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, 0, 0, 0, block_len);
+                        index_len, block_len);
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");
@@ -409,7 +409,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, 0, vector_len);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
 
         }
     }
