@@ -10,6 +10,7 @@
 #include <stdlib.h> //rand()
 #include <stddef.h> //size_t
 #include "sgtype.h"
+#include "trace-util.h"
 #ifdef USE_OPENCL
 #include "../opencl/cl-helper.h"
 #endif
@@ -69,7 +70,7 @@ void wrap_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, size
  */
 
 void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t gap);
-
+size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr);
 #ifdef USE_OPENCL
 //TODO: why is it a void*? 
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr);

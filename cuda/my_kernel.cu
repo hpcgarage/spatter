@@ -8,29 +8,25 @@ template<int v>
 __global__ void scatter_t(double* target, 
                         double* source, 
                         long* ti, 
-                        long* si, 
-                        long ot, long os, long oi)
+                        long* si) 
 {
     extern __shared__ char space[];
 
     int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-    double* tr = target + ot;
-    double* sr = source + os;
-    long *tir =  ti     + oi;
 
     double buf[v];
     long idx[v]; 
 
     for(int i = 0; i < v; i++){
-        buf[i] = sr[gid+i];    
+        buf[i] = source[gid+i];    
     }
 
     for(int i = 0; i < v; i++){
-       idx[i] = tir[gid+i]; 
+       idx[i] = ti[gid+i]; 
     }
 
     for(int i = 0; i < v; i++){
-        tr[idx[i]] = buf[i];
+        target[idx[i]] = buf[i];
     }
 }
 
@@ -39,23 +35,19 @@ template<int v>
 __global__ void gather_t(double* target, 
                         double* source, 
                         long* ti, 
-                        long* si, 
-                        long ot, long os, long oi)
+                        long* si)
 {
     extern __shared__ char space[];
 
     int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-    double* tr = target + ot;
-    double* sr = source + os;
-    long* sir  = si     + oi;
     double buf[v];
 
     for(int i = 0; i < v; i++){
-        buf[i] = sr[sir[gid+i]];
+        buf[i] = source[si[gid+i]];
     }
 
     for(int i = 0; i < v; i++){
-        tr[gid+i] = buf[i];
+        target[gid+i] = buf[i];
     }
 
 }
@@ -64,35 +56,29 @@ template<int v>
 __global__ void sg_t(double* target, 
                     double* source, 
                     long* ti, 
-                    long* si, 
-                    long ot, long os, long oi)
+                    long* si)
 {
     extern __shared__ char space[];
 
     int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-    double* tr = target + ot;
-    double* sr = source + os;
-    long* tir  = ti     + oi;
-    long* sir  = si     + oi;
-
     long sidx[v];
     long tidx[v];
 
     for(int i = 0; i < v; i++){
-        sidx[i] = sir[gid+i];
+        sidx[i] = si[gid+i];
     }
     for(int i = 0; i < v; i++){
-        tidx[i] = tir[gid+i];
+        tidx[i] = ti[gid+i];
     }
     for(int i = 0; i < v; i++){
-        tr[tidx[i]] = sr[sidx[i]];
+        target[tidx[i]] = source[sidx[i]];
     }
 
 }
 #define INSTANTIATE(V)\
-template __global__ void scatter_t<V>(double* target, double* source, long* ti, long* si, long ot, long os, long oi);\
-template __global__ void gather_t<V>(double* target, double* source, long* ti, long* si, long ot, long os, long oi); \
-template __global__ void sg_t<V>(double* target, double* source, long* ti, long* si, long ot, long os, long oi);
+template __global__ void scatter_t<V>(double* target, double* source, long* ti, long* si);\
+template __global__ void gather_t<V>(double* target, double* source, long* ti, long* si); \
+template __global__ void sg_t<V>(double* target, double* source, long* ti, long* si);
 INSTANTIATE(1);
 INSTANTIATE(2);
 INSTANTIATE(4);
@@ -126,7 +112,6 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
                                 uint dim, uint* grid, uint* block, 
                                 double* target, double *source, 
                                 long* ti, long* si, 
-                                long ot, long os, long oi,
                                 unsigned int shmem){
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
@@ -141,21 +126,21 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
     if(kernel == SCATTER)
     {
         if (vector_len == 1)
-            scatter_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 2)
-            scatter_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 4)
-            scatter_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 5)
-            scatter_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 8)
-            scatter_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 16)
-            scatter_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 32)
-            scatter_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
-            scatter_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            scatter_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else 
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -165,21 +150,21 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
     else if(kernel == GATHER)
     {
         if (vector_len == 1)
-            gather_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 2)
-            gather_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 4)
-            gather_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 5)
-            gather_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 8)
-            gather_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 16)
-            gather_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 32)
-            gather_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
-            gather_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            gather_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else 
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -189,21 +174,21 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
     else if(kernel == SG)
     {
         if (vector_len == 1)
-            sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 2)
-            sg_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 4)
-            sg_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 5)
-            sg_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 8)
-            sg_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 16)
-            sg_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 32)
-            sg_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
-            sg_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si, ot, os, oi);
+            sg_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else 
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");

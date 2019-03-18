@@ -72,13 +72,15 @@ ENDIF ()
 
 # Enable OpenMP
 IF (USE_OPENMP)
+    FIND_PACKAGE (OpenMP REQUIRED)
+    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+
     # enable pragma regions in the code for OpenMP
     ADD_DEFINITIONS (-DUSE_OPENMP)
     ADD_DEFINITIONS (-DUSE_OMP_SIMD)
-    # Standard includes and libraries are probably ok for standard OMP
     INCLUDE_DIRECTORIES (openmp)
-    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
     # Pull the OpenMP-specific files and kernels into the build
     FILE (GLOB BACKEND_C_FILES_OMP openmp/*.c)
@@ -126,18 +128,9 @@ SET (
 # Specify the executable and source files
 ADD_EXECUTABLE (spatter ${SOURCE_FILES})
 
-# Use the 2011 standards for C and C++.
-SET_PROPERTY (TARGET spatter PROPERTY C_STANDARD 11)
-SET_PROPERTY (TARGET spatter PROPERTY CXX_STANDARD 11)
-
-
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
-IF (USE_OPENMP)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC gomp)
-ENDIF ()
-
 IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC OpenCL)
 ENDIF ()
