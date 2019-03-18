@@ -9,6 +9,7 @@ struct instruction {
     size_t count;
     size_t length;
     double pct;
+    double cpct; //cumulative pct
     sgIdx_t *delta;
 };
 

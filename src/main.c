@@ -135,6 +135,7 @@ int main(int argc, char **argv)
     sgDataBuf  target;
     sgIndexBuf si; //source_index
     sgIndexBuf ti; //target_index
+    struct trace tr;
 
     size_t cpu_cache_size = 30720 * 1000; 
     size_t cpu_flush_size = cpu_cache_size * 8;
@@ -148,17 +149,11 @@ int main(int argc, char **argv)
 
     /* Parse command line arguments */
     parse_args(argc, argv);
-/*
 
     if (config_flag) {
-        struct trace t;
-        read_trace(&t, config_file);
-        reweight_trace(t);
-        print_trace(t);
-        //exit(1);
-        
-    }
-    */
+        read_trace(&tr, config_file);
+        reweight_trace(tr);
+    };
 
     /* =======================================
 	Initalization
@@ -237,9 +232,6 @@ int main(int argc, char **argv)
     }
     #endif
 
-    /* Create buffers on host */
-    source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
-    target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
 
     /*
 #ifdef USE_CUDA
@@ -256,8 +248,6 @@ int main(int argc, char **argv)
     si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
     ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 
-    /* Populate buffers on host */
-    random_data(source.host_ptr, source.len);
 
     if (ms1_flag) {
         if (kernel == SCATTER) {
@@ -279,6 +269,25 @@ int main(int argc, char **argv)
             linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
         }
     }
+
+    if (config_flag) {
+        if (kernel == SCATTER) {
+            size_t reqd_len = trace_indices(ti.host_ptr, ti.len, tr);
+            target.len = reqd_len;
+            target.size = target.len * sizeof(sgData_t);
+        } else if (kernel == GATHER) {
+            size_t reqd_len = trace_indices(si.host_ptr, si.len, tr);
+            source.len = reqd_len;
+            source.size = source.len * sizeof(sgData_t);
+        } else {
+            printf("Error: pattern files only support scatter and gather kernels\n");
+        }
+    }
+    /* Create buffers on host */
+    source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
+    target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
+    /* Populate buffers on host */
+    random_data(source.host_ptr, source.len);
 
     /*
     for(size_t kk = 0; kk < si.len; kk++){

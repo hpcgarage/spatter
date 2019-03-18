@@ -12,6 +12,7 @@ int read_trace (struct trace *t, const char *filename)
     size_t len = 0;
     ssize_t read;
     char *token;
+    double cpct_accum = 0;
 
     int have_num_instructions = 0;
     int instructions_read = 0;
@@ -34,6 +35,9 @@ int read_trace (struct trace *t, const char *filename)
 
             token = strtok(NULL, " ");
             sscanf(token, "%lf", &(tmp.pct));
+
+            cpct_accum += tmp.pct;
+            tmp.cpct = cpct_accum;
 
             token = strtok(NULL, " ");
             sscanf(token, "%zu", &(tmp.length));
@@ -75,10 +79,13 @@ int print_trace(struct trace t) {
 int reweight_trace(struct trace t){
     //rescale weights to be between 0 and 1
     double tot = 0;
+    double cpct_accum = 0;
     for (int i = 0; i < t.length; i++) {
         tot += t.in[i].pct;
     }
     for (int i = 0; i < t.length; i++) {
         t.in[i].pct /= tot;
+        cpct_accum += t.in[i].pct;
+        t.in[i].cpct = cpct_accum;
     }
 }
