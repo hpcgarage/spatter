@@ -16,20 +16,10 @@ void sg_serial(
   long     *tir = ti     + oi; 
   long     *sir = si     + oi; 
 
-  if(B == 1){
-#pragma novector
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[sir[i]];
 	}
-  }
-  else{
-	for(long i = 0; i < n; i++){
-	#pragma novector
-        for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] = sr[sir[i]+b];
-        }
-	}
-  }
 }
 
 void scatter_serial(
@@ -47,20 +37,10 @@ void scatter_serial(
   sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
 
-  if(B == 1){
-#pragma novector
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] = sr[i];
 	}
-  }
-  else{
-	for(long i = 0; i < n; i++){
-	#pragma novector
-        for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] = sr[i+b];
-        }
-	}
-  }
 
 }
 
@@ -80,21 +60,10 @@ void gather_serial(
   long     *sir = si     + oi; 
 
 
-  if(B == 1){
-#pragma novector
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[i] = sr[sir[i]];
 	}
-  }
-  else{
-	for(long i = 0; i < n; i++){
-	#pragma novector
-        for(int b = 0; b < B; b++){
-	        tr[i+b] = sr[sir[i]+b];
-        }
-	}
-  }
-
 }
 
 void sg_accum_serial(
@@ -114,19 +83,10 @@ void sg_accum_serial(
   long     *sir = si     + oi; 
 
 
-  if(B == 1){
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] += sr[sir[i]];
 	}
-  }
-  else{
-#pragma novector
-	for(long i = 0; i < n; i++){
-	for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] += sr[sir[i]+b];
-        }
-	}
-  }
 }
 
 void scatter_accum_serial(
@@ -144,20 +104,10 @@ void scatter_accum_serial(
   sgData_t *sr  = source + os;
   long     *tir = ti     + oi; 
 
-  if(B == 1){
 #pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[tir[i]] += sr[i];
 	}
-  }
-  else{
-#pragma novector
-	for(long i = 0; i < n; i++){
-        for(int b = 0; b < B; b++){
-	        tr[tir[i]+b] += sr[i+b];
-        }
-	}
-  }
 }
 
 void gather_accum_serial(
@@ -176,18 +126,8 @@ void gather_accum_serial(
   long     *sir = si     + oi; 
 
 
-  if(B == 1){
-#pragma novector
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    tr[i] += sr[sir[i]];
 	}
-  }
-  else{
-#pragma novector
-	for(long i = 0; i < n; i++){
-        for(int b = 0; b < B; b++){
-	        tr[i+b] += sr[sir[i]+b];
-        }
-	}
-  }
 }

@@ -12,8 +12,7 @@ void sg_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 void scatter_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -22,8 +21,7 @@ void scatter_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 void gather_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -32,8 +30,7 @@ void gather_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 void sg_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -42,8 +39,7 @@ void sg_accum_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 void scatter_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -52,8 +48,7 @@ void scatter_accum_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 void gather_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
@@ -62,6 +57,5 @@ void gather_accum_serial(
             size_t n,
             long ot, 
             long os, 
-            long oi, 
-            long B);
+            long oi);
 #endif
