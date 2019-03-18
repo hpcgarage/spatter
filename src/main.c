@@ -382,26 +382,26 @@ int main(int argc, char **argv)
                 case SG:
                     if (op == OP_COPY) 
                         sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, block_len);
+                        index_len);
                     else 
                         sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, block_len);
+                        index_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
 				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, block_len);
+	                        index_len);
                     else
                         scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, block_len);
+                        index_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len, block_len);
+	                        index_len);
                     else
                         gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len, block_len);
+                        index_len);
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");
