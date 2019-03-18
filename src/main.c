@@ -139,17 +139,12 @@ int main(int argc, char **argv)
 	cl_ulong device_cache_size = 0;
     	cl_uint work_dim = 1;
     #endif
-    size_t device_flush_size = 0;
     size_t global_work_size = 1;
-    size_t current_ws;
-    long os, ot, oi;
     
     char *kernel_string;
 
     /* Parse command line arguments */
     parse_args(argc, argv);
-
-
 
     /* =======================================
 	Initalization
@@ -373,8 +368,9 @@ int main(int argc, char **argv)
     #ifdef USE_OPENMP
     if (backend == OPENMP) {
 
-        //omp_set_num_threads(workers);
         for (int i = 0; i <= R; i++) {
+
+
 
             sg_zero_time();
 

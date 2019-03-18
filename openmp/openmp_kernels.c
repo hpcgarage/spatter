@@ -3,16 +3,16 @@
 #define SIMD 4
 
 void sg_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,   
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n)
+            size_t             n)
 {
 #pragma omp parallel for simd safelen(SIMD)
 #pragma prefervector
-	for(long i = 0; i < n; i++){
-	    target[ti[i]] = source[si[i]];
+    for(long i = 0; i < n; i++){
+        target[ti[i]] = source[si[i]];
 	}
 }
 
