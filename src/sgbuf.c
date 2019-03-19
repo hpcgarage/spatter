@@ -147,7 +147,8 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 	new_max = idx[i];
       }
     }
-    max = new_max;   
+    max = new_max;
+    if( npages ) free(pages);
     return max;
 }
 #ifdef USE_OPENCL
