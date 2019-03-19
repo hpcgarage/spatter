@@ -70,7 +70,7 @@ void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t g
 struct instruction get_random_instr (struct trace tr) {
     double r = (double)rand() / (double)RAND_MAX;
     for (int i = 0; i < tr.length-1; i++) {
-        if (tr.in[i].cpct < r) {
+        if (tr.in[i].cpct > r) {
             return tr.in[i];
         }
     }
