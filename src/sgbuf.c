@@ -99,7 +99,8 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
     }
     assert (cur == len);
 
-    size_t min = idx[0] / 8;
+    idx[0] /= 8;
+    size_t min = idx[0];
     for (size_t i = 1; i < len; i++) {
         idx[i] = idx[i-1] + idx[i] / 8;
         if (idx[i] < min) 
