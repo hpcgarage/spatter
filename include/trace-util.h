@@ -10,7 +10,7 @@ struct instruction {
     size_t length;
     double pct;
     double cpct; //cumulative pct
-    sgIdx_t *delta;
+    sgsIdx_t *delta;
 };
 
 struct trace {

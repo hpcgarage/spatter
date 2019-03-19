@@ -70,7 +70,7 @@ void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t g
 struct instruction get_random_instr (struct trace tr) {
     double r = (double)rand() / (double)RAND_MAX;
     for (int i = 0; i < tr.length-1; i++) {
-        if (tr.in[i].cpct < r) {
+        if (tr.in[i].cpct > r) {
             return tr.in[i];
         }
     }
@@ -81,6 +81,7 @@ struct instruction get_random_instr (struct trace tr) {
 size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
 // and reads are 8 byte alignd
+    sgsIdx_t *sidx = (sgsIdx_t*)idx;
     size_t data_type_size = 8;
     size_t cur = 0; 
     int done = 0;
@@ -89,7 +90,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         int i;
         for (i = 0; i < in.length ; i++) {
             if (i + cur < len) {
-                idx[i+cur] = in.delta[i];
+                sidx[i+cur] = in.delta[i];
             } else {
                 done = 1;
                 break;
@@ -99,16 +100,18 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
     }
     assert (cur == len);
 
-    size_t min = idx[0] / 8;
+    sidx[0] /= 8;
+    sgsIdx_t min = sidx[0];
     for (size_t i = 1; i < len; i++) {
-        idx[i] = idx[i-1] + idx[i] / 8;
+        sidx[i] = sidx[i-1] + sidx[i] / 8;
         if (idx[i] < min) 
-            min = idx[i];
+            min = sidx[i];
     }
 
+    idx[0] = sidx[0] - min;
     size_t max = idx[0];
-    for (size_t i = 0; i < len; i++) {
-        idx[i] = idx[i] - min;
+    for (size_t i = 1; i < len; i++) {
+        idx[i] = sidx[i] - min;
         if (idx[i] > max) 
             max = idx[i];
     }

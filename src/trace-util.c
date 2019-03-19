@@ -42,11 +42,11 @@ int read_trace (struct trace *t, const char *filename)
             token = strtok(NULL, " ");
             sscanf(token, "%zu", &(tmp.length));
 
-            tmp.delta = (sgIdx_t *)malloc(sizeof(sgIdx_t) * tmp.length);
+            tmp.delta = (sgsIdx_t *)malloc(sizeof(sgsIdx_t) * tmp.length);
 
             for (int i = 0; i < tmp.length; i++) {
                 token = strtok(NULL, " ");
-                sscanf(token, "%lu", &(tmp.delta[i]));
+                sscanf(token, SGS, &(tmp.delta[i]));
             }
             t->in[instructions_read] = tmp;
             instructions_read++;
@@ -67,7 +67,7 @@ int print_trace(struct trace t) {
         struct instruction tmp = t.in[i];
         printf("%d %zu %zu %lf %zu ", tmp.type, tmp.data_type_size, tmp.count, tmp.pct, tmp.length);
         for (int j = 0; j < tmp.length; j++) {
-            printf("%lu", tmp.delta[j]);
+            printf(SGS, tmp.delta[j]);
             if (j != tmp.length-1) {
                 printf(" ");
             }
