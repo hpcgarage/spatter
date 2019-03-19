@@ -77,22 +77,6 @@ struct instruction get_random_instr (struct trace tr) {
     return tr.in[tr.length-1];
 }
 
-//compares long ints for sorting with qsort()
-static int compare_longs(const void *a, const void *b)
-{
-  long la = *((long*)a);
-  long lb = *((long*)b);
-
-  // Order in decreasing order by symbol address.
-  if( la > lb ) {
-    return 1;
-  } else if( la < lb ) {
-    return -1;
-  } else {
-    return 0;
-  }
-}
-
 //returns the size of the buffer required
 size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
@@ -163,12 +147,6 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 	new_max = idx[i];
       }
     }
-    /*
-    printf("max: %lu  new_max: %ld\n",max,new_max);
-    for(size_t p = 0; p < npages; p++) {
-      printf("%6d: 0x%lx\n",p,pages[p]);
-    }
-    */
     max = new_max;   
     return max;
 }
