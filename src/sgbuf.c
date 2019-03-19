@@ -77,6 +77,22 @@ struct instruction get_random_instr (struct trace tr) {
     return tr.in[tr.length-1];
 }
 
+//compares long ints for sorting with qsort()
+static int compare_longs(const void *a, const void *b)
+{
+  long la = *((long*)a);
+  long lb = *((long*)b);
+
+  // Order in decreasing order by symbol address.
+  if( la > lb ) {
+    return 1;
+  } else if( la < lb ) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
 //returns the size of the buffer required
 size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
@@ -99,7 +115,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         cur += i;
     }
     assert (cur == len);
-
+    // Pass over sidx[], convert byte addresses to indicies, track min.
     sidx[0] /= 8;
     sgsIdx_t min = sidx[0];
     for (size_t i = 1; i < len; i++) {
@@ -107,7 +123,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         if (idx[i] < min) 
             min = sidx[i];
     }
-
+    // Translate to zero-based start index, track max.
     idx[0] = sidx[0] - min;
     size_t max = idx[0];
     for (size_t i = 1; i < len; i++) {
@@ -115,7 +131,45 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         if (idx[i] > max) 
             max = idx[i];
     }
-
+    // Pageinate the positive zero-based indicies in idx[].
+    long *pages = NULL, npages = 0;
+    long  page,pidx;
+    long  page_bits = 26; // 26 => 64MiB
+    long  new_idx;
+    long  new_max = 0;
+    for(size_t i = 0; i < len; i++) {
+      // Turn address into page.
+      page = (idx[i]*8) >> page_bits;
+      // Find existing / make new page entry.
+      pidx = -1;
+      for(size_t p = 0; p < npages; p++) {
+	if( pages[p] == page ) {
+	  pidx = p;
+	}
+      }
+      if( pidx == -1 ) {
+	pidx = npages;
+	npages++;
+	if( !(pages = realloc(pages,npages*sizeof(long))) ) {
+	  fprintf(stderr,"trace_indices(): Failed to allocate new page entry (%ld).\n",npages);
+	}
+	pages[pidx] = page;
+      }
+      // Replace sparse page bits in address with dense page index bits.
+      new_idx  = (pidx << page_bits) | ((idx[i]*8) & ((1l<<page_bits)-1l));
+      new_idx /= 8;
+      idx[i] = new_idx;
+      if( idx[i] > new_max ) {
+	new_max = idx[i];
+      }
+    }
+    /*
+    printf("max: %lu  new_max: %ld\n",max,new_max);
+    for(size_t p = 0; p < npages; p++) {
+      printf("%6d: 0x%lx\n",p,pages[p]);
+    }
+    */
+    max = new_max;   
     return max;
 }
 #ifdef USE_OPENCL
