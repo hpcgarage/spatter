@@ -19,5 +19,7 @@ typedef double  sgData_t;
 #define SGD "%lf"
 typedef unsigned long sgIdx_t;
 #define SGI "%lu"
+typedef long sgsIdx_t;
+#define SGS "%ld"
 
 #endif //endif SGTYPE
