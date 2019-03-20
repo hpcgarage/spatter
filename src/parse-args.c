@@ -107,7 +107,7 @@ void parse_args(int argc, char **argv)
         {"workers",         required_argument, NULL, 'W'},
         {"wrap",            required_argument, NULL, 'w'},
         {"op",              required_argument, NULL, 'o'},
-        {"sparsity",        required_argument, NULL, 's'},
+        {"uniform-stride",  required_argument, NULL, 's'},
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
         {"ms1-pattern",     no_argument,       NULL, MS1_PATTERN},
