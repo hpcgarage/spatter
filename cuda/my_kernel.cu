@@ -107,7 +107,6 @@ extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int
 }
 
 extern "C" float cuda_sg_wrapper(enum sg_kernel kernel, 
-                                size_t block_len, 
                                 size_t vector_len, 
                                 uint dim, uint* grid, uint* block, 
                                 double* target, double *source, 

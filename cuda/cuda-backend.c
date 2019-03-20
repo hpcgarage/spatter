@@ -7,8 +7,8 @@
 #define cudaSilent(a) if(a!=cudaSuccess) exit(0);
 
 void create_dev_buffers_cuda(sgDataBuf* source, sgDataBuf* target, 
-                            sgIndexBuf* si, sgIndexBuf *ti, 
-                            size_t block_len){
+                            sgIndexBuf* si, sgIndexBuf *ti)
+{
     cudaError_t ret;
     ret = cudaMalloc((void **)&(source->dev_ptr_cuda), source->size); cudaSilent(ret);
     ret = cudaMalloc((void **)&(target->dev_ptr_cuda), target->size); cudaSilent(ret);

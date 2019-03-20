@@ -35,7 +35,6 @@ extern char config_file[STRING_SIZE];
 extern size_t source_len;
 extern size_t target_len;
 extern size_t index_len;
-extern size_t block_len;
 extern size_t wrap;
 extern size_t seed;
 extern size_t vector_len;
@@ -80,7 +79,6 @@ void parse_args(int argc, char **argv)
     source_len = 0;
     target_len = 0;
     index_len  = 0;
-    block_len  = 1;
     seed       = time(NULL); 
     err_file   = stderr;
 
@@ -106,7 +104,6 @@ void parse_args(int argc, char **argv)
         {"source-len",      required_argument, NULL, SOURCE},
         {"target-len",      required_argument, NULL, TARGET},
         {"index-len",       required_argument, NULL, INDEX},
-        {"block-len",       required_argument, NULL, BLOCK},
         {"seed",            required_argument, NULL, SEED},
         {"vector-len",      required_argument, NULL, 'v'},
         {"generic-len",     required_argument, NULL, 'l'},
@@ -200,9 +197,6 @@ void parse_args(int argc, char **argv)
                 break;
             case INDEX:
                 sscanf(optarg, "%zu", &index_len);
-                break;
-            case BLOCK:
-                sscanf(optarg, "%zu", &block_len);
                 break;
             case SEED:
                 sscanf(optarg, "%zu", &seed);
@@ -380,9 +374,6 @@ void parse_args(int argc, char **argv)
         }
     }
 
-    if(block_len < 1){
-        error("Invalid block-len", 1);
-    }
     if (workers < 1){
         error("Too few workers. Changing to 1.", 0);
         workers = 1;

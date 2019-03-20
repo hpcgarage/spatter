@@ -13,7 +13,7 @@ void initialize_dev_ocl(char* platform_string, char* device_string)
 
 }
 
-void create_dev_buffers_ocl(sgDataBuf *source, sgDataBuf *target, sgIndexBuf *si, sgIndexBuf *ti, size_t block_len)
+void create_dev_buffers_ocl(sgDataBuf *source, sgDataBuf *target, sgIndexBuf *si, sgIndexBuf *ti)
 {
 
         flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
