@@ -22,7 +22,6 @@
 #define MS1_PATTERN 1006
 #define MS1_GAP     1007
 #define MS1_RUN     1008
-#define CONFIG_FILE 1009
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -113,7 +112,7 @@ void parse_args(int argc, char **argv)
         {"ms1-pattern",     no_argument,       NULL, MS1_PATTERN},
         {"ms1-gap",         required_argument, NULL, MS1_GAP},
         {"ms1-run",         required_argument, NULL, MS1_RUN},
-        {"config-file",     required_argument, NULL, CONFIG_FILE},
+        {"config-file",     required_argument, NULL, 't'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"random",          no_argument,       NULL, 'y'},
         {"validate",        no_argument, &validate_flag, 1},
@@ -239,7 +238,7 @@ void parse_args(int argc, char **argv)
             case MS1_GAP:
                 sscanf(optarg, "%zu", &ms1_gap);
                 break;
-            case CONFIG_FILE:
+            case 't':
                 safestrcopy(config_file, optarg);
                 config_flag = 1;
                 break;
