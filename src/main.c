@@ -44,7 +44,6 @@ size_t index_len;
 size_t seed;
 size_t wrap = 1;
 size_t R = 10;
-size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;

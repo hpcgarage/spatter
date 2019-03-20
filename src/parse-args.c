@@ -39,7 +39,6 @@ extern size_t wrap;
 extern size_t seed;
 extern size_t vector_len;
 extern size_t R;
-extern size_t N;
 extern size_t local_work_size;
 extern size_t workers;
 extern size_t ms1_gap;
@@ -101,14 +100,10 @@ void parse_args(int argc, char **argv)
         {"cl-device",       required_argument, NULL, 'd'},
         {"kernel-file",     required_argument, NULL, 'f'},
         {"kernel-name",     required_argument, NULL, 'k'},
-        {"source-len",      required_argument, NULL, SOURCE},
-        {"target-len",      required_argument, NULL, TARGET},
-        {"index-len",       required_argument, NULL, INDEX},
         {"seed",            required_argument, NULL, SEED},
         {"vector-len",      required_argument, NULL, 'v'},
         {"generic-len",     required_argument, NULL, 'l'},
         {"runs",            required_argument, NULL, 'R'},
-        {"loops",           required_argument, NULL, 'N'},
         {"workers",         required_argument, NULL, 'W'},
         {"wrap",            required_argument, NULL, 'w'},
         {"op",              required_argument, NULL, 'o'},
@@ -210,9 +205,6 @@ void parse_args(int argc, char **argv)
                 break;
             case 'R':
                 sscanf(optarg, "%zu", &R);
-                break;
-            case 'N':
-                sscanf(optarg, "%zu", &N);
                 break;
             case 'W':
                 sscanf(optarg, "%zu", &workers);
