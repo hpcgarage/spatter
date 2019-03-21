@@ -41,11 +41,9 @@ char config_file[STRING_SIZE];
 size_t source_len;
 size_t target_len;
 size_t index_len;
-size_t block_len;
 size_t seed;
 size_t wrap = 1;
 size_t R = 10;
-size_t N = 100;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
@@ -215,11 +213,6 @@ int main(int argc, char **argv)
    si.size     = si.len * sizeof(sgIdx_t);
    ti.size     = ti.len * sizeof(sgIdx_t);
 
-    /* This is the number of sgData_t's in a workset */
-    //TODO: remove since this is obviously useless
-    source.block_len = source.len;
-    target.block_len = target.len;
-
     /* Create the kernel */
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
@@ -299,13 +292,13 @@ int main(int argc, char **argv)
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
-        create_dev_buffers_ocl(&source, &target, &si, &ti, block_len);
+        create_dev_buffers_ocl(&source, &target, &si, &ti);
     }
     #endif
 
     #ifdef USE_CUDA
     if (backend == CUDA) {
-        create_dev_buffers_cuda(&source, &target, &si, &ti, block_len);
+        create_dev_buffers_cuda(&source, &target, &si, &ti);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         cudaMemcpy(si.dev_ptr_cuda, si.host_ptr, si.size, cudaMemcpyHostToDevice);
         cudaMemcpy(ti.dev_ptr_cuda, ti.host_ptr, ti.size, cudaMemcpyHostToDevice);
@@ -372,7 +365,7 @@ int main(int argc, char **argv)
             unsigned int grid[arr_len]  = {global_work_size/local_work_size};
             unsigned int block[arr_len] = {local_work_size};
             
-            float time_ms = cuda_sg_wrapper(kernel, block_len, vector_len, 
+            float time_ms = cuda_sg_wrapper(kernel, vector_len, 
                     arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
                    ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
             cudaDeviceSynchronize();
@@ -463,23 +456,17 @@ int main(int argc, char **argv)
         switch (kernel) {
             case SG:
                 for (size_t i = 0; i < index_len; i++){
-                    for (size_t b = 0; b < block_len; b++) {
-                        target.host_ptr[ti.host_ptr[i+b]] = source.host_ptr[si.host_ptr[i+b]];
-                    }
+                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[si.host_ptr[i]];
                 }
                 break;
             case SCATTER:
                 for (size_t i = 0; i < index_len; i++){
-                    for (size_t b = 0; b < block_len; b++) {
-                        target.host_ptr[ti.host_ptr[i+b]] = source.host_ptr[i+b];
-                    }
+                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[i];
                 }
                 break;
             case GATHER:
                 for (size_t i = 0; i < index_len; i++){
-                    for (size_t b = 0; b < block_len; b++) {
-                        target.host_ptr[i+b] = source.host_ptr[si.host_ptr[i+b]];
-                    }
+                    target.host_ptr[i] = source.host_ptr[si.host_ptr[i]];
                 }
                 break;
         }

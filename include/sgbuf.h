@@ -27,7 +27,6 @@ typedef struct sgDataBuf_t{
     #endif    
     size_t len;         /**< The length of the buffers (in blocks) */
     size_t size;        /**< The size of the buffer (in bytes) */
-    size_t block_len;   /**< The length of a block (number of SGTYPEs in a workset */
 }sgDataBuf;
 
 /** @brief Describes a buffer object describing how data will be scattered/gathered */

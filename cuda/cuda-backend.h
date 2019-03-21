@@ -6,15 +6,14 @@
 
 extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
-extern float cuda_sg_wrapper(enum sg_kernel kernel, size_t block_len, 
+extern float cuda_sg_wrapper(enum sg_kernel kernel, 
                        size_t vector_len, 
                        uint dim, uint* grid, uint* block, 
                        double* target, double *source, 
                        long* ti, long* si, unsigned int shmem);
 
 void create_dev_buffers_cuda(sgDataBuf *source, sgDataBuf *targt, 
-                             sgIndexBuf *si, sgIndexBuf *ti, 
-                             size_t block_len);
+                             sgIndexBuf *si, sgIndexBuf *ti);
 
 int find_device_cuda(char *name);
 #endif
