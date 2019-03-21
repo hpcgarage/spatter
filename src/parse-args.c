@@ -249,6 +249,11 @@ void parse_args(int argc, char **argv)
 
     }
 
+    if (generic_len <= 0) {
+        error ("Length not specified. Default is 16 (elements)", 0);
+        generic_len = 16;
+    }
+
     /* Check argument coherency */
     if(backend == INVALID_BACKEND){
         if (sg_cuda_support()) {
@@ -311,7 +316,7 @@ void parse_args(int argc, char **argv)
     }
 
     //Check buffer lengths
-    if (generic_len && ms1_flag) {
+    if (ms1_flag) {
         if (kernel == SCATTER) {
             source_len = generic_len;
             target_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
@@ -321,35 +326,8 @@ void parse_args(int argc, char **argv)
             source_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
             index_len = generic_len;
         }
-    } else if (generic_len <= 0){
-
-        if (source_len <= 0 && target_len <= 0 && index_len <= 0) {
-            error ("Please specifiy at least one of : src_len, target_len, idx_len", 1);
-        }
-        if (source_len > 0 && target_len <= 0) {
-            target_len = source_len;
-        }
-        if (source_len > 0 && index_len <= 0) {
-            index_len = source_len;
-        }
-        if (target_len > 0 && source_len <= 0) {
-            source_len = target_len;
-        }
-        if (target_len > 0 && index_len <= 0) {
-            index_len = target_len;
-        }
-        if (index_len > 0 && source_len <= 0) {
-            source_len = index_len;
-        }
-        if (index_len > 0 && target_len <= 0) {
-            target_len = index_len;
-        }
     }
     else{
-        if (source_len > 0 || target_len > 0 || index_len > 0) {
-            error ("If you specify a generic length, source_len, target_len, and index_len will be ignored.", 0);
-        }
-
         index_len = generic_len;
         if (kernel == SCATTER) {
             target_len = generic_len * sparsity;
