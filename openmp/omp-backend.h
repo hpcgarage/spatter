@@ -7,7 +7,6 @@
 #ifndef OMP_BACKEND_H
 #define OMP_BACKEND_H
 
-#include <papi.h>
 /*
 double execute_kernel_omp(sg_kernel kernel, 
         sg_op        op,

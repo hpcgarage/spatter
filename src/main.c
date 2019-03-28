@@ -10,6 +10,7 @@
 #include "sgbuf.h"
 #include "sgtime.h"
 #include "trace-util.h"
+#include "util.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -23,6 +24,10 @@
     #include <cuda.h>
     #include "../cuda/cuda-backend.h"
 #endif
+
+#if defined ( USE_PAPI )
+    #include <papi.h>
+#endif 
 
 #define ALIGNMENT (64)
 
@@ -119,11 +124,23 @@ void print_data(double *buf, size_t len){
     }
     printf("\n");
 }
+
 void print_sizet(size_t *buf, size_t len){
     for (size_t i = 0; i < len; i++){
         printf("%zu ", buf[i]);
     }
     printf("\n");
+}
+
+//Open a file and dump PAPI stats to it
+void dump_papi_to_file(float real_time, float proc_time)
+{
+  FILE * papiFile;
+  //fopen("papi_stats.txt","a+");
+  //fprintf(papiFile, "%f %f\n",real_time,proc_time);
+  printf("%f %f\n",real_time,proc_time);
+  //fclose(papiFile);
+
 }
 
 int main(int argc, char **argv)
@@ -174,6 +191,14 @@ int main(int argc, char **argv)
         printf("sm's: %d\n", prop.multiProcessorCount);
         */
     }
+    #endif
+
+    //Initialize PAPI with multi-threaded support
+    #ifdef USE_PAPI
+	if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  	   exit(1);
+	if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
+  	   handle_error(1);
     #endif
 
     source.len = source_len;

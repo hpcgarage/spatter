@@ -116,6 +116,7 @@ ENDIF ()
 
 #Add optional PAPI support
 IF (USE_PAPI) 
+     ADD_DEFINITIONS (-DUSE_PAPI)
      #Use the included FindPAPI cmake module
      include(FindPAPI)
      FIND_PACKAGE (PAPI REQUIRED)
