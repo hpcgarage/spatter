@@ -1,7 +1,7 @@
-# Configure file for compiling with OpenCL
-# Execute from the main directory using ./configure/configure_ocl
+# Configure file for compiling with ICC and include Papi
+# Execute from the main directory using ./configure/configure_<compiler_platform>
 
-BUILD_DIR=build_omp
+BUILD_DIR=build_omp_intel_papi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
@@ -14,7 +14,8 @@ cmake -D CMAKE_BUILD_TYPE=Release \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
-	-D USE_PAPI=0 \
+	-D USE_PAPI=1 \
+	-D PAPI_PREFIX=/opt/papi \
 	..    
 
 #Unused options
