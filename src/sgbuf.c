@@ -13,11 +13,11 @@ void random_data(sgData_t *buf, size_t len){
 #else
     int nt = 1;
 #endif
-#pragma omp parallel for num_threads(nt)
+#pragma omp parallel for num_threads(nt) schedule(static, 1)
     for(int i=0; i<nt; i++) {
         init_genrand64(0x1337ULL + i);
     }
-#pragma omp parallel for shared(buf,len) num_threads(nt) schedule(static, 1)
+#pragma omp parallel for shared(buf,len) num_threads(nt)
     for(size_t i = 0; i < len; i++){
         buf[i] = genrand64_int64() % 10;
     }
