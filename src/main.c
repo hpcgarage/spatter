@@ -58,7 +58,7 @@ int config_flag = 0;
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth omp_threads vector_len block_dim\n");
+    printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
 }
 
 void make_upper (char* s) {
@@ -98,8 +98,9 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
 
     size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
-    double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
-    printf("%zu %lf ", bytes_moved, usable_bandwidth);
+    double usable_bandwidth = bytes_moved / time / 1000. / 1000.;
+    double actual_bandwidth = (bytes_moved + index_size) / time / 1000. / 1000.;
+    printf("%zu %lf %lf ", bytes_moved, usable_bandwidth, actual_bandwidth);
 
     //How many threads were used - currently refers to CPU systems
     size_t worker_threads = workers;
