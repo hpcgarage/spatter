@@ -9,13 +9,15 @@
 
 void random_data(sgData_t *buf, size_t len){
 #ifdef _OPENMP
-  int nt = omp_get_max_threads();
-#pragma omp parallel for num_threads(nt)
-  for(int i=0; i<nt; i++) {
-    init_genrand64(0x1337ULL + i);
-  }
-#pragma omp parallel for shared(buf,len) num_threads(nt)
+    int nt = omp_get_max_threads();
+#else
+    int nt = 1;
 #endif
+#pragma omp parallel for num_threads(nt) schedule(static, 1)
+    for(int i=0; i<nt; i++) {
+        init_genrand64(0x1337ULL + i);
+    }
+#pragma omp parallel for shared(buf,len) num_threads(nt)
     for(size_t i = 0; i < len; i++){
         buf[i] = genrand64_int64() % 10;
     }
