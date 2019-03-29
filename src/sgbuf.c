@@ -1,12 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "mt64.h"
 
 void random_data(sgData_t *buf, size_t len){
+#ifdef _OPENMP
+  int nt = omp_get_max_threads();
+#pragma omp parallel for num_threads(nt)
+  for(int i=0; i<nt; i++) {
+    init_genrand64(0x1337ULL + i);
+  }
+#pragma omp parallel for shared(buf,len) num_threads(nt)
+#endif
     for(size_t i = 0; i < len; i++){
-        buf[i] = rand() % 10; 
+        buf[i] = genrand64_int64() % 10;
     }
 }
 
