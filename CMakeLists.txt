@@ -1,6 +1,9 @@
 # 3.8 is specified since this is the first version with CUDA support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
 
+#Set target project name
+SET (TRGT spatter)
+
 # Set default values
 SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
@@ -24,9 +27,9 @@ ENDIF ()
 
 # Declare project languages
 IF (USE_CUDA)
-    PROJECT (spatter C CXX CUDA)
+    PROJECT (${TRGT} C CXX CUDA)
 ELSE ()
-    PROJECT (spatter C CXX)
+    PROJECT (${TRGT} C CXX)
 ENDIF ()
 
 # Debug function to check all the variables in the CMakeFile
@@ -45,6 +48,13 @@ ENDMACRO ()
 
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+#Add specific flags for the CodeXL compiler
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
+	SET(IBMXL_COMPILE_FLAGS "-qenablevmx -qtune=pwr9")
+	SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IBMXL_COMPILE_FLAGS}")
+ENDIF ()
+
 
 # Enable OpenCL
 IF (USE_OPENCL)
@@ -126,13 +136,13 @@ SET (
 )
 
 # Specify the executable and source files
-ADD_EXECUTABLE (spatter ${SOURCE_FILES})
+ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
 
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
 IF (USE_OPENCL)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC OpenCL)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
 
 IF (USE_CUDA)
@@ -141,7 +151,7 @@ IF (USE_CUDA)
         HINTS
             /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda-9.2/lib64/
     )
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${CUDART_LIBRARY})
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF ()
 
 # Copy over the test scripts
