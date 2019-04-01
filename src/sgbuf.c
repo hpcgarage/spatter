@@ -172,6 +172,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
       for(size_t p = 0; p < npages; p++) {
 	if( pages[p] == page ) {
 	  pidx = p;
+	  break;
 	}
       }
       if( pidx == -1 ) {
