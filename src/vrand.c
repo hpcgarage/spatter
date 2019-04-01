@@ -142,8 +142,8 @@ double vrand_double()
 /* Returns element from {0..d->n-1} according to d */
 unsigned int vrand_dist(dist_t *d)
 {
-  unsigned int p0 = vrand_double();
-  unsigned int p1 = vrand_double();
+  unsigned int p0 = vrand_uint();
+  unsigned int p1 = vrand_uint();
   unsigned int j  = p0 * d->m1;
 
   if ( (p1 * d->m2) < d->p[j] ) return j;
