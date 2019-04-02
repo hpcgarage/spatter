@@ -435,7 +435,10 @@ int main(int argc, char **argv)
     #endif // USE_OPENMP
     
 
-    // Validate results 
+    /* =======================================
+	VALIDATION
+       =======================================
+    */
     if(validate_flag) {
 
 #ifdef USE_OPENCL
@@ -460,6 +463,7 @@ int main(int argc, char **argv)
         sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
+    	// TODO: Issue - 13: Replace the hard-coded execution of each function with calls to the serial backend
         switch (kernel) {
             case SG:
                 for (size_t i = 0; i < index_len; i++){
