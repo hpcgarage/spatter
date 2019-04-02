@@ -70,7 +70,7 @@ void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t g
 struct instruction get_random_instr (struct trace tr) {
     double r = (double)rand() / (double)RAND_MAX;
     for (int i = 0; i < tr.length-1; i++) {
-        if (tr.in[i].cpct < r) {
+        if (tr.in[i].cpct > r) {
             return tr.in[i];
         }
     }
@@ -81,6 +81,7 @@ struct instruction get_random_instr (struct trace tr) {
 size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
 // and reads are 8 byte alignd
+    sgsIdx_t *sidx = (sgsIdx_t*)idx;
     size_t data_type_size = 8;
     size_t cur = 0; 
     int done = 0;
@@ -89,7 +90,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         int i;
         for (i = 0; i < in.length ; i++) {
             if (i + cur < len) {
-                idx[i+cur] = in.delta[i];
+                sidx[i+cur] = in.delta[i];
             } else {
                 done = 1;
                 break;
@@ -98,21 +99,56 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         cur += i;
     }
     assert (cur == len);
-
-    size_t min = idx[0] / 8;
+    // Pass over sidx[], convert byte addresses to indicies, track min.
+    sidx[0] /= 8;
+    sgsIdx_t min = sidx[0];
     for (size_t i = 1; i < len; i++) {
-        idx[i] = idx[i-1] + idx[i] / 8;
+        sidx[i] = sidx[i-1] + sidx[i] / 8;
         if (idx[i] < min) 
-            min = idx[i];
+            min = sidx[i];
     }
-
+    // Translate to zero-based start index, track max.
+    idx[0] = sidx[0] - min;
     size_t max = idx[0];
-    for (size_t i = 0; i < len; i++) {
-        idx[i] = idx[i] - min;
+    for (size_t i = 1; i < len; i++) {
+        idx[i] = sidx[i] - min;
         if (idx[i] > max) 
             max = idx[i];
     }
-
+    // Pageinate the positive zero-based indicies in idx[].
+    long *pages = NULL, npages = 0;
+    long  page,pidx;
+    long  page_bits = 26; // 26 => 64MiB
+    long  new_idx;
+    long  new_max = 0;
+    for(size_t i = 0; i < len; i++) {
+      // Turn address into page.
+      page = (idx[i]*8) >> page_bits;
+      // Find existing / make new page entry.
+      pidx = -1;
+      for(size_t p = 0; p < npages; p++) {
+	if( pages[p] == page ) {
+	  pidx = p;
+	}
+      }
+      if( pidx == -1 ) {
+	pidx = npages;
+	npages++;
+	if( !(pages = realloc(pages,npages*sizeof(long))) ) {
+	  fprintf(stderr,"trace_indices(): Failed to allocate new page entry (%ld).\n",npages);
+	}
+	pages[pidx] = page;
+      }
+      // Replace sparse page bits in address with dense page index bits.
+      new_idx  = (pidx << page_bits) | ((idx[i]*8) & ((1l<<page_bits)-1l));
+      new_idx /= 8;
+      idx[i] = new_idx;
+      if( idx[i] > new_max ) {
+	new_max = idx[i];
+      }
+    }
+    max = new_max;
+    if( npages ) free(pages);
     return max;
 }
 #ifdef USE_OPENCL
