@@ -26,7 +26,7 @@
 #endif
 
 #if defined ( USE_PAPI )
-    #include <papi.h>
+    #include "papi-util.h"
 #endif 
 
 #define ALIGNMENT (64)
@@ -509,4 +509,9 @@ int main(int argc, char **argv)
             }
         }
     }
+
+    //Make sure PAPI is stopped
+    #ifdef USE_PAPI
+	   PAPI_shutdown();
+   #endif
 }
