@@ -150,8 +150,8 @@ SET (
 
 # Specify the executable and source files
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
-#Prefer C99 or C11 standards to allow for loop initialization, among other features
-set_property(TARGET ${TRGT} PROPERTY C_STANDARD 99)
+#Prefer C11 standard to allow for loop initialization and aligned_alloc
+set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
 
 # Print out debug info print_all_variables()
 
