@@ -1,0 +1,26 @@
+# Configure file for compiling using the serial backend only
+# Execute from the main directory using ./configure/configure_<my_platform>
+
+BACKEND=serial
+COMPILER=gnu
+BUILD_DIR=build_${BACKEND}_${COMPILER}
+
+#Create directory if needed - clean CMake cached files
+mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+rm -rf CMake* 
+
+CC=gcc
+CXX=g++
+FLAGS="-O3"
+
+#Make sure to use tabs rather than spaces for newline entries
+cmake -D CMAKE_BUILD_TYPE=Release \
+	-D CMAKE_C_COMPILER=${CC} \
+	-D CMAKE_CXX_COMPILER=${CXX} \
+	-D CMAKE_C_FLAGS=${FLAGS} \
+	-D CMAKE_CXX_FLAGS=${FLAGS} \
+	-D USE_OPENCL=0 \
+	-D USE_OPENMP=1 \
+	-D USE_CUDA=0 \
+	-D USE_SERIAL=1 \
+	..    
