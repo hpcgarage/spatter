@@ -24,6 +24,9 @@
     #include <cuda.h>
     #include "../cuda/cuda-backend.h"
 #endif
+#if defined( USE_SERIAL )
+	#include "../serial/serial-kernels.h"
+#endif
 
 #if defined ( USE_PAPI )
     #include "papi-util.h"
@@ -63,7 +66,7 @@ int config_flag = 0;
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth omp_threads vector_len block_dim\n");
+    printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
 }
 
 void make_upper (char* s) {
@@ -103,8 +106,9 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
 
     size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
-    double usable_bandwidth = bytes_moved / time / 1024. / 1024.;
-    printf("%zu %lf ", bytes_moved, usable_bandwidth);
+    double usable_bandwidth = bytes_moved / time / 1000. / 1000.;
+    double actual_bandwidth = (bytes_moved + index_size) / time / 1000. / 1000.;
+    printf("%zu %lf %lf ", bytes_moved, usable_bandwidth, actual_bandwidth);
 
     //How many threads were used - currently refers to CPU systems
     size_t worker_threads = workers;
@@ -498,8 +502,55 @@ int main(int argc, char **argv)
     }
     #endif // USE_OPENMP
     
+    /* Time Serial Kernel */
+    #ifdef USE_SERIAL
+    if (backend == SERIAL) {
 
-    // Validate results 
+        for (int i = 0; i <= R; i++) {
+
+            sg_zero_time();
+
+            switch (kernel) {
+                case SG:
+                    if (op == OP_COPY) 
+                        sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len);
+                    else 
+                        sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len);
+                    break;
+                case SCATTER:
+                    if (op == OP_COPY)
+				scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len);
+                    else
+                        scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len);
+                    break;
+                case GATHER:
+                    if (op == OP_COPY)
+				gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+	                        index_len);
+                    else
+                        gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
+                        index_len);
+                    break;
+                default:
+                    printf("Error: Unable to determine kernel\n");
+                    break;
+            }
+
+            double time_ms = sg_get_time_ms();
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
+        }
+    }
+    #endif // USE_SERIAL
+    
+
+    /* =======================================
+	VALIDATION
+       =======================================
+    */
     if(validate_flag) {
 
 #ifdef USE_OPENCL
@@ -524,6 +575,35 @@ int main(int argc, char **argv)
         sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size); 
         memcpy(target_backup_host, target.host_ptr, target.size);
 
+    /* =======================================
+	VALIDATION
+       =======================================
+    */
+    if(validate_flag) {
+
+#ifdef USE_OPENCL
+        if (backend == OPENCL) {
+            clEnqueueReadBuffer(queue, target.dev_ptr_opencl, 1, 0, target.size, 
+                target.host_ptr, 0, NULL, &e);
+            clWaitForEvents(1, &e);
+        }
+#endif
+
+#ifdef USE_CUDA
+        if (backend == CUDA) {
+            cudaError_t cerr;
+            cerr = cudaMemcpy(target.host_ptr, target.dev_ptr_cuda, target.size, cudaMemcpyDeviceToHost);
+            if(cerr != cudaSuccess){
+                printf("transfer failed\n");
+            }
+            cudaDeviceSynchronize();
+        }
+#endif
+
+        sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size); 
+        memcpy(target_backup_host, target.host_ptr, target.size);
+
+    	// TODO: Issue - 13: Replace the hard-coded execution of each function with calls to the serial backend
         switch (kernel) {
             case SG:
                 for (size_t i = 0; i < index_len; i++){
@@ -555,10 +635,12 @@ int main(int argc, char **argv)
             }
         }
     }
-
+  }//end if validate
+      
     //Make sure PAPI is stopped and the file is closed
     #ifdef USE_PAPI
 	   fclose(papiFile);
 	   PAPI_shutdown();
    #endif
-}
+
+} //end main
