@@ -190,21 +190,53 @@ int main(int argc, char **argv)
   	   handle_error(1);
 
 	//Open a file pointer to write PAPI results to
-	FILE *papiFile;
-	papiFile = fopen("papi_counters.txt", "w");
+	FILE *papiFile, *papiConfig;
+	papiFile = fopen("papi_output.txt", "w");
+	//The config file contains 1) the number of events
+	papiConfig = fopen("papi_config.txt", "r");
 	if (papiFile == NULL)
 	{
- 	   perror("Opening the PAPI file failed.");
+ 	   perror("Opening the PAPI output file failed.");
     	   return 1;
 	}
-	
+	else if (papiConfig == NULL)
+	{
+ 	   perror("Opening the PAPI config file failed.");
+    	   return 1;
+	}
+
 	//Set the event struct for PAPI
 	struct papi_t papi;
-  	const int num_events   = 2;
-  	int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM};
-  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_L3_TCM, PAPI_DP_OPS};
-  	long long int counters[num_events] = {0};
-	papi_struct_set(&papi, num_events, events, counters);
+  	const int num_events;
+  	int events[num_events];
+  	long long int counters[num_events];
+
+	//Read in the config file
+	fscanf(papiConfig,"%d", &num_events);
+	papi.num = num_events;
+        printf("%d events\n",papi.num);
+
+	if(papi.num > 4)
+	{
+		perror("Only up to 4 events supported!\n");
+		return 1;
+	}
+
+	for(int i = 0; i < papi.num; i++)
+	{
+		// reads text until newline 
+		fscanf(papiConfig,"%s", papi.event_names[i]);
+		//printf("%d",i);
+		fscanf(papiConfig,"%x", &(papi.events[i]));
+		printf("%s: %x\n",papi.event_names[i],papi.events[i]);
+		
+		papi.counters[i] = 0;
+	}
+	
+  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM,PAPI_L3_TCM};
+  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_L3_TCM, PAPI_TLB_DM};
+  	//long long int counters[num_events] = {0};
+	//papi_struct_set(&papi, num_events, events, counters);
     #endif
 
     source.len = source_len;

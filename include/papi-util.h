@@ -8,8 +8,10 @@
 //Struct to hold PAPI events and counters
 struct papi_t{
   int num;
-  int *events;
-  long long int *counters;
+  int events[4];
+  long long int counters[4];
+  //Hold up to 4 event names
+  char event_names[4][100];
 };
 
 void print_papi_stats(struct papi_t *papi);
