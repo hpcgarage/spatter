@@ -20,7 +20,7 @@ cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_C_FLAGS=${FLAGS} \
 	-D CMAKE_CXX_FLAGS=${FLAGS} \
 	-D USE_OPENCL=0 \
-	-D USE_OPENMP=1 \
+	-D USE_OPENMP=0 \
 	-D USE_CUDA=0 \
 	-D USE_SERIAL=1 \
 	..    
