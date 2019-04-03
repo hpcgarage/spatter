@@ -148,6 +148,12 @@ void parse_args(int argc, char **argv)
                     }
                     backend = CUDA;
                 }
+                else if(!strcasecmp("SERIAL", optarg)){
+                    if (!sg_serial_support()) {
+                        error("You did not compile with support for serial execution", 1);
+                    }
+                    backend = SERIAL;
+                }
                 break;
             case 'p':
                 safestrcopy(platform_string, optarg);
@@ -187,7 +193,6 @@ void parse_args(int argc, char **argv)
                 sscanf(optarg, "%zu", &source_len);
                 break;
             case TARGET:
-                sscanf(optarg, "%zu", &target_len);
                 break;
             case INDEX:
                 sscanf(optarg, "%zu", &index_len);
@@ -268,9 +273,13 @@ void parse_args(int argc, char **argv)
             backend = OPENMP;
             error ("No backend specified, guessing OpenMP", 0);
         }
+        else if (sg_serial_support()) { 
+            backend = SERIAL;
+            error ("No backend specified, guessing Serial", 0);
+        }
         else
         {
-            error ("No backends available! Please recompile sgbench with at least one backend.", 1);
+            error ("No backends available! Please recompile spatter with at least one backend.", 1);
         }
     }
 
@@ -355,6 +364,5 @@ void parse_args(int argc, char **argv)
 
     /* Seed rand */
     srand(seed);
-
 
 }

@@ -1,81 +1,72 @@
-#include "openmp_kernels.h"
+#include "serial-kernels.h"
 
-#define SIMD 4
-
-void sg_omp(
-            sgData_t* restrict target,   
-            long*     restrict ti,
-            sgData_t* restrict source,
-            long*     restrict si,
-            size_t             n)
-{
-#pragma omp parallel for simd safelen(SIMD)
-#pragma prefervector
-    for(long i = 0; i < n; i++){
-        target[ti[i]] = source[si[i]];
-	}
-}
-
-void scatter_omp(
+void sg_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
             size_t n)
 {
+	#pragma novector
+	for(long i = 0; i < n; i++){
+	    target[ti[i]] = source[si[i]];
+	}
+}
 
-#pragma omp parallel for simd safelen(SIMD)
-#pragma prefervector
+void scatter_serial(
+            sgData_t* restrict target, 
+            long*     restrict ti,
+            sgData_t* restrict source,
+            long*     restrict si,
+            size_t n)
+{
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    target[ti[i]] = source[i];
 	}
 
 }
 
-void gather_omp(
+void gather_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
             size_t n)
 {
-
-//Users may want to set a specific safelen value like 32
-#pragma omp parallel for simd safelen(SIMD)
-#pragma prefervector
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    target[i] = source[si[i]];
 	}
 }
 
-void sg_accum_omp(
+void sg_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
             size_t n)
 {
-
-#pragma omp parallel for schedule(runtime)
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    target[ti[i]] += source[si[i]];
 	}
 }
 
-void scatter_accum_omp(
+void scatter_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
             size_t n)
 {
-#pragma omp parallel for schedule(runtime)
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    target[ti[i]] += source[i];
 	}
 }
 
-void gather_accum_omp(
+void gather_accum_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
@@ -83,7 +74,7 @@ void gather_accum_omp(
             size_t n)
 {
 
-#pragma omp parallel for schedule(runtime)
+	#pragma novector
 	for(long i = 0; i < n; i++){
 	    target[i] += source[si[i]];
 	}

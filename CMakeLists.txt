@@ -8,14 +8,15 @@ SET (TRGT spatter)
 SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
+SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
 # Check for support for at least one backend
-IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP))
+IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
     MESSAGE (
         FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DUSE_CUDA=1 -DUSE_OPENCL=1 or -DUSE_OPENMP=1 to cmake."
+            "You must build with support for at least one backend. Pass at least one of -DUSE_CUDA=1 -DUSE_OPENCL=1 -DUSE_SERIAL=1 or -DUSE_OPENMP=1 to cmake."
     )
 ENDIF ()
 
@@ -80,6 +81,16 @@ IF (USE_OPENCL)
     MESSAGE ("Using OpenCL")
 ENDIF ()
 
+# Enable Serial backend
+IF (USE_SERIAL)
+    ADD_DEFINITIONS (-DUSE_SERIAL)
+    INCLUDE_DIRECTORIES (serial)
+    # Pull the serial files and kernels into the build
+    FILE (GLOB BACKEND_C_FILES_SERIAL serial/*.c)
+    FILE (GLOB BACKEND_H_FILES_SERIAL serial/*.h)
+    MESSAGE ("Using serial backend")
+ENDIF ()
+
 # Enable OpenMP
 IF (USE_OPENMP)
     FIND_PACKAGE (OpenMP REQUIRED)
@@ -131,12 +142,16 @@ SET (
     ${BACKEND_H_FILES_CL}
     ${BACKEND_C_FILES_OMP}
     ${BACKEND_H_FILES_OMP}
+    ${BACKEND_C_FILES_SERIAL}
+    ${BACKEND_H_FILES_SERIAL}
     ${CUDA_CU_FILES}
     ${CUDA_C_FILES}
 )
 
 # Specify the executable and source files
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
+#Prefer C99 or C11 standards to allow for loop initialization, among other features
+set_property(TARGET ${TRGT} PROPERTY C_STANDARD 99)
 
 # Print out debug info print_all_variables()
 
