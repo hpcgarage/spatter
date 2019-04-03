@@ -10,6 +10,7 @@
 #include "sgbuf.h"
 #include "sgtime.h"
 #include "trace-util.h"
+#include "util.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -26,6 +27,10 @@
 #if defined( USE_SERIAL )
 	#include "../serial/serial-kernels.h"
 #endif
+
+#if defined ( USE_PAPI )
+    #include "papi-util.h"
+#endif 
 
 #define ALIGNMENT (64)
 
@@ -123,6 +128,7 @@ void print_data(double *buf, size_t len){
     }
     printf("\n");
 }
+
 void print_sizet(size_t *buf, size_t len){
     for (size_t i = 0; i < len; i++){
         printf("%zu ", buf[i]);
@@ -178,6 +184,63 @@ int main(int argc, char **argv)
         printf("sm's: %d\n", prop.multiProcessorCount);
         */
     }
+    #endif
+
+    //Initialize PAPI with multi-threaded support
+    #ifdef USE_PAPI
+	if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  	   exit(1);
+	if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
+  	   handle_error(1);
+
+	//Open a file pointer to write PAPI results to
+	FILE *papiFile, *papiConfig;
+	papiFile = fopen("papi_output.txt", "w");
+	//The config file contains 1) the number of events
+	papiConfig = fopen("papi_config.txt", "r");
+	if (papiFile == NULL)
+	{
+ 	   perror("Opening the PAPI output file failed.");
+    	   return 1;
+	}
+	else if (papiConfig == NULL)
+	{
+ 	   perror("Opening the PAPI config file failed.");
+    	   return 1;
+	}
+
+	//Set the event struct for PAPI
+	struct papi_t papi;
+  	const int num_events;
+  	int events[num_events];
+  	long long int counters[num_events];
+
+	//Read in the config file
+	fscanf(papiConfig,"%d", &num_events);
+	papi.num = num_events;
+        printf("%d events\n",papi.num);
+
+	if(papi.num > 4)
+	{
+		perror("Only up to 4 events supported!\n");
+		return 1;
+	}
+
+	for(int i = 0; i < papi.num; i++)
+	{
+		// reads text until newline 
+		fscanf(papiConfig,"%s", papi.event_names[i]);
+		//printf("%d",i);
+		fscanf(papiConfig,"%x", &(papi.events[i]));
+		printf("%s: %x\n",papi.event_names[i],papi.events[i]);
+		
+		papi.counters[i] = 0;
+	}
+	
+  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM,PAPI_L3_TCM};
+  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_L3_TCM, PAPI_TLB_DM};
+  	//long long int counters[num_events] = {0};
+	//papi_struct_set(&papi, num_events, events, counters);
     #endif
 
     source.len = source_len;
@@ -393,6 +456,10 @@ int main(int argc, char **argv)
 
 
             sg_zero_time();
+	    
+	    #ifdef USE_PAPI
+	    PAPI_start_counters(papi.events, papi.num);
+	    #endif
 
             switch (kernel) {
                 case SG:
@@ -425,8 +492,12 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
-
+	    if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
+            
+	    #ifdef USE_PAPI
+	    	PAPI_read_counters(papi.counters, papi.num);
+	    	dump_papi_to_file(&papi,papiFile);
+	    #endif
         }
     }
     #endif // USE_OPENMP
@@ -565,5 +636,11 @@ int main(int argc, char **argv)
         }
     }
   }//end if validate
+      
+    //Make sure PAPI is stopped and the file is closed
+    #ifdef USE_PAPI
+	   fclose(papiFile);
+	   PAPI_shutdown();
+   #endif
 
 } //end main

@@ -6,6 +6,7 @@
 
 #ifndef OMP_BACKEND_H
 #define OMP_BACKEND_H
+
 /*
 double execute_kernel_omp(sg_kernel kernel, 
         sg_op        op,

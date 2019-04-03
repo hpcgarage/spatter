@@ -1,6 +1,8 @@
 # 3.8 is specified since this is the first version with CUDA support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
 
+#Add any CMake modules
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 #Set target project name
 SET (TRGT spatter)
 
@@ -8,8 +10,10 @@ SET (TRGT spatter)
 SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
+SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
 SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
 
+#Specify whether to use doubles or floats as a fundamental datatype
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
 # Check for support for at least one backend
@@ -32,6 +36,7 @@ IF (USE_CUDA)
 ELSE ()
     PROJECT (${TRGT} C CXX)
 ENDIF ()
+
 
 # Debug function to check all the variables in the CMakeFile
 MACRO (print_all_variables)
@@ -129,6 +134,16 @@ IF (USE_CUDA)
     MESSAGE ("Using Cuda")
 ENDIF ()
 
+#Add optional PAPI support
+IF (USE_PAPI) 
+     ADD_DEFINITIONS (-DUSE_PAPI)
+     #Use the included FindPAPI cmake module
+     include(FindPAPI)
+     FIND_PACKAGE (PAPI REQUIRED)
+     #message("Found PAPI libraries at ${PAPI_INCLUDE_DIRS}")
+     include_directories(${PAPI_INCLUDE_DIRS})
+ENDIF ()
+
 # Include the location of stddef.h include_directories(/usr/include/linux/)
 
 # Glob for the source files and headers in the current directory and kernels
@@ -168,6 +183,14 @@ IF (USE_CUDA)
     )
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF ()
+   
+#Include PAPI libraries, if defined
+TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${PAPI_LIBRARIES})
+
+#Set the C standard used to build the target application; Can be set to 99 or 11
+#This fixes issues with Intel compilers related to loop variable initialization and
+#the usage of the restrict keyword
+set_property(TARGET spatter PROPERTY C_STANDARD 11)
 
 # Copy over the test scripts
 FILE (GLOB TEST_SCRIPTS tests/*.sh)

@@ -24,12 +24,15 @@ void scatter_omp(
             size_t n)
 {
 
+float real_time, proc_time, mflops;
+long long flpins;
+int retval;
+
 #pragma omp parallel for simd safelen(SIMD)
 #pragma prefervector
 	for(long i = 0; i < n; i++){
 	    target[ti[i]] = source[i];
 	}
-
 }
 
 void gather_omp(
@@ -46,6 +49,7 @@ void gather_omp(
 	for(long i = 0; i < n; i++){
 	    target[i] = source[si[i]];
 	}
+
 }
 
 void sg_accum_omp(
