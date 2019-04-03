@@ -25,6 +25,7 @@ void scatter_omp(
 {
 
 #pragma omp parallel for simd safelen(SIMD)
+#pragma prefervector
 	for(long i = 0; i < n; i++){
 	    target[ti[i]] = source[i];
 	}
