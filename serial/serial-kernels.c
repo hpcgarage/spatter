@@ -1,24 +1,15 @@
-#include "serial_kernels.h"
+#include "serial-kernels.h"
 
 void sg_serial(
             sgData_t* restrict target, 
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *tir = ti     + oi; 
-  long     *sir = si     + oi; 
-
 	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[tir[i]] = sr[sir[i]];
+	    target[ti[i]] = source[si[i]];
 	}
 }
 
@@ -27,19 +18,11 @@ void scatter_serial(
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *tir = ti     + oi; 
-
 	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[tir[i]] = sr[i];
+	    target[ti[i]] = source[i];
 	}
 
 }
@@ -49,20 +32,11 @@ void gather_serial(
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *sir = si     + oi; 
-
-
 	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[i] = sr[sir[i]];
+	    target[i] = source[si[i]];
 	}
 }
 
@@ -71,21 +45,11 @@ void sg_accum_serial(
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *tir = ti     + oi; 
-  long     *sir = si     + oi; 
-
-
 	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[tir[i]] += sr[sir[i]];
+	    target[ti[i]] += source[si[i]];
 	}
 }
 
@@ -94,19 +58,11 @@ void scatter_accum_serial(
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *tir = ti     + oi; 
-
-#pragma novector
+	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[tir[i]] += sr[i];
+	    target[ti[i]] += source[i];
 	}
 }
 
@@ -115,19 +71,11 @@ void gather_accum_serial(
             long*     restrict ti,
             sgData_t* restrict source,
             long*     restrict si,
-            size_t n,
-            long ot, 
-            long os, 
-            long oi, 
-            long B)
+            size_t n)
 {
-  sgData_t *tr  = target + ot;
-  sgData_t *sr  = source + os;
-  long     *sir = si     + oi; 
-
 
 	#pragma novector
 	for(long i = 0; i < n; i++){
-	    tr[i] += sr[sir[i]];
+	    target[i] += source[si[i]];
 	}
 }
