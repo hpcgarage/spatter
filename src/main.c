@@ -132,17 +132,6 @@ void print_sizet(size_t *buf, size_t len){
     printf("\n");
 }
 
-//Open a file and dump PAPI stats to it
-void dump_papi_to_file(float real_time, float proc_time)
-{
-  FILE * papiFile;
-  //fopen("papi_stats.txt","a+");
-  //fprintf(papiFile, "%f %f\n",real_time,proc_time);
-  printf("%f %f\n",real_time,proc_time);
-  //fclose(papiFile);
-
-}
-
 int main(int argc, char **argv)
 {
 
@@ -199,6 +188,23 @@ int main(int argc, char **argv)
   	   exit(1);
 	if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
   	   handle_error(1);
+
+	//Open a file pointer to write PAPI results to
+	FILE *papiFile;
+	papiFile = fopen("papi_counters.txt", "w");
+	if (papiFile == NULL)
+	{
+ 	   perror("Opening the PAPI file failed.");
+    	   return 1;
+	}
+	
+	//Set the event struct for PAPI
+	struct papi_t papi;
+  	const int num_events   = 2;
+  	int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM};
+  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_L3_TCM, PAPI_DP_OPS};
+  	long long int counters[num_events] = {0};
+	papi_struct_set(&papi, num_events, events, counters);
     #endif
 
     source.len = source_len;
@@ -414,6 +420,10 @@ int main(int argc, char **argv)
 
 
             sg_zero_time();
+	    
+	    #ifdef USE_PAPI
+	    PAPI_start_counters(papi.events, papi.num);
+	    #endif
 
             switch (kernel) {
                 case SG:
@@ -446,8 +456,12 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
-
+	    if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
+            
+	    #ifdef USE_PAPI
+	    	PAPI_read_counters(papi.counters, papi.num);
+	    	dump_papi_to_file(&papi,papiFile);
+	    #endif
         }
     }
     #endif // USE_OPENMP
@@ -510,8 +524,9 @@ int main(int argc, char **argv)
         }
     }
 
-    //Make sure PAPI is stopped
+    //Make sure PAPI is stopped and the file is closed
     #ifdef USE_PAPI
+	   fclose(papiFile);
 	   PAPI_shutdown();
    #endif
 }
