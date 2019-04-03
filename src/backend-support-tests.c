@@ -28,3 +28,12 @@ int sg_openmp_support()
     return 0;
 #endif
 }
+
+int sg_serial_support()
+{
+#if defined USE_SERIAL
+    return 1;
+#else 
+    return 0;
+#endif
+}
