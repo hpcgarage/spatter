@@ -24,7 +24,7 @@ IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
     )
 ENDIF ()
 
-# Set cuda compiler
+# Set CUDA compiler
 IF (USE_CUDA)
     SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
@@ -52,8 +52,12 @@ MACRO (print_all_variables)
     )
 ENDMACRO ()
 
-SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+# Check that appropriate compiler versions are used
+IF (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+        MESSAGE (FATAL_ERROR "GCC version must be at least 4.9.1 to run the OpenMP 4.0 backend")
+ENDIF ()
+
 
 #Add specific flags for the CodeXL compiler
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
@@ -61,6 +65,9 @@ IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 	SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IBMXL_COMPILE_FLAGS}")
 ENDIF ()
 
+#Add configure-specified flags
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Enable OpenCL
 IF (USE_OPENCL)

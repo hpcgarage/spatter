@@ -6,6 +6,7 @@
 #include "sgtype.h"
 #include "sgbuf.h"
 #include "mt64.h"
+#include "vrand.h"
 
 void random_data(sgData_t *buf, size_t len){
 #ifdef _OPENMP
@@ -19,7 +20,7 @@ void random_data(sgData_t *buf, size_t len){
     }
 #pragma omp parallel for shared(buf,len) num_threads(nt)
     for(size_t i = 0; i < len; i++){
-        buf[i] = genrand64_int64() % 10;
+        buf[i] = genrand64_int63() % 10;
     }
 }
 
@@ -80,7 +81,7 @@ void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t g
 
 }
 
-struct instruction get_random_instr (struct trace tr) {
+struct instruction get_random_instr_orig (struct trace tr) {
     double r = (double)rand() / (double)RAND_MAX;
     for (int i = 0; i < tr.length-1; i++) {
         if (tr.in[i].cpct > r) {
@@ -88,6 +89,27 @@ struct instruction get_random_instr (struct trace tr) {
         }
     }
     return tr.in[tr.length-1];
+}
+
+struct instruction get_random_instr(struct trace tr) 
+{
+  static int init = 0;
+  static dist_t *tr_dist;
+  
+  if( !init ) {
+    // This style of init will leak the dist_t when done..
+    vrand_init(0x1337ULL);
+    tr_dist = vrand_dist_alloc(tr.length);
+    double sum_pct = 0.0;
+    for(int i=0; i<tr.length; i++) {
+      tr_dist->p[i] = tr.in[i].pct;
+      sum_pct += tr_dist->p[i];
+    }
+    vrand_dist_init(tr_dist, sum_pct);
+    init = 1;
+  }
+
+  return tr.in[ vrand_dist(tr_dist) ];
 }
 
 //returns the size of the buffer required
@@ -103,7 +125,15 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         int i;
         for (i = 0; i < in.length ; i++) {
             if (i + cur < len) {
-                sidx[i+cur] = in.delta[i];
+#if 0
+	        // Skip first delta (i.e., between two SIMD instructions).
+	        if( i == 0 ) {
+		    sidx[i+cur] = 8;
+	        } else
+#endif
+	        {
+                    sidx[i+cur] = in.delta[i];
+	        }
             } else {
                 done = 1;
                 break;
@@ -142,6 +172,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
       for(size_t p = 0; p < npages; p++) {
 	if( pages[p] == page ) {
 	  pidx = p;
+	  break;
 	}
       }
       if( pidx == -1 ) {

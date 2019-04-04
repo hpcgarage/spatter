@@ -109,7 +109,7 @@ unsigned long long genrand64_int64(void)
 {
     int i;
     unsigned long long x;
-    static unsigned long long mag01[2]={0ULL, MATRIX_A};
+    static __thread unsigned long long mag01[2]={0ULL, MATRIX_A};
 
     if (mti >= NN) { /* generate NN words at one time */
 
