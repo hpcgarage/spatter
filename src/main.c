@@ -243,9 +243,6 @@ int main(int argc, char **argv)
 		papi.counters[i] = 0;
 	}
 	
-  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM,PAPI_L3_TCM};
-  	//int events[num_events] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_L3_TCM, PAPI_TLB_DM};
-  	//long long int counters[num_events] = {0};
 	//papi_struct_set(&papi, num_events, events, counters);
     #endif
 

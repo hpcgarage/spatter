@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "papi-util.h"
 
+#if defined ( USE_PAPI )
 void handle_error (int retval)
 {
     char err_str[64];
@@ -38,3 +39,6 @@ void dump_papi_to_file(struct papi_t *papi, FILE *filePtr)
   }
   fprintf(filePtr,"\n");
 }
+#endif
+
+

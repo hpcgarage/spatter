@@ -12,6 +12,8 @@ rm -rf CMake*
 CC=icc
 CXX=icpc
 FLAGS="-O3"
+#Set the base location of your PAPI installation
+PAPI_DIR=/opt/papi
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
@@ -22,5 +24,5 @@ cmake -D CMAKE_BUILD_TYPE=Release \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
 	-D USE_PAPI=1 \
-	-D PAPI_PREFIX=/opt/papi \
+	-D PAPI_PREFIX=${PAPI_DIR} \
 	..    
