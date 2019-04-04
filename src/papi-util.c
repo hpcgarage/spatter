@@ -5,8 +5,14 @@
 
 void handle_error (int retval)
 {
+    char err_str[64];
     /* print error to stderr and exit */
-    PAPI_perror(retval);
+    sprintf(err_str,"papi-util.c: handle_error(): retval = %d\n",retval);
+#if USE_PAPI
+    PAPI_perror(err_str);
+#else
+    fprintf(stderr,"%s",err_str);
+#endif
     exit(1);
 }
 

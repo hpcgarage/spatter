@@ -136,6 +136,11 @@ void print_sizet(size_t *buf, size_t len){
     printf("\n");
 }
 
+unsigned long ul_omp_get_thread_num()
+{
+  return (unsigned long) omp_get_thread_num();
+}
+
 int main(int argc, char **argv)
 {
 
@@ -190,7 +195,7 @@ int main(int argc, char **argv)
     #ifdef USE_PAPI
 	if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   	   exit(1);
-	if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
+	if (PAPI_thread_init(ul_omp_get_thread_num) != PAPI_OK)
   	   handle_error(1);
 
 	//Open a file pointer to write PAPI results to
@@ -210,17 +215,18 @@ int main(int argc, char **argv)
 	}
 
 	//Set the event struct for PAPI
+        #define max_events 4
 	struct papi_t papi;
-  	const int num_events;
-  	int events[num_events];
-  	long long int counters[num_events];
+	int num_events = 0;
+  	int events[max_events];
+  	long long int counters[max_events];
 
 	//Read in the config file
 	fscanf(papiConfig,"%d", &num_events);
 	papi.num = num_events;
         printf("%d events\n",papi.num);
 
-	if(papi.num > 4)
+	if(papi.num > max_events)
 	{
 		perror("Only up to 4 events supported!\n");
 		return 1;
@@ -464,27 +470,33 @@ int main(int argc, char **argv)
             switch (kernel) {
                 case SG:
                     if (op == OP_COPY) 
-                        sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        sg_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				(sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				index_len);
                     else 
-                        sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        sg_accum_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				      (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				      index_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-				scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len);
+				scatter_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+					     (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+					     index_len);
                     else
-                        scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        scatter_accum_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				           (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				           index_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len);
+		        gather_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				    (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				    index_len);
                     else
-                        gather_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        gather_accum_omp ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				          (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				          index_len);
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");
@@ -513,27 +525,33 @@ int main(int argc, char **argv)
             switch (kernel) {
                 case SG:
                     if (op == OP_COPY) 
-                        sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        sg_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+				   (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+				   index_len);
                     else 
-                        sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        sg_accum_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+					 (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+					 index_len);
                     break;
                 case SCATTER:
                     if (op == OP_COPY)
-				scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len);
+				scatter_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+						(sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+						index_len);
                     else
-                        scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        scatter_accum_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+					      (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+					      index_len);
                     break;
                 case GATHER:
                     if (op == OP_COPY)
-				gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-	                        index_len);
+				gather_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+					       (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+					       index_len);
                     else
-                        gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
-                        index_len);
+                        gather_accum_serial ((sgData_t * restrict)target.host_ptr, (long * restrict)ti.host_ptr,
+					     (sgData_t * restrict)source.host_ptr, (long * restrict)si.host_ptr, 
+					     index_len);
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");
