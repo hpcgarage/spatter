@@ -19,7 +19,7 @@ void random_data(sgData_t *buf, size_t len){
     }
 #pragma omp parallel for shared(buf,len) num_threads(nt)
     for(size_t i = 0; i < len; i++){
-        buf[i] = genrand64_int64() % 10;
+        buf[i] = genrand64_int63() % 10;
     }
 }
 
@@ -103,7 +103,15 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
         int i;
         for (i = 0; i < in.length ; i++) {
             if (i + cur < len) {
-                sidx[i+cur] = in.delta[i];
+#if 0
+	        // Skip first delta (i.e., between two SIMD instructions).
+	        if( i == 0 ) {
+		    sidx[i+cur] = 8;
+	        } else
+#endif
+	        {
+                    sidx[i+cur] = in.delta[i];
+	        }
             } else {
                 done = 1;
                 break;
