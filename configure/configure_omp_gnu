@@ -1,21 +1,26 @@
-# Configure file for compiling with OpenCL
-# Execute from the main directory using ./configure/configure_ocl
+# Configure file for compiling with GNU compilers
+# NOTE: gcc 4.9.1 is recommended for OpenMP 4.0 support;
+# gcc 6.1 is required for OpenMP 4.5 support
+# Execute from the main directory using ./configure/configure_<myplatform>
 
-BUILD_DIR=build_omp
+BACKEND=omp
+COMPILER=gnu
+
+BUILD_DIR=build_${BACKEND}_${COMPILER}
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake*
 
+CC=gcc
+CXX=g++
+FLAGS="-O3"
+
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
-	-D CMAKE_CXX_COMPILER=g++ \
-	-D CMAKE_CXX_FLAGS="-O3 -fopenmp" \
+	-D CMAKE_C_COMPILER=${CC} \
+	-D CMAKE_CXX_COMPILER=${CXX} \
+	-D CMAKE_C_FLAGS=${FLAGS} \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
 	..
-
-#Unused options
-#      -D USE_KOKKOS=0 -D KOKKOS_DIRECTORY=${KOKKOS_DIR}   \
-#      -D KOKKOS_WRAPPER=${KOKKOS_DIR}/bin/nvcc_wrapper    \
-#      -D USE_CUDA=0 -D CUDA_FLAGS="-arch sm_70"           \
