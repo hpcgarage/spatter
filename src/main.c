@@ -508,6 +508,13 @@ int main(int argc, char **argv)
 	    }
             
 	    #ifdef USE_PAPI
+                #pragma omp single
+                {
+                  for(int c=0; c<papi.num; c++) {
+                    papi.counters[c] = 0;
+       	          }
+                }
+                #pragma omp barrier
 	    	PAPI_read_counters(counters, papi.num);
                 #pragma omp critical
 		{
