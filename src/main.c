@@ -529,7 +529,9 @@ int main(int argc, char **argv)
 	    #pragma omp master
 	    {
               if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
-              dump_papi_to_file(&papi,papiFile);
+              #ifdef USE_PAPI
+                dump_papi_to_file(&papi,papiFile);
+              #endif
 	    }
         }
       } // omp parallel
