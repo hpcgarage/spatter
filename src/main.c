@@ -462,6 +462,7 @@ int main(int argc, char **argv)
             sg_zero_time();
     
 	    #ifdef USE_PAPI
+            #pragma omp master
 	    PAPI_start_counters(papi.events, papi.num);
 	    #endif
 
@@ -515,8 +516,9 @@ int main(int argc, char **argv)
        	          }
                 }
                 #pragma omp barrier
-	    	PAPI_read_counters(counters, papi.num);
-                #pragma omp critical
+	    	#pragma omp master
+                PAPI_read_counters(counters, papi.num);
+                #pragma omp master //critical
 		{
 		  for(int c=0; c<papi.num; c++) {
 		    papi.counters[c] += counters[c];
