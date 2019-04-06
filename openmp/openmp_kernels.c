@@ -1,6 +1,6 @@
 #include "openmp_kernels.h"
 
-#define SIMD 4
+#define SIMD 8
 
 void sg_omp(
             sgData_t* restrict target,   
