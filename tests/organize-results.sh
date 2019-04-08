@@ -23,8 +23,10 @@ BACKEND=$1
 SYS=$2
 #Is the device a CPU, GPU, or KNL?
 DEV=$3
+#Place results based on the current Github tag
+CURRTAG=0.3
 
-RESULTDIR=../results/v0.2
+RESULTDIR=../results/${CURRTAG}
 
 SYSDESC=${BACKEND}/$DEV/${SYS}
 

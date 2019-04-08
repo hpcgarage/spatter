@@ -1,5 +1,5 @@
 # Authors: Jeffrey Young, Patrick Lavin
-# Last Modified: September 24, 2018
+# Last Modified: April 8, 2019
 # Create the data for a roofline mode with various sparsities
 
 #Print out each command for debugging purposes
@@ -16,6 +16,9 @@ fi
 
 #User specifies backend
 BACKEND=$1
+
+#Exe file
+EXE=spatter
 
 
 #User specified identifier to clarify the output
@@ -60,8 +63,9 @@ O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 #NUMACTL="numactl -N 0 -l"
 NUMACTL=
 
-#Specify a large region to be used for the "sparse space
-LEN=$((2**22))
+#Specify a large region to be used for the "sparse space". We recommend to use at 
+#least 32 MB (2^25) for GPUs and CPUs to mitigate L3 caching or prefetching effects 
+LEN=$((2**25))
 
 export CL_HELPER_NO_COMPILER_OUTPUT_NAG=1
 
@@ -74,17 +78,17 @@ do
         then
             for B in $BLOCK;
             do
-                ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B -y >> $O_S
-                ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B -y >> $O_G
-                ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B -y >> $O_SG
+                ./${EXE} -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B -y >> $O_S
+                ./${EXE} -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B -y >> $O_G
+                ./${EXE} -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B -y >> $O_SG
             done
         elif [ "${BACKEND}" == "opencl" ]
         then
             for B in $BLOCK;
             do
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B -y >> $O_S
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B -y >> $O_G
-                ./sgbench -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B -y >> $O_SG
+                ./${EXE} -p $PLATFORM -d $DEVICE -l $LEN -s $S -k scatter -v $V --nph -q 1 -z $B -y >> $O_S
+                ./${EXE} -p $PLATFORM -d $DEVICE -l $LEN -s $S -k gather  -v $V --nph -q 1 -z $B -y >> $O_G
+                ./${EXE} -p $PLATFORM -d $DEVICE -l $LEN -s $S -k sg      -v $V --nph -q 1 -z $B -y >> $O_SG
             done
         elif [ "${BACKEND}" == "openmp" ]
         then
@@ -99,9 +103,9 @@ do
            
 	       #export OMP_SCHEDULE="static,"$V
                #echo $OMP_SCHEDULE
-               $NUMACTL ./sgbench -l $LEN -s $S -k scatter -v $V --nph -q 1 -y >> $O_S
-               $NUMACTL ./sgbench -l $LEN -s $S -k gather  -v $V --nph -q 1 -y >> $O_G
-               $NUMACTL ./sgbench -l $LEN -s $S -k sg      -v $V --nph -q 1 -y >> $O_SG
+               $NUMACTL ./${EXE} -l $LEN -s $S -k scatter -v $V --nph -q 1 -y >> $O_S
+               $NUMACTL ./${EXE} -l $LEN -s $S -k gather  -v $V --nph -q 1 -y >> $O_G
+               $NUMACTL ./${EXE} -l $LEN -s $S -k sg      -v $V --nph -q 1 -y >> $O_SG
 	    #done
         else 
             echo "Unknown backend" 
