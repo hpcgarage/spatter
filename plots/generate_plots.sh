@@ -25,7 +25,9 @@ BW=$3
 #Is the device a CPU, GPU, or KNL?
 DEV=$4
 
-RESULTDIR=../results/v0.2
+CURRTAG=`git describe --tags --abbrev=0`
+#CURRTAG=v0.3
+RESULTDIR=../results/${RESULTDIR}
 
 SYSDESC=${BACKEND}/${DEV}/${SYS}
 
