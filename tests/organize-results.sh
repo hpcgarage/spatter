@@ -24,7 +24,9 @@ SYS=$2
 #Is the device a CPU, GPU, or KNL?
 DEV=$3
 #Place results based on the current Github tag
-CURRTAG=0.3
+#This assumes that you are working from a tagged branch and that you have git installed and loaded
+#You can also manually set this value
+CURRTAG=`git describe --tags --abbrev=0`
 
 RESULTDIR=../results/${CURRTAG}
 
@@ -42,9 +44,11 @@ FULLRESULT=${RESULTDIR}/${OP}/${SYSDESC}
 
 #If this directory doesn't exist, create it. We assume the top-level directory exists
 if [ ! -d "$FULLRESULT" ]; then
-	mkdir ${RESULTDIR}/${OP}/${BACKEND}
-	mkdir ${RESULTDIR}/${OP}/${BACKEND}/${DEV}
-	mkdir ${RESULTDIR}/${OP}/${BACKEND}/${DEV}/${SYS}
+	mkdir -p ${RESULTDIR}
+	mkdir -p ${RESULTDIR}/${OP}
+	mkdir -p ${RESULTDIR}/${OP}/${BACKEND}
+	mkdir -p ${RESULTDIR}/${OP}/${BACKEND}/${DEV}
+	mkdir -p ${RESULTDIR}/${OP}/${BACKEND}/${DEV}/${SYS}
 fi
 
 echo $FULLRESULT

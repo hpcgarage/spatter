@@ -1,0 +1,152 @@
+1587-151 The OMP_PLACES environment variable does not support 'sockets' for this platform. Reverting to 'cores' . 
+-------------------------------------------------------------
+STREAM version $Revision: 5.10 $
+-------------------------------------------------------------
+This system uses 8 bytes per array element.
+-------------------------------------------------------------
+Array size = 126000000 (elements), Offset = 0 (elements)
+Memory per array = 961.3 MiB (= 0.9 GiB).
+Total memory required = 2883.9 MiB (= 2.8 GiB).
+Each kernel will be executed 100 times.
+ The *best* time for each kernel (excluding the first iteration)
+ will be used to compute the reported bandwidth.
+-------------------------------------------------------------
+
+OPENMP DISPLAY HELP BEGIN
+  OMP_CANCELLATION               TRUE, FALSE                              control cancel
+  OMP_DEFAUT_DEVICE              id of device                             default device
+  OMP_DEV_HEAPSIZE               size in kilo, mega, giga bytes           size in bytes of the heap used by the malloc() and free() device system calls
+  OMP_DEV_STACKSIZE              size in kilo, mega, giga bytes           stack size in bytes of each device thread
+  OMP_DISPLAY_AFFINITY           TRUE, FALSE                              display affinity
+  OMP_DISPLAY_ENV                TRUE, FALSE, VERBOSE                     display env info
+  OMP_DYNAMIC                    TRUE, FALSE                              dynamic number of threads
+  OMP_MAX_ACTIVE_LEVELS          num of levels                            max levels of parallelism
+  OMP_MAX_TASK_PRIORITY          num of priority                          max priority value
+  OMP_NESTED                     TRUE, FALSE                              nested parallelism allowed
+  OMP_NUM_TEAMS                  num of teams                             default number of target teams
+  OMP_NUM_THREADS                list of num of threads                   default number of threads in parallel region
+  OMP_PLACES                     place description                        definitions of places for computations
+  OMP_PROC_BIND                  TRUE, FALSE, list of SPREAD,CLOSE,MASTER policy to bind threads to places
+  OMP_SCHEDULE                   STATIC, DYNAMIC, GUIDED, AUTO            default policty for parallel for
+  OMP_STACKSIZE                  size in kilo, mega, giga bytes           stack size for threads
+  OMP_TARGET_OFFLOAD             MANDATORY, DEFAULT, DISABLED             control action on target offload
+  OMP_TEAM_LIMIT                 num of teams                             maximum number of target teams
+  OMP_THREAD_LIMIT               num of threads                           max number of threads
+  OMP_TOOL                       ENABLED, DISABLED                        control tool activation
+  OMP_TOOL_LIBRARIES             list of library binaries                 path for tool library
+  OMP_WAIT_POLICY                ACTIVE, PASSIVE                          policy while waiting for work
+  XLSMPOPTS=ALTGRID                                                       use alternate algorithm for grid
+  XLSMPOPTS=AUTOSHUTDOWN                                                  force shutdown afer each parallel region
+  XLSMPOPTS=BACKOFF              factor num                               exponential backoff for spin
+  XLSMPOPTS=BIND                 resource descr                           bind threads to resources (deprecated)
+  XLSMPOPTS=BINDLIST             resource descr                           bind threads to resources (deprecated)
+  XLSMPOPTS=CUDAMEMCHECKFRIENDLY ON, OFF                                  disable cuda calls that return errors in normal operation
+  XLSMPOPTS=DELAYS               number of delays                         number of delay before checking for work
+  XLSMPOPTS=FWAIT                number                                   timeout if using futex to sleep/wakeup
+  XLSMPOPTS=GPUCACHEPREF         NONE, SHARED, L1, EQUAL                  GPU cache preference
+  XLSMPOPTS=GPUNUMSTREAMS        number of streams                        number of GPU streams used
+  XLSMPOPTS=MAPWARNING           OFF, ONCE, ON, ABORT                     control target map warning
+  XLSMPOPTS=MSG_BACKTRACE                                                 print backtrace for messages
+  XLSMPOPTS=NOSTACKCHECK                                                  control checking for stack overflow
+  XLSMPOPTS=PARTHDS              number of threads                        max number of threads (deprecated)
+  XLSMPOPTS=PARTHRESHOLD         num of miliseconds                       parallel threshold for auto-parallel
+  XLSMPOPTS=PROCS                list of cpu ids                          bind thread to list of cpus (deprecated)
+  XLSMPOPTS=PROFILEFREQ          number 0..32                             profile freq for auto-parallel
+  XLSMPOPTS=SCHEDULE             STATIC, GUIDED, DYNAMIC, AUTO,...        default schedule when none specified
+  XLSMPOPTS=SEQTHRESHOLD         num of miliseconds                       sequential threshold for auto-parallel
+  XLSMPOPTS=SLEEPS               number                                   sleep while waiting
+  XLSMPOPTS=SPINS                number of loop spins                     number of loop spins before yield
+  XLSMPOPTS=STACK                num of bytes                             stack size for threads (deprecated)
+  XLSMPOPTS=STACKCHECK           optional num of min remaining bytes      check stack overflow
+  XLSMPOPTS=STARTPROC            id of proc                               first cpu for binding (deprecated)
+  XLSMPOPTS=STRIDE               num of procs                             strides between bound cpus (deprecated)
+  XLSMPOPTS=TARGETNUMTHREADS     num of threads                           default number of threads for a target team
+  XLSMPOPTS=TARGETMEM            DISTR, UIMPLICIT, UCOPYCLOSE, UONLY      how to handle target memory
+  XLSMPOPTS=TARGETTHREADLIMIT    num of threads                           maximum number of threads for a target team
+  XLSMPOPTS=USRTHDS              number of threads                        number of user threads
+  XLSMPOPTS=YIELDS               number of yields                         number of yield before sleep
+OPENMP DISPLAY HELP END
+
+OPENMP DISPLAY RUNTIME BEGIN
+  LOMP for OpenMP 4.0 targetting cuda device
+  LOMP API version 1508
+  BUILD_LEVEL='OpenMP Runtime Version: 13.1.7(C/C++) and 15.1.7(Fortran) Level: 181026 ID: _aZq_w9k6EeiLR71RxbOxBQ'
+  BUILT='xlC, level=13.1.2.0'
+  BUILDTIME='Oct 26 2018, 14:08:08'
+  TARGET='Linux, 64 bit LE'
+OPENMP DISPLAY RUNTIME END
+
+OPENMP DISPLAY AFFINITY BEGIN
+  OMP_PLACES='{0,1,2,3},{4,5,6,7},{8,9,10,11},{12,13,14,15},{16,17,18,19},{20,21,22,23},{24,25,26,27},{28,29,30,31},{32,33,34,35},{36,37,38,39},{40,41,42,43},{44,45,46,47},{48,49,50,51},{52,53,54,55},{56,57,58,59},{60,61,62,63},{64,65,66,67},{68,69,70,71},{72,73,74,75},{76,77,78,79},{80,81,82,83},{84,85,86,87},{88,89,90,91},{92,93,94,95},{96,97,98,99},{100,101,102,103},{104,105,106,107},{108,109,110,111},{112,113,114,115},{116,117,118,119},{120,121,122,123},{124,125,126,127}' cores
+  THREADS_PER_PLACE='{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4},{4}'
+OPENMP DISPLAY AFFINITY END
+
+OPENMP DISPLAY ENVIRONMENT BEGIN
+  _OPENMP='201107'
+  OMP_DISPLAY_ENV='VERBOSE'
+  OMP_PLACES='cores(32)'
+  OMP_PROC_BIND='MASTER'
+
+  OMP_AFFINITY_FORMAT='%.3n/%N @ %L'
+  OMP_CANCELLATION='FALSE'
+  OMP_DEFAULT_DEVICE='0'
+  OMP_DEV_HEAPSIZE='undef' 
+  OMP_DEV_STACKSIZE='undef' 
+  OMP_DISPLAY_AFFINITY='FALSE'
+  OMP_DYNAMIC='FALSE'
+  OMP_MAX_ACTIVE_LEVELS='5'
+  OMP_MAX_TASK_PRIORITY='0'
+  OMP_NESTED='FALSE'
+  OMP_NUM_TEAMS='undef'
+  OMP_NUM_THREADS='128'
+  OMP_SCHEDULE='STATIC,0'
+  OMP_STACKSIZE='4194304'
+  OMP_TARGET_OFFLOAD='DEFAULT'
+  OMP_TEAM_LIMIT='undef'
+  OMP_THREAD_LIMIT='128'
+  OMP_WAIT_POLICY='PASSIVE'
+  XLSMPOPTS=' BACKOFF=0.000000'
+  XLSMPOPTS=' CUDAMEMCHECKFRIENDLY=OFF'
+  XLSMPOPTS=' DELAYS=1000'
+  XLSMPOPTS=' FWAIT=0'
+  XLSMPOPTS=' GPUCACHEPREF=NONE'
+  XLSMPOPTS=' GPUNUMSTREAMS=32'
+  XLSMPOPTS=' MAPWARNING=ONCE'
+  XLSMPOPTS=' NOSTACKCHECK'
+  XLSMPOPTS=' PARTHDS=128'
+  XLSMPOPTS=' PARTHRESHOLD=    inf'
+  XLSMPOPTS=' PROFILEFREQ=16'
+  XLSMPOPTS=' SCHEDULE=STATIC=0'
+  XLSMPOPTS=' SEQTHRESHOLD=    inf'
+  XLSMPOPTS=' SLEEPS=100'
+  XLSMPOPTS=' SPINS=64'
+  XLSMPOPTS=' STACK=4194304'
+  XLSMPOPTS=' TARGETMEM=DISTR'
+  XLSMPOPTS=' TARGETNUMTHREADS=undef'
+  XLSMPOPTS=' TARGETTHREADLIMIT=undef'
+  XLSMPOPTS=' USRTHDS=0'
+  XLSMPOPTS=' YIELDS=64'
+OPENMP DISPLAY ENVIRONMENT END
+
+1587-156 Insufficient threads on place 0 with the MASTER proc_bind policy. May take threads from other places. The result of the program may be altered if the OMP_THREAD_LIMIT is not increased.
+Number of Threads requested = 128
+Number of Threads counted = 128
+-------------------------------------------------------------
+Your clock granularity/precision appears to be 1 microseconds.
+Each test below will take on the order of 7622 microseconds.
+   (= 7622 clock ticks)
+Increase the size of the arrays if this shows that
+you are not getting at least 20 clock ticks per test.
+-------------------------------------------------------------
+WARNING -- The above is only a rough guideline.
+For best results, please be sure you know the
+precision of your system timer.
+-------------------------------------------------------------
+Function    Best Rate MB/s  Avg time     Min time     Max time
+Copy:          207665.3     0.009937     0.009708     0.012474
+Scale:         195007.4     0.010446     0.010338     0.011540
+Add:           218418.7     0.014020     0.013845     0.019294
+Triad:         193400.3     0.015898     0.015636     0.017239
+-------------------------------------------------------------
+Solution Validates: avg error less than 1.000000e-13 on all three arrays
+-------------------------------------------------------------
