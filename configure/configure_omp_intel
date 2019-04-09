@@ -1,5 +1,5 @@
-# Configure file for compiling with OpenCL
-# Execute from the main directory using ./configure/configure_ocl
+# Configure file for compiling with OpenMP and Intel compilers
+# Execute from the main directory using ./configure/configure_<my_platform>
 
 BACKEND=omp
 COMPILER=intel
@@ -11,7 +11,7 @@ rm -rf CMake*
 
 CC=icc
 CXX=icpc
-FLAGS="-O3 -qenablevmx"
+FLAGS="-O3 -xCOMMON-AVX512"
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
@@ -21,4 +21,5 @@ cmake -D CMAKE_BUILD_TYPE=Release \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
+	-D USE_SERIAL=1 \	
 	..    
