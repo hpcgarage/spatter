@@ -61,7 +61,7 @@ O_SG=${SCRIPTNAME}_${BACKEND}_${DEVICE}_SG.ssv
 
 #Use numactl to allocate memory locally and only use one socket
 #NUMACTL="numactl -N 0 -l"
-NUMACTL=
+#NUMACTL=
 
 #Specify a large region to be used for the "sparse space". We recommend to use at 
 #least 32 MB (2^25) for GPUs and CPUs to mitigate L3 caching or prefetching effects 
@@ -92,17 +92,8 @@ do
             done
         elif [ "${BACKEND}" == "openmp" ]
         then
-	    #Attempt to reinforce socket binding with OpenMP if numactl is not available
-	    export OMP_PROC_BIND=master
-	    export OMP_PLACES=sockets
-   	    export OMP_DISPLAY_ENV=VERBOSE
-    	    
 	    #for N in $NUMTHREADS;
 	    #do
-	      # export OMP_NUM_THREADS=$N
-           
-	       #export OMP_SCHEDULE="static,"$V
-               #echo $OMP_SCHEDULE
                $NUMACTL ./${EXE} -l $LEN -s $S -k scatter -v $V --nph -q 1>> $O_S
                $NUMACTL ./${EXE} -l $LEN -s $S -k gather  -v $V --nph -q 1>> $O_G
                $NUMACTL ./${EXE} -l $LEN -s $S -k sg      -v $V --nph -q 1>> $O_SG

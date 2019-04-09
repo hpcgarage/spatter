@@ -27,6 +27,7 @@ DEV=$3
 #This assumes that you are working from a tagged branch and that you have git installed and loaded
 #You can also manually set this value
 CURRTAG=`git describe --tags --abbrev=0`
+#CURRTAG=`v0.3`
 
 RESULTDIR=../results/${CURRTAG}
 
@@ -51,8 +52,9 @@ if [ ! -d "$FULLRESULT" ]; then
 	mkdir -p ${RESULTDIR}/${OP}/${BACKEND}/${DEV}/${SYS}
 fi
 
-echo $FULLRESULT
+echo "Moving data to results folder at $FULLRESULT"
 
+echo "mv sg_sparse_roofline_${BACKEND}_${SYS}_${OPUPPER}.ssv  ${FULLRESULT}/."
 mv sg_sparse_roofline_${BACKEND}_${SYS}_${OPUPPER}.ssv  ${FULLRESULT}/.
 mv sg_rdm_roofline_${BACKEND}_${SYS}_${OPUPPER}.ssv  ${FULLRESULT}/.
 done

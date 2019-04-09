@@ -53,12 +53,12 @@ OUTPUTFILE=stream_${SYSDESC}.txt
 
 #NUMACTL can be used to run on just one socket but it may conflict with OpenMP env settings
 #NUMACTL=numactl -N 0 -l
-NUMACTL=
+#NUMACTL=
 
 #OpenMP settings to place STREAM on local threads
 export OMP_PLACES=sockets
 export OMP_PROC_BIND=master
-export OMP_DISPLAY_ENV=VERBOSE
+#export OMP_DISPLAY_ENV=VERBOSE
 
 #Run OpenMP version of BabelStream on one socket using local allocation
 echo "Running STREAM with n = $N"
