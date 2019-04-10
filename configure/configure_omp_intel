@@ -12,11 +12,13 @@ rm -rf CMake*
 CC=icc
 CXX=icpc
 #Skylake
-FLAGS="-O3 -march=skylake-avx512"
+#FLAGS="-O3 -march=skylake-avx512"
 #KNL
-#FLAGS="-O3 -xCOMMON-AVX512"
+#FLAGS="-O3 -xMIC-AVX512"
+#Cross-platform
+FLAGS="-O3 -xCOMMON-AVX512"
 #Return vectorization report
-#FLAGS="-O3 -qopt-report-phase=vec,loop -qopt-report=2"
+FLAGS="${FLAGS} -qopt-report-phase=vec,loop -qopt-report=2"
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
