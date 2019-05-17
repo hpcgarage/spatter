@@ -41,4 +41,26 @@ void gather_accum_omp(
             sgData_t* restrict source,
             long*     restrict si,
             size_t n);
+
+void gather_stride_noidx(
+        sgData_t* restrict target,
+        sgData_t* restrict source,
+        sgIdx_t*  restrict pat,
+        size_t    pat_len,
+        size_t    delta,
+        size_t    n);
+void gather_stride_noidx8(
+        sgData_t* restrict target,
+        sgData_t* restrict source,
+        sgIdx_t*  restrict pat,
+        size_t    delta,
+        size_t    n);
+void gather_stride_noidx16(
+        sgData_t* restrict target,
+        sgData_t* restrict source,
+        sgIdx_t*  restrict pat,
+        size_t    stride,
+        size_t    delta,
+        size_t    n);
+
 #endif

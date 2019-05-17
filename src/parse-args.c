@@ -22,6 +22,7 @@
 #define MS1_PATTERN 1006
 #define MS1_GAP     1007
 #define MS1_RUN     1008
+#define USTRIDE     1009
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -34,6 +35,7 @@ extern char config_file[STRING_SIZE];
 extern size_t source_len;
 extern size_t target_len;
 extern size_t index_len;
+extern size_t generic_len;
 extern size_t wrap;
 extern size_t seed;
 extern size_t vector_len;
@@ -42,12 +44,15 @@ extern size_t local_work_size;
 extern size_t workers;
 extern size_t ms1_gap;
 extern size_t ms1_run;
+extern ssize_t us_stride;
+extern ssize_t us_delta;
 extern int ms1_flag;
 extern int config_flag;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
 extern int random_flag;
+extern int ustride_flag;
 extern unsigned int shmem;
 extern enum sg_op op;
 
@@ -85,7 +90,6 @@ void parse_args(int argc, char **argv)
     safestrcopy(kernel_file,     "NONE");
     safestrcopy(kernel_name,     "NONE");
 
-    size_t generic_len = 0;
     size_t sparsity = 1;
     int supress_errors = 0;
 
@@ -112,6 +116,7 @@ void parse_args(int argc, char **argv)
         {"ms1-pattern",     no_argument,       NULL, MS1_PATTERN},
         {"ms1-gap",         required_argument, NULL, MS1_GAP},
         {"ms1-run",         required_argument, NULL, MS1_RUN},
+        {"ustride",         required_argument, NULL, USTRIDE},
         {"config-file",     required_argument, NULL, 't'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"random",          no_argument,       NULL, 'y'},
@@ -243,6 +248,10 @@ void parse_args(int argc, char **argv)
             case MS1_GAP:
                 sscanf(optarg, "%zu", &ms1_gap);
                 break;
+            case USTRIDE:
+                ustride_flag = 1;
+                sscanf(optarg, "%zu,%zu", &us_stride, &us_delta);
+                break;
             case 't':
                 safestrcopy(config_file, optarg);
                 config_flag = 1;
@@ -335,6 +344,23 @@ void parse_args(int argc, char **argv)
             source_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
             index_len = generic_len;
         }
+    }
+    else if (ustride_flag) {
+        if (kernel == GATHER) {
+            assert(us_stride >= 0);
+            
+            index_len = 1;
+            target_len = generic_len * 16; 
+
+            ssize_t window = 16 * us_stride;
+            assert(window + us_delta >= 0);
+            source_len = window + (generic_len-1) * ( window + us_delta );
+        } else {
+            printf("Not supported yet\n");
+            exit(1);
+        }
+
+
     }
     else{
         index_len = generic_len;

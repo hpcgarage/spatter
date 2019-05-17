@@ -44,6 +44,7 @@ char config_file[STRING_SIZE];
 size_t source_len;
 size_t target_len;
 size_t index_len;
+size_t generic_len = 0;
 size_t seed;
 size_t wrap = 1;
 size_t R = 10;
@@ -52,11 +53,14 @@ size_t vector_len = 1;
 size_t local_work_size = 1;
 size_t ms1_gap = 0; 
 size_t ms1_run = 0;
+ssize_t us_stride = 0; 
+ssize_t us_delta = 0;
 
 unsigned int shmem = 0;
 int random_flag = 0;
 int ms1_flag = 0;
 int config_flag = 0;
+int ustride_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
@@ -100,9 +104,18 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
 
     printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
 
-    size_t bytes_moved = 2 * index_len * sizeof(sgData_t);
-    double usable_bandwidth = bytes_moved / time / 1000. / 1000.;
-    double actual_bandwidth = (bytes_moved + index_size) / time / 1000. / 1000.;
+    size_t bytes_moved = 0;
+    double usable_bandwidth = 0;
+    double actual_bandwidth = 0;
+    if (ustride_flag) {
+        bytes_moved = 2* sizeof(sgData_t) * 16 * generic_len; 
+        usable_bandwidth = bytes_moved / time / 1000. / 1000.;
+        actual_bandwidth = usable_bandwidth;
+    } else {
+        bytes_moved = 2 * index_len * sizeof(sgData_t);
+        usable_bandwidth = bytes_moved / time / 1000. / 1000.;
+        actual_bandwidth = (bytes_moved + index_size) / time / 1000. / 1000.;
+    }
     printf("%zu %lf %lf ", bytes_moved, usable_bandwidth, actual_bandwidth);
 
     //How many threads were used - currently refers to CPU systems
@@ -146,6 +159,8 @@ int main(int argc, char **argv)
     	cl_uint work_dim = 1;
     #endif
     size_t global_work_size = 1;
+
+    size_t *pattern;
     
     char *kernel_string;
 
@@ -180,6 +195,7 @@ int main(int argc, char **argv)
     }
     #endif
 
+    
     source.len = source_len;
     target.len = target_len;
     si.len     = index_len;
@@ -280,6 +296,14 @@ int main(int argc, char **argv)
             printf("Error: pattern files only support scatter and gather kernels\n");
         }
     }
+
+    if (ustride_flag) {
+        pattern = (size_t *) sg_safe_cpu_alloc(sizeof(size_t) * 16); 
+        for (int i = 0; i < 16; i++) {
+            pattern[i] = i * us_stride;
+        }
+    }
+        
     /* Create buffers on host */
     source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
     target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
@@ -390,8 +414,6 @@ int main(int argc, char **argv)
 
         for (int i = 0; i <= R; i++) {
 
-
-
             sg_zero_time();
 
             switch (kernel) {
@@ -412,7 +434,10 @@ int main(int argc, char **argv)
                         index_len);
                     break;
                 case GATHER:
-                    if (op == OP_COPY)
+                    if (ustride_flag) 
+                        gather_stride_noidx16(target.host_ptr, source.host_ptr, pattern, us_stride, us_delta, generic_len);
+
+                    else if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
 	                        index_len);
                     else
