@@ -105,7 +105,7 @@ void gather_stride_noidx16(
             //printf("%zu <- %zu\n", i*16+j, pat[j]);
             target[i*16+j] = source[pat[j]];
         }
-        source += stride*16 + delta;    
+        source += delta;    
     }
 }
 

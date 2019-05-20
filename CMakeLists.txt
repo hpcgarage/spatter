@@ -1,6 +1,8 @@
 # 3.8 is specified since this is the first version with CUDA support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
 
+SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #Set target project name
 SET (TRGT spatter)
 
@@ -61,9 +63,13 @@ IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 ENDIF ()
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
-	SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -hlist=m")
-	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -hlist=m")
+    SET (OPTIMIZATIONS "-O3")
+	SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} -hlist=m")
+	SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m")
 ENDIF ()
+
+FILE (WRITE ${CMAKE_CURRENT_BINARY_DIR}/COMPILER ${CMAKE_C_COMPILER_ID}/${CMAKE_C_COMPILER_VERSION})
+FILE (WRITE ${CMAKE_CURRENT_BINARY_DIR}/OPTIMIZATIONS ${OPTIMIZATIONS})
 
 #Add configure-specified flags
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -184,6 +190,7 @@ ENDIF ()
 # Copy over the test scripts
 FILE (GLOB TEST_SCRIPTS tests/*.sh)
 FILE (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4
