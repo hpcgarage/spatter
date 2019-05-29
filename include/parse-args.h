@@ -8,6 +8,8 @@
 
 #define STRING_SIZE 100
 
+#define MAX_PATTERN_LEN 32
+
 /** @brief Read command-line arguments and populate global variables. 
  *  @param argc Value passed to main
  *  @param argv Value passed to main

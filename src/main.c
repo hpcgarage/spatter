@@ -29,6 +29,7 @@
 
 #define ALIGNMENT (64)
 
+
 //SGBench specific enums
 enum sg_backend backend = INVALID_BACKEND;
 enum sg_kernel  kernel  = INVALID_KERNEL;
@@ -61,8 +62,28 @@ int random_flag = 0;
 int ms1_flag = 0;
 int config_flag = 0;
 int ustride_flag = 0;
+int custom_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
+
+// NOIDX MODE OPTIONS
+int noidx_flag            = 0;
+int noidx_explicit_mode   = 0;
+int noidx_predef_us_mode  = 0;
+int noidx_predef_ms1_mode = 0;
+int noidx_file_mode       = 0;
+
+size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
+size_t noidx_pattern_len  = 0;
+char  noidx_pattern_file[STRING_SIZE] = {0};
+
+ssize_t noidx_delta       = -1;
+ssize_t noidx_us_stride   = -1;
+size_t noidx_ms1_deltas[MAX_PATTERN_LEN] =  {0};
+size_t noidx_ms1_breaks[MAX_PATTERN_LEN] =  {0};
+size_t noidx_ms1_deltas_len = 0;
+size_t noidx_ms1_breaks_len = 0;
+ssize_t noidx_ms1_delta   = -1;
 
 void print_header(){
     printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
