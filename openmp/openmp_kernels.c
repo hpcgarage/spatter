@@ -1,5 +1,6 @@
 #include "openmp_kernels.h"
 
+#include <stdio.h>
 #define SIMD 8
 
 void sg_omp(
@@ -72,7 +73,24 @@ void gather_stride_noidx(
         for (size_t j = 0; j < pat_len; j++) {
             target[i*pat_len+j] = source[pat[j]];
         }
-        source += delta;    
+        source += delta;
+    }
+}
+		
+void gather_stride_noidx_os(
+		sgData_t* restrict target, 
+		sgData_t* restrict source, 
+		sgIdx_t*  restrict pat, 
+		size_t    pat_len,
+		size_t    delta, 
+		size_t    n, 
+        size_t    target_wrap)
+{
+    for (size_t i = 0; i < n; i++) {
+        for (size_t j = 0; j < pat_len; j++) {
+            target[(i%target_wrap)*pat_len+j] = source[pat[j]];
+        }
+        source += delta;
     }
 }
 		

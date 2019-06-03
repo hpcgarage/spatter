@@ -41,4 +41,13 @@ enum sg_op
     OP_ACCUM
 };
 
+enum noidx_mode
+{
+    UNIFORM,
+    MS1,
+    EXPLICIT,
+    CUSTOM,
+    INVALID
+};
+
 #endif 

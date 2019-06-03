@@ -64,6 +64,7 @@ extern int noidx_explicit_mode;
 extern int noidx_predef_us_mode;
 extern int noidx_predef_ms1_mode;
 extern int noidx_file_mode;
+extern int noidx_onesided;
 
 extern size_t noidx_pattern[MAX_PATTERN_LEN];
 extern size_t noidx_pattern_len;
@@ -76,6 +77,9 @@ extern size_t noidx_ms1_breaks[MAX_PATTERN_LEN];
 extern size_t noidx_ms1_deltas_len;
 extern size_t noidx_ms1_breaks_len;
 extern ssize_t noidx_ms1_delta;
+
+extern size_t noidx_window;
+extern size_t noidx_size;
 
 
 FILE *err_file;
@@ -94,6 +98,15 @@ void error(char *what, int code){
 void safestrcopy(char *dest, char *src){
     dest[0] = '\0';
     strncat(dest, src, STRING_SIZE-1);
+}
+
+ssize_t setincludes(size_t s, size_t* noidx_ms1_breaks, size_t noidx_ms1_breaks_len){ 
+    for (size_t i = 0; i < noidx_ms1_breaks_len; i++) {
+        if (noidx_ms1_breaks[i] == s) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void parse_args(int argc, char **argv)
@@ -244,6 +257,7 @@ void parse_args(int argc, char **argv)
                 break;
             case 'w':
                 sscanf(optarg, "%zu", &wrap);
+                sscanf(optarg, "%d", &noidx_onesided);
                 break;
             case 'l':
                 sscanf(optarg,"%zu", &generic_len);
@@ -277,9 +291,9 @@ void parse_args(int argc, char **argv)
                 sscanf(optarg, "%zu,%zu", &us_stride, &us_delta);
                 break;
             case 'p':
-                ;
                 // This code will parse the arguments for NOIDX mode. 
                 // Correctness checking is done after all arguments are parsed, below
+                {
                 noidx_flag = 1;
                 char *arg = 0;
                 if ((arg=strchr(optarg, ':'))) {
@@ -394,13 +408,15 @@ void parse_args(int argc, char **argv)
                             error ("Failed to parse pattern", 1);
                         }
                     }
+                    printf("read: %zu\n", read);
 
                     noidx_pattern_len = read;
                 }
-                exit(1); 
                 break;
+            }
             case 'd':
                 sscanf(optarg, "%zu", &us_delta);
+                sscanf(optarg, "%zu", &noidx_delta);
                 break;
             case 't':
                 safestrcopy(config_file, optarg);
@@ -484,6 +500,59 @@ void parse_args(int argc, char **argv)
     }
 
     //Check buffer lengths
+
+    if (noidx_flag) {
+        if (noidx_explicit_mode) {
+            printf("Explicit mode: \n\t[");
+            for (int i = 0; i < noidx_pattern_len; i++) {
+                printf("%zu", noidx_pattern[i]);
+                if (i != noidx_pattern_len-1) printf(" ");
+            }
+            printf("]\n");
+        }else if (noidx_predef_us_mode) {   
+            for (int i = 0; i < noidx_pattern_len; i++) {
+                noidx_pattern[i] = i*noidx_us_stride;
+            }
+            printf("Uniform Stride mode: \n\t[");
+            for (int i = 0; i < noidx_pattern_len; i++) {
+                printf("%zu", noidx_pattern[i]);
+                if (i != noidx_pattern_len-1) printf(" ");
+            }
+            printf("]\n");
+        }
+        else if (noidx_predef_ms1_mode) {
+            size_t last = 0;
+            ssize_t j;
+            for (int i = 1; i < noidx_pattern_len; i++) {
+                if ((j=setincludes(i, noidx_ms1_breaks, noidx_ms1_breaks_len))!=-1) {
+                   noidx_pattern[i] = last+noidx_ms1_deltas[noidx_ms1_deltas_len>1?j:0];
+                } else {
+                    noidx_pattern[i] = last + 1;
+                }
+                last = noidx_pattern[i];
+            }
+            printf("MS1 mode: \n\t[");
+            for (int i = 0; i < noidx_pattern_len; i++) {
+                printf("%zu", noidx_pattern[i]);
+                if (i != noidx_pattern_len-1) printf(" ");
+            }
+            printf("]\n");
+        }     
+        
+        size_t max = noidx_pattern[0];
+        for (int i = 1; i < noidx_pattern_len; i++) {
+            if (noidx_pattern[i] > max ) {
+                max = noidx_pattern[i];
+            }
+        }
+
+        if (noidx_delta == -1) {
+            error("noidx_delta not specified, default is 8\n", 0);
+            noidx_delta = 16;
+        }
+        
+        noidx_window = max + 1; // unit: elements
+    }
     if (ms1_flag) {
         if (kernel == SCATTER) {
             source_len = generic_len;

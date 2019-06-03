@@ -72,6 +72,7 @@ int noidx_explicit_mode   = 0;
 int noidx_predef_us_mode  = 0;
 int noidx_predef_ms1_mode = 0;
 int noidx_file_mode       = 0;
+int noidx_onesided        = 0;
 
 size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
 size_t noidx_pattern_len  = 0;
@@ -84,6 +85,9 @@ size_t noidx_ms1_breaks[MAX_PATTERN_LEN] =  {0};
 size_t noidx_ms1_deltas_len = 0;
 size_t noidx_ms1_breaks_len = 0;
 ssize_t noidx_ms1_delta   = -1;
+
+size_t noidx_window;
+size_t noidx_size;
 
 void print_header(){
     printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
@@ -279,52 +283,64 @@ int main(int argc, char **argv)
     ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 #endif
 */
-    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 
+    if (noidx_flag) {
+        si.size = 1;
+        ti.size = 1;
+    }
 
-    if (ms1_flag) {
-        if (kernel == SCATTER) {
-            linear_indices(si.host_ptr, si.len, 1, 1, 0);
-            ms1_indices(ti.host_ptr, ti.len, 1, ms1_run, ms1_gap);
-        }else if (kernel == GATHER) {
-            ms1_indices(si.host_ptr, si.len, 1, ms1_run, ms1_gap);
-            linear_indices(ti.host_ptr, ti.len, 1, 1, 0);
+    if (!noidx_flag) {
+        si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
+        ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
+
+        if (ms1_flag) {
+            if (kernel == SCATTER) {
+                linear_indices(si.host_ptr, si.len, 1, 1, 0);
+                ms1_indices(ti.host_ptr, ti.len, 1, ms1_run, ms1_gap);
+            }else if (kernel == GATHER) {
+                ms1_indices(si.host_ptr, si.len, 1, ms1_run, ms1_gap);
+                linear_indices(ti.host_ptr, ti.len, 1, 1, 0);
+            } else {
+                printf("MS1 pattern is only supported for scatter and gather\n");
+                exit(1);
+            }
         } else {
-            printf("MS1 pattern is only supported for scatter and gather\n");
-            exit(1);
+            if (wrap > 1) {
+                wrap_indices(si.host_ptr, si.len, 1, si.stride, wrap);
+                wrap_indices(ti.host_ptr, ti.len, 1, ti.stride, wrap);
+            } else {
+                linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
+                linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
+            }
         }
-    } else {
-        if (wrap > 1) {
-            wrap_indices(si.host_ptr, si.len, 1, si.stride, wrap);
-            wrap_indices(ti.host_ptr, ti.len, 1, ti.stride, wrap);
-        } else {
-            linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
-            linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
+
+        if (config_flag) {
+            if (kernel == SCATTER) {
+                size_t reqd_len = trace_indices(ti.host_ptr, ti.len, tr);
+                target.len = reqd_len;
+                target.size = target.len * sizeof(sgData_t);
+            } else if (kernel == GATHER) {
+                size_t reqd_len = trace_indices(si.host_ptr, si.len, tr);
+                source.len = reqd_len;
+                source.size = source.len * sizeof(sgData_t);
+            } else {
+                printf("Error: pattern files only support scatter and gather kernels\n");
+            }
+        }
+
+        if (ustride_flag) {
+            pattern = (size_t *) sg_safe_cpu_alloc(sizeof(size_t) * 16); 
+            for (int i = 0; i < 16; i++) {
+                pattern[i] = i * us_stride;
+            }
         }
     }
 
-    if (config_flag) {
-        if (kernel == SCATTER) {
-            size_t reqd_len = trace_indices(ti.host_ptr, ti.len, tr);
-            target.len = reqd_len;
-            target.size = target.len * sizeof(sgData_t);
-        } else if (kernel == GATHER) {
-            size_t reqd_len = trace_indices(si.host_ptr, si.len, tr);
-            source.len = reqd_len;
-            source.size = source.len * sizeof(sgData_t);
-        } else {
-            printf("Error: pattern files only support scatter and gather kernels\n");
-        }
+    if (noidx_flag) {
+        source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
+        target.size = generic_len * noidx_pattern_len * sizeof(double);
     }
 
-    if (ustride_flag) {
-        pattern = (size_t *) sg_safe_cpu_alloc(sizeof(size_t) * 16); 
-        for (int i = 0; i < 16; i++) {
-            pattern[i] = i * us_stride;
-        }
-    }
-        
     /* Create buffers on host */
     source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
     target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
@@ -457,7 +473,14 @@ int main(int argc, char **argv)
                 case GATHER:
                     if (ustride_flag) 
                         gather_stride_noidx16(target.host_ptr, source.host_ptr, pattern, us_stride, us_delta, generic_len);
-
+                    else if (noidx_flag)
+                        if (noidx_onesided) {
+                            printf(" -- onesided mode\n");
+                            gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
+                        } else {
+                            printf(" -- twosided mode\n");
+                            gather_stride_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
+                        }
                     else if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
 	                        index_len);
