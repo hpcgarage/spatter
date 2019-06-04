@@ -136,6 +136,10 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
         bytes_moved = 2* sizeof(sgData_t) * 16 * generic_len; 
         usable_bandwidth = bytes_moved / time / 1000. / 1000.;
         actual_bandwidth = usable_bandwidth;
+    } else if (noidx_flag){
+        bytes_moved = 2 * sizeof(sgData_t) * noidx_pattern_len * generic_len;
+        usable_bandwidth = 0;
+        actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     } else {
         bytes_moved = 2 * index_len * sizeof(sgData_t);
         usable_bandwidth = bytes_moved / time / 1000. / 1000.;
@@ -475,10 +479,10 @@ int main(int argc, char **argv)
                         gather_stride_noidx16(target.host_ptr, source.host_ptr, pattern, us_stride, us_delta, generic_len);
                     else if (noidx_flag)
                         if (noidx_onesided) {
-                            printf(" -- onesided mode\n");
+                            //printf(" -- onesided mode\n");
                             gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
                         } else {
-                            printf(" -- twosided mode\n");
+                            //printf(" -- twosided mode\n");
                             gather_stride_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
                         }
                     else if (op == OP_COPY)

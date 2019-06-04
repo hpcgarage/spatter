@@ -64,14 +64,19 @@ void gather_omp_v2(
 void gather_stride_noidx(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
-		sgIdx_t*  restrict pat, 
+		sgIdx_t*  const restrict pat, 
 		size_t    pat_len,
 		size_t    delta, 
 		size_t    n)
 {
+
+#pragma omp parallel for simd safelen(SIMD)
+#pragma prefervector
     for (size_t i = 0; i < n; i++) {
+#pragma loop_info est_trips(8)
+#pragma loop_info prefetch
         for (size_t j = 0; j < pat_len; j++) {
-            target[i*pat_len+j] = source[pat[j]];
+            target[i*pat_len+j] = source[pat[j]+delta];
         }
         source += delta;
     }
