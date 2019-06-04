@@ -61,7 +61,6 @@ unsigned int shmem = 0;
 int random_flag = 0;
 int ms1_flag = 0;
 int config_flag = 0;
-int ustride_flag = 0;
 int custom_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
@@ -88,6 +87,8 @@ ssize_t noidx_ms1_delta   = -1;
 
 size_t noidx_window;
 size_t noidx_size;
+
+int verbose = 0;
 
 void print_header(){
     printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
@@ -132,11 +133,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     size_t bytes_moved = 0;
     double usable_bandwidth = 0;
     double actual_bandwidth = 0;
-    if (ustride_flag) {
-        bytes_moved = 2* sizeof(sgData_t) * 16 * generic_len; 
-        usable_bandwidth = bytes_moved / time / 1000. / 1000.;
-        actual_bandwidth = usable_bandwidth;
-    } else if (noidx_flag){
+    if (noidx_flag){
         bytes_moved = 2 * sizeof(sgData_t) * noidx_pattern_len * generic_len;
         usable_bandwidth = 0;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
@@ -224,43 +221,49 @@ int main(int argc, char **argv)
     }
     #endif
 
-    
-    source.len = source_len;
-    target.len = target_len;
-    si.len     = index_len;
-    ti.len     = index_len;
+    if (noidx_flag) {
+        source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
+        target.size = generic_len * noidx_pattern_len * sizeof(double);
 
-    /* These are the total size of the data allocated for each buffer */
-    source.size = source.len * sizeof(sgData_t);
-    target.size = target.len * sizeof(sgData_t);
+    } else {
+        source.len = source_len;
+        target.len = target_len;
+        si.len     = index_len;
+        ti.len     = index_len;
 
-    si.stride = source.len / si.len;
-    ti.stride = target.len / ti.len;
+        /* These are the total size of the data allocated for each buffer */
+        source.size = source.len * sizeof(sgData_t);
+        target.size = target.len * sizeof(sgData_t);
 
-    if (kernel == GATHER || kernel == SG) {
-        if(wrap > si.stride) {
-            wrap = si.stride;
-        }
-    }
-    if (kernel == SCATTER || kernel == SG) {
-        if(wrap > ti.stride) { 
-            wrap = ti.stride;
-        }
-    }
+        printf("source.len %zu, si.len %zu\n", source.len, si.len);
+        si.stride = source.len / si.len;
+        ti.stride = target.len / ti.len;
 
-    if (wrap > 1){
         if (kernel == GATHER || kernel == SG) {
-            source.size = source.size / wrap;
-            source.len = source.len / wrap;
+            if(wrap > si.stride) {
+                wrap = si.stride;
+            }
         }
         if (kernel == SCATTER || kernel == SG) {
-            target.size = target.size / wrap;
-            target.len = target.len / wrap;
+            if(wrap > ti.stride) { 
+                wrap = ti.stride;
+            }
         }
-    }
 
-   si.size     = si.len * sizeof(sgIdx_t);
-   ti.size     = ti.len * sizeof(sgIdx_t);
+        if (wrap > 1){
+            if (kernel == GATHER || kernel == SG) {
+                source.size = source.size / wrap;
+                source.len = source.len / wrap;
+            }
+            if (kernel == SCATTER || kernel == SG) {
+                target.size = target.size / wrap;
+                target.len = target.len / wrap;
+            }
+        }
+
+       si.size     = si.len * sizeof(sgIdx_t);
+       ti.size     = ti.len * sizeof(sgIdx_t);
+    }
 
     /* Create the kernel */
     #ifdef USE_OPENCL
@@ -275,22 +278,11 @@ int main(int argc, char **argv)
     #endif
 
 
-    /*
-#ifdef USE_CUDA
-    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
-#elif defined USE_OPENMP
-    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
-#elif defined USE_OPENCL
-    si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
-    ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
-#endif
-*/
-
     if (noidx_flag) {
-        si.size = 1;
-        ti.size = 1;
+        si.len = 0;
+        ti.len = 0;
+        si.size = 0;
+        ti.size = 0;
     }
 
     if (!noidx_flag) {
@@ -332,17 +324,6 @@ int main(int argc, char **argv)
             }
         }
 
-        if (ustride_flag) {
-            pattern = (size_t *) sg_safe_cpu_alloc(sizeof(size_t) * 16); 
-            for (int i = 0; i < 16; i++) {
-                pattern[i] = i * us_stride;
-            }
-        }
-    }
-
-    if (noidx_flag) {
-        source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
-        target.size = generic_len * noidx_pattern_len * sizeof(double);
     }
 
     /* Create buffers on host */
@@ -475,15 +456,13 @@ int main(int argc, char **argv)
                         index_len);
                     break;
                 case GATHER:
-                    if (ustride_flag) 
-                        gather_stride_noidx16(target.host_ptr, source.host_ptr, pattern, us_stride, us_delta, generic_len);
-                    else if (noidx_flag)
+                    if (noidx_flag)
                         if (noidx_onesided) {
                             //printf(" -- onesided mode\n");
                             gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
                         } else {
                             //printf(" -- twosided mode\n");
-                            gather_stride_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
+                            gather_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
                         }
                     else if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 

@@ -13,16 +13,8 @@
 #include "cuda-backend.h"
 #endif
 
-#define SOURCE      1000
-#define TARGET      1001 
-#define INDEX       1002
-#define BLOCK       1003
 #define SEED        1004
 #define VALIDATE    1005
-#define MS1_PATTERN 1006
-#define MS1_GAP     1007
-#define MS1_RUN     1008
-#define USTRIDE     1009
 #define CLPLATFORM  1010
 #define CLDEVICE    1011
 
@@ -45,17 +37,11 @@ extern size_t vector_len;
 extern size_t R;
 extern size_t local_work_size;
 extern size_t workers;
-extern size_t ms1_gap;
-extern size_t ms1_run;
-extern ssize_t us_stride;
-extern ssize_t us_delta;
-extern int ms1_flag;
 extern int config_flag;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
 extern int random_flag;
-extern int ustride_flag;
 extern unsigned int shmem;
 extern enum sg_op op;
 
@@ -81,17 +67,24 @@ extern ssize_t noidx_ms1_delta;
 extern size_t noidx_window;
 extern size_t noidx_size;
 
+extern int verbose;
+
 
 FILE *err_file;
 
 void error(char *what, int code){
-    if (code)
+    if (code) {
         fprintf(err_file, "Error: ");
-    else
-        fprintf(err_file, "Warning: ");
+    }
+    else {
+        if (verbose)
+            fprintf(err_file, "Warning: ");
+    }
 
-    fprintf(err_file, "%s", what);
-    fprintf(err_file, "\n");
+    if (verbose || code) {
+        fprintf(err_file, "%s", what);
+        fprintf(err_file, "\n");
+    }
     if(code) exit(code);
 }
 
@@ -148,15 +141,12 @@ void parse_args(int argc, char **argv)
         {"uniform-stride",  required_argument, NULL, 's'},
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
-        {"ms1-pattern",     no_argument,       NULL, MS1_PATTERN},
-        {"ms1-gap",         required_argument, NULL, MS1_GAP},
-        {"ms1-run",         required_argument, NULL, MS1_RUN},
-        {"ustride",         required_argument, NULL, USTRIDE},
         {"config-file",     required_argument, NULL, 't'},
         {"pattern",         required_argument, NULL, 'p'},
         {"delta",           required_argument, NULL, 'p'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"random",          no_argument,       NULL, 'y'},
+        {"verbose",         no_argument,       &verbose, 1},
         {"validate",        no_argument, &validate_flag, 1},
         {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
@@ -231,14 +221,6 @@ void parse_args(int argc, char **argv)
                     error("Unrecognzied op type", 1);
                 }
                 break;
-            case SOURCE:
-                sscanf(optarg, "%zu", &source_len);
-                break;
-            case TARGET:
-                break;
-            case INDEX:
-                sscanf(optarg, "%zu", &index_len);
-                break;
             case SEED:
                 sscanf(optarg, "%zu", &seed);
                 break;
@@ -276,19 +258,6 @@ void parse_args(int argc, char **argv)
                 break;
             case 'q':
                 err_file = fopen("/dev/null", "w");
-                break;
-            case MS1_PATTERN:
-                ms1_flag = 1;
-                break;
-            case MS1_RUN:
-                sscanf(optarg, "%zu", &ms1_run);
-                break;
-            case MS1_GAP:
-                sscanf(optarg, "%zu", &ms1_gap);
-                break;
-            case USTRIDE:
-                ustride_flag = 1;
-                sscanf(optarg, "%zu,%zu", &us_stride, &us_delta);
                 break;
             case 'p':
                 // This code will parse the arguments for NOIDX mode. 
@@ -415,7 +384,6 @@ void parse_args(int argc, char **argv)
                 break;
             }
             case 'd':
-                sscanf(optarg, "%zu", &us_delta);
                 sscanf(optarg, "%zu", &noidx_delta);
                 break;
             case 't':
@@ -494,7 +462,7 @@ void parse_args(int argc, char **argv)
         sprintf(kernel_name, "%s%zu", "sg", vector_len);
     }
 
-    if (!strcasecmp(kernel_file, "NONE")) {
+    if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL) {
         error("Kernel file unspecified, guessing kernels/kernels_vector.cl", 0);
         safestrcopy(kernel_file, "kernels/kernels_vector.cl");
     }
@@ -553,35 +521,6 @@ void parse_args(int argc, char **argv)
         
         noidx_window = max + 1; // unit: elements
     }
-    if (ms1_flag) {
-        if (kernel == SCATTER) {
-            source_len = generic_len;
-            target_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
-            index_len = generic_len;
-        } else if (kernel == GATHER) {
-            target_len = generic_len;
-            source_len = (generic_len / ms1_run) * (ms1_run + ms1_gap);
-            index_len = generic_len;
-        }
-    }
-    else if (ustride_flag) {
-        if (kernel == GATHER) {
-            assert(us_stride >= 0);
-            
-            index_len = 1;
-            target_len = generic_len * 16; 
-
-            ssize_t window = 16 * us_stride;
-            assert(delta >= 0);
-            source_len = window + (generic_len-1)*(us_delta);
-            //source_len = window + (generic_len-1) * ( window + us_delta );
-        } else {
-            printf("Not supported yet\n");
-            exit(1);
-        }
-
-
-    }
     else{
         index_len = generic_len;
         if (kernel == SCATTER) {
@@ -603,11 +542,6 @@ void parse_args(int argc, char **argv)
         workers = 1;
     }
     
-    if(ms1_flag) {
-        assert(ms1_run > 0);
-        assert(ms1_gap > 0);
-    }
-
     /* Seed rand */
     srand(seed);
 
