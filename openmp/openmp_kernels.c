@@ -61,7 +61,7 @@ void gather_omp_v2(
 		long      restrict ldb, 
 		*/
 
-void gather_stride_noidx(
+void gather_noidx(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  const restrict pat, 

@@ -42,7 +42,7 @@ void gather_accum_omp(
             sgIdx_t*     restrict si,
             size_t n);
 
-void gather_stride_noidx(
+void gather_noidx(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,
