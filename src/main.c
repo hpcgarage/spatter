@@ -90,19 +90,38 @@ size_t noidx_size;
 
 int verbose = 0;
 
+void print_system_info(){
+
+    printf("Running Spatter version 0.0\n");
+    printf("Backend: ");
+
+    if(backend == OPENMP) printf("OPENMP ");
+    if(backend == OPENCL) printf("OPENCL ");
+    if(backend == CUDA) printf("CUDA ");
+
+    printf("\n");
+
+    if(noidx_flag) {
+        printf("Index pattern: ");
+    } 
+
+    if (noidx_predef_ms1_mode) printf("MS1: [");
+    if (noidx_predef_us_mode) printf("UNIFORM: [");
+    if (noidx_explicit_mode) printf("CUSTOM: [");
+        for (int i = 0; i < noidx_pattern_len; i++) {
+            printf("%zu", noidx_pattern[i]);
+            if (i != noidx_pattern_len-1) printf(" ");
+        }
+    printf("]\n\n");
+
+
+}
+
 void print_header(){
-    printf("backend kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth omp_threads vector_len block_dim\n");
-}
-
-void make_upper (char* s) {
-    while (*s) {
-        *s = toupper(*s);
-        s++;
-    }
-}
-
-long posmod (long i, long n) {
-    return (i % n + n) % n;
+    if (noidx_flag) 
+        printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
+    else
+        printf("kernel op time source_size target_size idx_size bytes_moved usable_bandwidth actual_bandwidth nthreads vector_len block_dim shmem\n");
 }
 
 void *sg_safe_cpu_alloc (size_t size) {
@@ -117,9 +136,6 @@ void *sg_safe_cpu_alloc (size_t size) {
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
 void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  size_t vector_len){
-    if(backend == OPENMP) printf("OPENMP ");
-    if(backend == OPENCL) printf("OPENCL ");
-    if(backend == CUDA) printf("CUDA ");
 
     if(kernel == SCATTER) printf("SCATTER ");
     if(kernel == GATHER) printf("GATHER ");
@@ -128,7 +144,12 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     if(op == OP_COPY) printf("COPY ");
     if(op == OP_ACCUM) printf("ACCUM ");
 
-    printf("%lf %zu %zu %zu ", time, source_size, target_size, index_size);
+    printf("%lf %zu %zu ", time, source_size, target_size);
+
+    if (noidx_flag)
+        printf("%zu ", noidx_pattern_len);
+    else 
+        printf("%zu ", index_size);
 
     size_t bytes_moved = 0;
     double usable_bandwidth = 0;
@@ -142,7 +163,10 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
         usable_bandwidth = bytes_moved / time / 1000. / 1000.;
         actual_bandwidth = (bytes_moved + index_size) / time / 1000. / 1000.;
     }
-    printf("%zu %lf %lf ", bytes_moved, usable_bandwidth, actual_bandwidth);
+    if (noidx_flag) 
+        printf("%zu %lf ", bytes_moved, actual_bandwidth);
+    else
+        printf("%zu %lf %lf ", bytes_moved, usable_bandwidth, actual_bandwidth);
 
     //How many threads were used - currently refers to CPU systems
     size_t worker_threads = workers;
@@ -224,7 +248,6 @@ int main(int argc, char **argv)
     if (noidx_flag) {
         source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
         target.size = generic_len * noidx_pattern_len * sizeof(double);
-
     } else {
         source.len = source_len;
         target.len = target_len;
@@ -363,7 +386,11 @@ int main(int argc, char **argv)
     */
 
     /* Begin benchmark */
-    if (print_header_flag) print_header();
+    if (print_header_flag) 
+    {
+        print_system_info();
+        print_header();
+    }
     
 
     /* Time OpenCL Kernel */

@@ -20,7 +20,6 @@
 
 #define INTERACTIVE "INTERACTIVE"
 
-
 extern char platform_string[STRING_SIZE];
 extern char device_string[STRING_SIZE];
 extern char kernel_file[STRING_SIZE];
@@ -68,7 +67,6 @@ extern size_t noidx_window;
 extern size_t noidx_size;
 
 extern int verbose;
-
 
 FILE *err_file;
 
@@ -377,8 +375,6 @@ void parse_args(int argc, char **argv)
                             error ("Failed to parse pattern", 1);
                         }
                     }
-                    printf("read: %zu\n", read);
-
                     noidx_pattern_len = read;
                 }
                 break;
@@ -471,22 +467,10 @@ void parse_args(int argc, char **argv)
 
     if (noidx_flag) {
         if (noidx_explicit_mode) {
-            printf("Explicit mode: \n\t[");
-            for (int i = 0; i < noidx_pattern_len; i++) {
-                printf("%zu", noidx_pattern[i]);
-                if (i != noidx_pattern_len-1) printf(" ");
-            }
-            printf("]\n");
         }else if (noidx_predef_us_mode) {   
             for (int i = 0; i < noidx_pattern_len; i++) {
                 noidx_pattern[i] = i*noidx_us_stride;
             }
-            printf("Uniform Stride mode: \n\t[");
-            for (int i = 0; i < noidx_pattern_len; i++) {
-                printf("%zu", noidx_pattern[i]);
-                if (i != noidx_pattern_len-1) printf(" ");
-            }
-            printf("]\n");
         }
         else if (noidx_predef_ms1_mode) {
             size_t last = 0;
@@ -499,12 +483,6 @@ void parse_args(int argc, char **argv)
                 }
                 last = noidx_pattern[i];
             }
-            printf("MS1 mode: \n\t[");
-            for (int i = 0; i < noidx_pattern_len; i++) {
-                printf("%zu", noidx_pattern[i]);
-                if (i != noidx_pattern_len-1) printf(" ");
-            }
-            printf("]\n");
         }     
         
         size_t max = noidx_pattern[0];
@@ -516,7 +494,7 @@ void parse_args(int argc, char **argv)
 
         if (noidx_delta == -1) {
             error("noidx_delta not specified, default is 8\n", 0);
-            noidx_delta = 16;
+            noidx_delta = 8;
         }
         
         noidx_window = max + 1; // unit: elements
