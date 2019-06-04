@@ -5,9 +5,9 @@
 
 void sg_omp(
             sgData_t* restrict target,   
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t             n)
 {
 #pragma omp parallel for simd safelen(SIMD)
@@ -19,9 +19,9 @@ void sg_omp(
 
 void scatter_omp(
             sgData_t* restrict target, 
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t n)
 {
 
@@ -35,9 +35,9 @@ void scatter_omp(
 
 void gather_omp(
             sgData_t* restrict target, 
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t n)
 {
 
@@ -129,9 +129,9 @@ void gather_stride_noidx16(
 
 void sg_accum_omp(
             sgData_t* restrict target, 
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t n)
 {
 
@@ -143,9 +143,9 @@ void sg_accum_omp(
 
 void scatter_accum_omp(
             sgData_t* restrict target, 
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t n)
 {
 #pragma omp parallel for schedule(runtime)
@@ -156,9 +156,9 @@ void scatter_accum_omp(
 
 void gather_accum_omp(
             sgData_t* restrict target, 
-            long*     restrict ti,
+            sgIdx_t*     restrict ti,
             sgData_t* restrict source,
-            long*     restrict si,
+            sgIdx_t*     restrict si,
             size_t n)
 {
 
