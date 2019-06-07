@@ -99,7 +99,9 @@ ssize_t setincludes(size_t s, size_t* noidx_ms1_breaks, size_t noidx_ms1_breaks_
     }
     return -1;
 }
-
+void parse_p(char*, struct run_config *);
+void print_run_config(struct run_config rc);
+//void parse_args(int argc, char **argv, struct run_config *rc, int nconfigs)
 void parse_args(int argc, char **argv)
 {
     static int platform_flag = 0;
@@ -118,6 +120,8 @@ void parse_args(int argc, char **argv)
 
     size_t sparsity = 1;
     int supress_errors = 0;
+
+    struct run_config rc;
 
 	static struct option long_options[] =
     {
@@ -141,7 +145,7 @@ void parse_args(int argc, char **argv)
         {"shared-mem",      required_argument, NULL, 'm'},
         {"config-file",     required_argument, NULL, 't'},
         {"pattern",         required_argument, NULL, 'p'},
-        {"delta",           required_argument, NULL, 'p'},
+        {"delta",           required_argument, NULL, 'd'},
         {"supress-errors",  no_argument,       NULL, 'q'},
         {"random",          no_argument,       NULL, 'y'},
         {"verbose",         no_argument,       &verbose, 1},
@@ -202,12 +206,18 @@ void parse_args(int argc, char **argv)
                 safestrcopy(kernel_name, optarg);
                 if (!strcasecmp("SG", optarg)) {
                     kernel = SG;
+                    rc.kernel=SG;
                 }
                 else if (!strcasecmp("SCATTER", optarg)) {
                     kernel = SCATTER;
+                    rc.kernel=SCATTER;
                 }
                 else if (!strcasecmp("GATHER", optarg)) {
                     kernel = GATHER;
+                    rc.kernel=GATHER;
+                }
+                else {
+                    error("Invalid kernel", 1);
                 }
                 break;
             case 'o':
@@ -225,8 +235,7 @@ void parse_args(int argc, char **argv)
             case 'v':
                 sscanf(optarg, "%zu", &vector_len);
                 if (vector_len < 1) {
-                    printf("Invalid vector len\n");
-                    exit(1);
+                    error("Invalid vector len", 1);
                 }
                 break;
             case 'R':
@@ -241,6 +250,7 @@ void parse_args(int argc, char **argv)
                 break;
             case 'l':
                 sscanf(optarg,"%zu", &generic_len);
+                sscanf(optarg,"%zu", &(rc.generic_len));
                 break;
             case 's':
                 sscanf(optarg,"%zu", &sparsity);
@@ -262,6 +272,12 @@ void parse_args(int argc, char **argv)
                 // Correctness checking is done after all arguments are parsed, below
                 {
                 noidx_flag = 1;
+
+                //{
+                char *optarg_copy = (char*)malloc(strlen(optarg)+1);
+                strcpy(optarg_copy, optarg);
+                parse_p(optarg_copy, &rc);
+                
                 char *arg = 0;
                 if ((arg=strchr(optarg, ':'))) {
 
@@ -377,10 +393,13 @@ void parse_args(int argc, char **argv)
                     }
                     noidx_pattern_len = read;
                 }
+
+                //}
                 break;
             }
             case 'd':
                 sscanf(optarg, "%zu", &noidx_delta);
+                sscanf(optarg, "%zu", &(rc.delta));
                 break;
             case 't':
                 safestrcopy(config_file, optarg);
@@ -394,8 +413,9 @@ void parse_args(int argc, char **argv)
     }
 
     if (generic_len <= 0) {
-        error ("Length not specified. Default is 16 (elements)", 0);
-        generic_len = 16;
+        error ("Length not specified. Default is 32 (elements)", 0);
+        generic_len = 32;
+        rc.generic_len = 32;
     }
 
     /* Check argument coherency */
@@ -447,6 +467,7 @@ void parse_args(int argc, char **argv)
     if (kernel == INVALID_KERNEL) {
         error("Kernel unspecified, guess GATHER", 0);
         kernel = GATHER;
+        rc.kernel = GATHER;
         safestrcopy(kernel_name, "gather");
     }
 
@@ -495,6 +516,7 @@ void parse_args(int argc, char **argv)
         if (noidx_delta == -1) {
             error("noidx_delta not specified, default is 8\n", 0);
             noidx_delta = 8;
+            rc.delta = 8;
         }
         
         noidx_window = max + 1; // unit: elements
@@ -523,4 +545,163 @@ void parse_args(int argc, char **argv)
     /* Seed rand */
     srand(seed);
 
+
+    print_run_config(rc);
+
+}
+
+
+void parse_p(char* optarg, struct run_config *rc) {
+
+    char *arg = 0;
+    if ((arg=strchr(optarg, ':'))) {
+
+        *arg = '\0';
+        arg++; //arg now points to arguments to the pattern type
+
+        // FILE mode indicates that we will load a 
+        // config from a file
+        if (!strcmp(optarg, "FILE")) {
+            //TODO
+            //safestrcopy(noidx_pattern_file, arg);
+            rc->type = CONFIG_FILE;
+        }
+
+        // Parse Uniform Stride Arguments, which are 
+        // UNIFORM:index_length:stride
+        else if (!strcmp(optarg, "UNIFORM")) {
+
+            rc->type = UNIFORM;
+            
+            // Read the length
+            char *len = strtok(arg,":");
+            if (!len) error("UNIFORM: Index Length not found", 1);
+            if (sscanf(len, "%zd", &(rc->pattern_len)) < 1)
+                error("UNIFORM: Length not parsed", 1);
+                
+            // Read the stride
+            char *stride = strtok(NULL, ":");
+            ssize_t strideval = 0;
+            if (!stride) error("UNIFORM: Stride not found", 1);
+            if (sscanf(stride, "%zd", &strideval) < 1)
+                error("UNIFORM: Stride not parsed", 1);
+
+            for (int i = 0; i < rc->pattern_len; i++) {
+                rc->pattern[i] = i*strideval;
+            }
+
+        }
+
+        // Mostly Stride 1 Mode
+        // Arguments: index_length:list_of_breaks:list_of_deltas 
+        // list_of_deltas should be length 1 or the same length as 
+        // list_of_breaks.
+        // The elements of both lists should be nonnegative and 
+        // the the elements of list_of_breaks should be strictly less 
+        // than index_length
+        else if (!strcmp(optarg, "MS1")) {
+
+            rc->type = MS1;
+
+            char *len = strtok(arg,":");
+            char *breaks = strtok(NULL,":");
+            char *gaps = strtok(NULL,":");
+
+            size_t ms1_breaks[MAX_PATTERN_LEN];
+            size_t ms1_deltas[MAX_PATTERN_LEN];
+            size_t ms1_breaks_len = 0;
+            size_t ms1_deltas_len = 0;
+            
+            // Parse index length 
+            sscanf(len, "%zd", &(rc->pattern_len));
+
+            // Parse breaks
+            char *ptr = strtok(breaks, ",");
+            size_t read = 0;
+            if (!ptr) {
+                error ("MS1: Breaks missing", 1);
+            }            
+            if (sscanf(ptr, "%zu", &(ms1_breaks[read++])) < 1) {
+                error ("MS1: Failed to parse first break", 1);
+            }
+
+            while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) {
+                if (sscanf(ptr, "%zu", &(ms1_breaks[read++])) < 1) {
+                    error ("MS1: Failed to parse breaks", 1);
+                }
+            }
+             
+            ms1_breaks_len = read;
+
+            // Parse deltas
+            ptr = strtok(gaps, ",");
+            read = 0;
+            if (ptr) {
+                if (sscanf(ptr, "%zu", &(ms1_deltas[read++])) < 1) {
+                    error ("Failed to parse first delta", 1);
+                }
+
+                while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) {
+                    if (sscanf(ptr, "%zu", &(ms1_deltas[read++])) < 1) {
+                        error ("Failed to parse deltas", 1);
+                    }
+                }
+            }
+            else {
+                error("MS1: deltas missing",1);
+            }
+
+            ms1_deltas_len = read;
+
+            rc->pattern[0] = 0;
+            size_t last = 0;
+            ssize_t j;
+            for (int i = 1; i < rc->pattern_len; i++) {
+                if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1) {
+                   rc->pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
+                } else {
+                    rc->pattern[i] = last + 1;
+                }
+                last = rc->pattern[i];
+            }
+        }
+        else {
+            error("Unrecognized mode in -p argument", 1);
+        }
+    }
+    
+    // CUSTOM mode means that the user supplied a single index buffer on the command line
+    else {
+        rc->type = CUSTOM;
+        char *delim = ",";
+        char *ptr = strtok(optarg, delim);
+        size_t read = 0;
+        if (!ptr) {
+            error ("Pattern not found", 1);
+        }            
+
+        if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1) {
+            error ("Failed to parse first pattern element", 1);
+        }
+
+        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) {
+            if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1) {
+                error ("Failed to parse pattern", 1);
+            }
+        }
+        rc->pattern_len = read;
+    }
+}
+
+
+void print_run_config(struct run_config rc){
+    printf("%zu ", rc.pattern_len);
+    printf("[");
+    for (size_t i = 0; i < rc.pattern_len; i++) {
+        printf("%zu", rc.pattern[i]);
+        if (i != rc.pattern_len-1) printf(" ");
+    }
+    printf("]\n");
+    printf("del: %zu, kern: %s\n", rc.delta, kernel_name);
+    printf("genlen: %zu\n", rc.generic_len);
 }

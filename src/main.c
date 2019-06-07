@@ -248,6 +248,8 @@ int main(int argc, char **argv)
     if (noidx_flag) {
         source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
         target.size = generic_len * noidx_pattern_len * sizeof(double);
+        source.len = source.size / sizeof(sgData_t);
+        target.len = target.size / sizeof(sgData_t);
     } else {
         source.len = source_len;
         target.len = target_len;

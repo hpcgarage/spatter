@@ -6,15 +6,15 @@
 #ifndef PARSE_ARGS_H
 #define PARSE_ARGS_H
 
+
 #define STRING_SIZE 100
 
 #define MAX_PATTERN_LEN 32
 
-/** @brief Read command-line arguments and populate global variables. 
- *  @param argc Value passed to main
- *  @param argv Value passed to main
- */
-void parse_args(int argc, char **argv);
+#define PAPI_MAX_COUNTERS 4;
+
+#include <sgtype.h>
+
 
 /** @brief Supported benchmark backends
  */
@@ -41,13 +41,38 @@ enum sg_op
     OP_ACCUM
 };
 
-enum noidx_mode
+enum noidx_type
 {
     UNIFORM,
     MS1,
-    EXPLICIT,
     CUSTOM,
+    CONFIG_FILE,
     INVALID
 };
+
+/*
+enum state
+{
+    NOTRUN,
+    INVALID_STATE,
+    VALID_STATE
+}; 
+*/
+
+struct run_config
+{
+    spSize_t pattern_len;
+    spIdx_t  pattern[MAX_PATTERN_LEN];
+    size_t delta;
+    enum sg_kernel kernel;
+    enum noidx_type type;
+    spSize_t generic_len;
+};
+
+/** @brief Read command-line arguments and populate global variables. 
+ *  @param argc Value passed to main
+ *  @param argv Value passed to main
+ */
+void parse_args(int argc, char **argv);
 
 #endif 
