@@ -127,7 +127,7 @@ void print_header(){
 void *sg_safe_cpu_alloc (size_t size) {
     void *ptr = aligned_alloc (ALIGNMENT, size);
     if (!ptr) {
-        printf("Falied to allocate memory on cpu\n");
+        printf("Falied to allocate memory on cpu: requested size %zu\n", size);
         exit(1);
     }
     return ptr;
@@ -209,13 +209,17 @@ int main(int argc, char **argv)
     	cl_uint work_dim = 1;
     #endif
     size_t global_work_size = 1;
-
     size_t *pattern;
-    
     char *kernel_string;
+    
+    
+    size_t omp_threads = workers;
+    #ifdef USE_OPENMP
+	omp_threads = omp_get_max_threads();
+    #endif
 
     /* Parse command line arguments */
-    parse_args(argc, argv);
+    struct run_config rc = parse_args(argc, argv);
 
     if (config_flag) {
         read_trace(&tr, config_file);
@@ -246,10 +250,17 @@ int main(int argc, char **argv)
     #endif
 
     if (noidx_flag) {
+        if (rc.wrap != 0) {
+            target.size = noidx_pattern_len * sizeof(sgData_t) * rc.wrap;
+            target.len = target.size / sizeof(sgData_t);
+            printf("target.size: %zu\n", target.size);
+            target.nptrs = omp_threads;
+        } else {
+            target.size = generic_len * noidx_pattern_len * sizeof(double);
+            target.len = target.size / sizeof(sgData_t);
+        }
         source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
-        target.size = generic_len * noidx_pattern_len * sizeof(double);
         source.len = source.size / sizeof(sgData_t);
-        target.len = target.size / sizeof(sgData_t);
     } else {
         source.len = source_len;
         target.len = target_len;
@@ -353,7 +364,14 @@ int main(int argc, char **argv)
 
     /* Create buffers on host */
     source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
-    target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
+    if (rc.wrap == 0) {
+        target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
+    } else {
+        target.host_ptrs = (sgData_t**) sg_safe_cpu_alloc(target.nptrs * sizeof(sgData_t*));
+        for (size_t i = 0; i < target.nptrs; i++) {
+            target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
+        }
+    }
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len);
 
@@ -485,14 +503,18 @@ int main(int argc, char **argv)
                         index_len);
                     break;
                 case GATHER:
-                    if (noidx_flag)
-                        if (noidx_onesided) {
+                    if (noidx_flag) {
+                        //printf("noidx_onesided: %d\n", noidx_onesided);
+                        if (rc.wrap > 0) {
                             //printf(" -- onesided mode\n");
-                            gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
+							gather_smallbuf(target.host_ptrs, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, rc.wrap);
+
+                            //gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
                         } else {
                             //printf(" -- twosided mode\n");
                             gather_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
                         }
+                    }
                     else if (op == OP_COPY)
 				gather_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, 
 	                        index_len);

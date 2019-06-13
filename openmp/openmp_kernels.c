@@ -73,6 +73,31 @@ void gather_noidx(
         source += delta;
     }
 }
+
+void gather_smallbuf(
+        sgData_t** restrict target, 
+        sgData_t* restrict source, 
+        sgIdx_t* const restrict pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t target_len) {
+    #pragma omp parallel shared(pat)
+    {
+        int t = omp_get_thread_num();
+
+        //taget_len is in multiples of pat_len
+#pragma omp for
+        for (size_t i = 0; i < n; i++) {
+           sgData_t *sl = source + delta * i; 
+           sgData_t *tl = target[t] + pat_len*(i%target_len);
+#pragma loop_info est_trips(8)
+           for (size_t j = 0; j < pat_len; j++) {
+               tl[j] = sl[pat[j]];
+           }
+        }
+    }
+}
 		
 void scatter_noidx(
 		sgData_t* restrict target, 

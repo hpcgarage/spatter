@@ -19,6 +19,7 @@
  */
 typedef struct sgDataBuf_t{
     sgData_t *host_ptr;        /**< Points to data on the host (CPU) */
+    sgData_t **host_ptrs;       
     #ifdef USE_OPENCL
     cl_mem dev_ptr_opencl;     /**< Points to data on the OpenCL device */ 
     #endif
@@ -27,6 +28,7 @@ typedef struct sgDataBuf_t{
     #endif    
     size_t len;         /**< The length of the buffers (in blocks) */
     size_t size;        /**< The size of the buffer (in bytes) */
+    size_t nptrs;       /**< The number of host pointers in **host_ptrs */
 }sgDataBuf;
 
 /** @brief Describes a buffer object describing how data will be scattered/gathered */

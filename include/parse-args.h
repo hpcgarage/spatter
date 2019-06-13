@@ -67,12 +67,13 @@ struct run_config
     enum sg_kernel kernel;
     enum noidx_type type;
     spSize_t generic_len;
+    size_t wrap;
 };
 
 /** @brief Read command-line arguments and populate global variables. 
  *  @param argc Value passed to main
  *  @param argv Value passed to main
  */
-void parse_args(int argc, char **argv);
+struct run_config parse_args(int argc, char **argv);
 
 #endif 

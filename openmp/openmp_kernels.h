@@ -78,4 +78,14 @@ void gather_stride_noidx16(
         size_t    delta,
         size_t    n);
 
+void gather_smallbuf(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t target_len);
+
+
 #endif

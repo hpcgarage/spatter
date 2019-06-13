@@ -102,7 +102,7 @@ ssize_t setincludes(size_t s, size_t* noidx_ms1_breaks, size_t noidx_ms1_breaks_
 void parse_p(char*, struct run_config *);
 void print_run_config(struct run_config rc);
 //void parse_args(int argc, char **argv, struct run_config *rc, int nconfigs)
-void parse_args(int argc, char **argv)
+struct run_config parse_args(int argc, char **argv)
 {
     static int platform_flag = 0;
     extern enum sg_backend backend;
@@ -121,7 +121,7 @@ void parse_args(int argc, char **argv)
     size_t sparsity = 1;
     int supress_errors = 0;
 
-    struct run_config rc;
+    struct run_config rc = {0};
 
 	static struct option long_options[] =
     {
@@ -247,6 +247,8 @@ void parse_args(int argc, char **argv)
             case 'w':
                 sscanf(optarg, "%zu", &wrap);
                 sscanf(optarg, "%d", &noidx_onesided);
+                printf("noidx_onesided: %d\n", noidx_onesided);
+                sscanf(optarg,"%zu", &rc.wrap);
                 break;
             case 'l':
                 sscanf(optarg,"%zu", &generic_len);
@@ -547,6 +549,7 @@ void parse_args(int argc, char **argv)
 
 
     print_run_config(rc);
+    return rc;
 
 }
 
