@@ -56,7 +56,6 @@ ssize_t us_delta = 0;
 
 unsigned int shmem = 0;
 int random_flag = 0;
-int config_flag = 0;
 int custom_flag = 0;
 
 int json_flag = 0, validate_flag = 0, print_header_flag = 1;
@@ -160,38 +159,42 @@ void print_sizet(size_t *buf, size_t len){
 int main(int argc, char **argv)
 {
 
+    // =======================================
+    // Declare Variables
+    // =======================================
+
+    // source and target are used for the gather and scatter operations. 
+    // data is gathered from source and placed into target
     sgDataBuf  source;
     sgDataBuf  target;
+
+    // tr holds info relating to reading a trace file
     struct trace tr;
 
-    size_t cpu_cache_size = 30720 * 1000; 
-    size_t cpu_flush_size = cpu_cache_size * 8;
+    // OpenCL Specific 
+    size_t global_work_size = 1;
+    char   *kernel_string;
+
+    // OpenMP Specific
+    size_t omp_threads = 1;
+
     #ifdef USE_OPENCL
 	cl_ulong device_cache_size = 0;
-    	cl_uint work_dim = 1;
+    cl_uint work_dim = 1;
     #endif
-    size_t global_work_size = 1;
-    size_t *pattern;
-    char *kernel_string;
     
-    
-    size_t omp_threads = 1;
     #ifdef USE_OPENMP
 	omp_threads = omp_get_max_threads();
     #endif
 
-    /* Parse command line arguments */
+    // =======================================
+    // Parse Command Line Arguments
+    // =======================================
     struct run_config rc = parse_args(argc, argv);
 
-    if (config_flag) {
-        read_trace(&tr, config_file);
-        reweight_trace(tr);
-    };
-
-    /* =======================================
-	Initalization
-       =======================================
-    */
+    // =======================================
+    // Initialize OpenCL Backend
+    // =======================================
 
     /* Create a context and corresponding queue */
     #ifdef USE_OPENCL
@@ -200,34 +203,37 @@ int main(int argc, char **argv)
     }
     #endif
 
-    #ifdef USE_CUDA 
-    if (backend == CUDA) {
-        /*
-        struct cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, 1);
+    // =======================================
+    // Compute Buffer Sizes
+    // =======================================
+    
+    if (kernel == GATHER) {
+        // the target only has rc.wrap slots of size rc.pattern_len to be gathered into. 
+        target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
+        target.len = target.size / sizeof(sgData_t);
+        
+        // we will duplicate the target space for every thread.
+        target.nptrs = omp_threads;
 
-        printf("sm's: %d\n", prop.multiProcessorCount);
-        */
-    }
-    #endif
-
-    target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
-    target.len = target.size / sizeof(sgData_t);
-    printf("target.size: %zu\n", target.size);
-    target.nptrs = omp_threads;
-
-    size_t max_pattern_val = rc.pattern[0];
-    for (size_t i = 0; i < rc.pattern_len; i++) {
-        if (rc.pattern[i] > max_pattern_val) {
-            max_pattern_val = rc.pattern[i];
+        // we must make sure there is sufficient space in source for us to slide the pattern
+        size_t max_pattern_val = rc.pattern[0];
+        for (size_t i = 0; i < rc.pattern_len; i++) {
+            if (rc.pattern[i] > max_pattern_val) {
+                max_pattern_val = rc.pattern[i];
+            }
         }
+                   
+        source.size = ((max_pattern_val + 1) + (generic_len-1)*rc.delta) * sizeof(double);
+        source.len = source.size / sizeof(sgData_t);
+    } else {
+        //TODO: Add data allocation for SCATTER
+        printf(" ERROR - only GATHER is currently supported\n");
+        exit(1);
     }
-               
-    source.size = ((max_pattern_val + 1) + (generic_len-1)*rc.delta) * sizeof(double);
-    source.len = source.size / sizeof(sgData_t);
-    printf("source.len = %zu\n", source.len);
 
-    /* Create the kernel */
+    // =======================================
+    // Create OpenCL Kernel
+    // =======================================
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
         //kernel_string = ocl_kernel_gen(index_len, vector_len, kernel);
@@ -239,18 +245,23 @@ int main(int argc, char **argv)
     }
     #endif
 
-    /* Create buffers on host */
+    // =======================================
+    // Create Host Buffers, Fill With Data
+    // =======================================
     source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
 
+    // replicate the target space for every thread
     target.host_ptrs = (sgData_t**) sg_safe_cpu_alloc(target.nptrs * sizeof(sgData_t*));
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
     }
 
-    /* Populate buffers on host */
+    // Populate buffers on host 
     random_data(source.host_ptr, source.len);
 
-    /* Create buffers on device and transfer data from host */
+    // =======================================
+    // Create Device Buffers, Transfer Data
+    // =======================================
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
         //TODO: Rewrite to not take index buffers
@@ -272,12 +283,11 @@ int main(int argc, char **argv)
     #endif
 
     
-    /* =======================================
-	Benchmark Execution
-       =======================================
-    */
+    // =======================================
+    // Execute Benchmark
+    // =======================================
 
-    /* Begin benchmark */
+    // Print some header info
     if (print_header_flag) 
     {
         print_system_info(rc);
@@ -285,7 +295,7 @@ int main(int argc, char **argv)
     }
     
 
-    /* Time OpenCL Kernel */
+    // Time OpenCL Kernel 
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
 
@@ -323,7 +333,7 @@ int main(int argc, char **argv)
     }
     #endif // USE_OPENCL
 
-    /* Time CUDA Kernel */
+    // Time CUDA Kernel 
     #ifdef USE_CUDA
     if (backend == CUDA) {
 
@@ -354,7 +364,7 @@ int main(int argc, char **argv)
 
 
 
-    /* Time OpenMP Kernel */
+    // Time OpenMP Kernel 
     #ifdef USE_OPENMP
     if (backend == OPENMP) {
 
@@ -396,7 +406,7 @@ int main(int argc, char **argv)
     }
     #endif // USE_OPENMP
     
-    /* Time Serial Kernel */
+    // Time Serial Kernel 
     #ifdef USE_SERIAL
     if (backend == SERIAL) {
 
@@ -439,10 +449,9 @@ int main(int argc, char **argv)
     #endif // USE_SERIAL
     
 
-    /* =======================================
-	VALIDATION
-       =======================================
-    */
+    // =======================================
+    // Validation
+    // =======================================
     if(validate_flag) {
 
         //TODO: Rewrite validataion

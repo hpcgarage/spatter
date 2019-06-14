@@ -35,7 +35,6 @@ extern size_t vector_len;
 extern size_t R;
 extern size_t local_work_size;
 extern size_t workers;
-extern int config_flag;
 extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
@@ -305,8 +304,7 @@ struct run_config parse_args(int argc, char **argv)
                 break;
                 }
             case 't':
-                safestrcopy(config_file, optarg);
-                config_flag = 1;
+                error ("No longer supported - please use -pFILE", 1);
                 break;
             default:
                 break;
