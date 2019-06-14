@@ -43,7 +43,6 @@ extern int random_flag;
 extern unsigned int shmem;
 extern enum sg_op op;
 
-extern int noidx_flag;
 
 size_t noidx_pattern[MAX_PATTERN_LEN];
 size_t noidx_pattern_len;
@@ -261,7 +260,6 @@ struct run_config parse_args(int argc, char **argv)
                 // This code will parse the arguments for NOIDX mode. 
                 // Correctness checking is done after all arguments are parsed, below
                 {
-                noidx_flag = 1;
 
                 //{
                 parse_p(optarg, &rc);
@@ -401,45 +399,28 @@ struct run_config parse_args(int argc, char **argv)
 
     //Check buffer lengths
 
-    if (noidx_flag) {
-        if (rc.type == CUSTOM) {
-        }else if (rc.type == UNIFORM) {   
-            for (int i = 0; i < noidx_pattern_len; i++) {
-                noidx_pattern[i] = i*noidx_us_stride;
-            }
-        }
-        else if (rc.type == MS1) {
-            size_t last = 0;
-            ssize_t j;
-            for (int i = 1; i < noidx_pattern_len; i++) {
-                if ((j=setincludes(i, noidx_ms1_breaks, noidx_ms1_breaks_len))!=-1) {
-                   noidx_pattern[i] = last+noidx_ms1_deltas[noidx_ms1_deltas_len>1?j:0];
-                } else {
-                    noidx_pattern[i] = last + 1;
-                }
-                last = noidx_pattern[i];
-            }
-        }     
-        
-        if (rc.delta == -1) {
-            error("delta not specified, default is 8\n", 0);
-            rc.delta = 8;
+    if (rc.type == CUSTOM) {
+    }else if (rc.type == UNIFORM) {   
+        for (int i = 0; i < noidx_pattern_len; i++) {
+            noidx_pattern[i] = i*noidx_us_stride;
         }
     }
-    else{
-        index_len = generic_len;
-        if (kernel == SCATTER) {
-            target_len = generic_len * sparsity;
-            source_len = generic_len;
+    else if (rc.type == MS1) {
+        size_t last = 0;
+        ssize_t j;
+        for (int i = 1; i < noidx_pattern_len; i++) {
+            if ((j=setincludes(i, noidx_ms1_breaks, noidx_ms1_breaks_len))!=-1) {
+               noidx_pattern[i] = last+noidx_ms1_deltas[noidx_ms1_deltas_len>1?j:0];
+            } else {
+                noidx_pattern[i] = last + 1;
+            }
+            last = noidx_pattern[i];
         }
-        else if (kernel == GATHER) {
-            target_len = generic_len;    
-            source_len = generic_len * sparsity;
-        }
-        else if (kernel == SG) {
-            target_len = generic_len * sparsity;
-            source_len = generic_len * sparsity;
-        }
+    }     
+    
+    if (rc.delta == -1) {
+        error("delta not specified, default is 8\n", 0);
+        rc.delta = 8;
     }
 
     if (workers < 1){
