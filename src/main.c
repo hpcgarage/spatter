@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     char *kernel_string;
     
     
-    size_t omp_threads = workers;
+    size_t omp_threads = 1;
     #ifdef USE_OPENMP
 	omp_threads = omp_get_max_threads();
     #endif
@@ -211,15 +211,10 @@ int main(int argc, char **argv)
     }
     #endif
 
-    if (rc.wrap != 0) {
-        target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
-        target.len = target.size / sizeof(sgData_t);
-        printf("target.size: %zu\n", target.size);
-        target.nptrs = omp_threads;
-    } else {
-        target.size = generic_len * rc.pattern_len * sizeof(double);
-        target.len = target.size / sizeof(sgData_t);
-    }
+    target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
+    target.len = target.size / sizeof(sgData_t);
+    printf("target.size: %zu\n", target.size);
+    target.nptrs = omp_threads;
 
     size_t max_pattern_val = rc.pattern[0];
     for (size_t i = 0; i < rc.pattern_len; i++) {
@@ -246,14 +241,12 @@ int main(int argc, char **argv)
 
     /* Create buffers on host */
     source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
-    if (rc.wrap == 0) {
-        target.host_ptr = (sgData_t*) sg_safe_cpu_alloc(target.size); 
-    } else {
-        target.host_ptrs = (sgData_t**) sg_safe_cpu_alloc(target.nptrs * sizeof(sgData_t*));
-        for (size_t i = 0; i < target.nptrs; i++) {
-            target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
-        }
+
+    target.host_ptrs = (sgData_t**) sg_safe_cpu_alloc(target.nptrs * sizeof(sgData_t*));
+    for (size_t i = 0; i < target.nptrs; i++) {
+        target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
     }
+
     /* Populate buffers on host */
     random_data(source.host_ptr, source.len);
 
@@ -385,15 +378,11 @@ int main(int argc, char **argv)
                     }
                     break;
                 case GATHER:
-                    if (rc.wrap > 0) {
                         if (rc.deltas_len == 0) {
                             gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len, rc.wrap);
                         } else {
                             gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, generic_len, rc.wrap, rc.deltas_len);
                         }
-                    } else {
-                        gather_noidx(target.host_ptr, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len);
-                    }
                     break;
                 default:
                     printf("Error: Unable to determine kernel\n");

@@ -315,6 +315,11 @@ struct run_config parse_args(int argc, char **argv)
 
     }
 
+    if (rc.wrap == 0) {
+        error ("length of smallbuf not specified. Default is 1 (slot of size pattern_len elements)", 0);
+        rc.wrap = 1;
+    }
+
     if (generic_len <= 0) {
         error ("Length not specified. Default is 32 (elements)", 0);
         generic_len = 32;
