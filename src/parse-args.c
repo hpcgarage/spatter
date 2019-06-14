@@ -257,17 +257,7 @@ struct run_config parse_args(int argc, char **argv)
                 err_file = fopen("/dev/null", "w");
                 break;
             case 'p':
-                // This code will parse the arguments for NOIDX mode. 
-                // Correctness checking is done after all arguments are parsed, below
-                {
-
-                //{
                 parse_p(optarg, &rc);
-                
-                }
-
-                //}
-
                 break;
             case 'd':
                 sscanf(optarg, "%zu", &(rc.delta));

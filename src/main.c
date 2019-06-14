@@ -260,13 +260,15 @@ int main(int argc, char **argv)
     /* Create buffers on device and transfer data from host */
     #ifdef USE_OPENCL
     if (backend == OPENCL) {
-        create_dev_buffers_ocl(&source, &target, &si, &ti);
+        //TODO: Rewrite to not take index buffers
+        //create_dev_buffers_ocl(&source, &target, &si, &ti);
     }
     #endif
 
     #ifdef USE_CUDA
     if (backend == CUDA) {
-        create_dev_buffers_cuda(&source, &target, &si, &ti);
+        //TODO: Rewrite to not take index buffers
+        //create_dev_buffers_cuda(&source, &target, &si, &ti);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         /*
         cudaMemcpy(si.dev_ptr_cuda, si.host_ptr, si.size, cudaMemcpyHostToDevice);
