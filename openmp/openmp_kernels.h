@@ -87,5 +87,16 @@ void gather_smallbuf(
         size_t n,
         size_t target_len);
 
+void gather_smallbuf_multidelta(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict pat,
+        size_t pat_len,
+        size_t *delta,
+        size_t n,
+        size_t target_len,
+        size_t delta_len);
+
+
 
 #endif

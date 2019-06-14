@@ -63,7 +63,10 @@ struct run_config
 {
     spSize_t pattern_len;
     spIdx_t  pattern[MAX_PATTERN_LEN];
-    size_t delta;
+    ssize_t delta;
+    size_t deltas[MAX_PATTERN_LEN];
+    size_t deltas_ps[MAX_PATTERN_LEN];
+    size_t deltas_len;
     enum sg_kernel kernel;
     enum noidx_type type;
     spSize_t generic_len;

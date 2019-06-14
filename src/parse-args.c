@@ -51,20 +51,16 @@ extern int noidx_predef_ms1_mode;
 extern int noidx_file_mode;
 extern int noidx_onesided;
 
-extern size_t noidx_pattern[MAX_PATTERN_LEN];
-extern size_t noidx_pattern_len;
+size_t noidx_pattern[MAX_PATTERN_LEN];
+size_t noidx_pattern_len;
 extern char   noidx_pattern_file[STRING_SIZE];
 
-extern ssize_t noidx_delta;
-extern ssize_t noidx_us_stride;
-extern size_t noidx_ms1_deltas[MAX_PATTERN_LEN];
-extern size_t noidx_ms1_breaks[MAX_PATTERN_LEN];
-extern size_t noidx_ms1_deltas_len;
-extern size_t noidx_ms1_breaks_len;
-extern ssize_t noidx_ms1_delta;
-
-extern size_t noidx_window;
-extern size_t noidx_size;
+ssize_t noidx_us_stride;
+size_t noidx_ms1_deltas[MAX_PATTERN_LEN];
+size_t noidx_ms1_breaks[MAX_PATTERN_LEN];
+size_t noidx_ms1_deltas_len;
+size_t noidx_ms1_breaks_len;
+ssize_t noidx_ms1_delta;
 
 extern int verbose;
 
@@ -122,6 +118,7 @@ struct run_config parse_args(int argc, char **argv)
     int supress_errors = 0;
 
     struct run_config rc = {0};
+    rc.delta = -1;
 
 	static struct option long_options[] =
     {
@@ -159,7 +156,7 @@ struct run_config parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:yw:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:D:f:b:z:m:yw:",
                          long_options, &option_index);
 
         switch(c){
@@ -400,9 +397,50 @@ struct run_config parse_args(int argc, char **argv)
                 break;
             }
             case 'd':
-                sscanf(optarg, "%zu", &noidx_delta);
                 sscanf(optarg, "%zu", &(rc.delta));
                 break;
+            case 'D':
+                {
+                char *delim = ",";
+                char *ptr = strtok(optarg, delim);
+                size_t read = 0;
+                if (!ptr) {
+                    error ("Pattern not found", 1);
+                }            
+
+                if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1) {
+                    error ("Failed to parse first pattern element", 1);
+                }
+
+                while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) {
+                    if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1) {
+                        error ("Failed to parse pattern", 1);
+                    }
+                }
+                rc.deltas_len = read;
+
+                // rotate
+                for (size_t i = 0; i < rc.deltas_len; i++) {
+                    rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
+                    printf("rc.deltas_ps[%zu] = %zu\n",i, rc.deltas_ps[i]);
+                }
+                // compute prefix-sum
+                
+#pragma novector // ALERT: Do not remove this pragma - the cray compiler will mistakenly vectorize this loop 
+                for (size_t i = 1; i < rc.deltas_len; i++) {
+                    rc.deltas_ps[i] += rc.deltas_ps[i-1];
+                }
+                // compute max
+                size_t m = rc.deltas_ps[0];
+                for (size_t i = 1; i < rc.deltas_len; i++) {
+                    if (rc.deltas_ps[i] > m) {
+                        m = rc.deltas_ps[i];
+                    }
+                }
+                rc.delta = m;
+
+                break;
+                }
             case 't':
                 safestrcopy(config_file, optarg);
                 config_flag = 1;
@@ -508,20 +546,10 @@ struct run_config parse_args(int argc, char **argv)
             }
         }     
         
-        size_t max = noidx_pattern[0];
-        for (int i = 1; i < noidx_pattern_len; i++) {
-            if (noidx_pattern[i] > max ) {
-                max = noidx_pattern[i];
-            }
-        }
-
-        if (noidx_delta == -1) {
-            error("noidx_delta not specified, default is 8\n", 0);
-            noidx_delta = 8;
+        if (rc.delta == -1) {
+            error("delta not specified, default is 8\n", 0);
             rc.delta = 8;
         }
-        
-        noidx_window = max + 1; // unit: elements
     }
     else{
         index_len = generic_len;
@@ -546,7 +574,6 @@ struct run_config parse_args(int argc, char **argv)
     
     /* Seed rand */
     srand(seed);
-
 
     print_run_config(rc);
     return rc;
@@ -698,13 +725,31 @@ void parse_p(char* optarg, struct run_config *rc) {
 
 
 void print_run_config(struct run_config rc){
-    printf("%zu ", rc.pattern_len);
+    printf("Index: %zu ", rc.pattern_len);
     printf("[");
     for (size_t i = 0; i < rc.pattern_len; i++) {
         printf("%zu", rc.pattern[i]);
         if (i != rc.pattern_len-1) printf(" ");
     }
     printf("]\n");
-    printf("del: %zu, kern: %s\n", rc.delta, kernel_name);
+    if (rc.deltas_len > 0) {
+        printf("Deltas: %zu ", rc.deltas_len);
+        printf("[");
+        for (size_t i = 0; i < rc.deltas_len; i++) {
+            printf("%zu", rc.deltas[i]);
+            if (i != rc.deltas_len-1) printf(" ");
+        }
+        printf("]\n");
+        printf("Deltas_ps: %zu ", rc.deltas_len);
+        printf("[");
+        for (size_t i = 0; i < rc.deltas_len; i++) {
+            printf("%zu", rc.deltas_ps[i]);
+            if (i != rc.deltas_len-1) printf(" ");
+        }
+        printf("] (%zu)\n", rc.delta);
+    } else {
+        printf("Delta: %zu\n", rc.delta);
+    }
+    printf("kern: %s\n", kernel_name);
     printf("genlen: %zu\n", rc.generic_len);
 }

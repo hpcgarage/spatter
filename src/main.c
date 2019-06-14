@@ -52,14 +52,11 @@ size_t R = 10;
 size_t workers = 1;
 size_t vector_len = 1;
 size_t local_work_size = 1;
-size_t ms1_gap = 0; 
-size_t ms1_run = 0;
 ssize_t us_stride = 0; 
 ssize_t us_delta = 0;
 
 unsigned int shmem = 0;
 int random_flag = 0;
-int ms1_flag = 0;
 int config_flag = 0;
 int custom_flag = 0;
 
@@ -73,24 +70,14 @@ int noidx_predef_ms1_mode = 0;
 int noidx_file_mode       = 0;
 int noidx_onesided        = 0;
 
-size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
-size_t noidx_pattern_len  = 0;
+//size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
+//size_t noidx_pattern_len  = 0;
 char  noidx_pattern_file[STRING_SIZE] = {0};
-
-ssize_t noidx_delta       = -1;
-ssize_t noidx_us_stride   = -1;
-size_t noidx_ms1_deltas[MAX_PATTERN_LEN] =  {0};
-size_t noidx_ms1_breaks[MAX_PATTERN_LEN] =  {0};
-size_t noidx_ms1_deltas_len = 0;
-size_t noidx_ms1_breaks_len = 0;
-ssize_t noidx_ms1_delta   = -1;
-
-size_t noidx_window;
-size_t noidx_size;
 
 int verbose = 0;
 
-void print_system_info(){
+//TODO: this shouldn't print out info about rc - only the system
+void print_system_info(struct run_config rc){
 
     printf("Running Spatter version 0.0\n");
     printf("Backend: ");
@@ -108,12 +95,11 @@ void print_system_info(){
     if (noidx_predef_ms1_mode) printf("MS1: [");
     if (noidx_predef_us_mode) printf("UNIFORM: [");
     if (noidx_explicit_mode) printf("CUSTOM: [");
-        for (int i = 0; i < noidx_pattern_len; i++) {
-            printf("%zu", noidx_pattern[i]);
-            if (i != noidx_pattern_len-1) printf(" ");
+        for (int i = 0; i < rc.pattern_len; i++) {
+            printf("%zu", rc.pattern[i]);
+            if (i != rc.pattern_len-1) printf(" ");
         }
     printf("]\n\n");
-
 
 }
 
@@ -135,7 +121,7 @@ void *sg_safe_cpu_alloc (size_t size) {
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  size_t vector_len){
+void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  size_t vector_len, struct run_config rc){
 
     if(kernel == SCATTER) printf("SCATTER ");
     if(kernel == GATHER) printf("GATHER ");
@@ -147,7 +133,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     printf("%lf %zu %zu ", time, source_size, target_size);
 
     if (noidx_flag)
-        printf("%zu ", noidx_pattern_len);
+        printf("%zu ", rc.pattern_len);
     else 
         printf("%zu ", index_size);
 
@@ -155,7 +141,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     double usable_bandwidth = 0;
     double actual_bandwidth = 0;
     if (noidx_flag){
-        bytes_moved = 2 * sizeof(sgData_t) * noidx_pattern_len * generic_len;
+        bytes_moved = 2 * sizeof(sgData_t) * rc.pattern_len * generic_len;
         usable_bandwidth = 0;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     } else {
@@ -251,16 +237,25 @@ int main(int argc, char **argv)
 
     if (noidx_flag) {
         if (rc.wrap != 0) {
-            target.size = noidx_pattern_len * sizeof(sgData_t) * rc.wrap;
+            target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
             target.len = target.size / sizeof(sgData_t);
             printf("target.size: %zu\n", target.size);
             target.nptrs = omp_threads;
         } else {
-            target.size = generic_len * noidx_pattern_len * sizeof(double);
+            target.size = generic_len * rc.pattern_len * sizeof(double);
             target.len = target.size / sizeof(sgData_t);
         }
-        source.size = (noidx_window + (generic_len-1)*noidx_delta) * sizeof(double);
+
+        size_t max_pattern_val = rc.pattern[0];
+        for (size_t i = 0; i < rc.pattern_len; i++) {
+            if (rc.pattern[i] > max_pattern_val) {
+                max_pattern_val = rc.pattern[i];
+            }
+        }
+                   
+        source.size = ((max_pattern_val + 1) + (generic_len-1)*rc.delta) * sizeof(double);
         source.len = source.size / sizeof(sgData_t);
+        printf("source.len = %zu\n", source.len);
     } else {
         source.len = source_len;
         target.len = target_len;
@@ -325,25 +320,12 @@ int main(int argc, char **argv)
         si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
         ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 
-        if (ms1_flag) {
-            if (kernel == SCATTER) {
-                linear_indices(si.host_ptr, si.len, 1, 1, 0);
-                ms1_indices(ti.host_ptr, ti.len, 1, ms1_run, ms1_gap);
-            }else if (kernel == GATHER) {
-                ms1_indices(si.host_ptr, si.len, 1, ms1_run, ms1_gap);
-                linear_indices(ti.host_ptr, ti.len, 1, 1, 0);
-            } else {
-                printf("MS1 pattern is only supported for scatter and gather\n");
-                exit(1);
-            }
+        if (wrap > 1) {
+            wrap_indices(si.host_ptr, si.len, 1, si.stride, wrap);
+            wrap_indices(ti.host_ptr, ti.len, 1, ti.stride, wrap);
         } else {
-            if (wrap > 1) {
-                wrap_indices(si.host_ptr, si.len, 1, si.stride, wrap);
-                wrap_indices(ti.host_ptr, ti.len, 1, ti.stride, wrap);
-            } else {
-                linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
-                linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
-            }
+            linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
+            linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
         }
 
         if (config_flag) {
@@ -408,7 +390,7 @@ int main(int argc, char **argv)
     /* Begin benchmark */
     if (print_header_flag) 
     {
-        print_system_info();
+        print_system_info(rc);
         print_header();
     }
     
@@ -441,7 +423,7 @@ int main(int argc, char **argv)
 
             cl_ulong time_ns = end - start;
             double time_s = time_ns / 1000000000.;
-            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len);
+            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
 
 
         }
@@ -468,7 +450,7 @@ int main(int argc, char **argv)
             cudaDeviceSynchronize();
 
             double time_s = time_ms / 1000.;
-            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len);
+            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
 
         }
 
@@ -507,12 +489,14 @@ int main(int argc, char **argv)
                         //printf("noidx_onesided: %d\n", noidx_onesided);
                         if (rc.wrap > 0) {
                             //printf(" -- onesided mode\n");
-							gather_smallbuf(target.host_ptrs, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, rc.wrap);
-
-                            //gather_stride_noidx_os(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len, noidx_onesided);
+                            if (rc.deltas_len == 0) {
+                                gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len, rc.wrap);
+                            } else {
+                                gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, generic_len, rc.wrap, rc.deltas_len);
+                            }
                         } else {
                             //printf(" -- twosided mode\n");
-                            gather_noidx(target.host_ptr, source.host_ptr, noidx_pattern, noidx_pattern_len, noidx_delta, generic_len);
+                            gather_noidx(target.host_ptr, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len);
                         }
                     }
                     else if (op == OP_COPY)
@@ -528,7 +512,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len, rc);
 
         }
     }
@@ -573,7 +557,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, si.size, vector_len, rc);
         }
     }
     #endif // USE_SERIAL
