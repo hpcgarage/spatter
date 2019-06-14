@@ -47,7 +47,6 @@ size_t target_len;
 size_t index_len;
 size_t generic_len = 0;
 size_t seed;
-size_t wrap = 1;
 size_t R = 10;
 size_t workers = 1;
 size_t vector_len = 1;
@@ -64,11 +63,6 @@ int json_flag = 0, validate_flag = 0, print_header_flag = 1;
 
 // NOIDX MODE OPTIONS
 int noidx_flag            = 0;
-int noidx_explicit_mode   = 0;
-int noidx_predef_us_mode  = 0;
-int noidx_predef_ms1_mode = 0;
-int noidx_file_mode       = 0;
-int noidx_onesided        = 0;
 
 //size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
 //size_t noidx_pattern_len  = 0;
@@ -92,9 +86,9 @@ void print_system_info(struct run_config rc){
         printf("Index pattern: ");
     } 
 
-    if (noidx_predef_ms1_mode) printf("MS1: [");
-    if (noidx_predef_us_mode) printf("UNIFORM: [");
-    if (noidx_explicit_mode) printf("CUSTOM: [");
+    if (rc.type == MS1) printf("MS1: [");
+    if (rc.type == UNIFORM) printf("UNIFORM: [");
+    if (rc.type == CUSTOM) printf("CUSTOM: [");
         for (int i = 0; i < rc.pattern_len; i++) {
             printf("%zu", rc.pattern[i]);
             if (i != rc.pattern_len-1) printf(" ");
@@ -270,28 +264,6 @@ int main(int argc, char **argv)
         si.stride = source.len / si.len;
         ti.stride = target.len / ti.len;
 
-        if (kernel == GATHER || kernel == SG) {
-            if(wrap > si.stride) {
-                wrap = si.stride;
-            }
-        }
-        if (kernel == SCATTER || kernel == SG) {
-            if(wrap > ti.stride) { 
-                wrap = ti.stride;
-            }
-        }
-
-        if (wrap > 1){
-            if (kernel == GATHER || kernel == SG) {
-                source.size = source.size / wrap;
-                source.len = source.len / wrap;
-            }
-            if (kernel == SCATTER || kernel == SG) {
-                target.size = target.size / wrap;
-                target.len = target.len / wrap;
-            }
-        }
-
        si.size     = si.len * sizeof(sgIdx_t);
        ti.size     = ti.len * sizeof(sgIdx_t);
     }
@@ -320,13 +292,8 @@ int main(int argc, char **argv)
         si.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(si.size); 
         ti.host_ptr = (sgIdx_t*) sg_safe_cpu_alloc(ti.size); 
 
-        if (wrap > 1) {
-            wrap_indices(si.host_ptr, si.len, 1, si.stride, wrap);
-            wrap_indices(ti.host_ptr, ti.len, 1, ti.stride, wrap);
-        } else {
-            linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
-            linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
-        }
+        linear_indices(si.host_ptr, si.len, 1, si.stride, random_flag);
+        linear_indices(ti.host_ptr, ti.len, 1, ti.stride, random_flag);
 
         if (config_flag) {
             if (kernel == SCATTER) {
@@ -486,7 +453,6 @@ int main(int argc, char **argv)
                     break;
                 case GATHER:
                     if (noidx_flag) {
-                        //printf("noidx_onesided: %d\n", noidx_onesided);
                         if (rc.wrap > 0) {
                             //printf(" -- onesided mode\n");
                             if (rc.deltas_len == 0) {

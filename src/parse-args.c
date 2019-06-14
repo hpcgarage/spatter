@@ -30,7 +30,6 @@ extern size_t source_len;
 extern size_t target_len;
 extern size_t index_len;
 extern size_t generic_len;
-extern size_t wrap;
 extern size_t seed;
 extern size_t vector_len;
 extern size_t R;
@@ -45,11 +44,6 @@ extern unsigned int shmem;
 extern enum sg_op op;
 
 extern int noidx_flag;
-extern int noidx_explicit_mode;
-extern int noidx_predef_us_mode;
-extern int noidx_predef_ms1_mode;
-extern int noidx_file_mode;
-extern int noidx_onesided;
 
 size_t noidx_pattern[MAX_PATTERN_LEN];
 size_t noidx_pattern_len;
@@ -97,7 +91,7 @@ ssize_t setincludes(size_t s, size_t* noidx_ms1_breaks, size_t noidx_ms1_breaks_
 }
 void parse_p(char*, struct run_config *);
 void print_run_config(struct run_config rc);
-//void parse_args(int argc, char **argv, struct run_config *rc, int nconfigs)
+
 struct run_config parse_args(int argc, char **argv)
 {
     static int platform_flag = 0;
@@ -242,9 +236,6 @@ struct run_config parse_args(int argc, char **argv)
                 sscanf(optarg, "%zu", &workers);
                 break;
             case 'w':
-                sscanf(optarg, "%zu", &wrap);
-                sscanf(optarg, "%d", &noidx_onesided);
-                printf("noidx_onesided: %d\n", noidx_onesided);
                 sscanf(optarg,"%zu", &rc.wrap);
                 break;
             case 'l':
@@ -273,129 +264,13 @@ struct run_config parse_args(int argc, char **argv)
                 noidx_flag = 1;
 
                 //{
-                char *optarg_copy = (char*)malloc(strlen(optarg)+1);
-                strcpy(optarg_copy, optarg);
-                parse_p(optarg_copy, &rc);
+                parse_p(optarg, &rc);
                 
-                char *arg = 0;
-                if ((arg=strchr(optarg, ':'))) {
-
-                    *arg = '\0';
-                    arg++; //arg now points to arguments to the pattern type
-
-                    // FILE mode indicates that we will load a 
-                    // config from a file
-                    if (strstr(optarg, "FILE")) {
-                        noidx_file_mode = 1;
-                        safestrcopy(noidx_pattern_file, arg);
-                    }
-
-                    // Parse Uniform Stride Arguments, which are 
-                    // UNIFORM:index_length:stride
-                    else if (!strcmp(optarg, "UNIFORM")) {
-
-                        noidx_predef_us_mode = 1;
-                        
-                        // Read the length
-                        char *len = strtok(arg,":");
-                        if (!len) error("UNIFORM: Index Length not found", 1);
-                        if (sscanf(len, "%zd", &noidx_pattern_len) < 1)
-                            error("UNIFORM: Length not parsed", 1);
-                            
-                        // Read the stride
-                        char *stride = strtok(NULL, ":");
-                        if (!stride) error("UNIFORM: Stride not found", 1);
-                        if (sscanf(stride, "%zd", &noidx_us_stride) < 1)
-                            error("UNIFORM: Stride not parsed", 1);
-
-                    }
-
-                    // Mostly Stride 1 Mode
-                    // Arguments: index_length:list_of_breaks:list_of_deltas 
-                    // list_of_deltas should be length 1 or the same length as 
-                    // list_of_breaks.
-                    // The elements of both lists should be nonnegative and 
-                    // the the elements of list_of_breaks should be strictly less 
-                    // than index_length
-                    else if (!strcmp(optarg, "MS1")) {
-
-                        noidx_predef_ms1_mode = 1;
-
-                        char *len = strtok(arg,":");
-                        char *breaks = strtok(NULL,":");
-                        char *gaps = strtok(NULL,":");
-                        
-                        // Parse index length 
-                        sscanf(len, "%zd", &noidx_pattern_len);
-
-                        // Parse breaks
-                        char *ptr = strtok(breaks, ",");
-                        size_t read = 0;
-                        if (!ptr) {
-                            error ("MS1: Breaks missing", 1);
-                        }            
-                        if (sscanf(ptr, "%zu", &(noidx_ms1_breaks[read++])) < 1) {
-                            error ("MS1: Failed to parse first break", 1);
-                        }
-
-                        while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) {
-                            if (sscanf(ptr, "%zu", &(noidx_ms1_breaks[read++])) < 1) {
-                                error ("MS1: Failed to parse breaks", 1);
-                            }
-                        }
-                        
-                        noidx_ms1_breaks_len = read;
-
-                        // Parse deltas
-                        ptr = strtok(gaps, ",");
-                        read = 0;
-                        if (ptr) {
-                            if (sscanf(ptr, "%zu", &(noidx_ms1_deltas[read++])) < 1) {
-                                error ("Failed to parse first delta", 1);
-                            }
-
-                            while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) {
-                                if (sscanf(ptr, "%zu", &(noidx_ms1_deltas[read++])) < 1) {
-                                    error ("Failed to parse deltas", 1);
-                                }
-                            }
-                        }
-                        else {
-                            error("MS1: deltas missing",1);
-                        }
-
-                        noidx_ms1_deltas_len = read;
-                    }
-                    else {
-                        error("Unrecognized mode in -p argument", 1);
-                    }
-                }
-                
-                // EXPLICIT mode means that the user supplied a single index buffer on the command line
-                else {
-                    noidx_explicit_mode = 1;
-                    char *delim = ",";
-                    char *ptr = strtok(optarg, delim);
-                    size_t read = 0;
-                    if (!ptr) {
-                        error ("Pattern not found", 1);
-                    }            
-
-                    if (sscanf(ptr, "%zu", &(noidx_pattern[read++])) < 1) {
-                        error ("Failed to parse first pattern element", 1);
-                    }
-
-                    while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) {
-                        if (sscanf(ptr, "%zu", &(noidx_pattern[read++])) < 1) {
-                            error ("Failed to parse pattern", 1);
-                        }
-                    }
-                    noidx_pattern_len = read;
                 }
 
                 //}
+
                 break;
-            }
             case 'd':
                 sscanf(optarg, "%zu", &(rc.delta));
                 break;
@@ -527,13 +402,13 @@ struct run_config parse_args(int argc, char **argv)
     //Check buffer lengths
 
     if (noidx_flag) {
-        if (noidx_explicit_mode) {
-        }else if (noidx_predef_us_mode) {   
+        if (rc.type == CUSTOM) {
+        }else if (rc.type == UNIFORM) {   
             for (int i = 0; i < noidx_pattern_len; i++) {
                 noidx_pattern[i] = i*noidx_us_stride;
             }
         }
-        else if (noidx_predef_ms1_mode) {
+        else if (rc.type == MS1) {
             size_t last = 0;
             ssize_t j;
             for (int i = 1; i < noidx_pattern_len; i++) {
