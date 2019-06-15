@@ -388,7 +388,7 @@ int main(int argc, char **argv)
                     }
                     break;
                 case GATHER:
-                        if (rc.deltas_len == 0) {
+                        if (rc.deltas_len <= 1) {
                             gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len, rc.wrap);
                         } else {
                             gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, generic_len, rc.wrap, rc.deltas_len);

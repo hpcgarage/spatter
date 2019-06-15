@@ -148,7 +148,7 @@ struct run_config parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:D:f:b:z:m:yw:",
+    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:yw:",
                          long_options, &option_index);
 
         switch(c){
@@ -259,9 +259,6 @@ struct run_config parse_args(int argc, char **argv)
                 parse_p(optarg, &rc);
                 break;
             case 'd':
-                sscanf(optarg, "%zu", &(rc.delta));
-                break;
-            case 'D':
                 {
                 char *delim = ",";
                 char *ptr = strtok(optarg, delim);
@@ -284,7 +281,7 @@ struct run_config parse_args(int argc, char **argv)
                 // rotate
                 for (size_t i = 0; i < rc.deltas_len; i++) {
                     rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
-                    printf("rc.deltas_ps[%zu] = %zu\n",i, rc.deltas_ps[i]);
+                    //printf("rc.deltas_ps[%zu] = %zu\n",i, rc.deltas_ps[i]);
                 }
                 // compute prefix-sum
                 

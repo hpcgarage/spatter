@@ -7,6 +7,6 @@ len=10000000
 ./spatter -p MS1:8:3,5:2,2 -l$len
 ./spatter -p MS1:8:4,7:8 -l$len
 ./spatter -p MS1:8:4,7 -l$len
-./spatter -pUNIFORM:16:12 -D195,191,187,195,191,289 -w1 -l29489
+./spatter -pUNIFORM:16:12 -d195,191,187,195,191,289 -w1 -l29489
 ./spatter -pUNIFORM:13:12 -d4 -w8 -l29489
 
