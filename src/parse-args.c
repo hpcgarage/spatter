@@ -2,10 +2,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
 #include "parse-args.h"
 #include "backend-support-tests.h"
 
@@ -13,7 +11,10 @@
 #include "cuda-backend.h"
 #endif
 
-#define SEED        1004
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #define VALIDATE    1005
 #define CLPLATFORM  1010
 #define CLDEVICE    1011
@@ -24,81 +25,27 @@ extern char platform_string[STRING_SIZE];
 extern char device_string[STRING_SIZE];
 extern char kernel_file[STRING_SIZE];
 extern char kernel_name[STRING_SIZE];
-extern char config_file[STRING_SIZE];
 
-extern size_t source_len;
-extern size_t target_len;
-extern size_t index_len;
-extern size_t generic_len;
 extern size_t seed;
-extern size_t vector_len;
-extern size_t R;
-extern size_t local_work_size;
-extern size_t workers;
-extern int json_flag;
 extern int validate_flag;
 extern int print_header_flag;
-extern int random_flag;
-extern unsigned int shmem;
-extern enum sg_op op;
 
+extern enum sg_backend backend;
 
-size_t noidx_pattern[MAX_PATTERN_LEN];
-size_t noidx_pattern_len;
-extern char   noidx_pattern_file[STRING_SIZE];
-
-ssize_t noidx_us_stride;
-size_t noidx_ms1_deltas[MAX_PATTERN_LEN];
-size_t noidx_ms1_breaks[MAX_PATTERN_LEN];
-size_t noidx_ms1_deltas_len;
-size_t noidx_ms1_breaks_len;
-ssize_t noidx_ms1_delta;
-
-extern int verbose;
-
+// These should actually stay global
+int verbose;
 FILE *err_file;
 
-void error(char *what, int code){
-    if (code) {
-        fprintf(err_file, "Error: ");
-    }
-    else {
-        if (verbose)
-            fprintf(err_file, "Warning: ");
-    }
-
-    if (verbose || code) {
-        fprintf(err_file, "%s", what);
-        fprintf(err_file, "\n");
-    }
-    if(code) exit(code);
-}
-
-void safestrcopy(char *dest, char *src){
-    dest[0] = '\0';
-    strncat(dest, src, STRING_SIZE-1);
-}
-
-ssize_t setincludes(size_t s, size_t* noidx_ms1_breaks, size_t noidx_ms1_breaks_len){ 
-    for (size_t i = 0; i < noidx_ms1_breaks_len; i++) {
-        if (noidx_ms1_breaks[i] == s) {
-            return i;
-        }
-    }
-    return -1;
-}
+void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
-void print_run_config(struct run_config rc);
+ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
 struct run_config parse_args(int argc, char **argv)
 {
-    static int platform_flag = 0;
-    extern enum sg_backend backend;
-    extern enum sg_kernel kernel;
-    source_len = 0;
-    target_len = 0;
-    index_len  = 0;
-    seed       = time(NULL); 
+    struct backend_config bc;
+
+    bc.backend = INVALID_BACKEND;
+    
     err_file   = stderr;
 
     safestrcopy(platform_string, "NONE");
@@ -106,40 +53,40 @@ struct run_config parse_args(int argc, char **argv)
     safestrcopy(kernel_file,     "NONE");
     safestrcopy(kernel_name,     "NONE");
 
-    size_t sparsity = 1;
     int supress_errors = 0;
 
     struct run_config rc = {0};
     rc.delta = -1;
+    rc.kernel = INVALID_KERNEL;
 
 	static struct option long_options[] =
     {
-    	/* These options set a flag. */
+        /* Output */
         {"no-print-header", no_argument, &print_header_flag, 0},
         {"nph",             no_argument, &print_header_flag, 0},
+        {"supress-errors",  no_argument,       NULL, 'q'},
+        {"verbose",         no_argument,       &verbose, 1},
+        /* Backend */
         {"backend",         required_argument, NULL, 'b'},
         {"cl-platform",     required_argument, NULL, CLPLATFORM},
         {"cl-device",       required_argument, NULL, CLDEVICE},
         {"kernel-file",     required_argument, NULL, 'f'},
         {"kernel-name",     required_argument, NULL, 'k'},
-        {"seed",            required_argument, NULL, SEED},
-        {"vector-len",      required_argument, NULL, 'v'},
-        {"generic-len",     required_argument, NULL, 'l'},
-        {"runs",            required_argument, NULL, 'R'},
-        {"workers",         required_argument, NULL, 'W'},
-        {"wrap",            required_argument, NULL, 'w'},
-        {"op",              required_argument, NULL, 'o'},
-        {"uniform-stride",  required_argument, NULL, 's'},
-        {"local-work-size", required_argument, NULL, 'z'},
-        {"shared-mem",      required_argument, NULL, 'm'},
-        {"config-file",     required_argument, NULL, 't'},
+        {"interactive",     no_argument,       NULL, 'i'},
+        /* Run Config */
         {"pattern",         required_argument, NULL, 'p'},
         {"delta",           required_argument, NULL, 'd'},
-        {"supress-errors",  no_argument,       NULL, 'q'},
-        {"random",          no_argument,       NULL, 'y'},
-        {"verbose",         no_argument,       &verbose, 1},
+        {"generic-len",     required_argument, NULL, 'l'},
+        {"wrap",            required_argument, NULL, 'w'},
+        {"random",          required_argument, NULL, 's'},
+        {"vector-len",      required_argument, NULL, 'v'},
+        {"runs",            required_argument, NULL, 'R'},
+        {"omp-threads",     required_argument, NULL, 't'},
+        {"op",              required_argument, NULL, 'o'},
+        {"local-work-size", required_argument, NULL, 'z'},
+        {"shared-mem",      required_argument, NULL, 'm'},
+        /* Other */
         {"validate",        no_argument, &validate_flag, 1},
-        {"interactive",     no_argument,       0, 'i'},
         {0, 0, 0, 0}
     };  
 
@@ -148,34 +95,25 @@ struct run_config parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:s:qv:R:p:d:f:b:z:m:yw:",
+    	c = getopt_long_only (argc, argv, "W:l:k:qv:R:p:d:f:b:z:m:yw:t:",
                          long_options, &option_index);
 
         switch(c){
             case 'b':
                 if(!strcasecmp("OPENCL", optarg)){
-                    if (!sg_opencl_support()) {
-                        error("You did not compile with support for OpenCL", 1);
-                    }
                     backend = OPENCL;
                 }
                 else if(!strcasecmp("OPENMP", optarg)){
-                    if (!sg_openmp_support()) {
-                        error("You did not compile with support for OpenMP", 1);
-                    }
                     backend = OPENMP;
                 }
                 else if(!strcasecmp("CUDA", optarg)){
-                    if (!sg_cuda_support()) {
-                        error("You did not compile with support for CUDA", 1);
-                    }
                     backend = CUDA;
                 }
                 else if(!strcasecmp("SERIAL", optarg)){
-                    if (!sg_serial_support()) {
-                        error("You did not compile with support for serial execution", 1);
-                    }
                     backend = SERIAL;
+                }
+                else {
+                    error ("Unrecognized Backend", ERROR);
                 }
                 break;
             case CLPLATFORM:
@@ -194,63 +132,54 @@ struct run_config parse_args(int argc, char **argv)
             case 'k':
                 safestrcopy(kernel_name, optarg);
                 if (!strcasecmp("SG", optarg)) {
-                    kernel = SG;
                     rc.kernel=SG;
                 }
                 else if (!strcasecmp("SCATTER", optarg)) {
-                    kernel = SCATTER;
                     rc.kernel=SCATTER;
                 }
                 else if (!strcasecmp("GATHER", optarg)) {
-                    kernel = GATHER;
                     rc.kernel=GATHER;
                 }
                 else {
                     error("Invalid kernel", 1);
                 }
                 break;
+            // run config
             case 'o':
                 if (!strcasecmp("COPY", optarg)) { 
-                    op = OP_COPY;
+                    rc.op = OP_COPY;
                 } else if (!strcasecmp("ACCUM", optarg)) {
-                    op = OP_ACCUM;
+                    rc.op = OP_ACCUM;
                 } else {
-                    error("Unrecognzied op type", 1);
+                    error("Unrecognzied op type", ERROR);
                 }
                 break;
-            case SEED:
-                sscanf(optarg, "%zu", &seed);
+            case 's':
+                sscanf(optarg, "%zu", &rc.random_seed);
+                break;
+            case 't':
+                sscanf(optarg, "%zu", &rc.omp_threads);
                 break;
             case 'v':
-                sscanf(optarg, "%zu", &vector_len);
-                if (vector_len < 1) {
+                sscanf(optarg, "%zu", &rc.vector_len);
+                if (rc.vector_len < 1) {
                     error("Invalid vector len", 1);
                 }
                 break;
             case 'R':
-                sscanf(optarg, "%zu", &R);
-                break;
-            case 'W':
-                sscanf(optarg, "%zu", &workers);
+                sscanf(optarg, "%zu", &rc.nruns);
                 break;
             case 'w':
                 sscanf(optarg,"%zu", &rc.wrap);
                 break;
             case 'l':
-                sscanf(optarg,"%zu", &generic_len);
                 sscanf(optarg,"%zu", &(rc.generic_len));
                 break;
-            case 's':
-                sscanf(optarg,"%zu", &sparsity);
-                break;
             case 'z':
-                sscanf(optarg,"%zu", &local_work_size);
-                break;
-            case 'y':
-                random_flag = 1;
+                sscanf(optarg,"%zu", &rc.local_work_size);
                 break;
             case 'm':
-                sscanf(optarg,"%u", &shmem);
+                sscanf(optarg,"%u", &rc.shmem);
                 break;
             case 'q':
                 err_file = fopen("/dev/null", "w");
@@ -300,9 +229,6 @@ struct run_config parse_args(int argc, char **argv)
 
                 break;
                 }
-            case 't':
-                error ("No longer supported - please use -pFILE", 1);
-                break;
             default:
                 break;
 
@@ -315,33 +241,75 @@ struct run_config parse_args(int argc, char **argv)
         rc.wrap = 1;
     }
 
-    if (generic_len <= 0) {
+    if (rc.nruns == 0) {
+        error ("Number of runs not specified. Default is 10 ", 0);
+        rc.nruns = 10;
+    }
+
+    if (rc.generic_len <= 0) {
         error ("Length not specified. Default is 32 (elements)", 0);
-        generic_len = 32;
         rc.generic_len = 32;
     }
+
+#ifdef USE_OPENMP
+    int max_threads = omp_get_max_threads();
+    if (rc.omp_threads > max_threads) {
+        error ("Too many OpenMP threads requested, using the max instead", ERROR);
+    }
+    if (rc.omp_threads == 0) {
+        error ("Number of OpenMP threads not specified, using the max", WARN);
+        rc.omp_threads = max_threads;
+    }
+#else
+    if (rc.omp_threads > 1) {
+        error ("Compiled without OpenMP support but requsted more than 1 thread, using 1 instead", WARN);
+    }
+#endif
+
 
     /* Check argument coherency */
     if(backend == INVALID_BACKEND){
         if (sg_cuda_support()) {
             backend = CUDA;
-            error ("No backend specified, guessing CUDA", 0);
+            error ("No backend specified, guessing CUDA", WARN);
         }
         else if (sg_opencl_support()) {
             backend = OPENCL;
-            error ("No backend specified, guessing OpenCL", 0);
+            error ("No backend specified, guessing OpenCL", WARN);
         }
         else if (sg_openmp_support()) { 
             backend = OPENMP;
-            error ("No backend specified, guessing OpenMP", 0);
+            error ("No backend specified, guessing OpenMP", WARN);
         }
         else if (sg_serial_support()) { 
             backend = SERIAL;
-            error ("No backend specified, guessing Serial", 0);
+            error ("No backend specified, guessing Serial", WARN);
         }
         else
         {
-            error ("No backends available! Please recompile spatter with at least one backend.", 1);
+            error ("No backends available! Please recompile spatter with at least one backend.", ERROR);
+        }
+    }
+
+    // Check to see if they compiled with support for their requested backend
+    if(backend == OPENCL){
+        if (!sg_opencl_support()) {
+            error("You did not compile with support for OpenCL", ERROR);
+        }
+    }
+    else if(backend == OPENMP){
+        if (!sg_openmp_support()) {
+            error("You did not compile with support for OpenMP", ERROR);
+        }
+    }
+    else if(backend == CUDA){
+        if (!sg_cuda_support()) {
+            error("You did not compile with support for CUDA", ERROR);
+        }
+    }
+    else if(backend == SERIAL){
+        if (!sg_serial_support()) {
+            error("You did not compile with support for serial execution", ERROR);
         }
     }
 
@@ -367,19 +335,18 @@ struct run_config parse_args(int argc, char **argv)
     }
     #endif
 
-    if (kernel == INVALID_KERNEL) {
-        error("Kernel unspecified, guess GATHER", 0);
-        kernel = GATHER;
+    if (rc.kernel == INVALID_KERNEL) {
+        error("Kernel unspecified, guess GATHER", WARN);
         rc.kernel = GATHER;
         safestrcopy(kernel_name, "gather");
     }
 
-    if (kernel == SCATTER) {
-        sprintf(kernel_name, "%s%zu", "scatter", vector_len);
-    } else if (kernel == GATHER) {
-        sprintf(kernel_name, "%s%zu", "gather", vector_len);
-    } else if (kernel == SG) {
-        sprintf(kernel_name, "%s%zu", "sg", vector_len);
+    if (rc.kernel == SCATTER) {
+        sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
+    } else if (rc.kernel == GATHER) {
+        sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
+    } else if (rc.kernel == SG) {
+        sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
     }
 
     if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL) {
@@ -387,39 +354,10 @@ struct run_config parse_args(int argc, char **argv)
         safestrcopy(kernel_file, "kernels/kernels_vector.cl");
     }
 
-    //Check buffer lengths
-
-    if (rc.type == CUSTOM) {
-    }else if (rc.type == UNIFORM) {   
-        for (int i = 0; i < noidx_pattern_len; i++) {
-            noidx_pattern[i] = i*noidx_us_stride;
-        }
-    }
-    else if (rc.type == MS1) {
-        size_t last = 0;
-        ssize_t j;
-        for (int i = 1; i < noidx_pattern_len; i++) {
-            if ((j=setincludes(i, noidx_ms1_breaks, noidx_ms1_breaks_len))!=-1) {
-               noidx_pattern[i] = last+noidx_ms1_deltas[noidx_ms1_deltas_len>1?j:0];
-            } else {
-                noidx_pattern[i] = last + 1;
-            }
-            last = noidx_pattern[i];
-        }
-    }     
-    
     if (rc.delta == -1) {
         error("delta not specified, default is 8\n", 0);
         rc.delta = 8;
     }
-
-    if (workers < 1){
-        error("Too few workers. Changing to 1.", 0);
-        workers = 1;
-    }
-    
-    /* Seed rand */
-    srand(seed);
 
     print_run_config(rc);
     return rc;
@@ -569,6 +507,14 @@ void parse_p(char* optarg, struct run_config *rc) {
     }
 }
 
+ssize_t setincludes(size_t key, size_t* set, size_t set_len){ 
+    for (size_t i = 0; i < set_len; i++) {
+        if (set[i] == key) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 void print_run_config(struct run_config rc){
     printf("Index: %zu ", rc.pattern_len);
@@ -598,4 +544,25 @@ void print_run_config(struct run_config rc){
     }
     printf("kern: %s\n", kernel_name);
     printf("genlen: %zu\n", rc.generic_len);
+}
+
+void error(char *what, int code){
+    if (code) {
+        fprintf(err_file, "Error: ");
+    }
+    else {
+        if (verbose)
+            fprintf(err_file, "Warning: ");
+    }
+
+    if (verbose || code) {
+        fprintf(err_file, "%s", what);
+        fprintf(err_file, "\n");
+    }
+    if(code) exit(code);
+}
+
+void safestrcopy(char *dest, char *src){
+    dest[0] = '\0';
+    strncat(dest, src, STRING_SIZE-1);
 }

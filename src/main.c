@@ -32,41 +32,14 @@
 
 //SGBench specific enums
 enum sg_backend backend = INVALID_BACKEND;
-enum sg_kernel  kernel  = INVALID_KERNEL;
-enum sg_op      op      = OP_COPY;
 
 //Strings defining program behavior
 char platform_string[STRING_SIZE];
 char device_string[STRING_SIZE];
 char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
-char config_file[STRING_SIZE];
 
-size_t source_len;
-size_t target_len;
-size_t index_len;
-size_t generic_len = 0;
-size_t seed;
-size_t R = 10;
-size_t workers = 1;
-size_t vector_len = 1;
-size_t local_work_size = 1;
-ssize_t us_stride = 0; 
-ssize_t us_delta = 0;
-
-unsigned int shmem = 0;
-int random_flag = 0;
-int custom_flag = 0;
-
-int json_flag = 0, validate_flag = 0, print_header_flag = 1;
-
-// NOIDX MODE OPTIONS
-
-//size_t noidx_pattern[MAX_PATTERN_LEN] = {0};
-//size_t noidx_pattern_len  = 0;
-char  noidx_pattern_file[STRING_SIZE] = {0};
-
-int verbose = 0;
+int validate_flag = 0, print_header_flag = 1;
 
 //TODO: this shouldn't print out info about rc - only the system
 void print_system_info(struct run_config rc){
@@ -110,12 +83,12 @@ void *sg_safe_cpu_alloc (size_t size) {
  */
 void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  size_t vector_len, struct run_config rc){
 
-    if(kernel == SCATTER) printf("SCATTER ");
-    if(kernel == GATHER) printf("GATHER ");
-    if(kernel == SG) printf("SG ");
+    if(rc.kernel == SCATTER) printf("SCATTER ");
+    if(rc.kernel == GATHER) printf("GATHER ");
+    if(rc.kernel == SG) printf("SG ");
 
-    if(op == OP_COPY) printf("COPY ");
-    if(op == OP_ACCUM) printf("ACCUM ");
+    if(rc.op == OP_COPY) printf("COPY ");
+    if(rc.op == OP_ACCUM) printf("ACCUM ");
 
     printf("%lf %zu %zu ", time, source_size, target_size);
 
@@ -125,19 +98,13 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     double usable_bandwidth = 0;
     double actual_bandwidth = 0;
     
-    bytes_moved = 2 * sizeof(sgData_t) * rc.pattern_len * generic_len;
+    bytes_moved = 2 * sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
     usable_bandwidth = 0;
     actual_bandwidth = bytes_moved / time / 1000. / 1000.;
 
     printf("%zu %lf ", bytes_moved, actual_bandwidth);
 
-    //How many threads were used - currently refers to CPU systems
-    size_t worker_threads = workers;
-    #ifdef USE_OPENMP
-	worker_threads = omp_get_max_threads();
-    #endif
-
-    printf("%zu %zu %zu %u", worker_threads, vector_len, local_work_size, shmem);
+    printf("%zu %zu %zu %u", rc.omp_threads, rc.vector_len, rc.local_work_size, rc.shmem);
 
     printf("\n");
 
@@ -175,18 +142,11 @@ int main(int argc, char **argv)
     size_t global_work_size = 1;
     char   *kernel_string;
 
-    // OpenMP Specific
-    size_t omp_threads = 1;
-
     #ifdef USE_OPENCL
 	cl_ulong device_cache_size = 0;
     cl_uint work_dim = 1;
     #endif
     
-    #ifdef USE_OPENMP
-	omp_threads = omp_get_max_threads();
-    #endif
-
     // =======================================
     // Parse Command Line Arguments
     // =======================================
@@ -207,13 +167,13 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
     
-    if (kernel == GATHER) {
+    if (rc.kernel == GATHER) {
         // the target only has rc.wrap slots of size rc.pattern_len to be gathered into. 
         target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
         target.len = target.size / sizeof(sgData_t);
         
         // we will duplicate the target space for every thread.
-        target.nptrs = omp_threads;
+        target.nptrs = rc.omp_threads;
 
         // we must make sure there is sufficient space in source for us to slide the pattern
         size_t max_pattern_val = rc.pattern[0];
@@ -223,7 +183,7 @@ int main(int argc, char **argv)
             }
         }
                    
-        source.size = ((max_pattern_val + 1) + (generic_len-1)*rc.delta) * sizeof(double);
+        source.size = ((max_pattern_val + 1) + (rc.generic_len-1)*rc.delta) * sizeof(double);
         source.len = source.size / sizeof(sgData_t);
     } else {
         //TODO: Add data allocation for SCATTER
@@ -367,21 +327,22 @@ int main(int argc, char **argv)
     // Time OpenMP Kernel 
     #ifdef USE_OPENMP
     if (backend == OPENMP) {
+        omp_set_num_threads(rc.omp_threads);
 
-        for (int i = 0; i <= R; i++) {
+        for (int i = 0; i <= rc.nruns; i++) {
 
             sg_zero_time();
 
-            switch (kernel) {
+            switch (rc.kernel) {
                 case SG:
-                    if (op == OP_COPY) {
+                    if (rc.op == OP_COPY) {
                         //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
                     } else {
                         //sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     }
                     break;
                 case SCATTER:
-                    if (op == OP_COPY) {
+                    if (rc.op == OP_COPY) {
 				        // scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     } else {
                         // scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
@@ -389,9 +350,9 @@ int main(int argc, char **argv)
                     break;
                 case GATHER:
                         if (rc.deltas_len <= 1) {
-                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, generic_len, rc.wrap);
+                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, rc.generic_len, rc.wrap);
                         } else {
-                            gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, generic_len, rc.wrap, rc.deltas_len);
+                            gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, rc.generic_len, rc.wrap, rc.deltas_len);
                         }
                     break;
                 default:
@@ -400,7 +361,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, vector_len, rc);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc.vector_len, rc);
 
         }
     }
@@ -415,23 +376,23 @@ int main(int argc, char **argv)
             sg_zero_time();
 
             //TODO: Rewrite serial kernel
-            switch (kernel) {
+            switch (rc.kernel) {
                 case SG:
-                    if (op == OP_COPY) {
+                    if (rc.op == OP_COPY) {
                         //sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     } else {
                         //sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     }
                     break;
                 case SCATTER:
-                    if (op == OP_COPY) {
+                    if (rc.op == OP_COPY) {
                         //scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     } else {
                         //scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     }
                     break;
                 case GATHER:
-                    if (op == OP_COPY) {
+                    if (rc.op == OP_COPY) {
                         //gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                     } else {
                         //gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
@@ -443,7 +404,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, vector_len, rc);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc.vector_len, rc);
         }
     }
     #endif // USE_SERIAL

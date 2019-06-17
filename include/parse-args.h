@@ -15,6 +15,9 @@
 
 #include <sgtype.h>
 
+#define WARN 0
+#define ERROR 1
+
 
 /** @brief Supported benchmark backends
  */
@@ -29,10 +32,10 @@ enum sg_backend
 
 enum sg_kernel
 {
+    INVALID_KERNEL=0,
     SCATTER, 
     GATHER, 
     SG,    
-    INVALID_KERNEL
 };
 
 enum sg_op
@@ -71,12 +74,35 @@ struct run_config
     enum noidx_type type;
     spSize_t generic_len;
     size_t wrap;
+    size_t nruns;
+    char pattern_file[STRING_SIZE];
+    size_t random_seed;
+    size_t omp_threads;
+    enum sg_op op;
+    size_t vector_len;
+    unsigned int shmem;
+    size_t local_work_size;
+};
+
+struct backend_config
+{
+    enum sg_backend backend;
+    enum sg_kernel kernel;
+    enum sg_op op;
+
+    char platform_string[STRING_SIZE];
+    char device_string[STRING_SIZE];
+    char kernel_file[STRING_SIZE];
+    char kernel_name[STRING_SIZE];
+    
 };
 
 /** @brief Read command-line arguments and populate global variables. 
  *  @param argc Value passed to main
  *  @param argv Value passed to main
  */
-struct run_config parse_args(int argc, char **argv);
+struct run_config parse_args(int arrr, char **argv);
 
+void error(char *what, int code);
+void print_run_config(struct run_config rc);
 #endif 
