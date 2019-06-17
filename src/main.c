@@ -81,7 +81,7 @@ void *sg_safe_cpu_alloc (size_t size) {
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  size_t vector_len, struct run_config rc){
+void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  struct run_config rc){
 
     if(rc.kernel == SCATTER) printf("SCATTER ");
     if(rc.kernel == GATHER) printf("GATHER ");
@@ -135,15 +135,11 @@ int main(int argc, char **argv)
     sgDataBuf  source;
     sgDataBuf  target;
 
-    // tr holds info relating to reading a trace file
-    struct trace tr;
-
     // OpenCL Specific 
     size_t global_work_size = 1;
     char   *kernel_string;
 
     #ifdef USE_OPENCL
-	cl_ulong device_cache_size = 0;
     cl_uint work_dim = 1;
     #endif
     
@@ -151,6 +147,11 @@ int main(int argc, char **argv)
     // Parse Command Line Arguments
     // =======================================
     struct run_config rc = parse_args(argc, argv);
+    //char *argv_copy = (char*)malloc(sizeof(char) * (strlen(argv)
+
+    
+
+    //parse_backend(argc, argv);
 
     // =======================================
     // Initialize OpenCL Backend
@@ -361,7 +362,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc.vector_len, rc);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc);
 
         }
     }
@@ -404,7 +405,7 @@ int main(int argc, char **argv)
             }
 
             double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc.vector_len, rc);
+            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc);
         }
     }
     #endif // USE_SERIAL

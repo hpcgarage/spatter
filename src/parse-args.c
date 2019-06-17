@@ -26,7 +26,6 @@ extern char device_string[STRING_SIZE];
 extern char kernel_file[STRING_SIZE];
 extern char kernel_name[STRING_SIZE];
 
-extern size_t seed;
 extern int validate_flag;
 extern int print_header_flag;
 
@@ -40,12 +39,10 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:";
+
 struct run_config parse_args(int argc, char **argv)
 {
-    struct backend_config bc;
-
-    bc.backend = INVALID_BACKEND;
-    
     err_file   = stderr;
 
     safestrcopy(platform_string, "NONE");
@@ -58,6 +55,8 @@ struct run_config parse_args(int argc, char **argv)
     struct run_config rc = {0};
     rc.delta = -1;
     rc.kernel = INVALID_KERNEL;
+
+
 
 	static struct option long_options[] =
     {
@@ -95,7 +94,7 @@ struct run_config parse_args(int argc, char **argv)
 
     while(c != -1){
 
-    	c = getopt_long_only (argc, argv, "W:l:k:qv:R:p:d:f:b:z:m:yw:t:",
+    	c = getopt_long_only (argc, argv, short_options,
                          long_options, &option_index);
 
         switch(c){
@@ -362,6 +361,169 @@ struct run_config parse_args(int argc, char **argv)
     print_run_config(rc);
     return rc;
 
+}
+
+void parse_backend(int argc, char **argv)
+{
+    err_file   = stderr;
+
+    safestrcopy(platform_string, "NONE");
+    safestrcopy(device_string,   "NONE");
+    safestrcopy(kernel_file,     "NONE");
+    safestrcopy(kernel_name,     "NONE");
+
+    int supress_errors = 0;
+
+    struct run_config rc = {0};
+    rc.delta = -1;
+    rc.kernel = INVALID_KERNEL;
+
+
+
+	static struct option long_options[] =
+    {
+        /* Output */
+        {"no-print-header", no_argument, &print_header_flag, 0},
+        {"nph",             no_argument, &print_header_flag, 0},
+        {"supress-errors",  no_argument,       NULL, 'q'},
+        {"verbose",         no_argument,       &verbose, 1},
+        /* Backend */
+        {"backend",         required_argument, NULL, 'b'},
+        {"cl-platform",     required_argument, NULL, CLPLATFORM},
+        {"cl-device",       required_argument, NULL, CLDEVICE},
+        {"kernel-file",     required_argument, NULL, 'f'},
+        {"interactive",     no_argument,       NULL, 'i'},
+        /* Other */
+        {"validate",        no_argument, &validate_flag, 1},
+        {0, 0, 0, 0}
+    };  
+
+    int c = 0;
+    int option_index = 0;
+
+    while(c != -1){
+
+    	c = getopt_long_only (argc, argv, short_options,
+                         long_options, &option_index);
+
+        switch(c){
+            case 'b':
+                if(!strcasecmp("OPENCL", optarg)){
+                    backend = OPENCL;
+                }
+                else if(!strcasecmp("OPENMP", optarg)){
+                    backend = OPENMP;
+                }
+                else if(!strcasecmp("CUDA", optarg)){
+                    backend = CUDA;
+                }
+                else if(!strcasecmp("SERIAL", optarg)){
+                    backend = SERIAL;
+                }
+                else {
+                    error ("Unrecognized Backend", ERROR);
+                }
+                break;
+            case CLPLATFORM:
+                safestrcopy(platform_string, optarg);
+                break;
+            case CLDEVICE:
+                safestrcopy(device_string, optarg);
+               break;
+            case 'i':
+                safestrcopy(platform_string, INTERACTIVE);
+                safestrcopy(device_string, INTERACTIVE);
+                break;
+            case 'f':
+                safestrcopy(kernel_file, optarg);
+                break;
+            // run config
+            case 'q':
+                err_file = fopen("/dev/null", "w");
+                break;
+            default:
+                break;
+
+        }
+
+    }
+
+    /* Check argument coherency */
+    if(backend == INVALID_BACKEND){
+        if (sg_cuda_support()) {
+            backend = CUDA;
+            error ("No backend specified, guessing CUDA", WARN);
+        }
+        else if (sg_opencl_support()) {
+            backend = OPENCL;
+            error ("No backend specified, guessing OpenCL", WARN);
+        }
+        else if (sg_openmp_support()) { 
+            backend = OPENMP;
+            error ("No backend specified, guessing OpenMP", WARN);
+        }
+        else if (sg_serial_support()) { 
+            backend = SERIAL;
+            error ("No backend specified, guessing Serial", WARN);
+        }
+        else
+        {
+            error ("No backends available! Please recompile spatter with at least one backend.", ERROR);
+        }
+    }
+
+    // Check to see if they compiled with support for their requested backend
+    if(backend == OPENCL){
+        if (!sg_opencl_support()) {
+            error("You did not compile with support for OpenCL", ERROR);
+        }
+    }
+    else if(backend == OPENMP){
+        if (!sg_openmp_support()) {
+            error("You did not compile with support for OpenMP", ERROR);
+        }
+    }
+    else if(backend == CUDA){
+        if (!sg_cuda_support()) {
+            error("You did not compile with support for CUDA", ERROR);
+        }
+    }
+    else if(backend == SERIAL){
+        if (!sg_serial_support()) {
+            error("You did not compile with support for serial execution", ERROR);
+        }
+    }
+
+    if(backend == OPENCL){
+        if(!strcasecmp(platform_string, "NONE")){
+            safestrcopy(platform_string, INTERACTIVE);
+            safestrcopy(device_string, INTERACTIVE);
+        }
+        if(!strcasecmp(device_string, "NONE")){
+            safestrcopy(platform_string, INTERACTIVE);
+            safestrcopy(device_string, INTERACTIVE);
+        }
+    }
+
+    #ifdef USE_CUDA
+    if (backend == CUDA) {
+        int dev = find_device_cuda(device_string);
+        if (dev == -1) {
+            error("Specified CUDA device not found or no device specified. Using device 0", 0);
+            dev = 0;
+        }
+        cudaSetDevice(dev);
+    }
+    #endif
+
+
+    if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL) {
+        error("Kernel file unspecified, guessing kernels/kernels_vector.cl", 0);
+        safestrcopy(kernel_file, "kernels/kernels_vector.cl");
+    }
+
+
+    return;
 }
 
 
