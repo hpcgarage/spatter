@@ -39,7 +39,7 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:";
 void parse_backend(int argc, char **argv);
 
 struct run_config parse_args(int argc, char **argv)
@@ -53,6 +53,7 @@ struct run_config parse_args(int argc, char **argv)
     struct run_config rc = {0};
     rc.delta = -1;
     rc.kernel = INVALID_KERNEL;
+    safestrcopy(rc.name,"NONE");
 
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
     //must be rest between calls. 
@@ -72,6 +73,7 @@ struct run_config parse_args(int argc, char **argv)
         {"op",              required_argument, NULL, 'o'},
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
+        {"name",            required_argument, NULL, 'n'},
         {"verbose",         no_argument,       NULL, 0},
         {0, 0, 0, 0}
     };  
@@ -142,7 +144,11 @@ struct run_config parse_args(int argc, char **argv)
             case 'm':
                 sscanf(optarg,"%u", &rc.shmem);
                 break;
+            case 'n':
+                safestrcopy(rc.name, optarg);
+                break;
             case 'p':
+                safestrcopy(rc.generator, optarg);
                 parse_p(optarg, &rc);
                 break;
             case 'd':
@@ -237,6 +243,15 @@ struct run_config parse_args(int argc, char **argv)
     if (rc.op != OP_COPY) {
         error("OP must be OP_COPY", WARN);
     }
+
+    if (!strcasecmp(rc.name, "NONE")) {
+        if (rc.type != CUSTOM) {
+            safestrcopy(rc.name, rc.generator);
+        } else {
+            safestrcopy(rc.name, "CUSTOM");
+        }
+    }
+
 
 
 #ifdef USE_OPENMP

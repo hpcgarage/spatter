@@ -77,6 +77,8 @@ struct run_config
     size_t wrap;
     size_t nruns;
     char pattern_file[STRING_SIZE];
+    char generator[STRING_SIZE];
+    char name[STRING_SIZE];
     size_t random_seed;
     size_t omp_threads;
     enum sg_op op;

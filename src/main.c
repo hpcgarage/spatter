@@ -40,34 +40,31 @@ char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
 
 int validate_flag = 0, print_header_flag = 1;
+int noaggregate_flag = 0;
 
 //TODO: this shouldn't print out info about rc - only the system
 void print_system_info(struct run_config rc){
 
-    printf("Running Spatter version 0.0\n");
+    printf("\nRunning Spatter version 0.0\n");
+    //printf("Contributors: Patrick Lavin, Jeff Young, Aaron Vose\n");
     printf("Backend: ");
 
-    if(backend == OPENMP) printf("OPENMP ");
-    if(backend == OPENCL) printf("OPENCL ");
-    if(backend == CUDA) printf("CUDA ");
+    if(backend == OPENMP) printf("OPENMP\n");
+    if(backend == OPENCL) printf("OPENCL\n");
+    if(backend == CUDA) printf("CUDA\n");
 
-    printf("\n");
+    
+    printf("Aggregate Results? %s", noaggregate_flag ? "NO" : "YES"); 
+    
+    //if (noaggregate_mode)
 
-    printf("Index pattern: ");
 
-    if (rc.type == MS1) printf("MS1: [");
-    if (rc.type == UNIFORM) printf("UNIFORM: [");
-    if (rc.type == CUSTOM) printf("CUSTOM: [");
-        for (int i = 0; i < rc.pattern_len; i++) {
-            printf("%zu", rc.pattern[i]);
-            if (i != rc.pattern_len-1) printf(" ");
-        }
-    printf("]\n\n");
-
+    printf("\n\n");
 }
 
 void print_header(){
-    printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
+    //printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
+    printf("%-7s %-12s %-12s\n", "config", "time(s)","bandwidth(MB/s)");
 }
 
 void *sg_safe_cpu_alloc (size_t size) {
@@ -81,8 +78,9 @@ void *sg_safe_cpu_alloc (size_t size) {
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(double time, size_t source_size, size_t target_size, size_t index_size,  struct run_config rc){
+void report_time(int ii, double time,  struct run_config rc){
 
+    /*
     if(rc.kernel == SCATTER) printf("SCATTER ");
     if(rc.kernel == GATHER) printf("GATHER ");
     if(rc.kernel == SG) printf("SG ");
@@ -93,6 +91,7 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     printf("%lf %zu %zu ", time, source_size, target_size);
 
     printf("%zu ", rc.pattern_len);
+    */
 
     size_t bytes_moved = 0;
     double usable_bandwidth = 0;
@@ -102,11 +101,15 @@ void report_time(double time, size_t source_size, size_t target_size, size_t ind
     usable_bandwidth = 0;
     actual_bandwidth = bytes_moved / time / 1000. / 1000.;
 
+    /*
     printf("%zu %lf ", bytes_moved, actual_bandwidth);
 
     printf("%zu %zu %zu %u", rc.omp_threads, rc.vector_len, rc.local_work_size, rc.shmem);
 
     printf("\n");
+    */
+    //printf("%d %.2e %.2e\n", 0, time, actual_bandwidth);
+    printf("%-7d %-12.4g %-12.6g\n", ii, time, actual_bandwidth);
 
 }
 
@@ -122,6 +125,8 @@ void print_sizet(size_t *buf, size_t len){
     }
     printf("\n");
 }
+
+void emit_configs(struct run_config *rc, int nconfigs);
 
 int main(int argc, char **argv)
 {
@@ -214,7 +219,7 @@ int main(int argc, char **argv)
         target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
     }
 
-    // Populate buffers on host 
+    // Populate buffers cn host 
     random_data(source.host_ptr, source.len);
 
     // =======================================
@@ -244,168 +249,190 @@ int main(int argc, char **argv)
     // =======================================
     // Execute Benchmark
     // =======================================
+    
+    int nrc=2;
+    struct run_config *rc2 = (struct run_config *)malloc(sizeof(struct run_config) * 2);
+    rc2[0] = rc;
+    rc2[1] = rc;
 
     // Print some header info
     if (print_header_flag) 
     {
         print_system_info(rc);
+        emit_configs(rc2, 2);
         print_header();
     }
+
+    // Print config info
+
     
 
-    // Time OpenCL Kernel 
-    #ifdef USE_OPENCL
-    if (backend == OPENCL) {
+    for (int k = 0; k < nrc; k++) {
+        // Time OpenCL Kernel 
+        #ifdef USE_OPENCL
+        if (backend == OPENCL) {
 
-        //TODO: Rewrite without index buffers
-        /*
-        global_work_size = si.len / vector_len;
-        assert(global_work_size > 0);
-        cl_ulong start = 0, end = 0; 
-        for (int i = 0; i <= R; i++) {
-             
-            start = 0; end = 0;
+            //TODO: Rewrite without index buffers
+            /*
+            global_work_size = si.len / vector_len;
+            assert(global_work_size > 0);
+            cl_ulong start = 0, end = 0; 
+            for (int i = 0; i <= R; i++) {
+                 
+                start = 0; end = 0;
 
-           cl_event e = 0; 
+               cl_event e = 0; 
 
-            SET_4_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
-                    ti.dev_ptr_opencl, si.dev_ptr_opencl);
+                SET_4_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
+                        ti.dev_ptr_opencl, si.dev_ptr_opencl);
 
-            CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
-                       &global_work_size, &local_work_size, 
-                      0, NULL, &e)); 
-            clWaitForEvents(1, &e);
+                CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
+                           &global_work_size, &local_work_size, 
+                          0, NULL, &e)); 
+                clWaitForEvents(1, &e);
 
-            CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
-            CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                    (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
+                CALL_CL_GUARDED(clGetEventProfilingInfo, 
+                        (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
+                CALL_CL_GUARDED(clGetEventProfilingInfo, 
+                        (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
 
-            cl_ulong time_ns = end - start;
-            double time_s = time_ns / 1000000000.;
-            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
+                cl_ulong time_ns = end - start;
+                double time_s = time_ns / 1000000000.;
+                if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
+
+            }
+            */
 
         }
-        */
+        #endif // USE_OPENCL
 
-    }
-    #endif // USE_OPENCL
+        // Time CUDA Kernel 
+        #ifdef USE_CUDA
+        if (backend == CUDA) {
 
-    // Time CUDA Kernel 
-    #ifdef USE_CUDA
-    if (backend == CUDA) {
-
-        //TODO: Rewrite without index buffers
-        /*
-        global_work_size = si.len / vector_len;
-        long start = 0, end = 0; 
-        for (int i = 0; i <= R; i++) {
-             
-            start = 0; end = 0;
+            //TODO: Rewrite without index buffers
+            /*
+            global_work_size = si.len / vector_len;
+            long start = 0, end = 0; 
+            for (int i = 0; i <= R; i++) {
+                 
+                start = 0; end = 0;
 #define arr_len (1) 
-            unsigned int grid[arr_len]  = {global_work_size/local_work_size};
-            unsigned int block[arr_len] = {local_work_size};
-            
-            float time_ms = cuda_sg_wrapper(kernel, vector_len, 
-                    arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
-                   ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
-            cudaDeviceSynchronize();
+                unsigned int grid[arr_len]  = {global_work_size/local_work_size};
+                unsigned int block[arr_len] = {local_work_size};
+                
+                float time_ms = cuda_sg_wrapper(kernel, vector_len, 
+                        arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
+                       ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
+                cudaDeviceSynchronize();
 
-            double time_s = time_ms / 1000.;
-            if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
+                double time_s = time_ms / 1000.;
+                if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
+
+            }
+            */
 
         }
-        */
-
-    }
-    #endif // USE_CUDA
+        #endif // USE_CUDA
 
 
 
-    // Time OpenMP Kernel 
-    #ifdef USE_OPENMP
-    if (backend == OPENMP) {
-        omp_set_num_threads(rc.omp_threads);
+        // Time OpenMP Kernel 
+        #ifdef USE_OPENMP
+        if (backend == OPENMP) {
+            omp_set_num_threads(rc2[k].omp_threads);
+            double min_time_ms = 1e10;
 
-        for (int i = 0; i <= rc.nruns; i++) {
+            for (int i = 0; i <= rc2[k].nruns; i++) {
 
-            sg_zero_time();
+                sg_zero_time();
 
-            switch (rc.kernel) {
-                case SG:
-                    if (rc.op == OP_COPY) {
-                        //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
-                    } else {
-                        //sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    }
-                    break;
-                case SCATTER:
-                    if (rc.op == OP_COPY) {
-				        // scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    } else {
-                        // scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    }
-                    break;
-                case GATHER:
-                        if (rc.deltas_len <= 1) {
-                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.delta, rc.generic_len, rc.wrap);
+                switch (rc2[k].kernel) {
+                    case SG:
+                        if (rc2[k].op == OP_COPY) {
+                            //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
                         } else {
-                            gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc.pattern, rc.pattern_len, rc.deltas_ps, rc.generic_len, rc.wrap, rc.deltas_len);
+                            //sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                         }
-                    break;
-                default:
-                    printf("Error: Unable to determine kernel\n");
-                    break;
+                        break;
+                    case SCATTER:
+                        if (rc2[k].op == OP_COPY) {
+                            // scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        } else {
+                            // scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        }
+                        break;
+                    case GATHER:
+                        if (rc2[k].deltas_len <= 1) {
+                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        } else {
+                            gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);
+                        }
+                        break;
+                    default:
+                        printf("Error: Unable to determine kernel\n");
+                        break;
+                }
+
+                double time_ms = sg_get_time_ms();
+                if (i!=0) {
+                    if (noaggregate_flag) {
+                        report_time(k, time_ms/1000., rc2[k]);
+                    } else {
+                        if (time_ms < min_time_ms) {
+                            min_time_ms = time_ms;
+                        }
+                    }
+                }
             }
-
-            double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc);
-
-        }
-    }
-    #endif // USE_OPENMP
-    
-    // Time Serial Kernel 
-    #ifdef USE_SERIAL
-    if (backend == SERIAL) {
-
-        for (int i = 0; i <= R; i++) {
-
-            sg_zero_time();
-
-            //TODO: Rewrite serial kernel
-            switch (rc.kernel) {
-                case SG:
-                    if (rc.op == OP_COPY) {
-                        //sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    } else {
-                        //sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    }
-                    break;
-                case SCATTER:
-                    if (rc.op == OP_COPY) {
-                        //scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    } else {
-                        //scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    }
-                    break;
-                case GATHER:
-                    if (rc.op == OP_COPY) {
-                        //gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    } else {
-                        //gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                    }
-                    break;
-                default:
-                    printf("Error: Unable to determine kernel\n");
-                    break;
+            if (!noaggregate_flag) {
+                report_time(k, min_time_ms/1000., rc2[k]);
             }
-
-            double time_ms = sg_get_time_ms();
-            if (i!=0) report_time(time_ms/1000., source.size, target.size, 0, rc);
         }
+        #endif // USE_OPENMP
+        
+        // Time Serial Kernel 
+        #ifdef USE_SERIAL
+        if (backend == SERIAL) {
+
+            for (int i = 0; i <= R; i++) {
+
+                sg_zero_time();
+
+                //TODO: Rewrite serial kernel
+                switch (rc2[k].kernel) {
+                    case SG:
+                        if (rc2[k].op == OP_COPY) {
+                            //sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        } else {
+                            //sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        }
+                        break;
+                    case SCATTER:
+                        if (rc2[k].op == OP_COPY) {
+                            //scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        } else {
+                            //scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        }
+                        break;
+                    case GATHER:
+                        if (rc2[k].op == OP_COPY) {
+                            //gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        } else {
+                            //gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
+                        }
+                        break;
+                    default:
+                        printf("Error: Unable to determine kernel\n");
+                        break;
+                }
+
+                double time_ms = sg_get_time_ms();
+                if (i!=0) report_time(k, time_ms/1000., rc2[k]);
+            }
+        }
+        #endif // USE_SERIAL
     }
-    #endif // USE_SERIAL
     
 
     // =======================================
@@ -499,3 +526,39 @@ int main(int argc, char **argv)
     //}
   }
 } 
+
+void emit_configs(struct run_config *rc, int nconfigs)
+{
+
+    printf("Run Configurations\n");
+
+    printf("[ ");
+    for (int i = 0; i < nconfigs; i++) {
+        if (i != 0) {
+            printf("  ");
+        }
+
+        printf("{");
+
+        // Pattern Type
+        printf("\'name\':\'%s\', ", rc[i].name);
+
+        // Pattern 
+        printf("\'pattern\':[");
+        for (int j = 0; j < rc[i].pattern_len; j++) {
+            printf("%zu", rc[i].pattern[j]);
+            if (j != rc[i].pattern_len-1) {
+                printf(",");
+            }
+        }
+        printf("], ");
+
+        printf("\'delta\':%d}", rc[i].delta);
+
+        if (i != nconfigs-1) {
+            printf(",\n");
+        }
+
+    }
+    printf(" ]\n\n");
+}
