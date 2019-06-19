@@ -10,3 +10,6 @@ len=10000000
 ./spatter -pUNIFORM:16:12 -d195,191,187,195,191,289 -w1 -l29489
 ./spatter -pUNIFORM:13:12 -d4 -w8 -l29489
 
+OMP_NUM_THREADS=8 ./spatter -pUNIFORM:13:12 -d4 -w8 -l29489 -t2 -R3
+OMP_NUM_THREADS=8 ./spatter -pUNIFORM:13:12 -d4 -w8 -l29489 -t3 -R3
+OMP_NUM_THREADS=8 ./spatter -pUNIFORM:13:12 -d4 -w8 -l29489     -R3

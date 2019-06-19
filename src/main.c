@@ -146,12 +146,9 @@ int main(int argc, char **argv)
     // =======================================
     // Parse Command Line Arguments
     // =======================================
-    struct run_config rc = parse_args(argc, argv);
-    //char *argv_copy = (char*)malloc(sizeof(char) * (strlen(argv)
-
     
-
-    //parse_backend(argc, argv);
+    struct run_config rc;
+    rc = parse_args(argc, argv);
 
     // =======================================
     // Initialize OpenCL Backend

@@ -41,7 +41,8 @@ enum sg_kernel
 enum sg_op
 {
     OP_COPY,
-    OP_ACCUM
+    OP_ACCUM,
+    INVALID_OP
 };
 
 enum noidx_type
@@ -50,7 +51,7 @@ enum noidx_type
     MS1,
     CUSTOM,
     CONFIG_FILE,
-    INVALID
+    INVALID_NOIDX
 };
 
 /*

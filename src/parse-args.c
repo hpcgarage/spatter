@@ -40,39 +40,27 @@ void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
 char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:";
+void parse_backend(int argc, char **argv);
 
 struct run_config parse_args(int argc, char **argv)
 {
-    err_file   = stderr;
-
-    safestrcopy(platform_string, "NONE");
-    safestrcopy(device_string,   "NONE");
-    safestrcopy(kernel_file,     "NONE");
-    safestrcopy(kernel_name,     "NONE");
-
+    parse_backend(argc, argv);
+    
     int supress_errors = 0;
+
+    volatile char *argv0copy = argv[0];
 
     struct run_config rc = {0};
     rc.delta = -1;
     rc.kernel = INVALID_KERNEL;
 
-
-
+    //Do NOT remove this - as we call getopt_long_only in multiple places, this
+    //must be rest between calls. 
+    optind = 1;
 	static struct option long_options[] =
     {
-        /* Output */
-        {"no-print-header", no_argument, &print_header_flag, 0},
-        {"nph",             no_argument, &print_header_flag, 0},
-        {"supress-errors",  no_argument,       NULL, 'q'},
-        {"verbose",         no_argument,       &verbose, 1},
-        /* Backend */
-        {"backend",         required_argument, NULL, 'b'},
-        {"cl-platform",     required_argument, NULL, CLPLATFORM},
-        {"cl-device",       required_argument, NULL, CLDEVICE},
-        {"kernel-file",     required_argument, NULL, 'f'},
+        // Run Config 
         {"kernel-name",     required_argument, NULL, 'k'},
-        {"interactive",     no_argument,       NULL, 'i'},
-        /* Run Config */
         {"pattern",         required_argument, NULL, 'p'},
         {"delta",           required_argument, NULL, 'd'},
         {"generic-len",     required_argument, NULL, 'l'},
@@ -84,8 +72,7 @@ struct run_config parse_args(int argc, char **argv)
         {"op",              required_argument, NULL, 'o'},
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
-        /* Other */
-        {"validate",        no_argument, &validate_flag, 1},
+        {"verbose",         no_argument,       NULL, 0},
         {0, 0, 0, 0}
     };  
 
@@ -98,36 +85,12 @@ struct run_config parse_args(int argc, char **argv)
                          long_options, &option_index);
 
         switch(c){
-            case 'b':
-                if(!strcasecmp("OPENCL", optarg)){
-                    backend = OPENCL;
-                }
-                else if(!strcasecmp("OPENMP", optarg)){
-                    backend = OPENMP;
-                }
-                else if(!strcasecmp("CUDA", optarg)){
-                    backend = CUDA;
-                }
-                else if(!strcasecmp("SERIAL", optarg)){
-                    backend = SERIAL;
-                }
-                else {
-                    error ("Unrecognized Backend", ERROR);
-                }
-                break;
             case CLPLATFORM:
                 safestrcopy(platform_string, optarg);
                 break;
             case CLDEVICE:
                 safestrcopy(device_string, optarg);
                break;
-            case 'i':
-                safestrcopy(platform_string, INTERACTIVE);
-                safestrcopy(device_string, INTERACTIVE);
-                break;
-            case 'f':
-                safestrcopy(kernel_file, optarg);
-                break;
             case 'k':
                 safestrcopy(kernel_name, optarg);
                 if (!strcasecmp("SG", optarg)) {
@@ -143,7 +106,6 @@ struct run_config parse_args(int argc, char **argv)
                     error("Invalid kernel", 1);
                 }
                 break;
-            // run config
             case 'o':
                 if (!strcasecmp("COPY", optarg)) { 
                     rc.op = OP_COPY;
@@ -179,9 +141,6 @@ struct run_config parse_args(int argc, char **argv)
                 break;
             case 'm':
                 sscanf(optarg,"%u", &rc.shmem);
-                break;
-            case 'q':
-                err_file = fopen("/dev/null", "w");
                 break;
             case 'p':
                 parse_p(optarg, &rc);
@@ -234,6 +193,12 @@ struct run_config parse_args(int argc, char **argv)
         }
 
     }
+    // VALIDATE ARGUMENTS
+
+    if (rc.vector_len == 0) {
+        error ("Vector length not set. Default is 1", WARN);
+        rc.vector_len = 1;
+    }
 
     if (rc.wrap == 0) {
         error ("length of smallbuf not specified. Default is 1 (slot of size pattern_len elements)", 0);
@@ -246,9 +211,33 @@ struct run_config parse_args(int argc, char **argv)
     }
 
     if (rc.generic_len <= 0) {
-        error ("Length not specified. Default is 32 (elements)", 0);
+        error ("Length not specified. Default is 32 (gathers/scatters)", 0);
         rc.generic_len = 32;
     }
+
+    if (rc.kernel == INVALID_KERNEL) {
+        error("Kernel unspecified, guess GATHER", WARN);
+        rc.kernel = GATHER;
+        safestrcopy(kernel_name, "gather");
+    }
+
+    if (rc.kernel == SCATTER) {
+        sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
+    } else if (rc.kernel == GATHER) {
+        sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
+    } else if (rc.kernel == SG) {
+        sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
+    }
+
+    if (rc.delta <= -1) {
+        error("delta not specified, default is 8\n", WARN);
+        rc.delta = 8;
+    }
+    
+    if (rc.op != OP_COPY) {
+        error("OP must be OP_COPY", WARN);
+    }
+
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
@@ -265,100 +254,12 @@ struct run_config parse_args(int argc, char **argv)
     }
 #endif
 
+#if defined USE_CUDA || defined USE_OPENCL
+    if (rc.local_work_size == 0) {
+        error ("Local_work_size not set. Default is 1", WARN);
+        rc.local_work_size = 1;
+#endif
 
-    /* Check argument coherency */
-    if(backend == INVALID_BACKEND){
-        if (sg_cuda_support()) {
-            backend = CUDA;
-            error ("No backend specified, guessing CUDA", WARN);
-        }
-        else if (sg_opencl_support()) {
-            backend = OPENCL;
-            error ("No backend specified, guessing OpenCL", WARN);
-        }
-        else if (sg_openmp_support()) { 
-            backend = OPENMP;
-            error ("No backend specified, guessing OpenMP", WARN);
-        }
-        else if (sg_serial_support()) { 
-            backend = SERIAL;
-            error ("No backend specified, guessing Serial", WARN);
-        }
-        else
-        {
-            error ("No backends available! Please recompile spatter with at least one backend.", ERROR);
-        }
-    }
-
-    // Check to see if they compiled with support for their requested backend
-    if(backend == OPENCL){
-        if (!sg_opencl_support()) {
-            error("You did not compile with support for OpenCL", ERROR);
-        }
-    }
-    else if(backend == OPENMP){
-        if (!sg_openmp_support()) {
-            error("You did not compile with support for OpenMP", ERROR);
-        }
-    }
-    else if(backend == CUDA){
-        if (!sg_cuda_support()) {
-            error("You did not compile with support for CUDA", ERROR);
-        }
-    }
-    else if(backend == SERIAL){
-        if (!sg_serial_support()) {
-            error("You did not compile with support for serial execution", ERROR);
-        }
-    }
-
-    if(backend == OPENCL){
-        if(!strcasecmp(platform_string, "NONE")){
-            safestrcopy(platform_string, INTERACTIVE);
-            safestrcopy(device_string, INTERACTIVE);
-        }
-        if(!strcasecmp(device_string, "NONE")){
-            safestrcopy(platform_string, INTERACTIVE);
-            safestrcopy(device_string, INTERACTIVE);
-        }
-    }
-
-    #ifdef USE_CUDA
-    if (backend == CUDA) {
-        int dev = find_device_cuda(device_string);
-        if (dev == -1) {
-            error("Specified CUDA device not found or no device specified. Using device 0", 0);
-            dev = 0;
-        }
-        cudaSetDevice(dev);
-    }
-    #endif
-
-    if (rc.kernel == INVALID_KERNEL) {
-        error("Kernel unspecified, guess GATHER", WARN);
-        rc.kernel = GATHER;
-        safestrcopy(kernel_name, "gather");
-    }
-
-    if (rc.kernel == SCATTER) {
-        sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
-    } else if (rc.kernel == GATHER) {
-        sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
-    } else if (rc.kernel == SG) {
-        sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
-    }
-
-    if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL) {
-        error("Kernel file unspecified, guessing kernels/kernels_vector.cl", 0);
-        safestrcopy(kernel_file, "kernels/kernels_vector.cl");
-    }
-
-    if (rc.delta == -1) {
-        error("delta not specified, default is 8\n", 0);
-        rc.delta = 8;
-    }
-
-    print_run_config(rc);
     return rc;
 
 }
@@ -374,12 +275,9 @@ void parse_backend(int argc, char **argv)
 
     int supress_errors = 0;
 
-    struct run_config rc = {0};
-    rc.delta = -1;
-    rc.kernel = INVALID_KERNEL;
-
-
-
+    //Do NOT remove this - as we call getopt_long_only in multiple places, this
+    //must be rest between calls. 
+    optind = 1;
 	static struct option long_options[] =
     {
         /* Output */
@@ -437,7 +335,6 @@ void parse_backend(int argc, char **argv)
             case 'f':
                 safestrcopy(kernel_file, optarg);
                 break;
-            // run config
             case 'q':
                 err_file = fopen("/dev/null", "w");
                 break;
@@ -529,6 +426,7 @@ void parse_backend(int argc, char **argv)
 
 void parse_p(char* optarg, struct run_config *rc) {
 
+    rc->type = INVALID_NOIDX;
     char *arg = 0;
     if ((arg=strchr(optarg, ':'))) {
 
@@ -610,6 +508,29 @@ void parse_p(char* optarg, struct run_config *rc) {
             ms1_breaks_len = read;
 
             // Parse deltas
+            /*
+            printf("here\n");
+            printf("gaps: %x\n", gaps);
+            if (gaps == 0) {
+                printf("1\n");
+            } 
+            if (!gaps) {
+                printf("2\n");
+                error("FUCK", 1);
+                exit(1);
+            }
+            if (!gaps || (gaps && gaps[0] == '\0')) {
+                error("MS1: Gaps missing", ERROR);
+            }
+            printf("here\n");
+
+            */
+            if(!gaps) {
+                printf("1\n");
+                exit(1);
+                error("error", ERROR);
+            }
+
             ptr = strtok(gaps, ",");
             read = 0;
             if (ptr) {
@@ -666,6 +587,13 @@ void parse_p(char* optarg, struct run_config *rc) {
             }
         }
         rc->pattern_len = read;
+    }
+
+    if (rc->pattern_len == 0) {
+        error("Pattern length of 0", ERROR);
+    }
+    if (rc->type == INVALID_NOIDX) {
+        error("No pattern type set", ERROR);
     }
 }
 
