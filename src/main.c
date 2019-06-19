@@ -552,8 +552,39 @@ void emit_configs(struct run_config *rc, int nconfigs)
             }
         }
         printf("], ");
+        
+        //Delta
+        //TODO: multidelta
+        if (rc[i].deltas_len == 1) {
+            printf("\'delta\':%zd", rc[i].delta);
+        } else {
+            printf("\'deltas\':[");
+            for (int j = 0; j < rc[i].deltas_len; j++) {
+                printf("%zu", rc[i].deltas[j]);
+                if (j != rc[i].deltas_len-1) {
+                    printf(",");
+                }
+            }
+            printf("]");
+            
+        }
+        printf(", ");
 
-        printf("\'delta\':%d}", rc[i].delta);
+        // Len
+        printf("\'length\':%zu, ", rc[i].generic_len);
+
+        // Aggregate
+        if (!noaggregate_flag) {
+            printf("\'agg\':%zu, ", rc[i].nruns);
+        }
+
+        // OpenMP Threads
+        if (backend == OPENMP) {
+            printf("\'threads\':%zu", rc[i].omp_threads);
+        }
+
+
+        printf("}");
 
         if (i != nconfigs-1) {
             printf(",\n");
