@@ -28,6 +28,7 @@ extern char kernel_name[STRING_SIZE];
 
 extern int validate_flag;
 extern int print_header_flag;
+extern int aggregate_flag;
 
 extern enum sg_backend backend;
 
@@ -39,13 +40,85 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:a";
 void parse_backend(int argc, char **argv);
 
-struct run_config parse_args(int argc, char **argv)
+char multifile[STRING_SIZE];
+
+void parse_args(int argc, char **argv, int *nrc, struct run_config **rc) 
 {
-    parse_backend(argc, argv);
-    
+    parse_backend(argc, argv); 
+
+    int multi = 0;
+    for (int i = 0; i < argc; i++) {
+        if (strstr(argv[i], "-pFILE")) {
+            safestrcopy(multifile, strchr(argv[i],'=')+1);
+            multi = 1;
+            break;
+        } else if (strstr(argv[i], "-p") &&  i < argc-1 && strstr(argv[i+1], "FILE")) {
+            safestrcopy(multifile, strchr(argv[i+1],'=')+1);
+            multi = 1;
+            break;
+        }
+    }
+
+    //printf("here\n");
+
+    if (multi) {
+        FILE* file = fopen(multifile, "r");
+		if (!file) {
+            error ("Could not open config file", ERROR);
+        }
+        char line[STRING_SIZE];
+
+        int lineno = 0;
+
+        char ** newargs = (char**)malloc(sizeof(char*) * STRING_SIZE);
+        while (fgets(line, sizeof(line), file)) {
+            printf("parsing line: %s", line);
+            if (lineno == 0) {
+                sscanf(line, "%zu", nrc);
+                *rc = (struct run_config*)calloc(sizeof(struct run_config), *nrc);
+                lineno++;
+                continue;
+            } 
+            newargs[0] = line;
+            int j;
+            int count = 1;
+            int sl = strlen(line);
+            for (j = 0; j < sl; j++) {
+                if (line[j] == ' ') {
+                    line[j] = '\0';
+                    newargs[count++] = &(line[j]) + 1;
+                } else {
+                }
+
+            }
+
+            rc[0][lineno-1] = parse_runs(count, newargs);
+
+            lineno++;
+        }
+        free(newargs);
+        
+        if (*nrc != lineno-1) {
+            error ("Some lines in the config file may not have been parsed", WARN);
+        }
+        if (*nrc == 0) {
+            error ("No patterns in the config file were parsed", ERROR);
+        }
+
+
+        fclose(file); 
+        return;
+    }
+    *rc = (struct run_config*)calloc(sizeof(struct run_config), 1);
+    rc[0][0] = parse_runs(argc, argv);
+    *nrc = 1;
+}
+
+struct run_config parse_runs(int argc, char **argv)
+{
     int supress_errors = 0;
 
     volatile char *argv0copy = argv[0];
@@ -75,6 +148,7 @@ struct run_config parse_args(int argc, char **argv)
         {"shared-mem",      required_argument, NULL, 'm'},
         {"name",            required_argument, NULL, 'n'},
         {"verbose",         no_argument,       NULL, 0},
+        {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
     };  
 
@@ -221,6 +295,7 @@ struct run_config parse_args(int argc, char **argv)
         rc.generic_len = 32;
     }
 
+
     if (rc.kernel == INVALID_KERNEL) {
         error("Kernel unspecified, guess GATHER", WARN);
         rc.kernel = GATHER;
@@ -308,6 +383,7 @@ void parse_backend(int argc, char **argv)
         {"interactive",     no_argument,       NULL, 'i'},
         /* Other */
         {"validate",        no_argument, &validate_flag, 1},
+        {"aggregate",       optional_argument, NULL, 'a'},
         {0, 0, 0, 0}
     };  
 
@@ -352,6 +428,13 @@ void parse_backend(int argc, char **argv)
                 break;
             case 'q':
                 err_file = fopen("/dev/null", "w");
+                break;
+            case 'a':
+                if (optarg == NULL) {
+                    aggregate_flag = 0;
+                }else {
+                    sscanf(optarg, "%d", &aggregate_flag);
+                }
                 break;
             default:
                 break;

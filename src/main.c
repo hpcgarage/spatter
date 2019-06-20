@@ -29,6 +29,8 @@
 
 #define ALIGNMENT (64)
 
+#define xstr(s) str(s)
+#define str(s) #s
 
 //SGBench specific enums
 enum sg_backend backend = INVALID_BACKEND;
@@ -40,12 +42,14 @@ char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
 
 int validate_flag = 0, print_header_flag = 1;
-int noaggregate_flag = 0;
+int aggregate_flag = 1;
 
 //TODO: this shouldn't print out info about rc - only the system
-void print_system_info(struct run_config rc){
+void print_system_info(){
 
     printf("\nRunning Spatter version 0.0\n");
+    printf("Compiler: %s ver. %s\n", xstr(SPAT_C_NAME), xstr(SPAT_C_VER));
+    printf("Compiler Location: %s\n", xstr(SPAT_C));
     //printf("Contributors: Patrick Lavin, Jeff Young, Aaron Vose\n");
     printf("Backend: ");
 
@@ -54,11 +58,8 @@ void print_system_info(struct run_config rc){
     if(backend == CUDA) printf("CUDA\n");
 
     
-    printf("Aggregate Results? %s", noaggregate_flag ? "NO" : "YES"); 
+    printf("Aggregate Results? %s", aggregate_flag ? "YES" : "NO"); 
     
-    //if (noaggregate_mode)
-
-
     printf("\n\n");
 }
 
@@ -79,38 +80,12 @@ void *sg_safe_cpu_alloc (size_t size) {
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
 void report_time(int ii, double time,  struct run_config rc){
-
-    /*
-    if(rc.kernel == SCATTER) printf("SCATTER ");
-    if(rc.kernel == GATHER) printf("GATHER ");
-    if(rc.kernel == SG) printf("SG ");
-
-    if(rc.op == OP_COPY) printf("COPY ");
-    if(rc.op == OP_ACCUM) printf("ACCUM ");
-
-    printf("%lf %zu %zu ", time, source_size, target_size);
-
-    printf("%zu ", rc.pattern_len);
-    */
-
     size_t bytes_moved = 0;
-    double usable_bandwidth = 0;
     double actual_bandwidth = 0;
     
-    bytes_moved = 2 * sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
-    usable_bandwidth = 0;
+    bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
     actual_bandwidth = bytes_moved / time / 1000. / 1000.;
-
-    /*
-    printf("%zu %lf ", bytes_moved, actual_bandwidth);
-
-    printf("%zu %zu %zu %u", rc.omp_threads, rc.vector_len, rc.local_work_size, rc.shmem);
-
-    printf("\n");
-    */
-    //printf("%d %.2e %.2e\n", 0, time, actual_bandwidth);
     printf("%-7d %-12.4g %-12.6g\n", ii, time, actual_bandwidth);
-
 }
 
 void print_data(double *buf, size_t len){
@@ -127,6 +102,7 @@ void print_sizet(size_t *buf, size_t len){
 }
 
 void emit_configs(struct run_config *rc, int nconfigs);
+
 
 int main(int argc, char **argv)
 {
@@ -152,8 +128,13 @@ int main(int argc, char **argv)
     // Parse Command Line Arguments
     // =======================================
     
-    struct run_config rc;
-    rc = parse_args(argc, argv);
+    struct run_config *rc;
+    int nrc = 0;
+    parse_args(argc, argv, &nrc, &rc);
+
+    assert(nrc > 0);
+
+    struct run_config *rc2 = rc;
 
     // =======================================
     // Initialize OpenCL Backend
@@ -170,23 +151,23 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
     
-    if (rc.kernel == GATHER) {
+    if (rc2[0].kernel == GATHER) {
         // the target only has rc.wrap slots of size rc.pattern_len to be gathered into. 
-        target.size = rc.pattern_len * sizeof(sgData_t) * rc.wrap;
+        target.size = rc2[0].pattern_len * sizeof(sgData_t) * rc2[0].wrap;
         target.len = target.size / sizeof(sgData_t);
         
         // we will duplicate the target space for every thread.
-        target.nptrs = rc.omp_threads;
+        target.nptrs = rc2[0].omp_threads;
 
         // we must make sure there is sufficient space in source for us to slide the pattern
-        size_t max_pattern_val = rc.pattern[0];
-        for (size_t i = 0; i < rc.pattern_len; i++) {
-            if (rc.pattern[i] > max_pattern_val) {
-                max_pattern_val = rc.pattern[i];
+        size_t max_pattern_val = rc2[0].pattern[0];
+        for (size_t i = 0; i < rc2[0].pattern_len; i++) {
+            if (rc2[0].pattern[i] > max_pattern_val) {
+                max_pattern_val = rc2[0].pattern[i];
             }
         }
                    
-        source.size = ((max_pattern_val + 1) + (rc.generic_len-1)*rc.delta) * sizeof(double);
+        source.size = ((max_pattern_val + 1) + (rc2[0].generic_len-1)*rc2[0].delta) * sizeof(double);
         source.len = source.size / sizeof(sgData_t);
     } else {
         //TODO: Add data allocation for SCATTER
@@ -250,16 +231,12 @@ int main(int argc, char **argv)
     // Execute Benchmark
     // =======================================
     
-    int nrc=2;
-    struct run_config *rc2 = (struct run_config *)malloc(sizeof(struct run_config) * 2);
-    rc2[0] = rc;
-    rc2[1] = rc;
 
     // Print some header info
     if (print_header_flag) 
     {
-        print_system_info(rc);
-        emit_configs(rc2, 2);
+        print_system_info();
+        emit_configs(rc2, nrc);
         print_header();
     }
 
@@ -376,7 +353,7 @@ int main(int argc, char **argv)
 
                 double time_ms = sg_get_time_ms();
                 if (i!=0) {
-                    if (noaggregate_flag) {
+                    if (!aggregate_flag) {
                         report_time(k, time_ms/1000., rc2[k]);
                     } else {
                         if (time_ms < min_time_ms) {
@@ -385,7 +362,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
-            if (!noaggregate_flag) {
+            if (aggregate_flag) {
                 report_time(k, min_time_ms/1000., rc2[k]);
             }
         }
@@ -543,6 +520,19 @@ void emit_configs(struct run_config *rc, int nconfigs)
         // Pattern Type
         printf("\'name\':\'%s\', ", rc[i].name);
 
+        // Kernel 
+        switch (rc[i].kernel) {
+        case GATHER:
+            printf("\'kernel\':\'Gather\', ");
+            break;
+        case SCATTER:
+            printf("\'kernel\':\'Scatter\', ");
+            break;
+        case SG:
+            printf("\'kernel\':\'GS\', ");
+            break;
+        }
+
         // Pattern 
         printf("\'pattern\':[");
         for (int j = 0; j < rc[i].pattern_len; j++) {
@@ -574,8 +564,13 @@ void emit_configs(struct run_config *rc, int nconfigs)
         printf("\'length\':%zu, ", rc[i].generic_len);
 
         // Aggregate
-        if (!noaggregate_flag) {
+        if (aggregate_flag) {
             printf("\'agg\':%zu, ", rc[i].nruns);
+        }
+        
+        // Wrap
+        if (aggregate_flag) {
+            printf("\'wrap\':%zu, ", rc[i].wrap);
         }
 
         // OpenMP Threads
