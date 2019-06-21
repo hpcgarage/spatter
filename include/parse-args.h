@@ -6,18 +6,17 @@
 #ifndef PARSE_ARGS_H
 #define PARSE_ARGS_H
 
+#define WARN 0
+#define ERROR 1
+
 
 #define STRING_SIZE 100
 
-#define MAX_PATTERN_LEN 32
+#define MAX_PATTERN_LEN 64
 
 #define PAPI_MAX_COUNTERS 4;
 
 #include <sgtype.h>
-
-#define WARN 0
-#define ERROR 1
-
 
 /** @brief Supported benchmark backends
  */
@@ -65,11 +64,12 @@ enum state
 
 struct run_config
 {
-    spSize_t pattern_len;
+    // keep arrays at top so they are aligned
     spIdx_t  pattern[MAX_PATTERN_LEN];
-    ssize_t delta;
     size_t deltas[MAX_PATTERN_LEN];
     size_t deltas_ps[MAX_PATTERN_LEN];
+    spSize_t pattern_len;
+    ssize_t delta;
     size_t deltas_len;
     enum sg_kernel kernel;
     enum noidx_type type;
@@ -106,7 +106,6 @@ struct backend_config
  */
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
 struct run_config parse_runs(int arrr, char **argv);
-
-void error(char *what, int code);
+void error (char* what, int code);
 void print_run_config(struct run_config rc);
 #endif 

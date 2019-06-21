@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "sp_alloc.h"
 #include "trace-util.h"
 
 int read_trace (struct trace *t, const char *filename)
@@ -42,7 +43,7 @@ int read_trace (struct trace *t, const char *filename)
             token = strtok(NULL, " ");
             sscanf(token, "%zu", &(tmp.length));
 
-            tmp.delta = (sgsIdx_t *)malloc(sizeof(sgsIdx_t) * tmp.length);
+            tmp.delta = (sgsIdx_t *)sp_malloc(tmp.length, sizeof(sgsIdx_t), ALIGN_CACHE);
 
             for (int i = 0; i < tmp.length; i++) {
                 token = strtok(NULL, " ");
@@ -53,7 +54,7 @@ int read_trace (struct trace *t, const char *filename)
         }
         else {
             sscanf(line, "%zu", &(t->length));
-            t->in = (struct instruction *)malloc(sizeof(struct instruction) * (t->length));
+            t->in = (struct instruction *)sp_malloc(t->length, sizeof(struct instruction), ALIGN_CACHE);
             have_num_instructions = 1;
         }
     }

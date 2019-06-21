@@ -6,6 +6,7 @@
 #include <time.h>
 #include "parse-args.h"
 #include "backend-support-tests.h"
+#include "sp_alloc.h"
 
 #ifdef USE_CUDA 
 #include "cuda-backend.h"
@@ -36,6 +37,7 @@ extern enum sg_backend backend;
 int verbose;
 FILE *err_file;
 
+void error(char *what, int code);
 void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
@@ -73,18 +75,18 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         int lineno = 0;
 
-        char ** newargs = (char**)malloc(sizeof(char*) * STRING_SIZE);
+        char ** newargs = (char**) sp_malloc(sizeof(char*), STRING_SIZE, ALIGN_CACHE);
         while (fgets(line, sizeof(line), file)) {
-            printf("parsing line: %s", line);
             if (lineno == 0) {
                 sscanf(line, "%zu", nrc);
-                *rc = (struct run_config*)calloc(sizeof(struct run_config), *nrc);
+                *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
                 lineno++;
                 continue;
             } 
             newargs[0] = line;
+            newargs[1] = line;
             int j;
-            int count = 1;
+            int count = 2;
             int sl = strlen(line);
             for (j = 0; j < sl; j++) {
                 if (line[j] == ' ') {
@@ -112,7 +114,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         fclose(file); 
         return;
     }
-    *rc = (struct run_config*)calloc(sizeof(struct run_config), 1);
+    *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), 1, ALIGN_CACHE);
     rc[0][0] = parse_runs(argc, argv);
     *nrc = 1;
 }
@@ -128,9 +130,10 @@ struct run_config parse_runs(int argc, char **argv)
     rc.kernel = INVALID_KERNEL;
     safestrcopy(rc.name,"NONE");
 
+
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
     //must be rest between calls. 
-    optind = 1;
+    optind = 0;
 	static struct option long_options[] =
     {
         // Run Config 
@@ -735,10 +738,10 @@ void print_run_config(struct run_config rc){
 }
 
 void error(char *what, int code){
-    if (code) {
+    if (code == ERROR) {
         fprintf(err_file, "Error: ");
     }
-    else {
+    else if (code == WARN){
         if (verbose)
             fprintf(err_file, "Warning: ");
     }

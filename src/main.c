@@ -10,6 +10,7 @@
 #include "sgbuf.h"
 #include "sgtime.h"
 #include "trace-util.h"
+#include "sp_alloc.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -27,7 +28,7 @@
 	#include "../serial/serial-kernels.h"
 #endif
 
-#define ALIGNMENT (64)
+#define ALIGNMENT (4096)
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -68,6 +69,7 @@ void print_header(){
     printf("%-7s %-12s %-12s\n", "config", "time(s)","bandwidth(MB/s)");
 }
 
+/*
 void *sg_safe_cpu_alloc (size_t size) {
     void *ptr = aligned_alloc (ALIGNMENT, size);
     if (!ptr) {
@@ -76,6 +78,7 @@ void *sg_safe_cpu_alloc (size_t size) {
     }
     return ptr;
 }
+*/
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
@@ -151,7 +154,45 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
     
+    //TODO: don't assume all gathers
     if (rc2[0].kernel == GATHER) {
+        size_t max_source_size = 0;
+        size_t max_target_size = 0;
+        size_t max_ptrs = 0;
+        for (int i = 0; i < nrc; i++) {
+
+            size_t max_pattern_val = rc2[i].pattern[0];
+            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
+                if (rc2[i].pattern[j] > max_pattern_val) {
+                    max_pattern_val = rc2[i].pattern[j];
+                }
+            }
+            
+            size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*rc2[i].delta) * sizeof(sgData_t);
+            if (cur_source_size > max_source_size) {
+                max_source_size = cur_source_size;
+            }
+
+            size_t cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
+            if (cur_target_size > max_target_size) {
+                max_target_size = cur_target_size;
+            }
+
+            if (rc2[i].omp_threads > max_ptrs) {
+                max_ptrs = rc2[i].omp_threads;
+            }
+
+        }
+
+        source.size = max_source_size;
+        source.len = source.size / sizeof(sgData_t);
+
+        target.size = max_target_size;
+        target.size = target.size / sizeof(sgData_t);
+
+        target.nptrs = max_ptrs;
+
+        /*
         // the target only has rc.wrap slots of size rc.pattern_len to be gathered into. 
         target.size = rc2[0].pattern_len * sizeof(sgData_t) * rc2[0].wrap;
         target.len = target.size / sizeof(sgData_t);
@@ -169,6 +210,7 @@ int main(int argc, char **argv)
                    
         source.size = ((max_pattern_val + 1) + (rc2[0].generic_len-1)*rc2[0].delta) * sizeof(double);
         source.len = source.size / sizeof(sgData_t);
+        */
     } else {
         //TODO: Add data allocation for SCATTER
         printf(" ERROR - only GATHER is currently supported\n");
@@ -192,12 +234,13 @@ int main(int argc, char **argv)
     // =======================================
     // Create Host Buffers, Fill With Data
     // =======================================
-    source.host_ptr = (sgData_t*) sg_safe_cpu_alloc(source.size); 
+    source.host_ptr = (sgData_t*) sp_malloc(source.size, 1, ALIGN_CACHE); 
 
     // replicate the target space for every thread
-    target.host_ptrs = (sgData_t**) sg_safe_cpu_alloc(target.nptrs * sizeof(sgData_t*));
+    target.host_ptrs = (sgData_t**) sp_malloc(sizeof(sgData_t*), target.nptrs, ALIGN_CACHE);
     for (size_t i = 0; i < target.nptrs; i++) {
-        target.host_ptrs[i] = (sgData_t*) sg_safe_cpu_alloc(target.size);
+        target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
+        printf("  0x%x\n", target.host_ptrs[i]);
     }
 
     // Populate buffers cn host 
@@ -231,7 +274,6 @@ int main(int argc, char **argv)
     // Execute Benchmark
     // =======================================
     
-
     // Print some header info
     if (print_header_flag) 
     {
@@ -241,8 +283,6 @@ int main(int argc, char **argv)
     }
 
     // Print config info
-
-    
 
     for (int k = 0; k < nrc; k++) {
         // Time OpenCL Kernel 
