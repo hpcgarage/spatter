@@ -198,7 +198,15 @@ struct run_config parse_runs(int argc, char **argv)
                 sscanf(optarg, "%zu", &rc.random_seed);
                 break;
             case 't':
-                sscanf(optarg, "%zu", &rc.omp_threads);
+                if (!strstr(optarg, "M")) {
+                    #ifdef USE_OPENMP
+                    rc.omp_threads = omp_get_max_threads();
+                    #else 
+                    rc.omp_threads = 1;
+                    #endif
+                }else{
+                    sscanf(optarg, "%zu", &rc.omp_threads);
+                }
                 break;
             case 'v':
                 sscanf(optarg, "%zu", &rc.vector_len);

@@ -438,7 +438,6 @@ int main(int argc, char **argv)
         }
         #endif // USE_SERIAL
     }
-    printf("finished benchmarking\n");
     
 
     // =======================================
