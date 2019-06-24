@@ -76,7 +76,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         int lineno = 0;
 
         char ** newargs = (char**) sp_malloc(sizeof(char*), STRING_SIZE, ALIGN_CACHE);
-        while (fgets(line, sizeof(line), file)) {
+        while (fgets(line, sizeof(line), file) && (lineno == 0 || lineno < *nrc + 1)) {
             if (lineno == 0) {
                 sscanf(line, "%zu", nrc);
                 *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);

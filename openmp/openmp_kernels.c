@@ -117,6 +117,8 @@ void gather_smallbuf_multidelta(
         for (size_t i = 0; i < n; i++) {
            sgData_t *sl = source + (i/delta_len)*delta[delta_len-1] + delta[i%delta_len] - delta[0]; 
            sgData_t *tl = target[t] + pat_len*(i%target_len);
+           //sgData_t *sl = source;
+           //sgData_t *tl = target[0];
 #pragma loop_info est_trips(8)
            for (size_t j = 0; j < pat_len; j++) {
                //printf("i: %zu, j: %zu\n", i, j);

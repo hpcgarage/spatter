@@ -69,17 +69,6 @@ void print_header(){
     printf("%-7s %-12s %-12s\n", "config", "time(s)","bandwidth(MB/s)");
 }
 
-/*
-void *sg_safe_cpu_alloc (size_t size) {
-    void *ptr = aligned_alloc (ALIGNMENT, size);
-    if (!ptr) {
-        printf("Falied to allocate memory on cpu: requested size %zu\n", size);
-        exit(1);
-    }
-    return ptr;
-}
-*/
-
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
 void report_time(int ii, double time,  struct run_config rc){
@@ -188,7 +177,7 @@ int main(int argc, char **argv)
         source.len = source.size / sizeof(sgData_t);
 
         target.size = max_target_size;
-        target.size = target.size / sizeof(sgData_t);
+        target.len = target.size / sizeof(sgData_t);
 
         target.nptrs = max_ptrs;
 
@@ -240,7 +229,6 @@ int main(int argc, char **argv)
     target.host_ptrs = (sgData_t**) sp_malloc(sizeof(sgData_t*), target.nptrs, ALIGN_CACHE);
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
-        printf("  0x%x\n", target.host_ptrs[i]);
     }
 
     // Populate buffers cn host 
@@ -450,6 +438,7 @@ int main(int argc, char **argv)
         }
         #endif // USE_SERIAL
     }
+    printf("finished benchmarking\n");
     
 
     // =======================================
@@ -542,6 +531,16 @@ int main(int argc, char **argv)
         */
     //}
   }
+
+  // Free Memory
+  free(source.host_ptr);
+  for (size_t i = 0; i < target.nptrs; i++) {
+      free(target.host_ptrs[i]);
+  }
+  if (target.nptrs != 0) {
+      free(target.host_ptrs);
+  }
+  free(rc);
 } 
 
 void emit_configs(struct run_config *rc, int nconfigs)
