@@ -2,7 +2,7 @@
 #define SP_ALLOC_H
 #ifndef SP_MAX_ALLOC
   //20GB
-  #define SP_MAX_ALLOC (20ll * 1000 * 1000 * 1000) 
+  #define SP_MAX_ALLOC (30ll * 1000 * 1000 * 1000) 
 #endif
 #define ALIGN_CACHE 64
 #define ALIGN_PAGE  4096

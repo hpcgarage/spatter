@@ -4,9 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 #include "parse-args.h"
 #include "backend-support-tests.h"
 #include "sp_alloc.h"
+#include "json.h"
 
 #ifdef USE_CUDA 
 #include "cuda-backend.h"
@@ -45,7 +47,76 @@ ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:a";
 void parse_backend(int argc, char **argv);
 
-char multifile[STRING_SIZE];
+char jsonfilename[STRING_SIZE];
+
+int get_num_configs(json_value* value) {
+    if (value->type != json_array) {
+        error ("get_num_configs was not passed an array", ERROR);
+    }
+
+    return value->u.array.length;
+
+}
+
+struct run_config parse_json_config(json_value *value){
+    struct run_config rc = {0};
+
+    if (!value) {
+        error ("parse_json_config passed NULL pointer", ERROR);
+    }
+
+    if (value->type != json_object) {
+        error ("parse_json_config should only be passed json_objects", ERROR);
+    }
+    
+    char **argv;
+    int argc;
+    argc = value->u.object.length;
+    argv = (char **)sp_malloc(sizeof(char*), argc, ALIGN_CACHE);
+    for (int i = 0; i < argc; i++) {
+        argv[i] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
+    }
+
+    //json_value *values = value->u.object.values;
+
+    for (int i = 0; i < argc-1; i++) {
+        
+        json_object_entry cur = value->u.object.values[i];
+
+        if (cur.value->type == json_string) {
+            snprintf(argv[i+1], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
+        } else if (cur.value->type == json_integer) {
+            snprintf(argv[i+1], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
+        } else if (cur.value->type == json_array) {
+           int index = 0;
+           index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
+           for (int j = 0; j < cur.value->u.array.length; j++) {
+               if (cur.value->u.array.values[j]->type != json_integer) {
+                   error ("encountered non-integer json type while parsing array", ERROR);
+               }
+               index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+               if (j != cur.value->u.array.length-1) {
+                   index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
+               }
+
+           }
+
+        } else {
+            error ("Unexpected json type", ERROR);
+        }
+    }
+    //yeah its hacky - parse_args ignores the first arg
+    safestrcopy(argv[0], argv[1]);
+
+    rc = parse_runs(argc, argv);
+    
+    for (int i = 0; i < argc; i++) {
+        free(argv[i]);
+    }
+    free(argv);
+
+    return rc;
+}
 
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc) 
 {
@@ -54,11 +125,11 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     int multi = 0;
     for (int i = 0; i < argc; i++) {
         if (strstr(argv[i], "-pFILE")) {
-            safestrcopy(multifile, strchr(argv[i],'=')+1);
+            safestrcopy(jsonfilename, strchr(argv[i],'=')+1);
             multi = 1;
             break;
         } else if (strstr(argv[i], "-p") &&  i < argc-1 && strstr(argv[i+1], "FILE")) {
-            safestrcopy(multifile, strchr(argv[i+1],'=')+1);
+            safestrcopy(jsonfilename, strchr(argv[i+1],'=')+1);
             multi = 1;
             break;
         }
@@ -66,6 +137,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
     //printf("here\n");
 
+    /*
     if (multi) {
         FILE* file = fopen(multifile, "r");
 		if (!file) {
@@ -110,8 +182,50 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
             error ("No patterns in the config file were parsed", ERROR);
         }
 
-
         fclose(file); 
+        return;
+    }
+    */
+
+    if (multi) {
+        FILE *fp; //j fopen(jsonfilename, "r");
+        struct stat filestatus;
+        int file_size;
+        char *file_contents;
+        json_char *json;
+        json_value *value;
+
+        if (stat(jsonfilename, &filestatus) != 0) {
+            error ("Json file not found", ERROR);
+        }
+
+        file_size = filestatus.st_size;
+        file_contents = (char *)sp_malloc(file_size, 1, ALIGN_CACHE);
+        fp = fopen(jsonfilename, "rt");
+        if (!fp) 
+            error ("Unable to open Json file", ERROR);
+        if (fread(file_contents, file_size, 1, fp) != 1) {
+            fclose(fp);
+            error ("Unable to read content of Json file", ERROR);
+        }
+        fclose(fp);
+
+        json = (json_char*)file_contents;
+        value = json_parse(json, file_size);
+
+        if (!value) {
+            error ("Unable to parse Json file", ERROR);
+        }
+
+        *nrc = get_num_configs(value);
+
+        *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
+        
+        for (int i = 0; i < *nrc; i++) {
+            rc[0][i] = parse_json_config(value->u.array.values[i]);
+        }
+
+        //exit(0);
         return;
     }
     *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), 1, ALIGN_CACHE);
@@ -127,6 +241,11 @@ struct run_config parse_runs(int argc, char **argv)
 
     struct run_config rc = {0};
     rc.delta = -1;
+#ifdef USE_OPENMP
+    rc.omp_threads = omp_get_max_threads();
+#else 
+    rc.omp_threads = 1;
+#endif
     rc.kernel = INVALID_KERNEL;
     safestrcopy(rc.name,"NONE");
 
@@ -140,7 +259,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"kernel-name",     required_argument, NULL, 'k'},
         {"pattern",         required_argument, NULL, 'p'},
         {"delta",           required_argument, NULL, 'd'},
-        {"generic-len",     required_argument, NULL, 'l'},
+        {"count",           required_argument, NULL, 'l'},
         {"wrap",            required_argument, NULL, 'w'},
         {"random",          required_argument, NULL, 's'},
         {"vector-len",      required_argument, NULL, 'v'},
@@ -162,6 +281,7 @@ struct run_config parse_runs(int argc, char **argv)
 
     	c = getopt_long_only (argc, argv, short_options,
                          long_options, &option_index);
+        printf("parsing a \'%c\'\n", c);
 
         switch(c){
             case CLPLATFORM:
@@ -198,15 +318,7 @@ struct run_config parse_runs(int argc, char **argv)
                 sscanf(optarg, "%zu", &rc.random_seed);
                 break;
             case 't':
-                if (!strstr(optarg, "M")) {
-                    #ifdef USE_OPENMP
-                    rc.omp_threads = omp_get_max_threads();
-                    #else 
-                    rc.omp_threads = 1;
-                    #endif
-                }else{
-                    sscanf(optarg, "%zu", &rc.omp_threads);
-                }
+                sscanf(optarg, "%zu", &rc.omp_threads);
                 break;
             case 'v':
                 sscanf(optarg, "%zu", &rc.vector_len);
@@ -233,6 +345,7 @@ struct run_config parse_runs(int argc, char **argv)
                 safestrcopy(rc.name, optarg);
                 break;
             case 'p':
+                printf("parsing a p - %s\n", optarg);
                 safestrcopy(rc.generator, optarg);
                 parse_p(optarg, &rc);
                 break;
@@ -263,7 +376,6 @@ struct run_config parse_runs(int argc, char **argv)
                 }
                 // compute prefix-sum
                 
-#pragma novector // ALERT: Do not remove this pragma - the cray compiler will mistakenly vectorize this loop 
                 for (size_t i = 1; i < rc.deltas_len; i++) {
                     rc.deltas_ps[i] += rc.deltas_ps[i-1];
                 }
@@ -322,8 +434,10 @@ struct run_config parse_runs(int argc, char **argv)
     }
 
     if (rc.delta <= -1) {
+        //printf("rc.delta: %zd\n");
         error("delta not specified, default is 8\n", WARN);
         rc.delta = 8;
+        rc.deltas_len = 1;
     }
     
     if (rc.op != OP_COPY) {
@@ -568,6 +682,23 @@ void parse_p(char* optarg, struct run_config *rc) {
             if (!stride) error("UNIFORM: Stride not found", 1);
             if (sscanf(stride, "%zd", &strideval) < 1)
                 error("UNIFORM: Stride not parsed", 1);
+            
+            char *delta = strtok(NULL, ":");
+            if (delta) {
+                if (!strcmp(delta, "NR")) {
+                    rc->delta = strideval*rc->pattern_len;
+                    rc->deltas[0] = rc->delta;
+                    rc->deltas_len = 1;
+                } else {
+                    if (sscanf(delta, "%zd", &(rc->delta)) < 1) {
+                        error("UNIFORM: delta not parsed", 1);
+                    }
+                    rc->deltas[0] = rc->delta;
+                    rc->deltas_len = 1;
+                            
+                }
+            }
+            
 
             for (int i = 0; i < rc->pattern_len; i++) {
                 rc->pattern[i] = i*strideval;
