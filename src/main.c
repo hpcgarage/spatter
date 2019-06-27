@@ -25,7 +25,7 @@
     #include "../cuda/cuda-backend.h"
 #endif
 #if defined( USE_SERIAL )
-	#include "../serial/serial-kernels.h"
+	#include "serial-kernels.h"
 #endif
 
 #define ALIGNMENT (4096)
@@ -400,7 +400,9 @@ int main(int argc, char **argv)
         #ifdef USE_SERIAL
         if (backend == SERIAL) {
 
-            for (int i = 0; i <= R; i++) {
+            printf("running the serial backend\n");
+
+            for (int i = 0; i <= rc2[k].nruns; i++) {
 
                 sg_zero_time();
 
