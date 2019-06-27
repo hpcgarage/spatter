@@ -1,11 +1,12 @@
 # Spatter 
-This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter) and read more abut Spatter in our recently submitted [paper](https://arxiv.org/abs/1811.03743). Please submit an issue on Github if you run into any issues.
+This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues.
 
 ## Purpose 
 For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do not reuse data much, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search  for new approaches to better utilize what little memory bandwidth is available. 
 
 With this benchmark, we aim to characterize the performance of memory systems in a novel way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures. We will use these results to predict the impact of new memory access primitives. 
 
+<!---
 ### Kernels
 Spatter supports the following primitives:
 
@@ -60,6 +61,8 @@ Steps:
 4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
 
 ![Gather Comparison](.resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
+
+-->
 
 ### Arguments
 Spatter has a large number of arguments, broken up into two types. Backend configuration options are specied once for each invocation of Spatter, and benchmark configuration arguments can be supplied in bulk using a `.json` file. These arguments may be specified in any order, but it may be simpler if you list all of your backend arguments first. The only reuired argument to Spatter is `-p`, a benchmark configuration argument.
@@ -118,7 +121,7 @@ The second set of arguments are benchmark  configuration arguments, and these de
     
 ```
 
-### Pattern
+#### Pattern
 Spatter supports two built-in pattners, uniform stride and mostly stride-1. 
 
 ```
@@ -144,3 +147,27 @@ Custom:
     -p4,4,4,4,4
 ```
 
+#### Json
+You may specify multiple sets of benchmark configuration options to Spatter inside a Json file. Examples can be found in the `json/` directory. The file format is below. String values should be quoted while numeric values should not be. 
+```
+[
+    {"long-option1":numeric, "long-option2":"string", ...},
+    {"long-option1":numeric, "long-option2":"string", ...},
+    ...
+]
+
+```
+For your convienience, we also provide a python script to help you create configurations quickly. If your json contains arrays, you can pass it into the python script `python/generate_json.py` and it will expand the arrays into multiple configs, each with a single value from the array. Given that you probably don't want your pattern arguments to be expanded like this, they should be specified as python tuples. An example is below. 
+
+```
+[
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[2**i for i in range(3)]}
+]
+   |||
+   vvv
+[
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[1]},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[2]},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[4]}
+]
+```
