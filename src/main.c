@@ -42,7 +42,7 @@ char device_string[STRING_SIZE];
 char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
 
-int validate_flag = 0, print_header_flag = 1;
+int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
 
 //TODO: this shouldn't print out info about rc - only the system
@@ -263,12 +263,25 @@ int main(int argc, char **argv)
     // =======================================
     
     // Print some header info
+    /*
     if (print_header_flag) 
     {
         print_system_info();
         emit_configs(rc2, nrc);
         print_header();
     }
+    */
+    if (quiet_flag < 1) {
+        print_system_info();
+    }
+    if (quiet_flag < 2) {
+        emit_configs(rc2, nrc);
+    }
+    if (quiet_flag < 3) {
+        print_header();
+    }
+
+
 
     // Print config info
 

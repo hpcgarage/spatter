@@ -30,7 +30,7 @@ extern char kernel_file[STRING_SIZE];
 extern char kernel_name[STRING_SIZE];
 
 extern int validate_flag;
-extern int print_header_flag;
+extern int quiet_flag;
 extern int aggregate_flag;
 
 extern enum sg_backend backend;
@@ -44,7 +44,7 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:a";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aq";
 void parse_backend(int argc, char **argv);
 
 char jsonfilename[STRING_SIZE];
@@ -449,9 +449,7 @@ void parse_backend(int argc, char **argv)
 	static struct option long_options[] =
     {
         /* Output */
-        {"no-print-header", no_argument, &print_header_flag, 0},
-        {"nph",             no_argument, &print_header_flag, 0},
-        {"supress-errors",  no_argument,       NULL, 'q'},
+        {"no-print-header", no_argument,       NULL, 'q'},
         {"verbose",         no_argument,       &verbose, 1},
         /* Backend */
         {"backend",         required_argument, NULL, 'b'},
@@ -505,7 +503,7 @@ void parse_backend(int argc, char **argv)
                 safestrcopy(kernel_file, optarg);
                 break;
             case 'q':
-                err_file = fopen("/dev/null", "w");
+                quiet_flag ++;
                 break;
             case 'a':
                 if (optarg == NULL) {
