@@ -23,18 +23,20 @@ S+G:
     
 This diagram depicts the full Scatter+Gather. Gather performs on the top half of this diagram and Scatter the second half.
 
+-->
 
-
-### Building
+## Building
 CMake is required to build Spatter
 
 To build with CMake from the main source directory:
 ```
-./configure/configure_ocl
-cd build_ocl
+./configure/configure_omp_gnu
+cd build_ocl_gnu
 make
 ```
 or use one of the other configure scripts to compile with different backends. 
+
+<!--
 
 ### Quick Start
 
@@ -63,6 +65,13 @@ Steps:
 ![Gather Comparison](.resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
 
 -->
+
+## Running Spatter
+Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).
+```
+./spatter -pUNIFORM:8:1 -l$((2**24))
+```
+
 
 ### Arguments
 Spatter has a large number of arguments, broken up into two types. Backend configuration options are specied once for each invocation of Spatter, and benchmark configuration arguments can be supplied in bulk using a `.json` file. These arguments may be specified in any order, but it may be simpler if you list all of your backend arguments first. The only reuired argument to Spatter is `-p`, a benchmark configuration argument.
@@ -163,11 +172,12 @@ For your convienience, we also provide a python script to help you create config
 [
     {"kernel":"Gather", "pattern":(1,2,3,4), "count":[2**i for i in range(3)]}
 ]
-   |||
-   vvv
+   |
+   |
+   v
 [
-    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[1]},
-    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[2]},
-    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[4]}
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":1},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":2},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":4}
 ]
 ```
