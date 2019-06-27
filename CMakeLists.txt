@@ -75,15 +75,14 @@ ENDIF ()
 
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm -fsanitize=address")
+    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
     SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
 ENDIF ()
 
-FILE (WRITE ${CMAKE_CURRENT_BINARY_DIR}/COMPILER ${CMAKE_C_COMPILER_ID}/${CMAKE_C_COMPILER_VERSION})
-FILE (WRITE ${CMAKE_CURRENT_BINARY_DIR}/OPTIMIZATIONS ${OPTIMIZATIONS})
 
 #Add configure-specified flags
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -110,7 +109,6 @@ IF (USE_OPENCL)
         ${CMAKE_CURRENT_BINARY_DIR}/kernels/
     )
 
-    MESSAGE ("Using OpenCL")
 ENDIF ()
 
 # Enable Serial backend
@@ -150,7 +148,6 @@ IF (USE_OPENMP)
     # Pull the OpenMP-specific files and kernels into the build
     FILE (GLOB BACKEND_C_FILES_OMP openmp/*.c)
     FILE (GLOB BACKEND_H_FILES_OMP openmp/*.h)
-    MESSAGE ("Using OpenMP")
 ENDIF ()
 
 # Enable CUDA
@@ -170,7 +167,6 @@ IF (USE_CUDA)
     FILE (GLOB CUDA_CU_FILES cuda/*.cu)
     FILE (GLOB CUDA_C_FILES cuda/*.c)
     FILE (GLOB CUDA_H_FILES cuda/*.h)
-    MESSAGE ("Using Cuda")
 ENDIF ()
 
 # Include the location of stddef.h include_directories(/usr/include/linux/)
@@ -219,7 +215,7 @@ FILE (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add a command to put some important info in environment variables 
 # to be output by spatter
-message (STATUS "compiler ver is ${CMAKE_C_COMPILER_VERSION}")
+message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
 message (STATUS "compiler is ${CMAKE_C_COMPILER}")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")

@@ -82,7 +82,11 @@ void gather_smallbuf(
         size_t delta, 
         size_t n, 
         size_t target_len) {
+#ifdef __GNUC__
+    #pragma omp parallel 
+#else 
     #pragma omp parallel shared(pat)
+#endif
     {
         int t = omp_get_thread_num();
 
@@ -108,7 +112,11 @@ void gather_smallbuf_multidelta(
         size_t n, 
         size_t target_len,
         size_t delta_len) {
+#ifdef __GNUC__
+    #pragma omp parallel 
+#else 
     #pragma omp parallel shared(pat)
+#endif
     {
         int t = omp_get_thread_num();
 
