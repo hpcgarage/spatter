@@ -96,11 +96,11 @@ IF (USE_OPENCL)
     # include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
     LINK_DIRECTORIES ($ENV{OCL_LIB})
     # Pull the OpenCL-specific files into the build
-    FILE (GLOB BACKEND_C_FILES_CL opencl/*.c)
-    FILE (GLOB BACKEND_H_FILES_CL opencl/*.h)
+    FILE (GLOB BACKEND_C_FILES_CL src/opencl/*.c)
+    FILE (GLOB BACKEND_H_FILES_CL src/opencl/*.h)
 
     # Copy over the OpenCL kernels used with the binary
-    FILE (GLOB OCL_KERNELS opencl/*.cl)
+    FILE (GLOB OCL_KERNELS src/opencl/*.cl)
     FILE (
         COPY
         ${OCL_KERNELS}
@@ -116,8 +116,8 @@ IF (USE_SERIAL)
     ADD_DEFINITIONS (-DUSE_SERIAL)
     INCLUDE_DIRECTORIES (serial)
     # Pull the serial files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES_SERIAL serial/*.c)
-    FILE (GLOB BACKEND_H_FILES_SERIAL serial/*.h)
+    FILE (GLOB BACKEND_C_FILES_SERIAL src/serial/*.c)
+    FILE (GLOB BACKEND_H_FILES_SERIAL src/serial/*.h)
     MESSAGE ("Using serial backend")
 ENDIF ()
 
@@ -146,8 +146,8 @@ IF (USE_OPENMP)
     INCLUDE_DIRECTORIES (openmp)
 
     # Pull the OpenMP-specific files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES_OMP openmp/*.c)
-    FILE (GLOB BACKEND_H_FILES_OMP openmp/*.h)
+    FILE (GLOB BACKEND_C_FILES_OMP src/openmp/*.c)
+    FILE (GLOB BACKEND_H_FILES_OMP src/openmp/*.h)
 ENDIF ()
 
 # Enable CUDA
@@ -164,9 +164,9 @@ IF (USE_CUDA)
         SET (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
     ENDIF ()
 
-    FILE (GLOB CUDA_CU_FILES cuda/*.cu)
-    FILE (GLOB CUDA_C_FILES cuda/*.c)
-    FILE (GLOB CUDA_H_FILES cuda/*.h)
+    FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
+    FILE (GLOB CUDA_C_FILES src/cuda/*.c)
+    FILE (GLOB CUDA_H_FILES src/cuda/*.h)
 ENDIF ()
 
 # Include the location of stddef.h include_directories(/usr/include/linux/)

@@ -17,15 +17,15 @@
 #endif
 #if defined( USE_OPENMP )
 	#include <omp.h>
-	#include "../openmp/omp-backend.h"
-	#include "../openmp/openmp_kernels.h"
+	#include "openmp/omp-backend.h"
+	#include "openmp/openmp_kernels.h"
 #endif
 #if defined ( USE_CUDA )
     #include <cuda.h>
-    #include "../cuda/cuda-backend.h"
+    #include "cuda/cuda-backend.h"
 #endif
 #if defined( USE_SERIAL )
-	#include "serial-kernels.h"
+	#include "serial/serial-kernels.h"
 #endif
 
 #define ALIGNMENT (4096)
