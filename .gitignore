@@ -4,3 +4,5 @@ sgbench
 docs/*
 build/*
 build_*
+modulefiles/
+configure_*

@@ -135,58 +135,6 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         }
     }
 
-    //printf("here\n");
-
-    /*
-    if (multi) {
-        FILE* file = fopen(multifile, "r");
-		if (!file) {
-            error ("Could not open config file", ERROR);
-        }
-        char line[STRING_SIZE];
-
-        int lineno = 0;
-
-        char ** newargs = (char**) sp_malloc(sizeof(char*), STRING_SIZE, ALIGN_CACHE);
-        while (fgets(line, sizeof(line), file) && (lineno == 0 || lineno < *nrc + 1)) {
-            if (lineno == 0) {
-                sscanf(line, "%zu", nrc);
-                *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
-                lineno++;
-                continue;
-            } 
-            newargs[0] = line;
-            newargs[1] = line;
-            int j;
-            int count = 2;
-            int sl = strlen(line);
-            for (j = 0; j < sl; j++) {
-                if (line[j] == ' ') {
-                    line[j] = '\0';
-                    newargs[count++] = &(line[j]) + 1;
-                } else {
-                }
-
-            }
-
-            rc[0][lineno-1] = parse_runs(count, newargs);
-
-            lineno++;
-        }
-        free(newargs);
-        
-        if (*nrc != lineno-1) {
-            error ("Some lines in the config file may not have been parsed", WARN);
-        }
-        if (*nrc == 0) {
-            error ("No patterns in the config file were parsed", ERROR);
-        }
-
-        fclose(file); 
-        return;
-    }
-    */
-
     if (multi) {
         FILE *fp; //j fopen(jsonfilename, "r");
         struct stat filestatus;
