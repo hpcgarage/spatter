@@ -281,7 +281,6 @@ struct run_config parse_runs(int argc, char **argv)
 
     	c = getopt_long_only (argc, argv, short_options,
                          long_options, &option_index);
-        printf("parsing a \'%c\'\n", c);
 
         switch(c){
             case CLPLATFORM:
@@ -345,7 +344,6 @@ struct run_config parse_runs(int argc, char **argv)
                 safestrcopy(rc.name, optarg);
                 break;
             case 'p':
-                printf("parsing a p - %s\n", optarg);
                 safestrcopy(rc.generator, optarg);
                 parse_p(optarg, &rc);
                 break;

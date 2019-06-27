@@ -60,13 +60,26 @@ ENDIF ()
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 	SET(IBMXL_COMPILE_FLAGS "-qenablevmx -qtune=pwr9")
 	SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IBMXL_COMPILE_FLAGS}")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=IBM")
 ENDIF ()
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
-    SET (OPTIMIZATIONS "-O3 -h concurrent -h vector3 -h cache3 -h scalar3")
-	SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} -hlist=m -hlist=d")
+    SET (OPTIMIZATIONS "-O3 -h vector3 -h cache3 -h scalar3")
+    #SET (OPTIMIZATIONS "-G0 -O0")
+    #SET (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
+    #SET (ALLWARNINGS "-h msglevel_2")
+    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} ${ALLWARNINGS} -hlist=m -hlist=d")
 	SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m")
-    MESSAGE (STATUS "We have set C_FLAGS to ${CMAKE_C_FLAGS}")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray")
+ENDIF ()
+
+
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU")
+ENDIF ()
+
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
 ENDIF ()
 
 FILE (WRITE ${CMAKE_CURRENT_BINARY_DIR}/COMPILER ${CMAKE_C_COMPILER_ID}/${CMAKE_C_COMPILER_VERSION})
@@ -113,6 +126,18 @@ ENDIF ()
 # Enable OpenMP
 IF (USE_OPENMP)
     FIND_PACKAGE (OpenMP REQUIRED)
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -homp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -homp")
+    ENDIF ()
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -fopenmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -fopenmp")
+    ENDIF ()
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -openmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -openmp")
+    ENDIF ()
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
@@ -192,6 +217,12 @@ ENDIF ()
 FILE (GLOB TEST_SCRIPTS tests/*.sh)
 FILE (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+# Add a command to put some important info in environment variables 
+# to be output by spatter
+message (STATUS "compiler ver is ${CMAKE_C_COMPILER_VERSION}")
+message (STATUS "compiler is ${CMAKE_C_COMPILER}")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4
