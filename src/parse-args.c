@@ -185,6 +185,8 @@ struct run_config parse_runs(int argc, char **argv)
 {
     int supress_errors = 0;
 
+    int pattern_found = 0;
+
     volatile char *argv0copy = argv[0];
 
     struct run_config rc = {0};
@@ -294,6 +296,7 @@ struct run_config parse_runs(int argc, char **argv)
             case 'p':
                 safestrcopy(rc.generator, optarg);
                 parse_p(optarg, &rc);
+                pattern_found = 1;
                 break;
             case 'd':
                 {
@@ -342,8 +345,12 @@ struct run_config parse_runs(int argc, char **argv)
         }
 
     }
+
     // VALIDATE ARGUMENTS
 
+    if (!pattern_found) {
+        error ("Please specify a pattern", ERROR);
+    }
     if (rc.vector_len == 0) {
         error ("Vector length not set. Default is 1", WARN);
         rc.vector_len = 1;
