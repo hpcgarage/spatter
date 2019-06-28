@@ -11,7 +11,7 @@
 #include "json.h"
 
 #ifdef USE_CUDA 
-#include "cuda-backend.h"
+#include "../src/cuda/cuda-backend.h"
 #endif
 
 #ifdef USE_OPENMP
@@ -430,6 +430,7 @@ struct run_config parse_runs(int argc, char **argv)
 
     return rc;
 
+    }
 }
 
 void parse_backend(int argc, char **argv)
