@@ -42,21 +42,21 @@ void gather_accum_omp(
             sgIdx_t*     restrict si,
             size_t n);
 
-void gather_noidx(
+void gather(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,
         size_t    pat_len,
         size_t    delta,
         size_t    n);
-void scatter_noidx(
+void scatter(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,
         size_t    pat_len,
         size_t    delta,
         size_t    n);
-void gather_stride_noidx_os(
+void gather_stride_os(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,
@@ -64,13 +64,13 @@ void gather_stride_noidx_os(
         size_t    delta,
         size_t    n, 
         size_t    target_wrap);
-void gather_stride_noidx8(
+void gather_stride8(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,
         size_t    delta,
         size_t    n);
-void gather_stride_noidx16(
+void gather_stride16(
         sgData_t* restrict target,
         sgData_t* restrict source,
         sgIdx_t*  restrict pat,

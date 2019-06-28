@@ -31,7 +31,7 @@ CMake is required to build Spatter
 To build with CMake from the main source directory:
 ```
 ./configure/configure_omp_gnu
-cd build_ocl_gnu
+cd build_omp_gnu
 make
 ```
 or use one of the other configure scripts to compile with different backends. 
@@ -96,7 +96,7 @@ Backend configuration arguments determine which language and device will be used
     --verbose
         Print info about default arguments that you have not overridden
     --aggregate=<0,1>
-        Report a min time over all runs of a given configurations [Default 1] (Do not use with PAPI) 
+        Report a minimum time for all runs of a given configuration for 2 or more runs [Default 1] (Do not use with PAPI) 
 ```
         
         
@@ -119,7 +119,7 @@ The second set of arguments are benchmark  configuration arguments, and these de
         Number of independent slots in the "small" buffer (Source buffer if Scatter, Target buffer if Gather) [Default: 1]
     -R, --runs=<N>
         Number of times to repeat execution of the kernel. [Default: 10]
-    -t, --opm-thread=<N>
+    -t, --omp-thread=<N>
         Number of OpenMP threads [Default: OMP_MAX_THREADS]
     -z, --local-work-size=<N>
         Number of Gathers or Scatters performed by each thread on a GPU

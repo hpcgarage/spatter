@@ -611,7 +611,7 @@ void parse_p(char* optarg, struct run_config *rc) {
         // config from a file
         if (!strcmp(optarg, "FILE")) {
             //TODO
-            //safestrcopy(noidx_pattern_file, arg);
+            //safestrcopy(idx_pattern_file, arg);
             rc->type = CONFIG_FILE;
         }
 

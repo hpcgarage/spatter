@@ -44,13 +44,14 @@ enum sg_op
     INVALID_OP
 };
 
-enum noidx_type
+//Specifies the indexing or offset type
+enum idx_type
 {
     UNIFORM,
     MS1,
     CUSTOM,
     CONFIG_FILE,
-    INVALID_NOIDX
+    INVALID_IDX
 };
 
 /*
@@ -72,7 +73,7 @@ struct run_config
     ssize_t delta;
     size_t deltas_len;
     enum sg_kernel kernel;
-    enum noidx_type type;
+    enum idx_type type;
     spSize_t generic_len;
     size_t wrap;
     size_t nruns;

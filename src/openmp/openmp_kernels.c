@@ -53,7 +53,7 @@ int get_ind(void) {
 	return 1;
 }
 
-void gather_noidx(
+void gather(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  const restrict pat, 
@@ -138,7 +138,7 @@ void gather_smallbuf_multidelta(
     }
 }
 		
-void scatter_noidx(
+void scatter(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  const restrict pat, 
@@ -158,7 +158,7 @@ void scatter_noidx(
         source += delta;
     }
 }
-void gather_stride_noidx_os(
+void gather_stride_os(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  restrict pat, 
@@ -176,7 +176,7 @@ void gather_stride_noidx_os(
 }
 		
 		
-void gather_stride_noidx8(
+void gather_stride8(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  restrict pat, 
@@ -191,7 +191,7 @@ void gather_stride_noidx8(
     }
 }
 
-void gather_stride_noidx16(
+void gather_stride16(
 		sgData_t* restrict target, 
 		sgData_t* restrict source, 
 		sgIdx_t*  restrict pat, 
