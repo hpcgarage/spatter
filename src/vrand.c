@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #define _VRAND_C
 #include "vrand.h"
+#include "sp_alloc.h"
 
 
 ////////////////////////////////////////////////////////////
@@ -58,14 +59,10 @@ void vrand_init(unsigned int j)
 dist_t *vrand_dist_alloc(unsigned int n)
 {
   dist_t *d;
-  
-  if (!(d = (dist_t *) malloc(sizeof(dist_t))))
-    error_rnd("malloc (allocdist: d)");
+  d = (dist_t *)sp_malloc(sizeof(dist_t), 1, ALIGN_CACHE);
+  d->a = (int *)sp_malloc(d->n, sizeof(int), ALIGN_CACHE);
+  d->p = (double *)sp_malloc(d->n, sizeof(double), ALIGN_CACHE);
   d->n = n;
-  if (!(d->a = (int *)malloc(d->n * sizeof(int))))
-    error_rnd("malloc (allocdist: d->a)");
-  if (!(d->p = (double *)malloc(d->n * sizeof(double))))
-    error_rnd("malloc (allocdist: d->p)");
   return d;
 }
 

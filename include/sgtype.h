@@ -18,8 +18,12 @@ static_assert(sizeof(cl_float) == sizeof(float), "Due to size differences betwee
 typedef double  sgData_t;
 #define SGD "%lf"
 typedef unsigned long sgIdx_t;
+typedef unsigned long spIdx_t;
 #define SGI "%lu"
 typedef long sgsIdx_t;
 #define SGS "%ld"
+
+typedef size_t spSize_t;
+#define SPS "%zu"
 
 #endif //endif SGTYPE

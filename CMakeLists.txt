@@ -1,6 +1,8 @@
 # 3.8 is specified since this is the first version with CUDA support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
 
+SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #Set target project name
 SET (TRGT spatter)
 
@@ -58,7 +60,30 @@ ENDIF ()
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 	SET(IBMXL_COMPILE_FLAGS "-qenablevmx -qtune=pwr9")
 	SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IBMXL_COMPILE_FLAGS}")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=IBM")
 ENDIF ()
+
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
+    SET (OPTIMIZATIONS "-O3 -h vector3 -h cache3 -h scalar3")
+    #SET (OPTIMIZATIONS "-G0 -O0")
+    #SET (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
+    #SET (ALLWARNINGS "-h msglevel_2")
+    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} ${ALLWARNINGS} -hlist=m -hlist=d")
+	SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray")
+ENDIF ()
+
+
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm")
+   #Use sanitize=address for debugging of access issues 
+   #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
+ENDIF ()
+
+IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
+ENDIF ()
+
 
 #Add configure-specified flags
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -72,11 +97,11 @@ IF (USE_OPENCL)
     # include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
     LINK_DIRECTORIES ($ENV{OCL_LIB})
     # Pull the OpenCL-specific files into the build
-    FILE (GLOB BACKEND_C_FILES_CL opencl/*.c)
-    FILE (GLOB BACKEND_H_FILES_CL opencl/*.h)
+    FILE (GLOB BACKEND_C_FILES_CL src/opencl/*.c)
+    FILE (GLOB BACKEND_H_FILES_CL src/opencl/*.h)
 
     # Copy over the OpenCL kernels used with the binary
-    FILE (GLOB OCL_KERNELS opencl/*.cl)
+    FILE (GLOB OCL_KERNELS src/opencl/*.cl)
     FILE (
         COPY
         ${OCL_KERNELS}
@@ -85,7 +110,6 @@ IF (USE_OPENCL)
         ${CMAKE_CURRENT_BINARY_DIR}/kernels/
     )
 
-    MESSAGE ("Using OpenCL")
 ENDIF ()
 
 # Enable Serial backend
@@ -93,14 +117,26 @@ IF (USE_SERIAL)
     ADD_DEFINITIONS (-DUSE_SERIAL)
     INCLUDE_DIRECTORIES (serial)
     # Pull the serial files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES_SERIAL serial/*.c)
-    FILE (GLOB BACKEND_H_FILES_SERIAL serial/*.h)
+    FILE (GLOB BACKEND_C_FILES_SERIAL src/serial/*.c)
+    FILE (GLOB BACKEND_H_FILES_SERIAL src/serial/*.h)
     MESSAGE ("Using serial backend")
 ENDIF ()
 
 # Enable OpenMP
 IF (USE_OPENMP)
     FIND_PACKAGE (OpenMP REQUIRED)
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -homp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -homp")
+    ENDIF ()
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -fopenmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -fopenmp")
+    ENDIF ()
+    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -qopenmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -qopenmp")
+    ENDIF ()
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
@@ -111,9 +147,8 @@ IF (USE_OPENMP)
     INCLUDE_DIRECTORIES (openmp)
 
     # Pull the OpenMP-specific files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES_OMP openmp/*.c)
-    FILE (GLOB BACKEND_H_FILES_OMP openmp/*.h)
-    MESSAGE ("Using OpenMP")
+    FILE (GLOB BACKEND_C_FILES_OMP src/openmp/*.c)
+    FILE (GLOB BACKEND_H_FILES_OMP src/openmp/*.h)
 ENDIF ()
 
 # Enable CUDA
@@ -130,10 +165,9 @@ IF (USE_CUDA)
         SET (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
     ENDIF ()
 
-    FILE (GLOB CUDA_CU_FILES cuda/*.cu)
-    FILE (GLOB CUDA_C_FILES cuda/*.c)
-    FILE (GLOB CUDA_H_FILES cuda/*.h)
-    MESSAGE ("Using Cuda")
+    FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
+    FILE (GLOB CUDA_C_FILES src/cuda/*.c)
+    FILE (GLOB CUDA_H_FILES src/cuda/*.h)
 ENDIF ()
 
 # Include the location of stddef.h include_directories(/usr/include/linux/)
@@ -171,7 +205,7 @@ IF (USE_CUDA)
     FIND_LIBRARY (
         CUDART_LIBRARY cudart
         HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda-9.2/lib64/
+            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
     )
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF ()
@@ -179,6 +213,13 @@ ENDIF ()
 # Copy over the test scripts
 FILE (GLOB TEST_SCRIPTS tests/*.sh)
 FILE (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# Add a command to put some important info in environment variables 
+# to be output by spatter
+message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
+message (STATUS "compiler is ${CMAKE_C_COMPILER}")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4

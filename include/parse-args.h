@@ -6,13 +6,17 @@
 #ifndef PARSE_ARGS_H
 #define PARSE_ARGS_H
 
+#define WARN 0
+#define ERROR 1
+
+
 #define STRING_SIZE 100
 
-/** @brief Read command-line arguments and populate global variables. 
- *  @param argc Value passed to main
- *  @param argv Value passed to main
- */
-void parse_args(int argc, char **argv);
+#define MAX_PATTERN_LEN 64
+
+#define PAPI_MAX_COUNTERS 4;
+
+#include <sgtype.h>
 
 /** @brief Supported benchmark backends
  */
@@ -27,16 +31,82 @@ enum sg_backend
 
 enum sg_kernel
 {
+    INVALID_KERNEL=0,
     SCATTER, 
     GATHER, 
     SG,    
-    INVALID_KERNEL
 };
 
 enum sg_op
 {
     OP_COPY,
-    OP_ACCUM
+    OP_ACCUM,
+    INVALID_OP
 };
 
+//Specifies the indexing or offset type
+enum idx_type
+{
+    UNIFORM,
+    MS1,
+    CUSTOM,
+    CONFIG_FILE,
+    INVALID_IDX
+};
+
+/*
+enum state
+{
+    NOTRUN,
+    INVALID_STATE,
+    VALID_STATE
+}; 
+*/
+
+struct run_config
+{
+    // keep arrays at top so they are aligned
+    spIdx_t  pattern[MAX_PATTERN_LEN];
+    size_t deltas[MAX_PATTERN_LEN];
+    size_t deltas_ps[MAX_PATTERN_LEN];
+    spSize_t pattern_len;
+    ssize_t delta;
+    size_t deltas_len;
+    enum sg_kernel kernel;
+    enum idx_type type;
+    spSize_t generic_len;
+    size_t wrap;
+    size_t nruns;
+    char pattern_file[STRING_SIZE];
+    char generator[STRING_SIZE];
+    char name[STRING_SIZE];
+    size_t random_seed;
+    size_t omp_threads;
+    enum sg_op op;
+    size_t vector_len;
+    unsigned int shmem;
+    size_t local_work_size;
+};
+
+struct backend_config
+{
+    enum sg_backend backend;
+    enum sg_kernel kernel;
+    enum sg_op op;
+
+    char platform_string[STRING_SIZE];
+    char device_string[STRING_SIZE];
+    char kernel_file[STRING_SIZE];
+    char kernel_name[STRING_SIZE];
+    
+};
+
+/** @brief Read command-line arguments and populate global variables. 
+ *  @param argc Value passed to main
+ *  @param argv Value passed to main
+ */
+void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
+struct run_config parse_runs(int arrr, char **argv);
+void error (char* what, int code);
+void print_run_config(struct run_config rc);
 #endif 

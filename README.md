@@ -1,11 +1,12 @@
-## Spatter Benchmark
-This is a microbenchmark for timing Scatter/Gather kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter) and read more abut Spatter in our recently submitted [paper](https://arxiv.org/abs/1811.03743). Please submit an issue on Github if you run into any issues.
+# Spatter 
+This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues.
 
 ## Purpose 
 For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do not reuse data much, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search  for new approaches to better utilize what little memory bandwidth is available. 
 
 With this benchmark, we aim to characterize the performance of memory systems in a novel way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures. We will use these results to predict the impact of new memory access primitives. 
 
+<!---
 ### Kernels
 Spatter supports the following primitives:
 
@@ -18,22 +19,24 @@ Gather:
 S+G:
     `A[j[:]] = B[i[:]]`
     
-![Gather Comparison](resources/sgexplain2.png?raw=true "Gather Comparison")
+![Gather Comparison](.resources/sgexplain2.png?raw=true "Gather Comparison")
     
 This diagram depicts the full Scatter+Gather. Gather performs on the top half of this diagram and Scatter the second half.
 
+-->
 
-
-### Building
+## Building
 CMake is required to build Spatter
 
 To build with CMake from the main source directory:
 ```
-./configure/configure_ocl
-cd build_ocl
+./configure/configure_omp_gnu
+cd build_omp_gnu
 make
 ```
 or use one of the other configure scripts to compile with different backends. 
+
+<!--
 
 ### Quick Start
 
@@ -59,53 +62,122 @@ Steps:
 
 4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
 
-![Gather Comparison](resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
+![Gather Comparison](.resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
+
+-->
+
+## Running Spatter
+Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).
+```
+./spatter -pUNIFORM:8:1 -l$((2**24))
+```
+
 
 ### Arguments
-Spatter has a large number of arguments. To start with, you should focus on -k (the kernel), -l (the length of the index arrays), -v (the work per thread) and -z (the CUDA/OpenCL block size).
+Spatter has a large number of arguments, broken up into two types. Backend configuration options are specied once for each invocation of Spatter, and benchmark configuration arguments can be supplied in bulk using a `.json` file. These arguments may be specified in any order, but it may be simpler if you list all of your backend arguments first. The only reuired argument to Spatter is `-p`, a benchmark configuration argument.
+
+#### Backend Configuration
+Backend configuration arguments determine which language and device will be used. Spatter can be compiled with support for multiple backends, so it is possible to choose between backends and devices at runtime. Spatter will attempt intelliigently pick a backend for you, so you may not need to worry about these arguments at all! It is only necessary to specifiy which `--backend` you want if you have compiled with support for more than one, and it is only necessary to specify which `--device` you want if there would be ambiguity (for instance, if you have more than one GPU available). If you want to see what Spatter has chosen for you, you can run with `--verbose`.
+
 ```
 ./spatter <arguments>
     -b, --backend=<backend>
-        Specify backend: OpenCL or OpenMP
-    -p, --cl-platform=<platform>
+        Specify backend: OpenCL, OpenMP, CUDA, or Serial
+    --cl-platform=<platform>
         Specify platform if using OpenCL (case-insensitve, fuzzy matching)
-    -d, --cl-device=<device>
+    --cl-device=<device>
         Specify device if using OpenCL (case-insensitve, fuzzy matching)
     --interactive
-        Tell spatter you want to pick the platform and device interactively
+        Pick the platform and device interactively
     -f, --kernel-file=<file>
-        Specify the location of a kernel file
-    -k, --kernel-name=<name>
-        Specify the name of the kernel (scatter, gather, or sg)  you want to run
-    -v, --vector-len 
-        Specifies the work per thread (poorly named, sorry)
-    -l, --generic-len
-        The number of elements to move. Automacially sets source-len, target-len, and index-len based on the kernel
-    -W, --workers 
-        The number of OMP threads to use
-    -w, --wrap
-        More info coming soon
-    -s, --sparsity
-        Sparsity of soruce or target buffers
-    -z
-        GPU, OpenCL block size
-    -q
-        Supress warnings
-    -nph, --no-print-header
-        Don't print the header on the output
-    --validate
-        Check the output of the kernel against naive CPU output
-    --source-len=<blocks>
-        The number of blocks that can be moved (default block size is 1)
-    --target-len=<blocks>
-        The number of blocks that can be filled
-    --index-len=<blocks> 
-        The number of blocks that will be moved
-    --seed=<seed>
-        Optional: Specify random seed
-    --runs=<count> 
-        Specify how many times to run the benchmark (default 10)
-    --loops=<count> 
-        Specify how many scatters/gathers will be performed by a single run of the benchmark
-        Not yet implemented
+        Specify the location of an OpenCL kernel file
+    -q, --no-print-header
+        Do not print header info. (May be repeated up to 3 times.)
+    --verbose
+        Print info about default arguments that you have not overridden
+    --aggregate=<0,1>
+        Report a minimum time for all runs of a given configuration for 2 or more runs [Default 1] (Do not use with PAPI) 
+```
+        
+        
+
+#### Benchmark Configuration
+The second set of arguments are benchmark  configuration arguments, and these define how the benchmark is run, including the pattern used and the amount of data that is moved. These arguments are special because you can supply multiple sets of benchmark configurations to spatter so that many runs can be performed at once. This way, memory is allocated only once which greatly reduces the amount of time needed to collect a large amount of data.
+
+```
+./spatter <arguments>
+    -p, --pattern=<Built-in pattern>
+    -p, --pattern=FILE=<config file>
+        See the section on Patterns. 
+    -k, --kernel-name=<kernel>
+        Specify the kernel you want to run [Default: Gather]
+    -d, --delta=<delta[,delta,...]>
+        Specify one or more deltas [Default: 8]
+    -l, --count=<N>
+        Number of Gathers or Scatters to do
+    -w, --wrap=<N>
+        Number of independent slots in the "small" buffer (Source buffer if Scatter, Target buffer if Gather) [Default: 1]
+    -R, --runs=<N>
+        Number of times to repeat execution of the kernel. [Default: 10]
+    -t, --omp-thread=<N>
+        Number of OpenMP threads [Default: OMP_MAX_THREADS]
+    -z, --local-work-size=<N>
+        Number of Gathers or Scatters performed by each thread on a GPU
+    -s, --shared-memory=<N>
+        Amount of dummy shared memory to allocate on GPUs (used for occupancy control)
+    -n, --name=<NAME>
+        Specify and name used to identify this configuration in the output
+    
+```
+
+#### Pattern
+Spatter supports two built-in pattners, uniform stride and mostly stride-1. 
+
+```
+Uniform:
+    -pUNIFORM:<length>:<gap>
+        Length is the length of the pattern, and gap is the size of each jump. 
+        E.g. UNIFORM:8:4 -> [0,4,8,12,16,20,24,28]
+Mostly Stride-1
+    -pMS1:<length>:<gap_locations>:<gap(s)>
+        Length is the length of the pattern, gap_locations are the places within the pattern
+        with a non-1 gap, and gap are the size of those gaps.  If more than one gap_location 
+        is specified, but only a single gap, the gap will be reused. 
+        E.g. MS1:8:4:32 -> [0,1,2,3,35,36,37,38]
+             MS1:8:2,3:20 -> [0,1,21,41,42,43,44,45]
+             MS1:8:2,3:20,22 -> [0,1,21,43,44,45,46,47]
+
+```
+
+You can also simply specify your own pattern, of any length.
+```
+Custom:
+    -p1,2,4,8,16,32
+    -p4,4,4,4,4
+```
+
+#### Json
+You may specify multiple sets of benchmark configuration options to Spatter inside a Json file. Examples can be found in the `json/` directory. The file format is below. String values should be quoted while numeric values should not be. 
+```
+[
+    {"long-option1":numeric, "long-option2":"string", ...},
+    {"long-option1":numeric, "long-option2":"string", ...},
+    ...
+]
+
+```
+For your convienience, we also provide a python script to help you create configurations quickly. If your json contains arrays, you can pass it into the python script `python/generate_json.py` and it will expand the arrays into multiple configs, each with a single value from the array. Given that you probably don't want your pattern arguments to be expanded like this, they should be specified as python tuples. An example is below. 
+
+```
+[
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":[2**i for i in range(3)]}
+]
+   |
+   |
+   v
+[
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":1},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":2},
+    {"kernel":"Gather", "pattern":(1,2,3,4), "count":4}
+]
 ```
