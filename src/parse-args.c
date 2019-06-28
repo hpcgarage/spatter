@@ -71,7 +71,7 @@ struct run_config parse_json_config(json_value *value){
     
     char **argv;
     int argc;
-    argc = value->u.object.length;
+    argc = value->u.object.length + 1;
     argv = (char **)sp_malloc(sizeof(char*), argc, ALIGN_CACHE);
     for (int i = 0; i < argc; i++) {
         argv[i] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
@@ -366,7 +366,7 @@ struct run_config parse_runs(int argc, char **argv)
         rc.nruns = 10;
     }
 
-    if (rc.generic_len <= 0) {
+    if (rc.generic_len == 0) {
         error ("Length not specified. Default is 32 (gathers/scatters)", 0);
         rc.generic_len = 32;
     }
