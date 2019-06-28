@@ -10,9 +10,12 @@ input="""[{'pattern':'UNIFORM:8:8', 'kernel':'Gather', 'length':[123,444], 'delt
 
 input2="""[{'pattern':"UNIFORM:8:8"}]"""
 
+input3="""[{'pattern':["UNIFORM:8:{}:NR".format(i) for i in range(8)]+["UNIFORM:8:{}:{}".format(i, i*4) for i in range(10)], 'count':2**24} ]"""
+            
+
 def main(): 
 
-    dat = eval(input2)
+    dat = eval(input3)
     change = True
 
     while change:
