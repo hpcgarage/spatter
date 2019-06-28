@@ -600,7 +600,7 @@ void parse_backend(int argc, char **argv)
 
 void parse_p(char* optarg, struct run_config *rc) {
 
-    rc->type = INVALID_NOIDX;
+    rc->type = INVALID_IDX;
     char *arg = 0;
     if ((arg=strchr(optarg, ':'))) {
 
@@ -783,7 +783,7 @@ void parse_p(char* optarg, struct run_config *rc) {
     if (rc->pattern_len == 0) {
         error("Pattern length of 0", ERROR);
     }
-    if (rc->type == INVALID_NOIDX) {
+    if (rc->type == INVALID_IDX) {
         error("No pattern type set", ERROR);
     }
 }
