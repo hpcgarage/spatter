@@ -75,8 +75,9 @@ ENDIF ()
 
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm -fsanitize=address")
-    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm")
+   #Use sanitize=address for debugging of access issues 
+   #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()
 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
@@ -133,8 +134,8 @@ IF (USE_OPENMP)
         SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -fopenmp")
     ENDIF ()
     IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
-        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -openmp")
-        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -openmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -qopenmp")
+        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -qopenmp")
     ENDIF ()
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -204,7 +205,7 @@ IF (USE_CUDA)
     FIND_LIBRARY (
         CUDART_LIBRARY cudart
         HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda-9.2/lib64/
+            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
     )
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
 ENDIF ()
