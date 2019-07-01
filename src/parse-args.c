@@ -426,11 +426,11 @@ struct run_config parse_runs(int argc, char **argv)
     if (rc.local_work_size == 0) {
         error ("Local_work_size not set. Default is 1", WARN);
         rc.local_work_size = 1;
+    }
 #endif
 
     return rc;
 
-    }
 }
 
 void parse_backend(int argc, char **argv)
