@@ -12,10 +12,16 @@ input2="""[{'pattern':"UNIFORM:8:8"}]"""
 
 input3="""[{'pattern':["UNIFORM:8:{}:NR".format(i) for i in range(8)]+["UNIFORM:8:{}:{}".format(i, i*4) for i in range(10)], 'count':2**24} ]"""
             
+input4="""[{'pattern':["UNIFORM:8:{}:{}".format(i, i*8) for i in range(10)], 'count':2**24, 'name':'Reuse 0%'}, 
+           {'pattern':["UNIFORM:8:{}:{}".format(i, i*6) for i in range(10)], 'count':2**24, 'name':'Reuse 25%'},
+           {'pattern':["UNIFORM:8:{}:{}".format(i, i*4) for i in range(10)], 'count':2**24, 'name':'Reuse 50%'},
+           {'pattern':["UNIFORM:8:{}:{}".format(i, i*2) for i in range(10)], 'count':2**24, 'name':'Reuse 75%'},
+           {'pattern':["UNIFORM:8:{}:{}".format(i, i*0) for i in range(10)], 'count':2**24, 'name':'Reuse 100%'}
+          ]"""
 
 def main(): 
 
-    dat = eval(input3)
+    dat = eval(input4)
     change = True
 
     while change:

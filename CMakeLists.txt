@@ -69,13 +69,13 @@ IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     #SET (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
     #SET (ALLWARNINGS "-h msglevel_2")
     SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} ${ALLWARNINGS} -hlist=m -hlist=d")
-	SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m")
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray")
+    SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m -D__CRAYC__")
+    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray -D__CRAYC__")
 ENDIF ()
 
-
+ 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm -O3")
    #Use sanitize=address for debugging of access issues 
    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()

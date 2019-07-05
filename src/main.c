@@ -143,68 +143,45 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
     
-    //TODO: don't assume all gathers
-    if (rc2[0].kernel == GATHER) {
-        size_t max_source_size = 0;
-        size_t max_target_size = 0;
-        size_t max_ptrs = 0;
-        for (int i = 0; i < nrc; i++) {
-
-            size_t max_pattern_val = rc2[i].pattern[0];
-            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-                if (rc2[i].pattern[j] > max_pattern_val) {
-                    max_pattern_val = rc2[i].pattern[j];
-                }
-            }
-            
-            size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*rc2[i].delta) * sizeof(sgData_t);
-            if (cur_source_size > max_source_size) {
-                max_source_size = cur_source_size;
-            }
-
-            size_t cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
-            if (cur_target_size > max_target_size) {
-                max_target_size = cur_target_size;
-            }
-
-            if (rc2[i].omp_threads > max_ptrs) {
-                max_ptrs = rc2[i].omp_threads;
-            }
-
-        }
-
-        source.size = max_source_size;
-        source.len = source.size / sizeof(sgData_t);
-
-        target.size = max_target_size;
-        target.len = target.size / sizeof(sgData_t);
-
-        target.nptrs = max_ptrs;
-
-        /*
-        // the target only has rc.wrap slots of size rc.pattern_len to be gathered into. 
-        target.size = rc2[0].pattern_len * sizeof(sgData_t) * rc2[0].wrap;
-        target.len = target.size / sizeof(sgData_t);
-        
-        // we will duplicate the target space for every thread.
-        target.nptrs = rc2[0].omp_threads;
-
-        // we must make sure there is sufficient space in source for us to slide the pattern
-        size_t max_pattern_val = rc2[0].pattern[0];
-        for (size_t i = 0; i < rc2[0].pattern_len; i++) {
-            if (rc2[0].pattern[i] > max_pattern_val) {
-                max_pattern_val = rc2[0].pattern[i];
-            }
-        }
-                   
-        source.size = ((max_pattern_val + 1) + (rc2[0].generic_len-1)*rc2[0].delta) * sizeof(double);
-        source.len = source.size / sizeof(sgData_t);
-        */
-    } else {
-        //TODO: Add data allocation for SCATTER
-        printf(" ERROR - only GATHER is currently supported\n");
+    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER) {
+        printf("Error: Unsupported kernel\n");
         exit(1);
     }
+    size_t max_source_size = 0;
+    size_t max_target_size = 0;
+    size_t max_ptrs = 0;
+    for (int i = 0; i < nrc; i++) {
+
+        size_t max_pattern_val = rc2[i].pattern[0];
+        for (size_t j = 0; j < rc2[i].pattern_len; j++) {
+            if (rc2[i].pattern[j] > max_pattern_val) {
+                max_pattern_val = rc2[i].pattern[j];
+            }
+        }
+        
+        size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*rc2[i].delta) * sizeof(sgData_t);
+        if (cur_source_size > max_source_size) {
+            max_source_size = cur_source_size;
+        }
+
+        size_t cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
+        if (cur_target_size > max_target_size) {
+            max_target_size = cur_target_size;
+        }
+
+        if (rc2[i].omp_threads > max_ptrs) {
+            max_ptrs = rc2[i].omp_threads;
+        }
+
+    }
+
+    source.size = max_source_size;
+    source.len = source.size / sizeof(sgData_t);
+
+    target.size = max_target_size;
+    target.len = target.size / sizeof(sgData_t);
+
+    target.nptrs = max_ptrs;
 
     // =======================================
     // Create OpenCL Kernel
@@ -375,6 +352,7 @@ int main(int argc, char **argv)
                         break;
                     case SCATTER:
                         if (rc2[k].op == OP_COPY) {
+                            scatter_smallbuf(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                             // scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                         } else {
                             // scatter_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
