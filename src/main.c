@@ -453,11 +453,12 @@ int main(int argc, char **argv)
             omp_set_num_threads(rc2[k].omp_threads);
             double min_time_ms = 1e10;
 
-            for (int i = 0; i <= rc2[k].nruns; i++) {
+            // Start at -1 to do a cache warm
+            for (int i = -1; i < (int)rc2[k].nruns; i++) {
 
-                sg_zero_time();
+                if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI
-                profile_start(EventSet);
+                if (i!=-1) profile_start(EventSet);
 #endif
 
                 switch (rc2[k].kernel) {
@@ -489,9 +490,9 @@ int main(int argc, char **argv)
                 }
 
 #ifdef USE_PAPI
-                profile_stop(EventSet, rc2[k].papi_ctr[i]);
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
 #endif
-                rc2[k].time_ms[i] = sg_get_time_ms();
+                if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
 
             }
 
