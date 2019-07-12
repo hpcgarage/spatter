@@ -28,6 +28,11 @@
 	#include "serial/serial-kernels.h"
 #endif
 
+#if defined( USE_PAPI )
+    #include <papi.h>
+    #include "papi_helper.h"
+#endif
+
 #define ALIGNMENT (4096)
 
 #define xstr(s) str(s)
@@ -44,8 +49,30 @@ char kernel_name[STRING_SIZE];
 
 int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
+int compress_flag = 0;
+int papi_counters = 0;
+#ifdef USE_PAPI
+char papi_counter_names[PAPI_MAX_COUNTERS][STRING_SIZE];
+int papi_counter_codes[PAPI_MAX_COUNTERS];
+long long papi_counter_values[PAPI_MAX_COUNTERS];
+extern const char* const papi_ctr_str[]; 
+#endif
 
-//TODO: this shouldn't print out info about rc - only the system
+void print_papi_names() {
+#ifdef USE_PAPI
+    printf("\nPAPI Counters: %d\n", papi_counters);
+    if (papi_counters > 0) {
+        printf("{ ");
+        for (int i = 0; i < papi_counters; i++) {
+            printf("\"%s\":\"%s\"", papi_ctr_str[i], papi_counter_names[i]);
+            if (i != papi_counters-1) {
+                printf(",\n  ");
+            }
+        }
+        printf(" }\n");
+    }
+#endif
+}
 void print_system_info(){
 
     printf("\nRunning Spatter version 0.0\n");
@@ -59,25 +86,61 @@ void print_system_info(){
     if(backend == CUDA) printf("CUDA\n");
 
     
-    printf("Aggregate Results? %s", aggregate_flag ? "YES" : "NO"); 
+    printf("Aggregate Results? %s\n", aggregate_flag ? "YES" : "NO"); 
+    print_papi_names();
     
-    printf("\n\n");
+    printf("\n");
 }
 
 void print_header(){
     //printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
-    printf("%-7s %-12s %-12s\n", "config", "time(s)","bandwidth(MB/s)");
+    printf("%-7s %-12s %-12s", "config", "time(s)","bw (MB/s)");
+
+#ifdef USE_PAPI
+    for (int i = 0; i < papi_counters; i++) {
+        printf(" %-12s", papi_ctr_str[i]);
+    }
+#endif
+    printf("\n");
 }
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(int ii, double time,  struct run_config rc){
+void report_time(int ii, double time,  struct run_config rc, int idx){
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
     
     bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
     actual_bandwidth = bytes_moved / time / 1000. / 1000.;
-    printf("%-7d %-12.4g %-12.6g\n", ii, time, actual_bandwidth);
+    printf("%-7d %-12.4g %-12.6g", ii, time, actual_bandwidth);
+#ifdef USE_PAPI
+    for (int i = 0; i < papi_counters; i++) {
+        printf(" %-12lld", rc.papi_ctr[idx][i]);
+    }
+#endif
+    printf("\n");
+}
+
+void report_time2(struct run_config* rc, int nrc) {
+    for (int k = 0; k < nrc; k++) {
+        if (aggregate_flag) {
+            double min_time_ms = rc[k].time_ms[0];
+            int min_idx = 0;
+            for (int i = 1; i < rc[k].nruns; i++) {
+                if (rc[k].time_ms[i] < min_time_ms) {
+                    min_time_ms = rc[k].time_ms[i];
+                    min_idx = i;
+                }
+            }
+            report_time(k, min_time_ms/1000., rc[k], min_idx);
+        }
+        else {
+            for (int i = 0; i < rc[k].nruns; i++) {
+                report_time(k, rc[k].time_ms[i]/1000., rc[k], i);
+            }
+        }
+    }
+
 }
 
 void print_data(double *buf, size_t len){
@@ -124,9 +187,61 @@ int main(int argc, char **argv)
     int nrc = 0;
     parse_args(argc, argv, &nrc, &rc);
 
-    assert(nrc > 0);
+    if (nrc <= 0) {
+        error("No run configurations parsed", ERROR);
+    }
+
+    // If indices span many pages, compress them so that there are no 
+    // pages in the address space which are never accessed
+    // Pages are assumed to be 4KiB
+    if (compress_flag) {
+        for (int i = 0; i < nrc; i++) {
+            compress_indices(rc[i].pattern, rc[i].pattern_len);
+        }
+    }
 
     struct run_config *rc2 = rc;
+
+    // Allocate space for timing and papi counter information
+    
+    for (int i = 0; i < nrc; i++) {
+        rc2[i].time_ms = (double*)malloc(sizeof(double) * rc2[i].nruns);
+#ifdef USE_PAPI
+        rc2[i].papi_ctr = (long long **)malloc(sizeof(long long *) * rc2[i].nruns);
+        for (int j = 0; j < rc2[i].nruns; j++){
+            rc2[i].papi_ctr[j] = (long long*)malloc(sizeof(long long) * papi_counters);
+        }
+#endif
+    }
+    // =======================================
+    // Initialize PAPI Library
+    // =======================================
+
+#ifdef USE_PAPI
+    // Powering up a space shuttle probably has fewer checks than initlizing papi
+    int err = PAPI_library_init(PAPI_VER_CURRENT);
+    if (err !=PAPI_VER_CURRENT && err > 0) {
+        error ("PAPI library version mismatch", ERROR);
+    }
+    if (err < 0) papi_err(err);
+    err = PAPI_is_initialized();
+    if (err != PAPI_LOW_LEVEL_INITED) {
+        error ("PAPI was not initialized", ERROR);
+    }
+
+    // OK, now that papi is finally inizlized, we need to make our EventSet
+    // First, convert names to codes
+    for (int i = 0; i < papi_counters; i++) {
+        papi_err(PAPI_event_name_to_code(papi_counter_names[i],&papi_counter_codes[i]));
+    }
+
+    int EventSet = PAPI_NULL;
+    papi_err(PAPI_create_eventset(&EventSet));
+    for (int i = 0; i < papi_counters; i++) {
+        papi_err(PAPI_add_event(EventSet, papi_counter_codes[i]));
+    }
+
+#endif
 
     // =======================================
     // Initialize OpenCL Backend
@@ -150,6 +265,7 @@ int main(int argc, char **argv)
     size_t max_source_size = 0;
     size_t max_target_size = 0;
     size_t max_ptrs = 0;
+    size_t max_nruns = 0;
     for (int i = 0; i < nrc; i++) {
 
         size_t max_pattern_val = rc2[i].pattern[0];
@@ -172,7 +288,6 @@ int main(int argc, char **argv)
         if (rc2[i].omp_threads > max_ptrs) {
             max_ptrs = rc2[i].omp_threads;
         }
-
     }
 
     source.size = max_source_size;
@@ -341,6 +456,9 @@ int main(int argc, char **argv)
             for (int i = 0; i <= rc2[k].nruns; i++) {
 
                 sg_zero_time();
+#ifdef USE_PAPI
+                profile_start(EventSet);
+#endif
 
                 switch (rc2[k].kernel) {
                     case SG:
@@ -370,20 +488,14 @@ int main(int argc, char **argv)
                         break;
                 }
 
-                double time_ms = sg_get_time_ms();
-                if (i!=0) {
-                    if (!aggregate_flag) {
-                        report_time(k, time_ms/1000., rc2[k]);
-                    } else {
-                        if (time_ms < min_time_ms) {
-                            min_time_ms = time_ms;
-                        }
-                    }
-                }
+#ifdef USE_PAPI
+                profile_stop(EventSet, rc2[k].papi_ctr[i]);
+#endif
+                rc2[k].time_ms[i] = sg_get_time_ms();
+
             }
-            if (aggregate_flag) {
-                report_time(k, min_time_ms/1000., rc2[k]);
-            }
+
+            report_time2(rc2, nrc);
         }
         #endif // USE_OPENMP
         
@@ -426,7 +538,7 @@ int main(int argc, char **argv)
                 }
 
                 double time_ms = sg_get_time_ms();
-                if (i!=0) report_time(k, time_ms/1000., rc2[k]);
+                if (i!=0) report_time(k, time_ms/1000., rc2[k], i);
             }
         }
         #endif // USE_SERIAL

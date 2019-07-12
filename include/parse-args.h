@@ -11,10 +11,7 @@
 
 
 #define STRING_SIZE 100
-
 #define MAX_PATTERN_LEN 64
-
-#define PAPI_MAX_COUNTERS 4;
 
 #include <sgtype.h>
 
@@ -86,6 +83,9 @@ struct run_config
     size_t vector_len;
     unsigned int shmem;
     size_t local_work_size;
+    double *time_ms;
+    long long **papi_ctr;
+    int papi_counters;
 };
 
 struct backend_config

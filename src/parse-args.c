@@ -18,9 +18,14 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_PAPI
+#include "papi_helper.h"
+#endif
+
 #define VALIDATE    1005
 #define CLPLATFORM  1010
 #define CLDEVICE    1011
+#define PAPI_ARG    1012
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -32,6 +37,12 @@ extern char kernel_name[STRING_SIZE];
 extern int validate_flag;
 extern int quiet_flag;
 extern int aggregate_flag;
+extern int compress_flag;
+
+#ifdef USE_PAPI
+extern int papi_counters;
+extern char papi_counter_names[PAPI_MAX_COUNTERS][STRING_SIZE];
+#endif
 
 extern enum sg_backend backend;
 
@@ -44,7 +55,7 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aq";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqc";
 void parse_backend(int argc, char **argv);
 
 char jsonfilename[STRING_SIZE];
@@ -219,6 +230,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"local-work-size", required_argument, NULL, 'z'},
         {"shared-mem",      required_argument, NULL, 'm'},
         {"name",            required_argument, NULL, 'n'},
+        {"papi",            required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
@@ -461,6 +473,8 @@ void parse_backend(int argc, char **argv)
         /* Other */
         {"validate",        no_argument, &validate_flag, 1},
         {"aggregate",       optional_argument, NULL, 'a'},
+        {"compress",        optional_argument, NULL, 'c'},
+        {"papi",            required_argument, NULL, PAPI_ARG},
         {0, 0, 0, 0}
     };  
 
@@ -511,6 +525,25 @@ void parse_backend(int argc, char **argv)
                     aggregate_flag = 0;
                 }else {
                     sscanf(optarg, "%d", &aggregate_flag);
+                }
+                break;
+            case 'c':
+                if (optarg == NULL) {
+                    compress_flag = 1;
+                }else {
+                    sscanf(optarg, "%d", &compress_flag);
+                }
+                break;
+            case PAPI_ARG:
+                {
+#ifdef USE_PAPI
+                    char *pch = strtok(optarg, ",");
+                    while (pch != NULL) {
+                        safestrcopy(papi_counter_names[papi_counters++], pch);
+                        pch = strtok (NULL, ",");
+                        if(papi_counters == PAPI_MAX_COUNTERS) break;
+                    }
+#endif
                 }
                 break;
             default:

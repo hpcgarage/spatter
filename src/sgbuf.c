@@ -195,6 +195,40 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
     if( npages ) free(pages);
     return max;
 }
+
+void compress_indices( sgIdx_t *idx, size_t len) {
+    // Pageinate the positive zero-based indicies in idx[].
+    long *pages = NULL, npages = 0;
+    long  page,pidx;
+    long  page_bits = 12; // 12 => 4KiB
+    long  new_idx;
+    for(size_t i = 0; i < len; i++) {
+        // Turn address into page.
+        page = (idx[i]*8) >> page_bits;
+        // Find existing / make new page entry.
+        pidx = -1;
+        for(size_t p = 0; p < npages; p++) {
+            if( pages[p] == page ) {
+                pidx = p;
+                break;
+            }
+        }
+        if( pidx == -1 ) {
+            pidx = npages;
+            npages++;
+            if( !(pages = realloc(pages,npages*sizeof(long))) ) {
+                fprintf(stderr,"trace_indices(): Failed to allocate new page entry (%ld).\n",npages);
+            }
+            pages[pidx] = page;
+        }
+        // Replace sparse page bits in address with dense page index bits.
+        new_idx  = (pidx << page_bits) | ((idx[i]*8) & ((1l<<page_bits)-1l));
+        new_idx /= 8;
+        idx[i] = new_idx;
+    }
+    if( npages ) free(pages);
+}
+
 #ifdef USE_OPENCL
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr){
     cl_int err;
