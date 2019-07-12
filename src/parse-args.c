@@ -40,8 +40,8 @@ extern int aggregate_flag;
 extern int compress_flag;
 
 #ifdef USE_PAPI
-extern int papi_counters;
-extern char papi_counter_names[PAPI_MAX_COUNTERS][STRING_SIZE];
+extern int papi_nevents;
+extern char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 #endif
 
 extern enum sg_backend backend;
@@ -539,9 +539,9 @@ void parse_backend(int argc, char **argv)
 #ifdef USE_PAPI
                     char *pch = strtok(optarg, ",");
                     while (pch != NULL) {
-                        safestrcopy(papi_counter_names[papi_counters++], pch);
+                        safestrcopy(papi_event_names[papi_nevents++], pch);
                         pch = strtok (NULL, ",");
-                        if(papi_counters == PAPI_MAX_COUNTERS) break;
+                        if(papi_nevents == PAPI_MAX_COUNTERS) break;
                     }
 #endif
                 }

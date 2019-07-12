@@ -50,22 +50,22 @@ char kernel_name[STRING_SIZE];
 int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
 int compress_flag = 0;
-int papi_counters = 0;
+int papi_nevents = 0;
 #ifdef USE_PAPI
-char papi_counter_names[PAPI_MAX_COUNTERS][STRING_SIZE];
-int papi_counter_codes[PAPI_MAX_COUNTERS];
-long long papi_counter_values[PAPI_MAX_COUNTERS];
+char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
+int papi_event_codes[PAPI_MAX_COUNTERS];
+long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[]; 
 #endif
 
 void print_papi_names() {
 #ifdef USE_PAPI
-    printf("\nPAPI Counters: %d\n", papi_counters);
-    if (papi_counters > 0) {
+    printf("\nPAPI Counters: %d\n", papi_nevents);
+    if (papi_nevents > 0) {
         printf("{ ");
-        for (int i = 0; i < papi_counters; i++) {
-            printf("\"%s\":\"%s\"", papi_ctr_str[i], papi_counter_names[i]);
-            if (i != papi_counters-1) {
+        for (int i = 0; i < papi_nevents; i++) {
+            printf("\"%s\":\"%s\"", papi_ctr_str[i], papi_event_names[i]);
+            if (i != papi_nevents-1) {
                 printf(",\n  ");
             }
         }
@@ -97,7 +97,7 @@ void print_header(){
     printf("%-7s %-12s %-12s", "config", "time(s)","bw (MB/s)");
 
 #ifdef USE_PAPI
-    for (int i = 0; i < papi_counters; i++) {
+    for (int i = 0; i < papi_nevents; i++) {
         printf(" %-12s", papi_ctr_str[i]);
     }
 #endif
@@ -114,7 +114,7 @@ void report_time(int ii, double time,  struct run_config rc, int idx){
     actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     printf("%-7d %-12.4g %-12.6g", ii, time, actual_bandwidth);
 #ifdef USE_PAPI
-    for (int i = 0; i < papi_counters; i++) {
+    for (int i = 0; i < papi_nevents; i++) {
         printf(" %-12lld", rc.papi_ctr[idx][i]);
     }
 #endif
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 #ifdef USE_PAPI
         rc2[i].papi_ctr = (long long **)malloc(sizeof(long long *) * rc2[i].nruns);
         for (int j = 0; j < rc2[i].nruns; j++){
-            rc2[i].papi_ctr[j] = (long long*)malloc(sizeof(long long) * papi_counters);
+            rc2[i].papi_ctr[j] = (long long*)malloc(sizeof(long long) * papi_nevents);
         }
 #endif
     }
@@ -231,14 +231,14 @@ int main(int argc, char **argv)
 
     // OK, now that papi is finally inizlized, we need to make our EventSet
     // First, convert names to codes
-    for (int i = 0; i < papi_counters; i++) {
-        papi_err(PAPI_event_name_to_code(papi_counter_names[i],&papi_counter_codes[i]));
+    for (int i = 0; i < papi_nevents; i++) {
+        papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]));
     }
 
     int EventSet = PAPI_NULL;
     papi_err(PAPI_create_eventset(&EventSet));
-    for (int i = 0; i < papi_counters; i++) {
-        papi_err(PAPI_add_event(EventSet, papi_counter_codes[i]));
+    for (int i = 0; i < papi_nevents; i++) {
+        papi_err(PAPI_add_event(EventSet, papi_event_codes[i]));
     }
 
 #endif
