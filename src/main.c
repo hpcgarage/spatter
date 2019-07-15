@@ -451,7 +451,6 @@ int main(int argc, char **argv)
         #ifdef USE_OPENMP
         if (backend == OPENMP) {
             omp_set_num_threads(rc2[k].omp_threads);
-            double min_time_ms = 1e10;
 
             // Start at -1 to do a cache warm
             for (int i = -1; i < (int)rc2[k].nruns; i++) {
@@ -496,7 +495,7 @@ int main(int argc, char **argv)
 
             }
 
-            report_time2(rc2, nrc);
+            //report_time2(rc2, nrc);
         }
         #endif // USE_OPENMP
         
@@ -544,6 +543,8 @@ int main(int argc, char **argv)
         }
         #endif // USE_SERIAL
     }
+
+    report_time2(rc2, nrc);
     
 
     // =======================================
