@@ -19,6 +19,10 @@ input4="""[{'pattern':["UNIFORM:8:{}:{}".format(i, i*8) for i in range(10)], 'co
            {'pattern':["UNIFORM:8:{}:{}".format(i, i*0) for i in range(10)], 'count':2**24, 'name':'Reuse 100%'}
           ]"""
 
+input5="""[{'pattern':(0, 1, 2, 3, d, d+1, d+2, d+3), 'count':2**24, 'name':'Good'},
+           {'pattern':(0, d, 1, d+1, 2, d+2, 3, d+3), 'count':2**24, 'name':'Bad'}
+          ]"""
+
 def main(): 
 
     dat = eval(input4)

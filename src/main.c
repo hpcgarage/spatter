@@ -94,7 +94,7 @@ void print_system_info(){
 
 void print_header(){
     //printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
-    printf("%-7s %-12s %-12s", "config", "time(s)","bw (MB/s)");
+    printf("%-7s %-12s %-12s", "config", "time(s)","bw(MB/s)");
 
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {

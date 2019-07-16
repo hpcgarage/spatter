@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from pandas.compat import StringIO
 import sys
 import re
+import os
+import ntpath
 
 def file_to_df(filename):
     with open(filename, 'r') as file:
@@ -45,13 +47,15 @@ if __name__ == "__main__":
     #df['pct'] = pct(df['name'])
 
 
-    print("here")
-    exit(0)
-    print("here")
+
+    print(df)
     fig, ax = plt.subplots()
-    for key, grp in df.groupby(['pct']):
-        ax = grp.plot(ax=ax, kind='line', x='gap', y='bandwidth(MB/s)', label=key)
+    for key, grp in df.groupby(['name']):
+        ax = grp.plot(ax=ax, kind='line', x='delta', y='bw(MB/s)', label=key)
         print(key)
 
+
     plt.legend(loc='best', title='% Reuse')
-    plt.savefig('strides2_skx.png')
+
+    outname = ntpath.basename(os.path.splitext(sys.argv[1])[0]) + ".png"
+    plt.savefig(outname)
