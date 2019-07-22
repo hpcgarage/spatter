@@ -13,6 +13,7 @@ fi
 
 if [ "$#" -ne 1 ]; then
     echo "Please supply a command to run with prefecthing off"
+    echo "Usage: sudo ./noprefetch \"command and args in quotes\""
     exit 
 fi
 
