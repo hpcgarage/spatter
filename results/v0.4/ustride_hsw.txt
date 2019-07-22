@@ -1,0 +1,26 @@
+
+Running Spatter version 0.0
+Compiler: Cray ver. 9.0
+Compiler Location: /opt/cray/pe/craype/2.6.1.4/bin/cc
+Backend: OPENMP
+Aggregate Results? YES
+
+Run Configurations
+[ {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:2:NR', 'kernel':'Gather', 'pattern':[0,2,4,6,8,10,12,14], 'delta':16, 'length':16777216, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:4:NR', 'kernel':'Gather', 'pattern':[0,4,8,12,16,20,24,28], 'delta':32, 'length':16777216, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:8:NR', 'kernel':'Gather', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':16777216, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:16:NR', 'kernel':'Gather', 'pattern':[0,16,32,48,64,80,96,112], 'delta':128, 'length':1048576, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:32:NR', 'kernel':'Gather', 'pattern':[0,32,64,96,128,160,192,224], 'delta':256, 'length':1048576, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:64:NR', 'kernel':'Gather', 'pattern':[0,64,128,192,256,320,384,448], 'delta':512, 'length':1048576, 'agg':10, 'wrap':1, 'threads':14},
+  {'name':'UNIFORM:8:128:NR', 'kernel':'Gather', 'pattern':[0,128,256,384,512,640,768,896], 'delta':1024, 'length':1048576, 'agg':10, 'wrap':1, 'threads':14} ]
+
+config  time(s)      bw(MB/s)    
+0       0.01763      60911       
+1       0.03366      31896.5     
+2       0.06711      15998.7     
+3       0.1359       7898.2      
+4       0.01485      4520.42     
+5       0.02015      3330.05     
+6       0.009908     6773.38     
+7       0.009839     6820.59     

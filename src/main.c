@@ -324,6 +324,10 @@ int main(int argc, char **argv)
     }
 
     // Populate buffers cn host 
+    #pragma omp parallel for
+    for (int i = 0; i < source.len; i++) {
+        source.host_ptr[i] = i % (source.len / 64);
+    }
     random_data(source.host_ptr, source.len);
 
     // =======================================

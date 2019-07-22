@@ -5,6 +5,8 @@
 # Initialize Spatter, pass configs, 
 import copy 
 import json
+import sys
+import sizes
 input="""[{'pattern':'UNIFORM:8:8', 'kernel':'Gather', 'length':[123,444], 'delta':[(1,2),4]}, 
           {'pattern':(10,20,30),'length':[2**i for i in range(10)]}]"""
 
@@ -23,9 +25,9 @@ input5="""[{'pattern':(0, 1, 2, 3, d, d+1, d+2, d+3), 'count':2**24, 'name':'Goo
            {'pattern':(0, d, 1, d+1, 2, d+2, 3, d+3), 'count':2**24, 'name':'Bad'}
           ]"""
 
-def main(): 
+def main(dict_string): 
 
-    dat = eval(input4)
+    dat = eval(dict_string)
     change = True
 
     while change:
@@ -46,5 +48,9 @@ def main():
     print(json.dumps(dat))
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        main(input4)
+    else:
+        with open(sys.argv[1], 'r') as file:
+            main(file.read())
 
