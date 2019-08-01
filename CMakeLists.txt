@@ -76,7 +76,7 @@ ENDIF ()
 
  
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm -O3")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3")
    #Use sanitize=address for debugging of access issues 
    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()
@@ -216,6 +216,9 @@ set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
 IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
+
+# Link math library for json
+TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
 IF (USE_CUDA)
     FIND_LIBRARY (
