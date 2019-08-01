@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Author: Patrick Lavin
+# Information on which MSR to use and how to use it 
+# was taken from the following webpage. I have not double-
+# checked this formation against the Intel docs. 
+# https://stackoverflow.com/questions/54753423/correctly-disable-hardware-prefetching-with-msr-in-skylake
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+if [ "$#" -ne 1 ]; then
+    echo "Please supply a command to run with prefecthing off"
+    echo "Usage: sudo ./noprefetch \"command and args in quotes\""
+    exit 
+fi
+
+# Disable prefetching
+wrmsr -a 0x1a4 15
+
+# Run Command
+sudo -u $USER env "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/lib/intel64/" $1
+
+# Re-enable prefetching
+wrmsr -a 0x1a4 0

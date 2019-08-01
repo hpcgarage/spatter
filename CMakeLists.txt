@@ -11,6 +11,7 @@ SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
 SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
+SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
@@ -68,14 +69,14 @@ IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     #SET (OPTIMIZATIONS "-G0 -O0")
     #SET (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
     #SET (ALLWARNINGS "-h msglevel_2")
-    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} ${ALLWARNINGS} -hlist=m -hlist=d")
-	SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m")
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray")
+    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OPTIMIZATIONS} ${ALLWARNINGS} -hlist=m -hlist=d ")
+    SET (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OPTIMIZATIONS} -hlist=m -D__CRAYC__")
+    SET (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray -D__CRAYC__")
 ENDIF ()
 
-
+ 
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -lm")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3")
    #Use sanitize=address for debugging of access issues 
    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()
@@ -93,7 +94,7 @@ SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
 IF (USE_OPENCL)
     ADD_DEFINITIONS (-DUSE_OPENCL)
     # Point the compiler to the include and library directories
-    INCLUDE_DIRECTORIES ($ENV{OCL_INCL} opencl)
+    INCLUDE_DIRECTORIES ($ENV{OCL_INCL} src/opencl)
     # include_directories(/usr/lib/gcc/x86_64-linux-gnu/5/include/)
     LINK_DIRECTORIES ($ENV{OCL_LIB})
     # Pull the OpenCL-specific files into the build
@@ -115,7 +116,7 @@ ENDIF ()
 # Enable Serial backend
 IF (USE_SERIAL)
     ADD_DEFINITIONS (-DUSE_SERIAL)
-    INCLUDE_DIRECTORIES (serial)
+    INCLUDE_DIRECTORIES (src/serial)
     # Pull the serial files and kernels into the build
     FILE (GLOB BACKEND_C_FILES_SERIAL src/serial/*.c)
     FILE (GLOB BACKEND_H_FILES_SERIAL src/serial/*.h)
@@ -144,7 +145,7 @@ IF (USE_OPENMP)
     # enable pragma regions in the code for OpenMP
     ADD_DEFINITIONS (-DUSE_OPENMP)
     ADD_DEFINITIONS (-DUSE_OMP_SIMD)
-    INCLUDE_DIRECTORIES (openmp)
+    INCLUDE_DIRECTORIES (src/openmp)
 
     # Pull the OpenMP-specific files and kernels into the build
     FILE (GLOB BACKEND_C_FILES_OMP src/openmp/*.c)
@@ -154,7 +155,7 @@ ENDIF ()
 # Enable CUDA
 IF (USE_CUDA)
     ADD_DEFINITIONS (-DUSE_CUDA)
-    INCLUDE_DIRECTORIES (cuda)
+    INCLUDE_DIRECTORIES (src/cuda)
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
     SET (
@@ -168,6 +169,19 @@ IF (USE_CUDA)
     FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
     FILE (GLOB CUDA_C_FILES src/cuda/*.c)
     FILE (GLOB CUDA_H_FILES src/cuda/*.h)
+ENDIF ()
+
+IF (USE_PAPI) 
+    SET (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+    INCLUDE_DIRECTORIES (src/papi)
+    ADD_DEFINITIONS (-DUSE_PAPI)
+    #Use the included FindPAPI cmake module
+    INCLUDE (FindPAPI)
+    FIND_PACKAGE (PAPI REQUIRED)
+    #message("Found PAPI libraries at ${PAPI_INCLUDE_DIRS}")
+    INCLUDE_DIRECTORIES(${PAPI_INCLUDE_DIRS})
+    FILE (GLOB PAPI_C_FILES src/papi/*.c)
+    FILE (GLOB PAPI_H_FILES src/papi/*.h)
 ENDIF ()
 
 # Include the location of stddef.h include_directories(/usr/include/linux/)
@@ -187,6 +201,8 @@ SET (
     ${BACKEND_H_FILES_SERIAL}
     ${CUDA_CU_FILES}
     ${CUDA_C_FILES}
+    ${PAPI_C_FILES}
+    ${PAPI_H_FILES}
 )
 
 # Specify the executable and source files
@@ -201,6 +217,9 @@ IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
 
+# Link math library for json
+TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
+
 IF (USE_CUDA)
     FIND_LIBRARY (
         CUDART_LIBRARY cudart
@@ -208,6 +227,14 @@ IF (USE_CUDA)
             /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
     )
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
+ENDIF ()
+
+#Include PAPI libraries, if defined
+IF (USE_PAPI)
+    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${PAPI_LIBRARIES})
+    # Explicitly link libdl because the Cray compiler refuses to link papi dynaimically...
+    # (Static libraries carry no dependency info, and libpapi depends on libdl)
+    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC dl)
 ENDIF ()
 
 # Copy over the test scripts
