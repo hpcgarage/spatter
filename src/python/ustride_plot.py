@@ -2,10 +2,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.compat import StringIO
+import matplotlib.ticker as ticker
 import sys
 import re
 import os
 import ntpath
+
+colors={'tx2':'orange', 'skx':'#26CAD3', 'bdw':'#005596', 'hsw':'#64d1a2'}
 
 def file_to_df(filename):
     with open(filename, 'r') as file:
@@ -60,21 +63,47 @@ if __name__ == "__main__":
 
     df['norm_global'] = df['bw(MB/s)'] / max(df['bw(MB/s)'])
 
+    SMALL_SIZE = 15
+    MEDIUM_SIZE = 18
+    BIGGER_SIZE = 20
+
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
     #Plot against global max
     fig, ax = plt.subplots()
     for key, grp in df.groupby(['arch']):
-        ax = grp.plot(ax=ax, kind='line', x='config', y='bw(MB/s)', label=key)
+        ax = grp.plot(ax=ax, kind='line', x='config', y='bw(MB/s)', label=key, color=colors[key], linewidth=4)
         print(key)
 
     #ax.set_xscale("log")
     ax.set_yscale("log")
-    plt.legend(loc='best', title='')
+    ax.set_ylabel("Log(Bandwidth)")
+    ax.set_xlabel("Stride (Doubles)")
 
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.set_xticklabels(["$2^{{{}}}$".format(x) for x in range(0,8)])
+
+    handles,labels = ax.get_legend_handles_labels()
+    handles = [handles[2], handles[0], handles[1], handles[3]]
+    labels = [labels[2], labels[0], labels[1], labels[3]]
+
+    plt.legend(handles, labels, loc='best', title='')
+    #plt.rcParams.update({'font.size': 28})
+
+    fig.set_size_inches(6,6)
     outname = "ustride_actual.png"
-    plt.savefig(outname)
+    plt.savefig(outname, transparent=True)
+    print(f"wrote to {outname}")
     plt.clf()
     exit(0)
 
+#########################
     #Plot against a local max
     fig, ax = plt.subplots()
     for key, grp in df.groupby(['arch']):
@@ -83,6 +112,7 @@ if __name__ == "__main__":
 
     plt.legend(loc='best', title='log2(gap)')
 
-    outname = "ustride_local.png"
+    outname = "ustride_tmp.png"
     plt.savefig(outname)
+    print(f"wrote to {outname}")
     plt.clf()
