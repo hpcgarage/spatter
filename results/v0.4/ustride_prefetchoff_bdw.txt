@@ -1,0 +1,28 @@
+//Run as root on one socket of an E5-2650V4 machine.
+# ../tests/noprefetch "numactl --cpunodebind=1 --membind=1 ./spatter -pFILE=../json/ustride.json"
+
+Running Spatter version 0.0
+Compiler: SPAT_C_NAME ver. 19.0.0.20190206
+Compiler Location: /tools/intel/bin/icc
+Backend: OPENMP
+Aggregate Results? YES
+
+Run Configurations
+[ {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:2:NR', 'kernel':'Gather', 'pattern':[0,2,4,6,8,10,12,14], 'delta':16, 'length':16777216, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:4:NR', 'kernel':'Gather', 'pattern':[0,4,8,12,16,20,24,28], 'delta':32, 'length':16777216, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:8:NR', 'kernel':'Gather', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':16777216, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:16:NR', 'kernel':'Gather', 'pattern':[0,16,32,48,64,80,96,112], 'delta':128, 'length':1048576, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:32:NR', 'kernel':'Gather', 'pattern':[0,32,64,96,128,160,192,224], 'delta':256, 'length':1048576, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:64:NR', 'kernel':'Gather', 'pattern':[0,64,128,192,256,320,384,448], 'delta':512, 'length':1048576, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'UNIFORM:8:128:NR', 'kernel':'Gather', 'pattern':[0,128,256,384,512,640,768,896], 'delta':1024, 'length':1048576, 'agg':10, 'wrap':1, 'threads':24} ]
+
+config  time(s)      bw(MB/s)
+0       0.04493      23895.9
+1       0.05638      19043
+2       0.1031       10412.8
+3       0.19         5651.13
+4       0.01112      6034.08
+5       0.01061      6322.8
+6       0.01088      6165.65
+7       0.01145      5860.82

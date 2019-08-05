@@ -15,8 +15,10 @@ CXX=icpc
 #FLAGS="-O3 -march=skylake-avx512"
 #KNL
 #FLAGS="-O3 -xMIC-AVX512"
-#Cross-platform
-FLAGS="-O3 -xCOMMON-AVX512"
+#Cross-platform but with AVX (KNL, SKL and newer)
+#FLAGS="-O3 -xCOMMON-AVX512"
+#Non-AVX platforms
+FLAGS="-O3"
 #Return vectorization report
 FLAGS="${FLAGS} -qopt-report-phase=vec,loop -qopt-report=2"
 
