@@ -226,11 +226,13 @@ __global__ void gather_new(double* source,
         //sl[i] = sl[idx[i]];
     }
 
+    /*
     for (int i = 0; i < V; i++) {
         if (buf[i] == 199402) {
             printf("oop\n");
         }
     }
+    */
 
         //printf("idx[1]: %d\n", idx[1]);
         /*
