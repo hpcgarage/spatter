@@ -4,6 +4,8 @@
 
 #define typedef uint unsigned int
 
+//__device__ int dummy = 0; 
+
 template<int v>
 __global__ void scatter_t(double* target, 
                         double* source, 
@@ -210,20 +212,64 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 
 }
 
+//V2 = 8
+//assume block size >= index buffer size
+//assume index buffer size divides block size
+template<int V>
+__global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb)
+{
+    __shared__ int idx_shared[V];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    if (tid < V) {
+        idx_shared[tid] = idx[tid];
+    }
+
+    double *src_loc = src + bid*delta*wpb;
+    double x;
+
+    for (int i = 0; i < wpb; i++) {
+        x = src_loc[idx_shared[tid%V]];
+        src_loc += delta;
+    }
+
+    if (x) src[0] = x;
+
+}
+
 //todo -- add WRAP 
 template<int V>
 __global__ void gather_new(double* source, 
-                        sgIdx_t* idx, size_t delta)
+                        sgIdx_t* idx, size_t delta, int dummy, int wpt)
 {
+    __shared__ int idx_shared[V];
+
+    int tid  = threadIdx.x;
+    //int bid  = blockIdx.x;
+    //int nblk = blockDim.x;
+
+    if (tid < V) {
+        idx_shared[tid] = idx[tid];
+    }
+
     int gid = (blockIdx.x * blockDim.x + threadIdx.x);
-    double *sl = source + gid*delta;
+    double *sl = source + wpt*gid*delta;
 
     double buf[V];
 
-    for (int i = 0; i < V; i++) {
-        buf[i] = sl[idx[i]];
-        //source[i+gid*delta] = 8;
-        //sl[i] = sl[idx[i]];
+    for (int j = 0; j < wpt; j++) {
+        for (int i = 0; i < V; i++) {
+            buf[i] = sl[idx_shared[i]];
+            //source[i+gid*delta] = 8;
+            //sl[i] = sl[idx[i]];
+        }
+        sl = sl + delta;
+    }
+
+    if (dummy) {
+        sl[idx_shared[0]] = buf[dummy];
     }
 
     /*
@@ -245,18 +291,22 @@ __global__ void gather_new(double* source,
 }
 
 #define INSTANTIATE2(V)\
-template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta);
+template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
+template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);
 
 //INSTANTIATE2(1);
 //INSTANTIATE2(2);
 //INSTANTIATE2(4);
 //INSTANTIATE2(5);
 INSTANTIATE2(8);
-//INSTANTIATE2(16);
-//INSTANTIATE2(32);
-//INSTANTIATE2(64);
+INSTANTIATE2(16);
+INSTANTIATE2(32);
+INSTANTIATE2(64);
+INSTANTIATE2(128);
+INSTANTIATE2(256);
+INSTANTIATE2(512);
 
-extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source, 
         sgIdx_t* pat_dev, 
@@ -264,7 +314,8 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
         size_t pat_len, 
         size_t delta, 
         size_t n, 
-        size_t wrap)
+        size_t wrap,
+        int wpt)
 {
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
@@ -279,7 +330,59 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
     cudaEventRecord(start);
     // KERNEL 
     if (pat_len == 8) {
-        gather_new<8><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta);
+        gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+    }else if (pat_len == 16) {
+    }else if (pat_len == 32) {
+        gather_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+    }else if (pat_len == 64) {
+    }else if (pat_len ==256) {
+    }else if (pat_len == 512) {
+    } else {
+        printf("ERROR NOT SUPPORTED\n");
+    }
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float time_ms = 0;
+    cudaEventElapsedTime(&time_ms, start, stop);
+    return time_ms;
+
+
+}
+
+extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
+        enum sg_kernel kernel,
+        double *source, 
+        sgIdx_t* pat_dev, 
+        sgIdx_t* pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t wrap,
+        int wpt)
+{
+    dim3 grid_dim, block_dim;
+    cudaEvent_t start, stop;
+
+    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
+    cudaMemcpy(pat_dev, pat, sizeof(sgIdx_t)*pat_len, cudaMemcpyHostToDevice); 
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaDeviceSynchronize();
+    cudaEventRecord(start);
+    // KERNEL 
+    if (pat_len == 8) {
+        gather_new<8><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len == 16) {
+        gather_new<16><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len == 64) {
+        gather_new<64><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len ==256) {
+        gather_new<256><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len == 512) {
+        gather_new<512><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
     } else {
         printf("ERROR NOT SUPPORTED\n");
     }

@@ -59,6 +59,7 @@ long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[]; 
 #endif
 
+
 void print_papi_names() {
 #ifdef USE_PAPI
     printf("\nPAPI Counters: %d\n", papi_nevents);
@@ -402,16 +403,17 @@ int main(int argc, char **argv)
 
         // Time CUDA Kernel 
         #ifdef USE_CUDA
+        int wpt = 1;
         if (backend == CUDA) {
-            float time_ms = 1;
+            float time_ms = 2;
             for (int i = -1; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1) 
-                int global_work_size = rc2[k].generic_len;
+                int global_work_size = rc2[k].generic_len / wpt;
                 int local_work_size = rc2[k].local_work_size;
                 unsigned int grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned int block[arr_len] = {local_work_size};
                 //cudaMemcpy(source.dev_ptr_cuda, pat_dev, rc2[k].pattern_len*sizeof(sgIdx_t), cudaMemcpyHostToDevice);
-                time_ms = cuda_new_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
                 if (i!= -1) rc2[k].time_ms[i] = time_ms;
             }
 
@@ -439,7 +441,6 @@ int main(int argc, char **argv)
 
 
         }
-        //TODO: REMOVE FOLLOWING 
 
         #endif // USE_CUDA
 

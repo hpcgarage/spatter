@@ -12,6 +12,15 @@ extern float cuda_sg_wrapper(enum sg_kernel kernel,
                        double* target, double *source, 
                        long* ti, long* si, unsigned int shmem);
 
+extern float cuda_block_wrapper(uint dim, uint* grid, uint* block,
+        enum sg_kernel kernel,
+        double *source,
+        sgIdx_t* pat_dev,
+        sgIdx_t* pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t wrap, int wpt);
 extern float cuda_new_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
@@ -20,7 +29,7 @@ extern float cuda_new_wrapper(uint dim, uint* grid, uint* block,
         size_t pat_len,
         size_t delta,
         size_t n,
-        size_t wrap);
+        size_t wrap, int wpt);
 
 void create_dev_buffers_cuda(sgDataBuf *source);
 
