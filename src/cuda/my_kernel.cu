@@ -226,16 +226,19 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
     if (tid < V) {
         idx_shared[tid] = idx[tid];
     }
+    
+    int ngatherperblock = blockDim.x / V;
+    int gatherid = tid / ngatherperblock;
 
-    double *src_loc = src + bid*delta*wpb;
+    double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
     double x;
 
-    for (int i = 0; i < wpb; i++) {
+    //for (int i = 0; i < wpb; i++) {
         x = src_loc[idx_shared[tid%V]];
         src_loc += delta;
-    }
+    //}
 
-    if (x) src[0] = x;
+    if (x==0.5) src[0] = x;
 
 }
 
