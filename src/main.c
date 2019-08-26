@@ -229,7 +229,7 @@ int main(int argc, char **argv)
         error ("PAPI was not initialized", ERROR);
     }
 
-    // OK, now that papi is finally inizlized, we need to make our EventSet
+    // OK, now that papi is finally initialized, we need to make our EventSet
     // First, convert names to codes
     for (int i = 0; i < papi_nevents; i++) {
         papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]));
@@ -507,49 +507,39 @@ int main(int argc, char **argv)
         #ifdef USE_SERIAL
         if (backend == SERIAL) {
 
-            printf("running the serial backend\n");
+            // Start at -1 to do a cache warm
+            for (int i = -1; i < (int)rc2[k].nruns; i++) {
 
-            for (int i = 0; i <= rc2[k].nruns; i++) {
+                if (i!=-1) sg_zero_time();
+#ifdef USE_PAPI
+                if (i!=-1) profile_start(EventSet);
+#endif
 
-                sg_zero_time();
-
-                //TODO: Rewrite serial kernel
                 switch (rc2[k].kernel) {
-                    case SG:
-                        if (rc2[k].op == OP_COPY) {
-                            //sg_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        } else {
-                            //sg_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        }
-                        break;
                     case SCATTER:
-                        if (rc2[k].op == OP_COPY) {
-                            //scatter_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        } else {
-                            //scatter_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        }
+                            scatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case GATHER:
-                        if (rc2[k].op == OP_COPY) {
-                            //gather_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        } else {
-                            //gather_accum_serial (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
-                        }
+                            gather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     default:
                         printf("Error: Unable to determine kernel\n");
                         break;
                 }
 
-                double time_ms = sg_get_time_ms();
-                if (i!=0) report_time(k, time_ms/1000., rc2[k], i);
+#ifdef USE_PAPI
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
+#endif
+                if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
+
             }
-        }
-        #endif // USE_SERIAL
+
     }
+        #endif // USE_SERIAL
 
     report_time2(rc2, nrc);
     
+   }//end for loop for each test
 
     // =======================================
     // Validation
