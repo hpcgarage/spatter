@@ -228,13 +228,17 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
     }
     
     int ngatherperblock = blockDim.x / V;
-    int gatherid = tid / ngatherperblock;
+    //if (tid == 1) printf("blockdim %d, V %d, ngatherperblock %d\n", blockDim.x, V, ngatherperblock);
+    int gatherid = tid / V;
+    //printf("tid: %d, gatherid: %d\n",tid, gatherid);
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
     double x;
 
     //for (int i = 0; i < wpb; i++) {
         x = src_loc[idx_shared[tid%V]];
+        //TODO - REMOVE THIS LINE
+        //src_loc[idx_shared[tid%V]] = 1337.;
         src_loc += delta;
     //}
 
@@ -345,6 +349,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
     }
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
+
 
     float time_ms = 0;
     cudaEventElapsedTime(&time_ms, start, stop);

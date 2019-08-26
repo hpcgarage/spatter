@@ -408,7 +408,7 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -1; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1) 
-                int global_work_size = rc2[k].generic_len / wpt;
+                int global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                 int local_work_size = rc2[k].local_work_size;
                 unsigned int grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned int block[arr_len] = {local_work_size};
@@ -544,6 +544,18 @@ int main(int argc, char **argv)
     }
 
     report_time2(rc2, nrc);
+
+    cudaMemcpy(source.host_ptr, source.dev_ptr_cuda, source.size, cudaMemcpyDeviceToHost);
+    int good = 0;
+    int bad  = 0;
+    for (int i = 0; i < source.len; i++) {
+        if (source.host_ptr[i] == 1337.) {
+            good++;
+        }else {
+            bad++;
+        }
+    }
+    //printf("\ngood: %d, bad: %d\n", good, bad);
     
 
     // =======================================
