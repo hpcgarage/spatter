@@ -96,7 +96,9 @@ void gather_smallbuf(
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *sl = source + delta * i; 
-           sgData_t *tl = target[t] + pat_len*(i%target_len);
+           //Pick which 8 elements are written to in a way that 
+	   //is hard to optimize out with a compiler
+	   sgData_t *tl = target[t] + pat_len*(i%target_len);
 #ifdef __CRAYC__
     #pragma concurrent
     #pragma vector always,unaligned
