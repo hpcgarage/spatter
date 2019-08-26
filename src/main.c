@@ -412,32 +412,9 @@ int main(int argc, char **argv)
                 int local_work_size = rc2[k].local_work_size;
                 unsigned int grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned int block[arr_len] = {local_work_size};
-                //cudaMemcpy(source.dev_ptr_cuda, pat_dev, rc2[k].pattern_len*sizeof(sgIdx_t), cudaMemcpyHostToDevice);
                 time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
                 if (i!= -1) rc2[k].time_ms[i] = time_ms;
             }
-
-            //TODO: Rewrite without index buffers
-            /*
-            global_work_size = si.len / vector_len;
-            long start = 0, end = 0; 
-            for (int i = 0; i <= R; i++) {
-                 
-                start = 0; end = 0;
-#define arr_len (1) 
-                unsigned int grid[arr_len]  = {global_work_size/local_work_size};
-                unsigned int block[arr_len] = {local_work_size};
-                
-                float time_ms = cuda_sg_wrapper(kernel, vector_len, 
-                        arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
-                       ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
-                cudaDeviceSynchronize();
-
-                double time_s = time_ms / 1000.;
-                if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
-
-            }
-            */
 
 
         }

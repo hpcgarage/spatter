@@ -212,6 +212,32 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 
 }
 
+//assume block size >= index buffer size
+//assume index buffer size divides block size
+template<int V>
+__global__ void scatter_block(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb)
+{
+    __shared__ int idx_shared[V];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    if (tid < V) {
+        idx_shared[tid] = idx[tid];
+    }
+    
+    int ngatherperblock = blockDim.x / V;
+    int gatherid = tid / V;
+
+    double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
+
+    //for (int i = 0; i < wpb; i++) {
+        src_loc[idx_shared[tid%V]] = idx_shared[tid%V];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+}
+
 //V2 = 8
 //assume block size >= index buffer size
 //assume index buffer size divides block size
@@ -228,18 +254,15 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
     }
     
     int ngatherperblock = blockDim.x / V;
-    //if (tid == 1) printf("blockdim %d, V %d, ngatherperblock %d\n", blockDim.x, V, ngatherperblock);
     int gatherid = tid / V;
-    //printf("tid: %d, gatherid: %d\n",tid, gatherid);
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
     double x;
 
     //for (int i = 0; i < wpb; i++) {
         x = src_loc[idx_shared[tid%V]];
-        //TODO - REMOVE THIS LINE
         //src_loc[idx_shared[tid%V]] = 1337.;
-        src_loc += delta;
+        //src_loc += delta;
     //}
 
     if (x==0.5) src[0] = x;
@@ -299,7 +322,8 @@ __global__ void gather_new(double* source,
 
 #define INSTANTIATE2(V)\
 template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
-template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);
+template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);\
+template __global__ void scatter_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);
 
 //INSTANTIATE2(1);
 //INSTANTIATE2(2);
@@ -336,16 +360,39 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
     cudaDeviceSynchronize();
     cudaEventRecord(start);
     // KERNEL 
-    if (pat_len == 8) {
-        gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
-    }else if (pat_len == 16) {
-    }else if (pat_len == 32) {
-        gather_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
-    }else if (pat_len == 64) {
-    }else if (pat_len ==256) {
-    }else if (pat_len == 512) {
-    } else {
-        printf("ERROR NOT SUPPORTED\n");
+    if (kernel == GATHER) {
+        if (pat_len == 8) {
+            gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 16) {
+            gather_block<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 32) {
+            gather_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 64) {
+            gather_block<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len ==256) {
+            gather_block<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 512) {
+            gather_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        } else {
+            printf("ERROR NOT SUPPORTED\n");
+        }
+    } else if (kernel == SCATTER) {
+        if (pat_len == 8) {
+            scatter_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 16) {
+            scatter_block<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 32) {
+            scatter_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 64) {
+            scatter_block<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len ==256) {
+            scatter_block<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 512) {
+            scatter_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        } else {
+            printf("ERROR NOT SUPPORTED\n");
+        }
+
     }
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
