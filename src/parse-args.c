@@ -55,7 +55,7 @@ void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqc";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs:";
 void parse_backend(int argc, char **argv);
 
 char jsonfilename[STRING_SIZE];

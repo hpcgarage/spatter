@@ -473,7 +473,10 @@ int main(int argc, char **argv)
                         }
                         break;
                     case SCATTER:
-                        if (rc2[k].op == OP_COPY) {
+                        if (rc2[k].random_seed > 1) {
+                            scatter_smallbuf_random(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                        }
+                        else if (rc2[k].op == OP_COPY) {
                             scatter_smallbuf(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                             // scatter_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                         } else {
@@ -481,7 +484,10 @@ int main(int argc, char **argv)
                         }
                         break;
                     case GATHER:
-                        if (rc2[k].deltas_len <= 1) {
+                        if (rc2[k].random_seed > 1) {
+                            gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                        }
+                        else if (rc2[k].deltas_len <= 1) {
                             gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         } else {
                             gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);

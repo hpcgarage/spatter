@@ -1,7 +1,9 @@
+#include "pcg_basic.h"
 #include "openmp_kernels.h"
 
 #include <stdio.h>
 #define SIMD 8
+
 
 void sg_omp(
             sgData_t* restrict target,   
@@ -130,6 +132,85 @@ void scatter_smallbuf(
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *tl = target + delta * i; 
+           sgData_t *sl = source[t] + pat_len*(i%source_len);
+#ifdef __CRAYC__
+    #pragma concurrent
+    #pragma vector always,unaligned
+#endif
+           for (size_t j = 0; j < pat_len; j++) {
+               tl[pat[j]] = sl[j];
+           }
+        }
+    }
+}
+
+void gather_smallbuf_random(
+        sgData_t** restrict target, 
+        sgData_t* const restrict source, 
+        sgIdx_t* const restrict pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t target_len, 
+        long initstate) {
+#ifdef __GNUC__
+    #pragma omp parallel 
+#else 
+    #pragma omp parallel shared(pat)
+#endif
+    {
+        int t = omp_get_thread_num();
+        pcg32_random_t rng;
+        pcg32_srandom_r(&rng, initstate, t);
+
+ 
+#ifdef __CRAYC__
+    #pragma concurrent 
+#endif
+#pragma omp for
+        for (size_t i = 0; i < n; i++) {
+            //long r = ()%n;
+           uint32_t r = pcg32_boundedrand_r(&rng, (uint32_t)n);
+           sgData_t *sl = source + delta * r; 
+           sgData_t *tl = target[t] + pat_len*(i%target_len);
+#ifdef __CRAYC__
+    #pragma concurrent
+    #pragma vector always,unaligned
+#endif
+           for (size_t j = 0; j < pat_len; j++) {
+               tl[j] = sl[pat[j]];
+           }
+        }
+    }
+}
+
+void scatter_smallbuf_random(
+        sgData_t* restrict target, 
+        sgData_t** const restrict source, 
+        sgIdx_t* const restrict pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t source_len,
+        long initstate) {
+    if (n > 1ll<<32) {printf("n too big for rng, exiting.\n"); exit(1);}
+#ifdef __GNUC__
+    #pragma omp parallel 
+#else 
+    #pragma omp parallel shared(pat)
+#endif
+    {
+        int t = omp_get_thread_num();
+        pcg32_random_t rng;
+        pcg32_srandom_r(&rng, initstate, t);
+ 
+#ifdef __CRAYC__
+    #pragma concurrent 
+#endif
+#pragma omp for
+        for (size_t i = 0; i < n; i++) {
+           uint32_t r = pcg32_boundedrand_r(&rng, (uint32_t)n);
+           sgData_t *tl = target + delta * r; 
            sgData_t *sl = source[t] + pat_len*(i%source_len);
 #ifdef __CRAYC__
     #pragma concurrent
