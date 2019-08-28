@@ -522,7 +522,9 @@ int main(int argc, char **argv)
 
     report_time2(rc2, nrc);
 
+#ifdef USE_CUDA
     cudaMemcpy(source.host_ptr, source.dev_ptr_cuda, source.size, cudaMemcpyDeviceToHost);
+#endif
     int good = 0;
     int bad  = 0;
     for (int i = 0; i < source.len; i++) {

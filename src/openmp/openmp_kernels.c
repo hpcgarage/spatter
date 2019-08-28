@@ -93,12 +93,56 @@ void gather_smallbuf(
 #ifdef __CRAYC__
     #pragma concurrent 
 #endif
+#ifdef __INTEL_COMPILER
+    #pragma ivdep
+#endif
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *sl = source + delta * i; 
            sgData_t *tl = target[t] + pat_len*(i%target_len);
-#ifdef __CRAYC__
+#ifdef __CRAYC__  
     #pragma concurrent
+#endif
+#if defined __CRAYC__ || defined __INTEL_COMPILER
+    #pragma vector always,unaligned
+#endif
+           for (size_t j = 0; j < pat_len; j++) {
+               tl[j] = sl[pat[j]];
+           }
+        }
+    }
+}
+
+void gather_smallbuf_rdm(
+        sgData_t** restrict target, 
+        sgData_t* const restrict source, 
+        sgIdx_t* const restrict pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t target_len) {
+#ifdef __GNUC__
+    #pragma omp parallel 
+#else 
+    #pragma omp parallel shared(pat)
+#endif
+    {
+        int t = omp_get_thread_num();
+ 
+#ifdef __CRAYC__
+    #pragma concurrent 
+#endif
+#ifdef __INTEL_COMPILER
+    #pragma ivdep
+#endif
+#pragma omp for
+        for (size_t i = 0; i < n; i++) {
+           sgData_t *sl = source + rand()%((n-1)*delta); 
+           sgData_t *tl = target[t] + pat_len*(i%target_len);
+#ifdef __CRAYC__  
+    #pragma concurrent
+#endif
+#if defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
 #endif
            for (size_t j = 0; j < pat_len; j++) {
