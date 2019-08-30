@@ -2,10 +2,12 @@
 #include <stdlib.h> //exit
 #include "sp_alloc.h"
 #include "parse-args.h" //error
+#include <stdio.h>
 
 long long total_mem_used = 0;
 void check_size(size_t size) {
     total_mem_used += size;
+    //printf("size: %zu\n", size);
     if (total_mem_used > SP_MAX_ALLOC) {
         error("Too much memory used.", ERROR);
     }

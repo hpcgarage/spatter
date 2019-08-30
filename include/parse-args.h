@@ -11,7 +11,7 @@
 
 
 #define STRING_SIZE 100
-#define MAX_PATTERN_LEN 64
+#define MAX_PATTERN_LEN 1024
 
 #include <sgtype.h>
 

@@ -422,7 +422,7 @@ struct run_config parse_runs(int argc, char **argv)
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
     if (rc.omp_threads > max_threads) {
-        error ("Too many OpenMP threads requested, using the max instead", ERROR);
+        error ("Too many OpenMP threads requested, using the max instead", WARN);
     }
     if (rc.omp_threads == 0) {
         error ("Number of OpenMP threads not specified, using the max", WARN);

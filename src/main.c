@@ -275,7 +275,10 @@ int main(int argc, char **argv)
             }
         }
         
+        //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
+        
         size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*rc2[i].delta) * sizeof(sgData_t);
+        //printf("max_pattern_val: %zu, source_size %zu\n", max_pattern_val, cur_source_size);
         if (cur_source_size > max_source_size) {
             max_source_size = cur_source_size;
         }
