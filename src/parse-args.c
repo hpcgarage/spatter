@@ -34,6 +34,7 @@ extern char device_string[STRING_SIZE];
 extern char kernel_file[STRING_SIZE];
 extern char kernel_name[STRING_SIZE];
 
+extern int cuda_dev;
 extern int validate_flag;
 extern int quiet_flag;
 extern int aggregate_flag;
@@ -617,6 +618,7 @@ void parse_backend(int argc, char **argv)
             error("Specified CUDA device not found or no device specified. Using device 0", 0);
             dev = 0;
         }
+        cuda_dev = dev;
         cudaSetDevice(dev);
     }
     #endif

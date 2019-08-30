@@ -1,5 +1,6 @@
 #include <string.h> //memset
 #include <stdlib.h> //exit
+#include <stdio.h>
 #include "sp_alloc.h"
 #include "parse-args.h" //error
 #include <stdio.h>
@@ -31,6 +32,7 @@ void *sp_malloc (size_t size, size_t count, size_t align) {
     check_size(size*count);
     void *ptr = aligned_alloc (align, size*count);
     if (!ptr) {
+        printf("Attepmted to allocate %zu bytes (%zu * %zu)\n", size*count, size , count);
         error("Error: failed to allocate memory", ERROR);
     }
     return ptr;

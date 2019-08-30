@@ -47,6 +47,7 @@ char device_string[STRING_SIZE];
 char kernel_file[STRING_SIZE];
 char kernel_name[STRING_SIZE];
 
+int cuda_dev = -1;
 int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
 int compress_flag = 0;
@@ -57,6 +58,7 @@ int papi_event_codes[PAPI_MAX_COUNTERS];
 long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[]; 
 #endif
+
 
 void print_papi_names() {
 #ifdef USE_PAPI
@@ -87,6 +89,13 @@ void print_system_info(){
 
     
     printf("Aggregate Results? %s\n", aggregate_flag ? "YES" : "NO"); 
+#ifdef USE_CUDA
+    if (backend == CUDA) {
+        struct cudaDeviceProp prop;
+        cudaGetDeviceProperties(&prop, cuda_dev);
+        printf("Device: %s\n", prop.name);
+    }
+#endif
     print_papi_names();
     
     printf("\n");
@@ -264,6 +273,7 @@ int main(int argc, char **argv)
     }
     size_t max_source_size = 0;
     size_t max_target_size = 0;
+    size_t max_pat_len = 0;
     size_t max_ptrs = 0;
     size_t max_nruns = 0;
     for (int i = 0; i < nrc; i++) {
@@ -290,6 +300,10 @@ int main(int argc, char **argv)
 
         if (rc2[i].omp_threads > max_ptrs) {
             max_ptrs = rc2[i].omp_threads;
+        }
+
+        if (rc2[i].pattern_len > max_pat_len) {
+            max_pat_len = rc2[i].pattern_len;
         }
     }
 
@@ -344,14 +358,12 @@ int main(int argc, char **argv)
     #endif
 
     #ifdef USE_CUDA
+    sgIdx_t* pat_dev;
     if (backend == CUDA) {
         //TODO: Rewrite to not take index buffers
-        //create_dev_buffers_cuda(&source, &target, &si, &ti);
+        create_dev_buffers_cuda(&source);
+        cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
-        /*
-        cudaMemcpy(si.dev_ptr_cuda, si.host_ptr, si.size, cudaMemcpyHostToDevice);
-        cudaMemcpy(ti.dev_ptr_cuda, ti.host_ptr, ti.size, cudaMemcpyHostToDevice);
-        */
         cudaDeviceSynchronize();
     }
     #endif
@@ -389,67 +401,27 @@ int main(int argc, char **argv)
         #ifdef USE_OPENCL
         if (backend == OPENCL) {
 
-            //TODO: Rewrite without index buffers
-            /*
-            global_work_size = si.len / vector_len;
-            assert(global_work_size > 0);
-            cl_ulong start = 0, end = 0; 
-            for (int i = 0; i <= R; i++) {
-                 
-                start = 0; end = 0;
-
-               cl_event e = 0; 
-
-                SET_4_KERNEL_ARGS(sgp, target.dev_ptr_opencl, source.dev_ptr_opencl,
-                        ti.dev_ptr_opencl, si.dev_ptr_opencl);
-
-                CALL_CL_GUARDED(clEnqueueNDRangeKernel, (queue, sgp, work_dim, NULL, 
-                           &global_work_size, &local_work_size, 
-                          0, NULL, &e)); 
-                clWaitForEvents(1, &e);
-
-                CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                        (e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL));
-                CALL_CL_GUARDED(clGetEventProfilingInfo, 
-                        (e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL));
-
-                cl_ulong time_ns = end - start;
-                double time_s = time_ns / 1000000000.;
-                if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
-
-            }
-            */
-
         }
         #endif // USE_OPENCL
 
         // Time CUDA Kernel 
         #ifdef USE_CUDA
+        int wpt = 1;
         if (backend == CUDA) {
-
-            //TODO: Rewrite without index buffers
-            /*
-            global_work_size = si.len / vector_len;
-            long start = 0, end = 0; 
-            for (int i = 0; i <= R; i++) {
-                 
-                start = 0; end = 0;
+            float time_ms = 2;
+            for (int i = -1; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1) 
+                int global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                int local_work_size = rc2[k].local_work_size;
                 unsigned int grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned int block[arr_len] = {local_work_size};
-                
-                float time_ms = cuda_sg_wrapper(kernel, vector_len, 
-                        arr_len, grid, block, target.dev_ptr_cuda, source.dev_ptr_cuda, 
-                       ti.dev_ptr_cuda, si.dev_ptr_cuda, shmem); 
-                cudaDeviceSynchronize();
-
-                double time_s = time_ms / 1000.;
-                if (i!=0) report_time(time_s, source.size, target.size, si.size, vector_len, rc);
-
+                time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
+                if (i!= -1) rc2[k].time_ms[i] = time_ms;
             }
-            */
+
 
         }
+
         #endif // USE_CUDA
 
 
@@ -558,6 +530,20 @@ int main(int argc, char **argv)
     }
 
     report_time2(rc2, nrc);
+
+#ifdef USE_CUDA
+    cudaMemcpy(source.host_ptr, source.dev_ptr_cuda, source.size, cudaMemcpyDeviceToHost);
+#endif
+    int good = 0;
+    int bad  = 0;
+    for (int i = 0; i < source.len; i++) {
+        if (source.host_ptr[i] == 1337.) {
+            good++;
+        }else {
+            bad++;
+        }
+    }
+    //printf("\ngood: %d, bad: %d\n", good, bad);
     
 
     // =======================================
