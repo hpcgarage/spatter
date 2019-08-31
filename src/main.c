@@ -707,6 +707,10 @@ void emit_configs(struct run_config *rc, int nconfigs)
         // Len
         printf("\'length\':%zu, ", rc[i].generic_len);
 
+        if (rc[i].random_seed > 0) {
+            printf("\'seed\':%zu, ", rc[i].random_seed);
+        }
+
         // Aggregate
         if (aggregate_flag) {
             printf("\'agg\':%zu, ", rc[i].nruns);
