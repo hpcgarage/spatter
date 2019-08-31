@@ -448,7 +448,7 @@ int main(int argc, char **argv)
                         }
                         break;
                     case SCATTER:
-                        if (rc2[k].random_seed > 1) {
+                        if (rc2[k].random_seed >= 1) {
                             scatter_smallbuf_random(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].op == OP_COPY) {
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
                         }
                         break;
                     case GATHER:
-                        if (rc2[k].random_seed > 1) {
+                        if (rc2[k].random_seed >= 1) {
                             gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].deltas_len <= 1) {

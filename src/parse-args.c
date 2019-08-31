@@ -476,6 +476,7 @@ void parse_backend(int argc, char **argv)
         {"aggregate",       optional_argument, NULL, 'a'},
         {"compress",        optional_argument, NULL, 'c'},
         {"papi",            required_argument, NULL, PAPI_ARG},
+        {"local-work-size", required_argument, NULL, '0'},
         {0, 0, 0, 0}
     };  
 

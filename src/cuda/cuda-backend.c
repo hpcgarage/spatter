@@ -9,7 +9,11 @@
 void create_dev_buffers_cuda(sgDataBuf* source)
 {
     cudaError_t ret;
-    ret = cudaMalloc((void **)&(source->dev_ptr_cuda), source->size); cudaSilent(ret);
+    ret = cudaMalloc((void **)&(source->dev_ptr_cuda), source->size);
+    if (ret != cudaSuccess) {
+        printf("Could not allocate gpu memory (%zu bytes): %s\n", source->size, cudaGetErrorName(ret));
+        exit(1);
+    }
 }
 
 int find_device_cuda(char *name) {

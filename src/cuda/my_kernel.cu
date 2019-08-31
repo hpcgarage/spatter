@@ -336,6 +336,7 @@ INSTANTIATE2(64);
 INSTANTIATE2(128);
 INSTANTIATE2(256);
 INSTANTIATE2(512);
+INSTANTIATE2(1024);
 
 extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
@@ -369,12 +370,16 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             gather_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len == 64) {
             gather_block<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 128) {
+            gather_block<128><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len ==256) {
             gather_block<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len == 512) {
             gather_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 1024) {
+            gather_block<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         } else {
-            printf("ERROR NOT SUPPORTED\n");
+            printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
         }
     } else if (kernel == SCATTER) {
         if (pat_len == 8) {
@@ -385,12 +390,16 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             scatter_block<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len == 64) {
             scatter_block<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 128) {
+            scatter_block<128><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len ==256) {
             scatter_block<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len == 512) {
             scatter_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        }else if (pat_len == 1024) {
+            scatter_block<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         } else {
-            printf("ERROR NOT SUPPORTED\n");
+            printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
         }
 
     }
