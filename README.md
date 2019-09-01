@@ -156,8 +156,8 @@ Custom:
     -p4,4,4,4,4
 ```
 
-#### Json
-You may specify multiple sets of benchmark configuration options to Spatter inside a Json file. Examples can be found in the `json/` directory. The file format is below. String values should be quoted while numeric values should not be. 
+#### JSON Inputs for Multiple Configurations
+You may specify multiple sets of benchmark configuration options to Spatter inside a JSON file and run them using `./spatter -pFILE=<jsonconfig>.json`. Examples can be found in the `json/` directory. The file format is below. String values should be quoted while numeric values should not be. 
 ```
 [
     {"long-option1":numeric, "long-option2":"string", ...},
@@ -166,6 +166,64 @@ You may specify multiple sets of benchmark configuration options to Spatter insi
 ]
 
 ```
+
+As an example of running with an example JSON configuration:
+```
+./spatter -pFILE=../json/standard.json
+
+Running Spatter version 0.0
+Compiler: IBM ver. 16.1.1.0
+Compiler Location: /usr/bin/xlc_r
+Backend: OPENMP
+Aggregate Results? YES
+
+Run Configurations
+[ {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
+  {'name':'UNIFORM:8:8:NR', 'kernel':'Gather', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
+  {'name':'UNIFORM:8:0:NR', 'kernel':'Gather', 'pattern':[0,0,0,0,0,0,0,0], 'delta':0, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
+  {'name':'MS1:8:0:0', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
+  {'name':'MS1:8:4:61', 'kernel':'Gather', 'pattern':[0,1,2,3,64,65,66,67], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
+  {'name':'MS1:8:4:128', 'kernel':'Gather', 'pattern':[0,1,2,3,131,132,133,134], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128} ]
+
+config  time(s)      bw(MB/s)
+0       0.00967      111040
+1       0            inf
+2       0            inf
+3       0            inf
+4       0            inf
+5       0            inf
+0       0.00967      111040
+1       0.08234      13039.8
+2       0            inf
+3       0            inf
+4       0            inf
+5       0            inf
+0       0.00967      111040
+1       0.08234      13039.8
+2       0.01245      86245.2
+3       0            inf
+4       0            inf
+5       0            inf
+0       0.00967      111040
+1       0.08234      13039.8
+2       0.01245      86245.2
+3       0.009044     118729
+4       0            inf
+5       0            inf
+0       0.00967      111040
+1       0.08234      13039.8
+2       0.01245      86245.2
+3       0.009044     118729
+4       0.09865      10884
+5       0            inf
+0       0.00967      111040
+1       0.08234      13039.8
+2       0.01245      86245.2
+3       0.009044     118729
+4       0.09865      10884
+5       0.08902      12061.2
+```
+
 For your convienience, we also provide a python script to help you create configurations quickly. If your json contains arrays, you can pass it into the python script `python/generate_json.py` and it will expand the arrays into multiple configs, each with a single value from the array. Given that you probably don't want your pattern arguments to be expanded like this, they should be specified as python tuples. An example is below. 
 
 ```
