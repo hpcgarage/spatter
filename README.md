@@ -185,43 +185,13 @@ Run Configurations
   {'name':'MS1:8:4:61', 'kernel':'Gather', 'pattern':[0,1,2,3,64,65,66,67], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128},
   {'name':'MS1:8:4:128', 'kernel':'Gather', 'pattern':[0,1,2,3,131,132,133,134], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1, 'threads':128} ]
 
-config  time(s)      bw(MB/s)
-0       0.00967      111040
-1       0            inf
-2       0            inf
-3       0            inf
-4       0            inf
-5       0            inf
-0       0.00967      111040
-1       0.08234      13039.8
-2       0            inf
-3       0            inf
-4       0            inf
-5       0            inf
-0       0.00967      111040
-1       0.08234      13039.8
-2       0.01245      86245.2
-3       0            inf
-4       0            inf
-5       0            inf
-0       0.00967      111040
-1       0.08234      13039.8
-2       0.01245      86245.2
-3       0.009044     118729
-4       0            inf
-5       0            inf
-0       0.00967      111040
-1       0.08234      13039.8
-2       0.01245      86245.2
-3       0.009044     118729
-4       0.09865      10884
-5       0            inf
-0       0.00967      111040
-1       0.08234      13039.8
-2       0.01245      86245.2
-3       0.009044     118729
-4       0.09865      10884
-5       0.08902      12061.2
+config  time(s)      bw(MB/s)    
+0       0.01083      99172       
+1       0.07331      14646.7     
+2       0.01216      88318.9     
+3       0.01075      99891.4     
+4       0.1013       10604       
+5       0.08925      12031.3
 ```
 
 For your convienience, we also provide a python script to help you create configurations quickly. If your json contains arrays, you can pass it into the python script `python/generate_json.py` and it will expand the arrays into multiple configs, each with a single value from the array. Given that you probably don't want your pattern arguments to be expanded like this, they should be specified as python tuples. An example is below. 
