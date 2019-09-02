@@ -415,7 +415,12 @@ int main(int argc, char **argv)
                 int local_work_size = rc2[k].local_work_size;
                 unsigned int grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned int block[arr_len] = {local_work_size};
-                time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
+                if (rc2[k].random_seed == 0) {
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
+                } else {
+                    time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                }
+
                 if (i!= -1) rc2[k].time_ms[i] = time_ms;
             }
 

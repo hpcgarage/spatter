@@ -2,6 +2,8 @@
 #include "cuda_kernels.h"
 #include "../include/parse-args.h"
 
+#include <curand_kernel.h>
+
 #define typedef uint unsigned int
 
 //__device__ int dummy = 0; 
@@ -238,6 +240,40 @@ __global__ void scatter_block(double *src, sgIdx_t* idx, int idx_len, size_t del
     //}
 }
 
+//assume block size >= index buffer size
+//assume index buffer size divides block size
+template<int V>
+__global__ void scatter_block_random(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n)
+{
+    __shared__ int idx_shared[V];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+    int ngatherperblock = blockDim.x / V;
+    int gatherid = tid / V;
+
+    unsigned long long sequence = blockIdx.x; //all thread blocks can use same sequence
+    unsigned long long offset = gatherid; 
+    curandState_t state; 
+    curand_init(seed, sequence, offset, &state);//everyone with same gather id should get same src_loc
+
+    int random_gatherid = (int)(n * curand_uniform(&state));
+
+
+    if (tid < V) {
+        idx_shared[tid] = idx[tid];
+    }
+    
+
+    double *src_loc = src + (bid*ngatherperblock+random_gatherid)*delta;
+
+    //for (int i = 0; i < wpb; i++) {
+        src_loc[idx_shared[tid%V]] = idx_shared[tid%V];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+}
+
 //V2 = 8
 //assume block size >= index buffer size
 //assume index buffer size divides block size
@@ -257,6 +293,41 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
     int gatherid = tid / V;
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
+    double x;
+
+    //for (int i = 0; i < wpb; i++) {
+        x = src_loc[idx_shared[tid%V]];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+
+    if (x==0.5) src[0] = x;
+
+}
+
+template<int V>
+__global__ void gather_block_random(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n)
+{
+
+    __shared__ int idx_shared[V];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+    int ngatherperblock = blockDim.x / V;
+    int gatherid = tid / V;
+
+    unsigned long long sequence = blockIdx.x; //all thread blocks can use same sequence
+    unsigned long long offset = gatherid; 
+    curandState_t state; 
+    curand_init(seed, sequence, offset, &state);//everyone with same gather id should get same src_loc
+    int random_gatherid = (int)(n * curand_uniform(&state));
+
+
+    if (tid < V) {
+        idx_shared[tid] = idx[tid];
+    }
+
+    double *src_loc = src + (bid*ngatherperblock+random_gatherid)*delta;
     double x;
 
     //for (int i = 0; i < wpb; i++) {
@@ -323,7 +394,9 @@ __global__ void gather_new(double* source,
 #define INSTANTIATE2(V)\
 template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
 template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);\
-template __global__ void scatter_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);
+template __global__ void scatter_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb); \
+template __global__ void gather_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n); \
+template __global__ void scatter_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n);
 
 //INSTANTIATE2(1);
 //INSTANTIATE2(2);
@@ -398,6 +471,82 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             scatter_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
         }else if (pat_len == 1024) {
             scatter_block<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt);
+        } else {
+            printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
+        }
+
+    }
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+
+    float time_ms = 0;
+    cudaEventElapsedTime(&time_ms, start, stop);
+    return time_ms;
+
+
+}
+
+extern "C" float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
+        enum sg_kernel kernel,
+        double *source, 
+        sgIdx_t* pat_dev, 
+        sgIdx_t* pat, 
+        size_t pat_len, 
+        size_t delta, 
+        size_t n, 
+        size_t wrap,
+        int wpt, size_t seed)
+{
+    dim3 grid_dim, block_dim;
+    cudaEvent_t start, stop;
+
+    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
+    cudaMemcpy(pat_dev, pat, sizeof(sgIdx_t)*pat_len, cudaMemcpyHostToDevice); 
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaDeviceSynchronize();
+    cudaEventRecord(start);
+    // KERNEL 
+    if (kernel == GATHER) {
+        if (pat_len == 8) {
+            gather_block_random<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 16) {
+            gather_block_random<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 32) {
+            gather_block_random<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 64) {
+            gather_block_random<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 128) {
+            gather_block_random<128><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len ==256) {
+            gather_block_random<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 512) {
+            gather_block_random<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 1024) {
+            gather_block_random<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        } else {
+            printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+        }
+    } else if (kernel == SCATTER) {
+        if (pat_len == 8) {
+            scatter_block_random<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 16) {
+            scatter_block_random<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 32) {
+            scatter_block_random<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 64) {
+            scatter_block_random<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 128) {
+            scatter_block_random<128><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len ==256) {
+            scatter_block_random<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 512) {
+            scatter_block_random<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len == 1024) {
+            scatter_block_random<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
         } else {
             printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
         }
