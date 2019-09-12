@@ -173,12 +173,17 @@ void scatter_smallbuf(
 #ifdef __CRAYC__
     #pragma concurrent 
 #endif
+#ifdef __INTEL_COMPILER
+    #pragma ivdep
+#endif
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *tl = target + delta * i; 
            sgData_t *sl = source[t] + pat_len*(i%source_len);
 #ifdef __CRAYC__
     #pragma concurrent
+#endif
+#if defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
 #endif
            for (size_t j = 0; j < pat_len; j++) {

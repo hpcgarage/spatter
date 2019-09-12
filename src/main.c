@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <math.h>
 //#include "ocl-kernel-gen.h"
 #include "parse-args.h"
 #include "sgtype.h"
@@ -111,11 +112,19 @@ void print_header(){
     }
 #endif
     printf("\n");
+    
+}
+
+int compare (const void * a, const void * b)
+{
+    if (*(double*)a > *(double*)b) return 1;
+    else if (*(double*)a < *(double*)b) return -1;
+    else return 0;
 }
 
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
-void report_time(int ii, double time,  struct run_config rc, int idx){
+double report_time(int ii, double time,  struct run_config rc, int idx){
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
     
@@ -128,9 +137,13 @@ void report_time(int ii, double time,  struct run_config rc, int idx){
     }
 #endif
     printf("\n");
+    return actual_bandwidth;
 }
 
+
 void report_time2(struct run_config* rc, int nrc) {
+    double *bw = (double*)malloc(sizeof(double)*nrc);
+    assert(bw);
     for (int k = 0; k < nrc; k++) {
         if (aggregate_flag) {
             double min_time_ms = rc[k].time_ms[0];
@@ -141,7 +154,7 @@ void report_time2(struct run_config* rc, int nrc) {
                     min_idx = i;
                 }
             }
-            report_time(k, min_time_ms/1000., rc[k], min_idx);
+            bw[k] = report_time(k, min_time_ms/1000., rc[k], min_idx);
         }
         else {
             for (int i = 0; i < rc[k].nruns; i++) {
@@ -149,6 +162,56 @@ void report_time2(struct run_config* rc, int nrc) {
             }
         }
     }
+    if (aggregate_flag) {
+        double min = bw[0];
+        double max = bw[0];
+        double hmean = 0;
+        double stddev = 0;
+        double first, med, third;
+
+        qsort(bw, nrc, sizeof(double), compare);
+
+        for (int i = 0; i < nrc; i++) {
+            if (bw[i] < min) {
+                min = bw[i];
+            }
+            if (bw[i] > max) {
+                max = bw[i];
+            }
+        }
+
+        first = bw[nrc/4];
+        med = bw[nrc/2];
+        third = bw[3*nrc/4];
+
+        
+
+        // Harmonic mean
+        for (int i = 0; i < nrc; i++) {
+            hmean += 1./bw[i];
+        }
+        hmean = 1./hmean * nrc;
+/*
+        double sig_2 = 0;
+        for (int i = 0; i < nrc; i++) {
+            sig_2 += 1./bw[i];
+        }
+
+        for (int i = 0; i < nrc; i++) {
+            stddev += pow(bw[i] - hmean, 2);
+        }
+        stddev = sqrt((1./nrc)*stddev);
+        */
+
+        printf("%-12s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
+        printf("%-12.6g\t%-12.6g\t%-12.6g\t%-12.6g\t%-12.6g\n", min, first, med, third, max);
+        printf("H.Mean\n");
+        printf("%-12.6g\n", hmean);
+        /*
+        printf("%.3lf\t%.3lf\n", hmean, stddev);
+        */
+    }
+    free(bw);
 
 }
 
