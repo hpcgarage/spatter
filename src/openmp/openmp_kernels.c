@@ -91,6 +91,9 @@ void gather_smallbuf(
 #endif
     {
         int t = omp_get_thread_num();
+
+//Start a Region of Interest for use with ARMIE
+#define __START_TRACE() {asm volatile (".inst 0x2520e020");}
  
 #ifdef __CRAYC__
     #pragma concurrent 
@@ -108,10 +111,14 @@ void gather_smallbuf(
 #if defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
 #endif
+	#pragma omp simd simdlen(8)
            for (size_t j = 0; j < pat_len; j++) {
                tl[j] = sl[pat[j]];
            }
         }
+
+//End a Region of Interest
+#define __STOP_TRACE() {asm volatile (".inst 0x2520e040");}
     }
 }
 
@@ -168,8 +175,10 @@ void scatter_smallbuf(
     #pragma omp parallel shared(pat)
 #endif
     {
-        int t = omp_get_thread_num();
- 
+        int t = omp_get_thread_num(); 
+
+#define __START_TRACE() {asm volatile (".inst 0x2520e020");} 
+
 #ifdef __CRAYC__
     #pragma concurrent 
 #endif
@@ -186,10 +195,13 @@ void scatter_smallbuf(
 #if defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
 #endif
+	//Force the compiler to try and vectorize with simdlen 8
+	#pragma omp simd simdlen(8)
            for (size_t j = 0; j < pat_len; j++) {
                tl[pat[j]] = sl[j];
            }
         }
+#define __STOP_TRACE() {asm volatile (".inst 0x2520e040");}
     }
 }
 
