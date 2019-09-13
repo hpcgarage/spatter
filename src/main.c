@@ -184,29 +184,46 @@ void report_time2(struct run_config* rc, int nrc) {
         med = bw[nrc/2];
         third = bw[3*nrc/4];
 
-        
-
         // Harmonic mean
         for (int i = 0; i < nrc; i++) {
             hmean += 1./bw[i];
         }
         hmean = 1./hmean * nrc;
-/*
-        double sig_2 = 0;
-        for (int i = 0; i < nrc; i++) {
-            sig_2 += 1./bw[i];
-        }
 
+        // Harmonic Standard Error 
+        // Reference: The Standard Errors of the Geometric and 
+        // Harmonic Means and Their Application to Index Numbers
+        // Author: Nilan Norris
+        // URL: https://www.jstor.org/stable/2235723
+        double E1_x = 0;
+        for (int i = 0; i < nrc; i++) {
+            E1_x += 1./bw[i];
+        }
+        E1_x = E1_x / nrc;
+
+        double theta_22 = pow(1./E1_x, 2);
+
+        double sig_1x = 0;
+        for (int i = 0; i < nrc; i++) {
+            sig_1x += pow(1./bw[i] - E1_x,2);
+        }
+        sig_1x = sqrt(sig_1x / nrc);
+
+        double hstderr = theta_22 * sig_1x / sqrt(nrc);
+
+
+
+        /*
         for (int i = 0; i < nrc; i++) {
             stddev += pow(bw[i] - hmean, 2);
         }
         stddev = sqrt((1./nrc)*stddev);
         */
 
-        printf("%-12s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
-        printf("%-12.6g\t%-12.6g\t%-12.6g\t%-12.6g\t%-12.6g\n", min, first, med, third, max);
-        printf("H.Mean\n");
-        printf("%-12.6g\n", hmean);
+        printf("\n%-12s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
+        printf("%-12.6g %-12.6g %-12.6g %-12.6g %-12.6g\n", min, first, med, third, max);
+        printf("%-12s %-12s\n", "H.Mean", "H.StdErr");
+        printf("%-12.6g %-12.6g\n", hmean, hstderr);
         /*
         printf("%.3lf\t%.3lf\n", hmean, stddev);
         */
