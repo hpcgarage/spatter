@@ -232,6 +232,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"shared-mem",      required_argument, NULL, 'm'},
         {"name",            required_argument, NULL, 'n'},
         {"papi",            required_argument, NULL, 0},
+        {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
