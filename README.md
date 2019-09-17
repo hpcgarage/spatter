@@ -167,38 +167,30 @@ You may specify multiple sets of benchmark configuration options to Spatter insi
 
 ```
 
-As an example of running with an example JSON configuration:
+As an example of running with an example JSON configuration. Note that results are provided on a per-pattern basis and 
 ```
-./spatter -pFILE=../json/standard.json
+./spatter -pFILE=../json/ustride_small.json                                                  
 
 Running Spatter version 0.0
 Compiler: Clang ver. 7.1.0
-Compiler Location: /sw/wombat/ARM_Compiler/19.2/opt/arm/arm-hpc-compiler-19.2_Generic-AArch64_RHEL-7_aarch64-1/bin/armclang
+Compiler Location: /sw/wombat/ARM_Compiler/19.2/opt/arm/arm-hpc-compiler-19.2_Generic-AArch64_RHEL-7_aarch64-1/bin/armclang         
 Backend: OPENMP
 Aggregate Results? YES
 
 Run Configurations
-[ {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':112},
-  {'name':'UNIFORM:8:8:NR', 'kernel':'Gather', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':16777216, 'agg':10, 'wrap':1,
-'threads':112},
-  {'name':'UNIFORM:8:0:NR', 'kernel':'Gather', 'pattern':[0,0,0,0,0,0,0,0], 'delta':0, 'length':16777216, 'agg':10, 'wrap':1, 'threads':112},
-  {'name':'MS1:8:0:0', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':16777216, 'agg':10, 'wrap':1, 'threads':112},
-  {'name':'MS1:8:4:61', 'kernel':'Gather', 'pattern':[0,1,2,3,64,65,66,67], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1, 'threads':112},
-  {'name':'MS1:8:4:128', 'kernel':'Gather', 'pattern':[0,1,2,3,131,132,133,134], 'delta':128, 'length':16777216, 'agg':10, 'wrap':1,
-'threads':112} ]
+[ {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':2500, 'agg':10, 'wrap':1, 'threads':112},
+  {'name':'UNIFORM:8:2:NR', 'kernel':'Gather', 'pattern':[0,2,4,6,8,10,12,14], 'delta':16, 'length':1250, 'agg':10, 'wrap':1, 'threads':112},
+  {'name':'UNIFORM:8:4:NR', 'kernel':'Gather', 'pattern':[0,4,8,12,16,20,24,28], 'delta':32, 'length':625, 'agg':10, 'wrap':1, 'threads':112} ]
 
 config  time(s)      bw(MB/s)
-0       0.01258      85342.6
-1       0.0919       11683.2
-2       0.008597     124897
-3       0.01306      82205.1
-4       0.1399       7676.8
-5       0.05946      18057.4
+0       0.0008033    199.168
+1       0.0007809    102.445
+2       0.0007738    51.6945
 
 Min          25%          Med          75%          Max
-7676.8       11683.2      82205.1      85342.6      124897
+51.6945      51.6945      102.445      199.168      199.168
 H.Mean       H.StdErr
-19793.9      7270.55
+87.9079      26.5821
 ```
 
 For your convienience, we also provide a python script to help you create configurations quickly. If your json contains arrays, you can pass it into the python script `python/generate_json.py` and it will expand the arrays into multiple configs, each with a single value from the array. Given that you probably don't want your pattern arguments to be expanded like this, they should be specified as python tuples. An example is below. 
