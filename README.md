@@ -167,7 +167,7 @@ You may specify multiple sets of benchmark configuration options to Spatter insi
 
 ```
 
-As an example of running with an example JSON configuration. Note that results are provided on a per-pattern basis and 
+As an example of running with an example JSON configuration. Note that results are provided on a per-pattern basis and summary results are provided for all patterns. This is useful for summarizing pattern results that represent an application kernel. 
 ```
 ./spatter -pFILE=../json/ustride_small.json                                                  
 
