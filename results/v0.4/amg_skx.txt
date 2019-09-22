@@ -1,0 +1,19 @@
+
+Running Spatter version 0.0
+Compiler: Cray ver. 9.0
+Compiler Location: /opt/cray/pe/craype/2.6.1.7/bin/cc
+Backend: OPENMP
+Aggregate Results? YES
+
+Run Configurations
+[ {'name':'CUSTOM', 'kernel':'Gather', 'pattern':[1333,0,1,2,36,37,38,72,73,74,1296,1297,1298,1332,1334,1368], 'delta':1, 'length':1454647, 'agg':10, 'wrap':1, 'threads':24},
+  {'name':'CUSTOM', 'kernel':'Gather', 'pattern':[1333,0,1,36,37,72,73,1296,1297,1332,1368,1369,2592,2593,2628,2629], 'delta':1, 'length':1454647, 'agg':10, 'wrap':1, 'threads':24} ]
+
+config  time(s)      bw(MB/s)    
+0       0.000584     318827      
+1       0.0005512    337769      
+
+Min          25%          Med          75%          Max         
+318827       318827       337769       337769       337769      
+H.Mean       H.StdErr    
+328025       6691.52     
