@@ -220,7 +220,7 @@ void report_time2(struct run_config* rc, int nrc) {
         stddev = sqrt((1./nrc)*stddev);
         */
 
-        printf("\n%-12s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
+        printf("\n%-11s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
         printf("%-12.6g %-12.6g %-12.6g %-12.6g %-12.6g\n", min, first, med, third, max);
         printf("%-12s %-12s\n", "H.Mean", "H.StdErr");
         printf("%-12.6g %-12.6g\n", hmean, hstderr);
@@ -491,10 +491,10 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -1; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1) 
-                int global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
-                int local_work_size = rc2[k].local_work_size;
-                unsigned int grid[arr_len]  = {global_work_size/local_work_size};
-                unsigned int block[arr_len] = {local_work_size};
+                unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                unsigned long local_work_size = rc2[k].local_work_size;
+                unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
                     time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
                 } else {

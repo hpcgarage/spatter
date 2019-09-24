@@ -8,11 +8,11 @@ extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int
 
 extern float cuda_sg_wrapper(enum sg_kernel kernel, 
                        size_t vector_len, 
-                       uint dim, uint* grid, uint* block, 
+                       long unsigned dim, long unsigned* grid, long unsigned* block, 
                        double* target, double *source, 
                        long* ti, long* si, unsigned int shmem);
 
-extern float cuda_block_wrapper(uint dim, uint* grid, uint* block,
+extern float cuda_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -21,7 +21,7 @@ extern float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         size_t delta,
         size_t n,
         size_t wrap, int wpt);
-extern float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
+extern float cuda_block_random_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -30,7 +30,7 @@ extern float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
         size_t delta,
         size_t n,
         size_t wrap, int wpt, size_t seed);
-extern float cuda_new_wrapper(uint dim, uint* grid, uint* block,
+extern float cuda_new_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,

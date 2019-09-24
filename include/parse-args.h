@@ -10,7 +10,7 @@
 #define ERROR 1
 
 
-#define STRING_SIZE 100
+#define STRING_SIZE 10000
 #define MAX_PATTERN_LEN 1024
 
 #include <sgtype.h>

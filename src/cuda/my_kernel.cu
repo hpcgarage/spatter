@@ -4,7 +4,7 @@
 
 #include <curand_kernel.h>
 
-#define typedef uint unsigned int
+#define typedef uint unsigned long
 
 //__device__ int dummy = 0; 
 

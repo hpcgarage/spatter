@@ -84,9 +84,9 @@ struct run_config parse_json_config(json_value *value){
     char **argv;
     int argc;
     argc = value->u.object.length + 1;
-    argv = (char **)sp_malloc(sizeof(char*), argc, ALIGN_CACHE);
+    argv = (char **)sp_malloc(sizeof(char*), argc*2, ALIGN_CACHE);
     for (int i = 0; i < argc; i++) {
-        argv[i] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
+        argv[i] = (char *)sp_malloc(1, STRING_SIZE*2, ALIGN_CACHE);
     }
 
     //json_value *values = value->u.object.values;
@@ -112,7 +112,6 @@ struct run_config parse_json_config(json_value *value){
                }
 
            }
-
         } else {
             error ("Unexpected json type", ERROR);
         }
@@ -160,7 +159,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         }
 
         file_size = filestatus.st_size;
-        file_contents = (char *)sp_malloc(file_size, 1, ALIGN_CACHE);
+        file_contents = (char *)sp_malloc(file_size, 1+1, ALIGN_CACHE);
         fp = fopen(jsonfilename, "rt");
         if (!fp) 
             error ("Unable to open Json file", ERROR);
@@ -477,7 +476,7 @@ void parse_backend(int argc, char **argv)
         {"aggregate",       optional_argument, NULL, 'a'},
         {"compress",        optional_argument, NULL, 'c'},
         {"papi",            required_argument, NULL, PAPI_ARG},
-        {"local-work-size", required_argument, NULL, '0'},
+        {"local-work-size", required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };  
 
@@ -816,6 +815,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             }
         }
         rc->pattern_len = read;
+
     }
 
     if (rc->pattern_len == 0) {
