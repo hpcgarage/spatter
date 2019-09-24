@@ -1,0 +1,1 @@
+[{"pattern": "UNIFORM:8:1:NR", "kernel": "Gather", "count": 250}, {"pattern": "UNIFORM:8:2:NR", "kernel": "Gather", "count": 125}, {"pattern": "UNIFORM:8:4:NR", "kernel": "Gather", "count": 62}]
