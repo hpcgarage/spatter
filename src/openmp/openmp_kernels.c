@@ -111,7 +111,9 @@ void gather_smallbuf(
 #if defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
 #endif
+#ifdef __arm__
 	#pragma omp simd simdlen(8)
+#endif
            for (size_t j = 0; j < pat_len; j++) {
                tl[j] = sl[pat[j]];
            }
@@ -196,7 +198,9 @@ void scatter_smallbuf(
     #pragma vector always,unaligned
 #endif
 	//Force the compiler to try and vectorize with simdlen 8
+#ifdef __arm__
 	#pragma omp simd simdlen(8)
+#endif
            for (size_t j = 0; j < pat_len; j++) {
                tl[pat[j]] = sl[j];
            }
