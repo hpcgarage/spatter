@@ -2,7 +2,7 @@
 # Execute from the main directory using ./configure/configure_<my_platform>
 
 BACKEND=serial
-COMPILER=gnu
+COMPILER=cce
 BUILD_DIR=build_${BACKEND}_${COMPILER}
 
 #Create directory if needed - clean CMake cached files
