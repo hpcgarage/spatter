@@ -10,15 +10,26 @@ box=$1
 arch=$2
 dir=vector_scalar/${box}_${arch}
 
+if [ $arch = "tx2" ];
+then
+    . ~/.arm_cmake
+fi
+
 mkdir -p $dir
 
 echo "Files will be written to $dir/"
 
-cp configure/configure_omp_cce .
-cp configure/configure_serial_cce .
+if [ $arch = "tx2" ];
+then
+    cp configure/configure_omp_cce_arm configure_omp
+    cp configure/configure_serial_cce_arm configure_serial
+else
+    cp configure/configure_omp_cce configure_omp
+    cp configure/configure_serial_cce configure_serial
+fi
 
-./configure_omp_cce
-./configure_serial_cce
+./configure_omp
+./configure_serial
 
 cd build_omp_cce
 make
