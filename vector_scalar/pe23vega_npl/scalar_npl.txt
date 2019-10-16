@@ -1,0 +1,46 @@
+
+Running Spatter version 0.0
+Compiler: Cray ver. 9.0
+Compiler Location: /opt/cray/pe/craype/2.6.2.8/bin/cc
+Backend: Aggregate Results? YES
+
+Run Configurations
+[ {'name':'UNIFORM:8:1:NR', 'kernel':'Scatter', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':250000000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:2:NR', 'kernel':'Scatter', 'pattern':[0,2,4,6,8,10,12,14], 'delta':16, 'length':125000000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:4:NR', 'kernel':'Scatter', 'pattern':[0,4,8,12,16,20,24,28], 'delta':32, 'length':62500000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:8:NR', 'kernel':'Scatter', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':31250000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:16:NR', 'kernel':'Scatter', 'pattern':[0,16,32,48,64,80,96,112], 'delta':128, 'length':15625000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:32:NR', 'kernel':'Scatter', 'pattern':[0,32,64,96,128,160,192,224], 'delta':256, 'length':7812500, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:64:NR', 'kernel':'Scatter', 'pattern':[0,64,128,192,256,320,384,448], 'delta':512, 'length':3906250, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:128:NR', 'kernel':'Scatter', 'pattern':[0,128,256,384,512,640,768,896], 'delta':1024, 'length':1953125, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:1:NR', 'kernel':'Gather', 'pattern':[0,1,2,3,4,5,6,7], 'delta':8, 'length':250000000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:2:NR', 'kernel':'Gather', 'pattern':[0,2,4,6,8,10,12,14], 'delta':16, 'length':125000000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:4:NR', 'kernel':'Gather', 'pattern':[0,4,8,12,16,20,24,28], 'delta':32, 'length':62500000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:8:NR', 'kernel':'Gather', 'pattern':[0,8,16,24,32,40,48,56], 'delta':64, 'length':31250000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:16:NR', 'kernel':'Gather', 'pattern':[0,16,32,48,64,80,96,112], 'delta':128, 'length':15625000, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:32:NR', 'kernel':'Gather', 'pattern':[0,32,64,96,128,160,192,224], 'delta':256, 'length':7812500, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:64:NR', 'kernel':'Gather', 'pattern':[0,64,128,192,256,320,384,448], 'delta':512, 'length':3906250, 'agg':10, 'wrap':1, },
+  {'name':'UNIFORM:8:128:NR', 'kernel':'Gather', 'pattern':[0,128,256,384,512,640,768,896], 'delta':1024, 'length':1953125, 'agg':10, 'wrap':1, } ]
+
+config  time(s)      bw(MB/s)    
+0       2.425        6598.56     
+1       2.12         3772.94     
+2       1.706        2344.01     
+3       1.753        1140.73     
+4       1.118        894.073     
+5       0.6622       755.049     
+6       0.3335       749.604     
+7       0.1673       747.21      
+8       1.711        9351.36     
+9       1.391        5750.43     
+10      1.161        3444.32     
+11      1.19         1680.41     
+12      0.8176       1223.08     
+13      0.4033       1239.68     
+14      0.2112       1183.47     
+15      0.1099       1137.63     
+
+Min         25%          Med          75%          Max         
+747.21       1137.63      1239.68      3772.94      9351.36     
+H.Mean       H.StdErr    
+1409.74      209.86      
