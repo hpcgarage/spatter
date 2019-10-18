@@ -39,6 +39,8 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
+const char* SPATTER_VERSION="0.4";
+
 //SGBench specific enums
 enum sg_backend backend = INVALID_BACKEND;
 
@@ -78,7 +80,7 @@ void print_papi_names() {
 }
 void print_system_info(){
 
-    printf("\nRunning Spatter version 0.0\n");
+    printf("\nRunning Spatter version %s\n",SPATTER_VERSION);
     printf("Compiler: %s ver. %s\n", xstr(SPAT_C_NAME), xstr(SPAT_C_VER));
     printf("Compiler Location: %s\n", xstr(SPAT_C));
     //printf("Contributors: Patrick Lavin, Jeff Young, Aaron Vose\n");
