@@ -1,0 +1,4 @@
+[
+    {"pattern":"UNIFORM:256:1:NR", "count":4194304, "kernel":"Gather", "local-work-size":1024},
+    {"pattern":"UNIFORM:256:1:NR", "count":4194304, "kernel":"Scatter", "local-work-size":1024}
+]
