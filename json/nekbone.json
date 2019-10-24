@@ -1,4 +1,0 @@
-[
-    {"kernel":"GATHER", "pattern":"UNIFORM:16:12", "delta":[195,191,187,195,191,289], "count":2948940},
-    {"kernel":"GATHER", "pattern":"UNIFORM:16:12", "delta":[195,195,191,191,187,289], "count":2948940}
-]
