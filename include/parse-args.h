@@ -1,6 +1,6 @@
 /** @file parse-args.h
  *  @author Patrick Lavin
- *  @brief Provides a function to read CLI 
+ *  @brief Provides a function to read CLI
  */
 
 #ifndef PARSE_ARGS_H
@@ -29,9 +29,9 @@ enum sg_backend
 enum sg_kernel
 {
     INVALID_KERNEL=0,
-    SCATTER, 
-    GATHER, 
-    SG,    
+    SCATTER,
+    GATHER,
+    SG,
 };
 
 enum sg_op
@@ -46,6 +46,7 @@ enum idx_type
 {
     UNIFORM,
     MS1,
+    LAPLACIAN,
     CUSTOM,
     CONFIG_FILE,
     INVALID_IDX
@@ -57,7 +58,7 @@ enum state
     NOTRUN,
     INVALID_STATE,
     VALID_STATE
-}; 
+};
 */
 
 struct run_config
@@ -98,10 +99,10 @@ struct backend_config
     char device_string[STRING_SIZE];
     char kernel_file[STRING_SIZE];
     char kernel_name[STRING_SIZE];
-    
+
 };
 
-/** @brief Read command-line arguments and populate global variables. 
+/** @brief Read command-line arguments and populate global variables.
  *  @param argc Value passed to main
  *  @param argv Value passed to main
  */
@@ -109,4 +110,4 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
 struct run_config parse_runs(int arrr, char **argv);
 void error (char* what, int code);
 void print_run_config(struct run_config rc);
-#endif 
+#endif
