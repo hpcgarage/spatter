@@ -10,7 +10,7 @@
 #include "sp_alloc.h"
 #include "json.h"
 
-#ifdef USE_CUDA 
+#ifdef USE_CUDA
 #include "../src/cuda/cuda-backend.h"
 #endif
 
@@ -80,7 +80,7 @@ struct run_config parse_json_config(json_value *value){
     if (value->type != json_object) {
         error ("parse_json_config should only be passed json_objects", ERROR);
     }
-    
+
     char **argv;
     int argc;
     argc = value->u.object.length + 1;
@@ -92,7 +92,7 @@ struct run_config parse_json_config(json_value *value){
     //json_value *values = value->u.object.values;
 
     for (int i = 0; i < argc-1; i++) {
-        
+
         json_object_entry cur = value->u.object.values[i];
 
         if (cur.value->type == json_string) {
@@ -120,7 +120,7 @@ struct run_config parse_json_config(json_value *value){
     safestrcopy(argv[0], argv[1]);
 
     rc = parse_runs(argc, argv);
-    
+
     for (int i = 0; i < argc; i++) {
         free(argv[i]);
     }
@@ -129,9 +129,9 @@ struct run_config parse_json_config(json_value *value){
     return rc;
 }
 
-void parse_args(int argc, char **argv, int *nrc, struct run_config **rc) 
+void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 {
-    parse_backend(argc, argv); 
+    parse_backend(argc, argv);
 
     int multi = 0;
     for (int i = 0; i < argc; i++) {
@@ -161,7 +161,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         file_size = filestatus.st_size;
         file_contents = (char *)sp_malloc(file_size, 1+1, ALIGN_CACHE);
         fp = fopen(jsonfilename, "rt");
-        if (!fp) 
+        if (!fp)
             error ("Unable to open Json file", ERROR);
         if (fread(file_contents, file_size, 1, fp) != 1) {
             fclose(fp);
@@ -179,7 +179,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         *nrc = get_num_configs(value);
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
-        
+
         for (int i = 0; i < *nrc; i++) {
             rc[0][i] = parse_json_config(value->u.array.values[i]);
         }
@@ -204,7 +204,7 @@ struct run_config parse_runs(int argc, char **argv)
     rc.delta = -1;
 #ifdef USE_OPENMP
     rc.omp_threads = omp_get_max_threads();
-#else 
+#else
     rc.omp_threads = 1;
 #endif
     rc.kernel = INVALID_KERNEL;
@@ -212,11 +212,11 @@ struct run_config parse_runs(int argc, char **argv)
 
 
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be rest between calls. 
+    //must be rest between calls.
     optind = 0;
 	static struct option long_options[] =
     {
-        // Run Config 
+        // Run Config
         {"kernel-name",     required_argument, NULL, 'k'},
         {"pattern",         required_argument, NULL, 'p'},
         {"delta",           required_argument, NULL, 'd'},
@@ -235,7 +235,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"verbose",         no_argument,       NULL, 0},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
-    };  
+    };
 
     int c = 0;
     int option_index = 0;
@@ -268,7 +268,7 @@ struct run_config parse_runs(int argc, char **argv)
                 }
                 break;
             case 'o':
-                if (!strcasecmp("COPY", optarg)) { 
+                if (!strcasecmp("COPY", optarg)) {
                     rc.op = OP_COPY;
                 } else if (!strcasecmp("ACCUM", optarg)) {
                     rc.op = OP_ACCUM;
@@ -318,7 +318,7 @@ struct run_config parse_runs(int argc, char **argv)
                 size_t read = 0;
                 if (!ptr) {
                     error ("Pattern not found", 1);
-                }            
+                }
 
                 if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1) {
                     error ("Failed to parse first pattern element", 1);
@@ -337,7 +337,7 @@ struct run_config parse_runs(int argc, char **argv)
                     //printf("rc.deltas_ps[%zu] = %zu\n",i, rc.deltas_ps[i]);
                 }
                 // compute prefix-sum
-                
+
                 for (size_t i = 1; i < rc.deltas_len; i++) {
                     rc.deltas_ps[i] += rc.deltas_ps[i-1];
                 }
@@ -405,7 +405,7 @@ struct run_config parse_runs(int argc, char **argv)
         rc.delta = 8;
         rc.deltas_len = 1;
     }
-    
+
     if (rc.op != OP_COPY) {
         error("OP must be OP_COPY", WARN);
     }
@@ -458,7 +458,7 @@ void parse_backend(int argc, char **argv)
     int supress_errors = 0;
 
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be rest between calls. 
+    //must be rest between calls.
     optind = 1;
 	static struct option long_options[] =
     {
@@ -478,7 +478,7 @@ void parse_backend(int argc, char **argv)
         {"papi",            required_argument, NULL, PAPI_ARG},
         {"local-work-size", required_argument, NULL, 'z'},
         {0, 0, 0, 0}
-    };  
+    };
 
     int c = 0;
     int option_index = 0;
@@ -565,11 +565,11 @@ void parse_backend(int argc, char **argv)
             backend = OPENCL;
             error ("No backend specified, guessing OpenCL", WARN);
         }
-        else if (sg_openmp_support()) { 
+        else if (sg_openmp_support()) {
             backend = OPENMP;
             error ("No backend specified, guessing OpenMP", WARN);
         }
-        else if (sg_serial_support()) { 
+        else if (sg_serial_support()) {
             backend = SERIAL;
             error ("No backend specified, guessing Serial", WARN);
         }
@@ -644,7 +644,7 @@ void parse_p(char* optarg, struct run_config *rc) {
         *arg = '\0';
         arg++; //arg now points to arguments to the pattern type
 
-        // FILE mode indicates that we will load a 
+        // FILE mode indicates that we will load a
         // config from a file
         if (!strcmp(optarg, "FILE")) {
             //TODO
@@ -652,25 +652,25 @@ void parse_p(char* optarg, struct run_config *rc) {
             rc->type = CONFIG_FILE;
         }
 
-        // Parse Uniform Stride Arguments, which are 
+        // Parse Uniform Stride Arguments, which are
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM")) {
 
             rc->type = UNIFORM;
-            
+
             // Read the length
             char *len = strtok(arg,":");
             if (!len) error("UNIFORM: Index Length not found", 1);
             if (sscanf(len, "%zd", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
-                
+
             // Read the stride
             char *stride = strtok(NULL, ":");
             ssize_t strideval = 0;
             if (!stride) error("UNIFORM: Stride not found", 1);
             if (sscanf(stride, "%zd", &strideval) < 1)
                 error("UNIFORM: Stride not parsed", 1);
-            
+
             char *delta = strtok(NULL, ":");
             if (delta) {
                 if (!strcmp(delta, "NR")) {
@@ -683,10 +683,10 @@ void parse_p(char* optarg, struct run_config *rc) {
                     }
                     rc->deltas[0] = rc->delta;
                     rc->deltas_len = 1;
-                            
+
                 }
             }
-            
+
 
             for (int i = 0; i < rc->pattern_len; i++) {
                 rc->pattern[i] = i*strideval;
@@ -695,11 +695,11 @@ void parse_p(char* optarg, struct run_config *rc) {
         }
 
         // Mostly Stride 1 Mode
-        // Arguments: index_length:list_of_breaks:list_of_deltas 
-        // list_of_deltas should be length 1 or the same length as 
+        // Arguments: index_length:list_of_breaks:list_of_deltas
+        // list_of_deltas should be length 1 or the same length as
         // list_of_breaks.
-        // The elements of both lists should be nonnegative and 
-        // the the elements of list_of_breaks should be strictly less 
+        // The elements of both lists should be nonnegative and
+        // the the elements of list_of_breaks should be strictly less
         // than index_length
         else if (!strcmp(optarg, "MS1")) {
 
@@ -713,8 +713,8 @@ void parse_p(char* optarg, struct run_config *rc) {
             size_t ms1_deltas[MAX_PATTERN_LEN];
             size_t ms1_breaks_len = 0;
             size_t ms1_deltas_len = 0;
-            
-            // Parse index length 
+
+            // Parse index length
             sscanf(len, "%zd", &(rc->pattern_len));
 
             // Parse breaks
@@ -722,7 +722,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             size_t read = 0;
             if (!ptr) {
                 error ("MS1: Breaks missing", 1);
-            }            
+            }
             if (sscanf(ptr, "%zu", &(ms1_breaks[read++])) < 1) {
                 error ("MS1: Failed to parse first break", 1);
             }
@@ -732,7 +732,7 @@ void parse_p(char* optarg, struct run_config *rc) {
                     error ("MS1: Failed to parse breaks", 1);
                 }
             }
-             
+
             ms1_breaks_len = read;
 
             // Parse deltas
@@ -741,7 +741,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             printf("gaps: %x\n", gaps);
             if (gaps == 0) {
                 printf("1\n");
-            } 
+            }
             if (!gaps) {
                 printf("2\n");
                 error("FUCK", 1);
@@ -794,7 +794,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             error("Unrecognized mode in -p argument", 1);
         }
     }
-    
+
     // CUSTOM mode means that the user supplied a single index buffer on the command line
     else {
         rc->type = CUSTOM;
@@ -803,7 +803,7 @@ void parse_p(char* optarg, struct run_config *rc) {
         size_t read = 0;
         if (!ptr) {
             error ("Pattern not found", 1);
-        }            
+        }
 
         if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1) {
             error ("Failed to parse first pattern element", 1);
@@ -826,7 +826,7 @@ void parse_p(char* optarg, struct run_config *rc) {
     }
 }
 
-ssize_t setincludes(size_t key, size_t* set, size_t set_len){ 
+ssize_t setincludes(size_t key, size_t* set, size_t set_len){
     for (size_t i = 0; i < set_len; i++) {
         if (set[i] == key) {
             return i;
