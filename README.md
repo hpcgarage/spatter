@@ -164,6 +164,8 @@ Laplacian:
         problem_size: The length of each dimension of the problem
         E.g. LAPLACIAN:1:1:100 -> [0,1,2] // 3-point stencil
              LAPLACIAN:2:1:100 -> [0,99,100,101,200] // 5-point stencil
+             LAPLACIAN:2:2:100 -> [0,100,198,199,200,201,202,300,400] // 9-point stencil
+             LAPLACIAN:3:1:100 -> [0,9900,9999,10000,10001,10100,20000] // 7-point stencil (3D)
 
         The default delta is 1 for Laplacian patterns
 
