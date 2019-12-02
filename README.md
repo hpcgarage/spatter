@@ -157,6 +157,15 @@ Mostly Stride-1
         E.g. MS1:8:4:32 -> [0,1,2,3,35,36,37,38]
              MS1:8:2,3:20 -> [0,1,21,41,42,43,44,45]
              MS1:8:2,3:20,22 -> [0,1,21,43,44,45,46,47]
+Laplacian:
+    -pLAPLACIAN:<dimension>:<pseudo_order>:<problem_size>
+        dimension: The dimension of the stencil
+        pseudo_order: The length of a branch of the stencil
+        problem_size: The length of each dimension of the problem
+        E.g. LAPLACIAN:1:1:100 -> [0,1,2] // 3-point stencil
+             LAPLACIAN:2:1:100 -> [0,99,100,101,200] // 5-point stencil
+
+        The default delta is 1 for Laplacian patterns
 
 ```
 
