@@ -380,8 +380,8 @@ struct run_config parse_runs(int argc, char **argv)
     }
 
     if (rc.generic_len == 0) {
-        error ("Length not specified. Default is 32 (gathers/scatters)", 0);
-        rc.generic_len = 32;
+        error ("Length not specified. Default is 1024 (gathers/scatters)", 0);
+        rc.generic_len = 1024;
     }
 
 
@@ -444,6 +444,67 @@ struct run_config parse_runs(int argc, char **argv)
 
     return rc;
 
+}
+
+ssize_t power(int base, int exp) {
+    int i, result = 1;
+    for (i = 0; i < exp; i++)
+        result *= base;
+    return result;
+}
+
+// Yes, there is no need for recursion here but I did this in python first. I'll
+// updatte this later with a cleaner implementation
+void static laplacian_branch(int depth, int order, int n, int **pos, int *pos_len)
+{
+    *pos = (int*)realloc(*pos, ((*pos_len)+order) * sizeof(int));
+
+    for (int i = 0; i < order; i++) {
+        (*pos)[i+*pos_len] = (i+1) * power(n, depth);
+    }
+
+    *pos_len += order;
+    return;
+}
+
+void static laplacian(int dim, int order, int n, struct run_config *rc)
+{
+
+    if (dim < 1) {
+        error("laplacian: dim must be positive", ERROR);
+    }
+
+    int final_len = dim * order * 2 + 1;
+    if (final_len > MAX_PATTERN_LEN) {
+        error("laplacian: resulting pattern too long", ERROR);
+    }
+
+    int pos_len = 0;
+    int *pos = NULL;
+
+    for (int i = 0; i < dim; i++) {
+        laplacian_branch(i, order, n, &pos, &pos_len);
+    }
+
+    rc->pattern_len = final_len;
+    int max = pos[pos_len-1];
+
+    for (int i = 0; i < rc->pattern_len; i++) {
+        rc->pattern[i] = 2;
+    }
+
+    //populate rc->pattern
+    for(int i = 0; i < pos_len; i++) {
+        rc->pattern[i] = (-pos[pos_len - i - 1] + max);
+    }
+
+    rc->pattern[pos_len] = max;
+
+    for(int i = 0; i < pos_len; i++) {
+        rc->pattern[pos_len+1+i] = pos[i] + max;
+    }
+
+    return;
 }
 
 void parse_backend(int argc, char **argv)
@@ -691,6 +752,38 @@ void parse_p(char* optarg, struct run_config *rc) {
             for (int i = 0; i < rc->pattern_len; i++) {
                 rc->pattern[i] = i*strideval;
             }
+
+        }
+
+        //LAPLACIAN:DIM:ORDER:N
+        else if (!strcmp(optarg, "LAPLACIAN")) {
+            int dim_val, order_val, problem_size_val;
+
+            rc->type = LAPLACIAN;
+
+            // Read the dimension
+            char *dim = strtok(arg,":");
+            if (!dim) error("LAPLACIAN: Dimension not found", 1);
+            if (sscanf(dim, "%d", &dim_val) < 1)
+                error("LAPLACIAN: Dimension not parsed", 1);
+
+            // Read the order
+            char *order = strtok(NULL, ":");
+            if (!order) error("LAPLACIAN: Order not found", 1);
+            if (sscanf(order, "%d", &order_val) < 1)
+                error("LAPLACIAN: Order not parsed", 1);
+
+            // Read the problem size
+            char *problem_size = strtok(NULL, ":");
+            if (!problem_size) error("LAPLACIAN: Problem size not found", 1);
+            if (sscanf(problem_size, "%d", &problem_size_val) < 1)
+                error("LAPLACIAN: Problem size not parsed", 1);
+
+            rc->delta = 1;
+            rc->deltas[0] = rc->delta;
+            rc->deltas_len = 1;
+
+            laplacian(dim_val, order_val, problem_size_val, rc);
 
         }
 

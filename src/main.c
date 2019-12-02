@@ -422,7 +422,7 @@ int main(int argc, char **argv)
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
     }
 
-    // Populate buffers cn host
+    // Populate buffers on host
     #pragma omp parallel for
     for (int i = 0; i < source.len; i++) {
         source.host_ptr[i] = i % (source.len / 64);
