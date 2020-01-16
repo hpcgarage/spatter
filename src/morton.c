@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "morton.h"
+#include "sp_alloc.h"
 
 uint64_t next_pow2(uint64_t x)
 {
@@ -59,7 +60,7 @@ uint32_t *z_order_2d(uint64_t dim)
         return NULL;
     }
 
-    list = (uint32_t*)malloc(sizeof(uint32_t) * dim * dim);
+    list = (uint32_t*)sp_malloc(sizeof(uint32_t), dim * dim, ALIGN_CACHE);
 
     if (!list) {
 #if MORTON_VERBOSE
@@ -123,7 +124,7 @@ uint32_t *z_order_3d(uint64_t dim)
         return NULL;
     }
 
-    list = (uint32_t*)malloc(sizeof(uint32_t) * dim * dim * dim);
+    list = (uint32_t*)sp_malloc(sizeof(uint32_t), dim * dim * dim, ALIGN_PAGE);
 
     if (!list) {
 #if MORTON_VERBOSE
@@ -143,6 +144,41 @@ uint32_t *z_order_3d(uint64_t dim)
         #if MORTON_DEBUG
             printf("(%lu,%lu,%lu) -> %lu\n", x, y, z, x*dim*dim + y*dim + z);
         #endif
+    }
+
+    return list;
+}
+
+uint32_t *z_order_1d(uint64_t dim)
+{
+    uint64_t i;
+    uint32_t *list = NULL;
+
+    if (dim == 0) {
+#if MORTON_VERBOSE
+        printf("Error: dim must be positive\n");
+#endif
+        return NULL;
+    }
+
+    if (next_pow2(dim) > 32) {
+#if MORTON_VERBOSE
+        printf("Error: The dimension is too big - unsupported as return type too small\n");
+#endif
+        return NULL;
+    }
+
+    list = (uint32_t*)sp_malloc(sizeof(uint32_t), dim, ALIGN_PAGE);
+
+    if (!list) {
+#if MORTON_VERBOSE
+        printf("Failed to allocate space for the ordering\n");
+#endif
+        return NULL;
+    }
+
+    for (i = 0; i < dim; i++) {
+        list[i] = i;
     }
 
     return list;

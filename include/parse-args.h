@@ -50,6 +50,7 @@ enum idx_type
     LAPLACIAN,
     CUSTOM,
     CONFIG_FILE,
+    HYDRO,
     INVALID_IDX
 };
 

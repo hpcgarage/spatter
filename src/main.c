@@ -390,11 +390,12 @@ int main(int argc, char **argv)
             max_pat_len = rc2[i].pattern_len;
         }
 
-        if (rc2[i].morton == 2) {
-            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].pattern_len));
-            printf("sqare root of %zu is %lu\n", rc2[i].pattern_len, isqrt(rc2[i].pattern_len));
+        if (rc2[i].morton == 1) {
+            rc2[i].morton_order = z_order_1d(rc2[i].generic_len);
+        } else if (rc2[i].morton == 2) {
+            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len));
         } else if (rc2[i].morton == 3) {
-            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].pattern_len));
+            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len));
         }
     }
 
@@ -814,6 +815,11 @@ void emit_configs(struct run_config *rc, int nconfigs)
         // OpenMP Threads
         if (backend == OPENMP) {
             printf("\'threads\':%zu", rc[i].omp_threads);
+        }
+
+        // Morton
+        if (rc[i].morton) {
+            printf(", \'morton\':%zu", rc[i].morton);
         }
 
 

@@ -56,6 +56,7 @@ void error(char *what, int code);
 void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
+void hydro_pattern(size_t *pat, size_t dim);
 
 char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs:";
 void parse_backend(int argc, char **argv);
@@ -307,6 +308,7 @@ struct run_config parse_runs(int argc, char **argv)
                 break;
             case 'n':
                 safestrcopy(rc.name, optarg);
+                //printf("Parsed name as %s\n", optarg);
                 break;
             case 'p':
                 safestrcopy(rc.generator, optarg);
@@ -417,6 +419,7 @@ struct run_config parse_runs(int argc, char **argv)
 
     if (!strcasecmp(rc.name, "NONE")) {
         if (rc.type != CUSTOM) {
+            //printf("Parsed name as %s\n", rc.generator);
             safestrcopy(rc.name, rc.generator);
         } else {
             safestrcopy(rc.name, "CUSTOM");
@@ -718,6 +721,29 @@ void parse_p(char* optarg, struct run_config *rc) {
             rc->type = CONFIG_FILE;
         }
 
+        // The static Hydro pattern
+        // HYDRO:dim
+        else if (!strcmp(optarg, "HYDRO")) {
+            rc->type = HYDRO;
+
+            size_t dim = 0;
+            char *dim_char = strtok(arg, ":");
+            if (!dim_char) error("HYDRO: size not found", 1);
+            if (sscanf(dim_char, "%zd", &dim) < 1)
+                error("HYDRO: Dimension not parsed", 1);
+
+            rc->pattern_len = 73;
+
+            // The default delta is 1
+            rc->delta = 1;
+            rc->deltas[0] = rc->delta;
+            rc->deltas_len = 1;
+
+            hydro_pattern(rc->pattern, dim);
+
+
+        }
+
         // Parse Uniform Stride Arguments, which are
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM")) {
@@ -982,4 +1008,91 @@ void error(char *what, int code){
 void safestrcopy(char *dest, char *src){
     dest[0] = '\0';
     strncat(dest, src, STRING_SIZE-1);
+}
+
+int compare_ssizet(const void *a, const void *b)
+{
+    if (*(ssize_t*)a > *(ssize_t*)b) return 1;
+    else if (*(ssize_t*)a < *(ssize_t*)b) return -1;
+    else return 0;
+}
+
+void copy4(ssize_t *dest, ssize_t *a, int *off)
+{
+    for (int i = 0; i < 4; i++) {
+        dest[i + *off] = a[i];
+    }
+    *off += 4;
+}
+
+void add4(ssize_t *dest, ssize_t *a, ssize_t *b, int *off)
+{
+    for (int i = 0; i < 4; i++) {
+        dest[i + *off] = a[i] + b[i];
+    }
+    *off += 4;
+}
+
+void hydro_pattern(size_t *pat_, size_t dim) {
+
+    ssize_t pat[73];
+    for (int i = 0; i < 73; i++) {
+        pat[i] = i;
+    }
+
+    ssize_t Xp[4];
+    ssize_t Xn[4];
+    ssize_t Yp[4];
+    ssize_t Yn[4];
+    ssize_t Zp[4];
+    ssize_t Zn[4];
+
+    Xp[0] =  1; Xp[1] =  2; Xp[2] =  3; Xp[3] =  4;
+    Xn[0] = -1; Xn[1] = -2; Xn[2] = -3; Xn[3] = -4;
+    Yp[0] = dim;  Yp[1] =  2*dim; Yp[2] =  3*dim; Yp[3] =  4*dim;
+    Yn[0] = -dim; Yn[1] = -2*dim; Yn[2] = -3*dim; Yn[3] = -4*dim;
+    Zp[0] = dim*dim;  Zp[1] =  2*dim*dim; Zp[2] =  3*dim*dim; Zp[3] =  4*dim*dim;
+    Zn[0] = -dim*dim; Zn[1] = -2*dim*dim; Zn[2] = -3*dim*dim; Zn[3] = -4*dim*dim;
+
+    int idx = 0;
+    pat[idx++] = 0;
+    copy4(pat, Xp, &idx);
+    copy4(pat, Xn, &idx);
+    copy4(pat, Yp, &idx);
+    copy4(pat, Yn, &idx);
+    copy4(pat, Zp, &idx);
+    copy4(pat, Zn, &idx);
+
+    add4(pat, Xp, Yp, &idx);
+    add4(pat, Xp, Zp, &idx);
+    add4(pat, Xp, Yn, &idx);
+    add4(pat, Xp, Zn, &idx);
+
+    add4(pat, Xn, Yp, &idx);
+    add4(pat, Xn, Zp, &idx);
+    add4(pat, Xn, Yn, &idx);
+    add4(pat, Xn, Zn, &idx);
+
+    add4(pat, Yp, Zp, &idx);
+    add4(pat, Yp, Zn, &idx);
+    add4(pat, Yn, Zp, &idx);
+    add4(pat, Yn, Zn, &idx);
+
+    qsort(pat, 73, sizeof(ssize_t), compare_ssizet);
+
+    ssize_t min = pat[0];
+    for (int i = 1; i < 73; i++) {
+        if (pat[i] < min) {
+            min = pat[i];
+        }
+    }
+
+    for (int i = 0; i < 73; i++) {
+        pat[i] -= min;
+    }
+
+    for (int i = 0; i < 73; i++) {
+        pat_[i] = pat[i];
+    }
+
 }
