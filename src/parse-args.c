@@ -26,6 +26,7 @@
 #define CLPLATFORM  1010
 #define CLDEVICE    1011
 #define PAPI_ARG    1012
+#define MORTON      1013
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -233,6 +234,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"papi",            required_argument, NULL, 0},
         {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
+        {"morton",          optional_argument, NULL, MORTON},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
     };
@@ -352,6 +354,9 @@ struct run_config parse_runs(int argc, char **argv)
 
                 break;
                 }
+            case MORTON:
+                sscanf(optarg,"%d", &rc.morton);
+                break;
             default:
                 break;
 
@@ -519,7 +524,7 @@ void parse_backend(int argc, char **argv)
     int supress_errors = 0;
 
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be rest between calls.
+    //must be reset between calls.
     optind = 1;
 	static struct option long_options[] =
     {

@@ -12,6 +12,7 @@
 #include "sgtime.h"
 #include "trace-util.h"
 #include "sp_alloc.h"
+#include "morton.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -61,7 +62,6 @@ int papi_event_codes[PAPI_MAX_COUNTERS];
 long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[];
 #endif
-
 
 void print_papi_names() {
 #ifdef USE_PAPI
@@ -248,6 +248,8 @@ void print_sizet(size_t *buf, size_t len){
 }
 
 void emit_configs(struct run_config *rc, int nconfigs);
+uint64_t isqrt(uint64_t x);
+uint64_t icbrt(uint64_t x);
 
 
 int main(int argc, char **argv)
@@ -386,6 +388,13 @@ int main(int argc, char **argv)
 
         if (rc2[i].pattern_len > max_pat_len) {
             max_pat_len = rc2[i].pattern_len;
+        }
+
+        if (rc2[i].morton == 2) {
+            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].pattern_len));
+            printf("sqare root of %zu is %lu\n", rc2[i].pattern_len, isqrt(rc2[i].pattern_len));
+        } else if (rc2[i].morton == 3) {
+            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].pattern_len));
         }
     }
 
@@ -550,7 +559,11 @@ int main(int argc, char **argv)
                             gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].deltas_len <= 1) {
-                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                            if (rc2[k].morton) {
+                                gather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].morton_order);
+                            } else {
+                                gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                            }
                         } else {
                             gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);
                         }
@@ -812,4 +825,45 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
     }
     printf(" ]\n\n");
+}
+
+// From http://www.codecodex.com/wiki/Calculate_an_integer_square_root
+uint64_t isqrt(uint64_t x)
+{
+    uint64_t op, res, one;
+
+    op = x;
+    res = 0;
+
+    /* "one" starts at the highest power of four <= than the argument. */
+    one = 1 << 30;  /* second-to-top bit set */
+    while (one > op) one >>= 2;
+
+    while (one != 0) {
+
+        if (op >= res + one) {
+            op -= res + one;
+            res += one << 1;  // <-- faster than 2 * one
+        }
+        res >>= 1;
+        one >>= 2;
+    }
+    return res;
+}
+
+// From https://gist.github.com/anonymous/729557
+uint64_t icbrt(uint64_t x) {
+    int s;
+    uint64_t y;
+    uint64_t b;
+    y = 0;
+    for (s = 63; s >= 0; s -= 3) {
+        y += y;
+        b = 3*y*((uint64_t) y + 1) + 1;
+        if ((x >> s) >= b) {
+                x -= b << s;
+                y++;
+        }
+    }
+    return y;
 }

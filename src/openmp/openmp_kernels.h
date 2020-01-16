@@ -3,40 +3,41 @@
 
 #include <omp.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "../include/sgtype.h"
 
 void sg_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
             size_t n);
 void scatter_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
             size_t n);
 void gather_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
             size_t n);
 void sg_accum_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
             size_t n);
 void scatter_accum_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
             size_t n);
 void gather_accum_omp(
-            sgData_t* restrict target, 
+            sgData_t* restrict target,
             sgIdx_t*     restrict ti,
             sgData_t* restrict source,
             sgIdx_t*     restrict si,
@@ -62,7 +63,7 @@ void gather_stride_os(
         sgIdx_t*  restrict pat,
         size_t    pat_len,
         size_t    delta,
-        size_t    n, 
+        size_t    n,
         size_t    target_wrap);
 void gather_stride8(
         sgData_t* restrict target,
@@ -86,6 +87,16 @@ void gather_smallbuf(
         size_t delta,
         size_t n,
         size_t target_len);
+
+void gather_smallbuf_morton(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t target_len,
+        uint32_t *order);
 
 void scatter_smallbuf(
         sgData_t* restrict target,

@@ -14,6 +14,7 @@
 #define MAX_PATTERN_LEN 1024
 
 #include <sgtype.h>
+#include <stdint.h>
 
 /** @brief Supported benchmark backends
  */
@@ -87,6 +88,8 @@ struct run_config
     double *time_ms;
     long long **papi_ctr;
     int papi_counters;
+    int morton;
+    uint32_t *morton_order;
 };
 
 struct backend_config
