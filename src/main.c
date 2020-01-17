@@ -360,6 +360,7 @@ int main(int argc, char **argv)
     size_t max_pat_len = 0;
     size_t max_ptrs = 0;
     size_t max_nruns = 0;
+    size_t max_morton = 0;
     for (int i = 0; i < nrc; i++) {
 
         size_t max_pattern_val = rc2[i].pattern[0];
@@ -396,6 +397,12 @@ int main(int argc, char **argv)
             rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len));
         } else if (rc2[i].morton == 3) {
             rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len));
+        }
+
+        if (rc2[i].morton) {
+            if (rc2[i].generic_len > max_morton) {
+                max_morton = rc2[i].generic_len;
+            }
         }
     }
 
@@ -450,11 +457,13 @@ int main(int argc, char **argv)
     #endif
 
     #ifdef USE_CUDA
-    sgIdx_t* pat_dev;
+    sgIdx_t *pat_dev;
+    uint32_t *order_dev;
     if (backend == CUDA) {
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_cuda(&source);
         cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_morton);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
@@ -508,7 +517,7 @@ int main(int argc, char **argv)
                 unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].morton, rc2[k].morton_order, order_dev);
                 } else {
                     time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                 }

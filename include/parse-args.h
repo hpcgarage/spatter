@@ -91,6 +91,7 @@ struct run_config
     int papi_counters;
     int morton;
     uint32_t *morton_order;
+    uint32_t *morton_order_dev;
 };
 
 struct backend_config
