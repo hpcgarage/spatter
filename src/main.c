@@ -316,7 +316,7 @@ int main(int argc, char **argv)
     if (err !=PAPI_VER_CURRENT && err > 0) {
         error ("PAPI library version mismatch", ERROR);
     }
-    if (err < 0) papi_err(err);
+    if (err < 0) papi_err(err, __LINE__, __FILE__);
     err = PAPI_is_initialized();
     if (err != PAPI_LOW_LEVEL_INITED) {
         error ("PAPI was not initialized", ERROR);
@@ -325,13 +325,13 @@ int main(int argc, char **argv)
     // OK, now that papi is finally inizlized, we need to make our EventSet
     // First, convert names to codes
     for (int i = 0; i < papi_nevents; i++) {
-        papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]));
+        papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]), __LINE__, __FILE__);
     }
 
     int EventSet = PAPI_NULL;
-    papi_err(PAPI_create_eventset(&EventSet));
+    papi_err(PAPI_create_eventset(&EventSet), __LINE__, __FILE__);
     for (int i = 0; i < papi_nevents; i++) {
-        papi_err(PAPI_add_event(EventSet, papi_event_codes[i]));
+        papi_err(PAPI_add_event(EventSet, papi_event_codes[i]), __LINE__, __FILE__);
     }
 
 #endif
@@ -542,7 +542,7 @@ int main(int argc, char **argv)
 
                 if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI
-                if (i!=-1) profile_start(EventSet);
+                if (i!=-1) profile_start(EventSet, __LINE__, __FILE__);
 #endif
 
                 switch (rc2[k].kernel) {
@@ -584,7 +584,7 @@ int main(int argc, char **argv)
                 }
 
 #ifdef USE_PAPI
-                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
 
@@ -602,7 +602,7 @@ int main(int argc, char **argv)
 
                 if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI
-                if (i!=-1) profile_start(EventSet);
+                if (i!=-1) profile_start(EventSet, __LINE__, __FILE__);
 #endif
 
                 //TODO: Rewrite serial kernel
@@ -621,7 +621,7 @@ int main(int argc, char **argv)
                 //double time_ms = sg_get_time_ms();
                 //if (i!=0) report_time(k, time_ms/1000., rc2[k], i);
 #ifdef USE_PAPI
-                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
             }
