@@ -334,6 +334,28 @@ __global__ void gather_block_morton(double *src, sgIdx_t* idx, int idx_len, size
 }
 
 template<int V>
+__global__ void gather_block_stride(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, int stride)
+{
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    int ngatherperblock = blockDim.x / V;
+    int gatherid = tid / V;
+
+    double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
+    double x;
+
+    //for (int i = 0; i < wpb; i++) {
+        x = src_loc[stride*(tid%V)];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+
+    if (x==0.5) src[0] = x;
+
+}
+
+template<int V>
 __global__ void gather_block_random(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n)
 {
 
@@ -423,6 +445,7 @@ __global__ void gather_new(double* source,
 template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
 template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb);\
 template __global__ void gather_block_morton<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, uint32_t *order);\
+template __global__ void gather_block_stride<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, int stride);\
 template __global__ void scatter_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb); \
 template __global__ void gather_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n); \
 template __global__ void scatter_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n);
@@ -453,7 +476,8 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         int wpt,
         size_t morton,
         uint32_t *order,
-        uint32_t *order_dev)
+        uint32_t *order_dev,
+        int stride)
 {
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
@@ -471,7 +495,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
     if (kernel == GATHER) {
         if (morton) {
             if (pat_len == 8) {
-                gather_block_morton<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order);
+                gather_block_morton<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev);
             }else if (pat_len == 16) {
                 gather_block_morton<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev);
             }else if (pat_len == 32) {
@@ -488,6 +512,29 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block_morton<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev);
             }else if (pat_len == 1024) {
                 gather_block_morton<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev);
+            } else {
+                printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+            }
+
+        } else if (stride >= 0) {
+            if (pat_len == 8) {
+                gather_block_stride<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 16) {
+                gather_block_stride<16><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 32) {
+                gather_block_stride<32><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 64) {
+                gather_block_stride<64><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 73) {
+                gather_block_stride<73><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 128) {
+                gather_block_stride<128><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 256) {
+                gather_block_stride<256><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 512) {
+                gather_block_stride<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
+            }else if (pat_len == 1024) {
+                gather_block_stride<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride);
             } else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
             }

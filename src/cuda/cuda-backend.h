@@ -21,7 +21,7 @@ extern float cuda_block_wrapper(long unsigned dim, long unsigned* grid, long uns
         size_t pat_len,
         size_t delta,
         size_t n,
-        size_t wrap, int wpt, size_t morton, uint32_t *order, uint32_t *order_dev);
+        size_t wrap, int wpt, size_t morton, uint32_t *order, uint32_t *order_dev, int stride);
 extern float cuda_block_random_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,

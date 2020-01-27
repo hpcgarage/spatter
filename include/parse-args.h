@@ -92,6 +92,7 @@ struct run_config
     int morton;
     uint32_t *morton_order;
     uint32_t *morton_order_dev;
+    int stride_kernel;
 };
 
 struct backend_config

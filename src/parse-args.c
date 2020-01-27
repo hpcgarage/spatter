@@ -27,6 +27,7 @@
 #define CLDEVICE    1011
 #define PAPI_ARG    1012
 #define MORTON      1013
+#define STRIDE      1014
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -40,6 +41,7 @@ extern int validate_flag;
 extern int quiet_flag;
 extern int aggregate_flag;
 extern int compress_flag;
+extern int stride_kernel;
 
 #ifdef USE_PAPI
 extern int papi_nevents;
@@ -204,6 +206,7 @@ struct run_config parse_runs(int argc, char **argv)
 
     struct run_config rc = {0};
     rc.delta = -1;
+    rc.stride_kernel = -1;
 #ifdef USE_OPENMP
     rc.omp_threads = omp_get_max_threads();
 #else
@@ -236,6 +239,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
         {"morton",          optional_argument, NULL, MORTON},
+        {"stride",          optional_argument, NULL, STRIDE},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
     };
@@ -358,6 +362,9 @@ struct run_config parse_runs(int argc, char **argv)
                 }
             case MORTON:
                 sscanf(optarg,"%d", &rc.morton);
+                break;
+            case STRIDE:
+                sscanf(optarg,"%d", &rc.stride_kernel);
                 break;
             default:
                 break;
@@ -546,6 +553,10 @@ void parse_backend(int argc, char **argv)
         {"compress",        optional_argument, NULL, 'c'},
         {"papi",            required_argument, NULL, PAPI_ARG},
         {"local-work-size", required_argument, NULL, 'z'},
+        {"morton",          optional_argument, NULL, 0},
+        {"count",           optional_argument, NULL, 0},
+        {"stride",          optional_argument, NULL, 0},
+        {"runs",            optional_argument, NULL, 0},
         {0, 0, 0, 0}
     };
 

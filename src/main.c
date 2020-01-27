@@ -56,6 +56,7 @@ int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
 int compress_flag = 0;
 int papi_nevents = 0;
+int stride_kernel = -1;
 #ifdef USE_PAPI
 char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 int papi_event_codes[PAPI_MAX_COUNTERS];
@@ -510,19 +511,19 @@ int main(int argc, char **argv)
         int wpt = 1;
         if (backend == CUDA) {
             float time_ms = 2;
-            for (int i = -1; i < (int)rc2[k].nruns; i++) {
+            for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
                 unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                 unsigned long local_work_size = rc2[k].local_work_size;
                 unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].morton, rc2[k].morton_order, order_dev);
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].morton, rc2[k].morton_order, order_dev, rc[k].stride_kernel);
                 } else {
                     time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                 }
 
-                if (i!= -1) rc2[k].time_ms[i] = time_ms;
+                if (i>=0) rc2[k].time_ms[i] = time_ms;
             }
 
 
@@ -746,6 +747,7 @@ int main(int argc, char **argv)
       free(target.host_ptrs);
   }
   free(rc);
+  //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
 }
 
 void emit_configs(struct run_config *rc, int nconfigs)
@@ -826,9 +828,14 @@ void emit_configs(struct run_config *rc, int nconfigs)
             printf("\'threads\':%zu", rc[i].omp_threads);
         }
 
+        // OpenMP Threads
+        if (rc[i].stride_kernel!=-1) {
+            printf("\'stride_kernel\':%d", rc[i].stride_kernel);
+        }
+
         // Morton
         if (rc[i].morton) {
-            printf(", \'morton\':%zu", rc[i].morton);
+            printf(", \'morton\':%d", rc[i].morton);
         }
 
 

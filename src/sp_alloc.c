@@ -6,6 +6,10 @@
 #include <stdio.h>
 
 long long total_mem_used = 0;
+
+long long get_mem_used() {
+    return total_mem_used;
+}
 void check_size(size_t size) {
     total_mem_used += size;
     //printf("size: %zu\n", size);
@@ -28,7 +32,7 @@ void check_safe_mult(size_t a, size_t b) {
 }
 
 void *sp_malloc (size_t size, size_t count, size_t align) {
-    check_safe_mult(size, count); 
+    check_safe_mult(size, count);
     check_size(size*count);
     void *ptr = aligned_alloc (align, size*count);
     if (!ptr) {
@@ -40,6 +44,6 @@ void *sp_malloc (size_t size, size_t count, size_t align) {
 
 void *sp_calloc (size_t size, size_t count, size_t align) {
     void *ptr = sp_malloc(size, count, align);
-    memset(ptr, 0, size*count); 
+    memset(ptr, 0, size*count);
     return ptr;
 }

@@ -8,4 +8,5 @@
 #define ALIGN_PAGE  4096
 void *sp_malloc (size_t size, size_t count, size_t align);
 void *sp_calloc (size_t size, size_t count, size_t align);
+long long get_mem_used();
 #endif
