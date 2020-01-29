@@ -393,11 +393,11 @@ int main(int argc, char **argv)
         }
 
         if (rc2[i].morton == 1) {
-            rc2[i].morton_order = z_order_1d(rc2[i].generic_len);
+            rc2[i].morton_order = z_order_1d(rc2[i].generic_len, 1);
         } else if (rc2[i].morton == 2) {
-            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len));
+            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len), 1);
         } else if (rc2[i].morton == 3) {
-            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len));
+            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len), 1);
         }
 
         if (rc2[i].morton) {
@@ -439,6 +439,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
     }
+    //    printf("-- here -- \n");
 
     // Populate buffers on host
     #pragma omp parallel for
@@ -736,16 +737,30 @@ int main(int argc, char **argv)
         }
         */
     //}
-  }
+    }
 
-  // Free Memory
-  free(source.host_ptr);
-  for (size_t i = 0; i < target.nptrs; i++) {
+    // Free Memory
+    free(source.host_ptr);
+    for (size_t i = 0; i < target.nptrs; i++) {
       free(target.host_ptrs[i]);
-  }
-  if (target.nptrs != 0) {
+    }
+    if (target.nptrs != 0) {
       free(target.host_ptrs);
-  }
+    }
+
+    for (int i = 0; i < nrc; i++) {
+        if (rc2[i].morton_order) {
+            free(rc2[i].morton_order);
+        }
+        free(rc2[i].time_ms);
+#ifdef USE_PAPI
+        for (int j = 0; j < rc2[i].nruns; j++){
+            free(rc2[i].papi_ctr[j]);
+        }
+        free(rc2[i].papi_ctr);
+#endif
+    }
+
   free(rc);
   //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
 }

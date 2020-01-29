@@ -27,7 +27,8 @@
 #define CLDEVICE    1011
 #define PAPI_ARG    1012
 #define MORTON      1013
-#define STRIDE      1014
+#define MBLOCK      1014
+#define STRIDE      1015
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -188,6 +189,8 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
             rc[0][i] = parse_json_config(value->u.array.values[i]);
         }
 
+        json_value_free(value);
+        free(file_contents);
         //exit(0);
         return;
     }
@@ -207,6 +210,8 @@ struct run_config parse_runs(int argc, char **argv)
     struct run_config rc = {0};
     rc.delta = -1;
     rc.stride_kernel = -1;
+    rc.morton_block = 1;
+    rc.morton_order = NULL;
 #ifdef USE_OPENMP
     rc.omp_threads = omp_get_max_threads();
 #else
@@ -239,6 +244,7 @@ struct run_config parse_runs(int argc, char **argv)
         {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
         {"morton",          optional_argument, NULL, MORTON},
+        {"mblock",          optional_argument, NULL, MBLOCK},
         {"stride",          optional_argument, NULL, STRIDE},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
@@ -362,6 +368,9 @@ struct run_config parse_runs(int argc, char **argv)
                 }
             case MORTON:
                 sscanf(optarg,"%d", &rc.morton);
+                break;
+            case MBLOCK:
+                sscanf(optarg,"%d", &rc.morton_block);
                 break;
             case STRIDE:
                 sscanf(optarg,"%d", &rc.stride_kernel);
@@ -554,6 +563,7 @@ void parse_backend(int argc, char **argv)
         {"papi",            required_argument, NULL, PAPI_ARG},
         {"local-work-size", required_argument, NULL, 'z'},
         {"morton",          optional_argument, NULL, 0},
+        {"mblock",          optional_argument, NULL, 0},
         {"count",           optional_argument, NULL, 0},
         {"stride",          optional_argument, NULL, 0},
         {"runs",            optional_argument, NULL, 0},

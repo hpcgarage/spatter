@@ -21,7 +21,7 @@ int read_trace (struct trace *t, const char *filename)
     while ((read = getline(&line, &len, fp)) != -1) {
         if (line[0] == '#')
             continue;
-        
+
         if (have_num_instructions && instructions_read < t->length) {
             struct instruction tmp;
 
@@ -43,7 +43,7 @@ int read_trace (struct trace *t, const char *filename)
             token = strtok(NULL, " ");
             sscanf(token, "%zu", &(tmp.length));
 
-            tmp.delta = (sgsIdx_t *)sp_malloc(tmp.length, sizeof(sgsIdx_t), ALIGN_CACHE);
+            tmp.delta = (sgsIdx_t *)malloc(tmp.length * sizeof(sgsIdx_t));
 
             for (int i = 0; i < tmp.length; i++) {
                 token = strtok(NULL, " ");
@@ -54,7 +54,7 @@ int read_trace (struct trace *t, const char *filename)
         }
         else {
             sscanf(line, "%zu", &(t->length));
-            t->in = (struct instruction *)sp_malloc(t->length, sizeof(struct instruction), ALIGN_CACHE);
+            t->in = (struct instruction *)malloc(t->length *sizeof(struct instruction));
             have_num_instructions = 1;
         }
     }
@@ -64,7 +64,7 @@ int read_trace (struct trace *t, const char *filename)
 
 int print_trace(struct trace t) {
     printf("%zu\n", t.length);
-    for (int i = 0; i < t.length; i++) { 
+    for (int i = 0; i < t.length; i++) {
         struct instruction tmp = t.in[i];
         printf("%d %zu %zu %lf %zu ", tmp.type, tmp.data_type_size, tmp.count, tmp.pct, tmp.length);
         for (int j = 0; j < tmp.length; j++) {

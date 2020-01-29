@@ -90,6 +90,7 @@ struct run_config
     long long **papi_ctr;
     int papi_counters;
     int morton;
+    int morton_block;
     uint32_t *morton_order;
     uint32_t *morton_order_dev;
     int stride_kernel;
