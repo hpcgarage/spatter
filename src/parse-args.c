@@ -201,11 +201,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
 struct run_config parse_runs(int argc, char **argv)
 {
-    int supress_errors = 0;
-
     int pattern_found = 0;
-
-    volatile char *argv0copy = argv[0];
 
     struct run_config rc = {0};
     rc.delta = -1;
@@ -540,8 +536,6 @@ void parse_backend(int argc, char **argv)
     safestrcopy(kernel_file,     "NONE");
     safestrcopy(kernel_name,     "NONE");
 
-    int supress_errors = 0;
-
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
     //must be reset between calls.
     optind = 1;
@@ -750,7 +744,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             size_t dim = 0;
             char *dim_char = strtok(arg, ":");
             if (!dim_char) error("HYDRO: size not found", 1);
-            if (sscanf(dim_char, "%zd", &dim) < 1)
+            if (sscanf(dim_char, "%zu", &dim) < 1)
                 error("HYDRO: Dimension not parsed", 1);
 
             rc->pattern_len = 73;
@@ -774,7 +768,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             // Read the length
             char *len = strtok(arg,":");
             if (!len) error("UNIFORM: Index Length not found", 1);
-            if (sscanf(len, "%zd", &(rc->pattern_len)) < 1)
+            if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
             // Read the stride
@@ -860,7 +854,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             size_t ms1_deltas_len = 0;
 
             // Parse index length
-            sscanf(len, "%zd", &(rc->pattern_len));
+            sscanf(len, "%zu", &(rc->pattern_len));
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");

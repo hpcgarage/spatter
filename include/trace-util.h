@@ -18,9 +18,9 @@ struct trace {
     size_t length;
 };
 
-int read_trace(struct trace *t, const char *filename);
+void read_trace(struct trace *t, const char *filename);
 
-int print_trace(struct trace t);
+void print_trace(struct trace t);
 
-int reweight_trace(struct trace t);
+void reweight_trace(struct trace t);
 #endif

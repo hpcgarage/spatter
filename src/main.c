@@ -169,7 +169,6 @@ void report_time2(struct run_config* rc, int nrc) {
         double min = bw[0];
         double max = bw[0];
         double hmean = 0;
-        double stddev = 0;
         double first, med, third;
 
         qsort(bw, nrc, sizeof(double), compare);
@@ -214,15 +213,6 @@ void report_time2(struct run_config* rc, int nrc) {
 
         double hstderr = theta_22 * sig_1x / sqrt(nrc);
 
-
-
-        /*
-        for (int i = 0; i < nrc; i++) {
-            stddev += pow(bw[i] - hmean, 2);
-        }
-        stddev = sqrt((1./nrc)*stddev);
-        */
-
         printf("\n%-11s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
         printf("%-12.6g %-12.6g %-12.6g %-12.6g %-12.6g\n", min, first, med, third, max);
         printf("%-12s %-12s\n", "H.Mean", "H.StdErr");
@@ -266,10 +256,9 @@ int main(int argc, char **argv)
     sgDataBuf  target;
 
     // OpenCL Specific
+    #ifdef USE_OPENCL
     size_t global_work_size = 1;
     char   *kernel_string;
-
-    #ifdef USE_OPENCL
     cl_uint work_dim = 1;
     #endif
 
@@ -360,7 +349,6 @@ int main(int argc, char **argv)
     size_t max_target_size = 0;
     size_t max_pat_len = 0;
     size_t max_ptrs = 0;
-    size_t max_nruns = 0;
     size_t max_morton = 0;
     for (int i = 0; i < nrc; i++) {
 
@@ -791,6 +779,9 @@ void emit_configs(struct run_config *rc, int nconfigs)
             break;
         case SG:
             printf("\'kernel\':\'GS\', ");
+            break;
+        case INVALID_KERNEL:
+            error ("Invalid kernel sent to emit_configs", ERROR);
             break;
         }
 

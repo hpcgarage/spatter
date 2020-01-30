@@ -32,16 +32,16 @@ void linear_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, in
         }
         idx_cur = idx_cur + len;
     }
-    
+
     // Fisher-Yates Shuffling
     if(randomize){
-        unsigned long long init[4] = {0x12345ULL, 0x23456ULL, 
+        unsigned long long init[4] = {0x12345ULL, 0x23456ULL,
                                       0x34567ULL,0x45678ULL};
         int length = 4;
         init_by_array64(init, length);
 
         for(size_t i = 0; i < len-2; i++){
-            size_t j = (genrand64_int64() % (len-i)) + i; 
+            size_t j = (genrand64_int64() % (len-i)) + i;
             for(size_t k = 0; k < worksets; k++) {
                 size_t tmp = idx[k*len+i];
                 idx[k*len+i] = idx[k*len+j];
@@ -91,11 +91,11 @@ struct instruction get_random_instr_orig (struct trace tr) {
     return tr.in[tr.length-1];
 }
 
-struct instruction get_random_instr(struct trace tr) 
+struct instruction get_random_instr(struct trace tr)
 {
   static int init = 0;
   static dist_t *tr_dist;
-  
+
   if( !init ) {
     // This style of init will leak the dist_t when done..
     vrand_init(0x1337ULL);
@@ -117,8 +117,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
 // and reads are 8 byte alignd
     sgsIdx_t *sidx = (sgsIdx_t*)idx;
-    size_t data_type_size = 8;
-    size_t cur = 0; 
+    size_t cur = 0;
     int done = 0;
     while (cur < len && !done) {
         struct instruction in = get_random_instr (tr);
@@ -147,7 +146,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
     sgsIdx_t min = sidx[0];
     for (size_t i = 1; i < len; i++) {
         sidx[i] = sidx[i-1] + sidx[i] / 8;
-        if (idx[i] < min) 
+        if (idx[i] < min)
             min = sidx[i];
     }
     // Translate to zero-based start index, track max.
@@ -155,7 +154,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
     size_t max = idx[0];
     for (size_t i = 1; i < len; i++) {
         idx[i] = sidx[i] - min;
-        if (idx[i] > max) 
+        if (idx[i] > max)
             max = idx[i];
     }
     // Pageinate the positive zero-based indicies in idx[].

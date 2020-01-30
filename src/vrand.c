@@ -33,15 +33,7 @@ static int nrndm()
   return 0;
 }
 
-static void error_rnd(char *s)
-{
-  printf("%s\n",s);
-  exit(1);
-}
-
-
 ////////////////////////////////////////////////////////////
-
 
 void vrand_init(unsigned int j)
 {

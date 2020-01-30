@@ -53,11 +53,11 @@ uint32_t *get_square(uint64_t dim, uint64_t block)
         }
     }
     return square;
-};
+}
 
 uint32_t *_z_block_2d(uint32_t* old_list, uint64_t dim, uint64_t block) {
 
-    uint64_t i, x, y, idx = 0, extra = 0;
+    uint64_t i;
     uint32_t* list = NULL;
     uint32_t* square = NULL;
 
@@ -188,11 +188,11 @@ uint32_t *get_cube(uint64_t dim, uint64_t block)
         }
     }
     return cube;
-};
+}
 
 uint32_t *_z_block_3d(uint32_t* old_list, uint64_t dim, uint64_t block) {
 
-    uint64_t i, x, y, z, idx = 0, extra = 0;
+    uint64_t i;
     uint32_t* list = NULL;
     uint32_t* cube = NULL;
 

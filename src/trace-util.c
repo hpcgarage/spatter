@@ -4,7 +4,7 @@
 #include "sp_alloc.h"
 #include "trace-util.h"
 
-int read_trace (struct trace *t, const char *filename)
+void read_trace (struct trace *t, const char *filename)
 {
     FILE *fp = fopen(filename, "r");
     assert(fp);
@@ -62,7 +62,7 @@ int read_trace (struct trace *t, const char *filename)
 
 }
 
-int print_trace(struct trace t) {
+void print_trace(struct trace t) {
     printf("%zu\n", t.length);
     for (int i = 0; i < t.length; i++) {
         struct instruction tmp = t.in[i];
@@ -77,7 +77,7 @@ int print_trace(struct trace t) {
     }
 }
 
-int reweight_trace(struct trace t){
+void reweight_trace(struct trace t){
     //rescale weights to be between 0 and 1
     double tot = 0;
     double cpct_accum = 0;
