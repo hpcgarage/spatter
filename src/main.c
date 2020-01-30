@@ -393,11 +393,11 @@ int main(int argc, char **argv)
         }
 
         if (rc2[i].morton == 1) {
-            rc2[i].morton_order = z_order_1d(rc2[i].generic_len, 1);
+            rc2[i].morton_order = z_order_1d(rc2[i].generic_len, rc2[i].morton_block);
         } else if (rc2[i].morton == 2) {
-            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len), 1);
+            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len), rc2[i].morton_block);
         } else if (rc2[i].morton == 3) {
-            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len), 1);
+            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len), rc2[i].morton_block);
         }
 
         if (rc2[i].morton) {
@@ -853,6 +853,9 @@ void emit_configs(struct run_config *rc, int nconfigs)
             printf(", \'morton\':%d", rc[i].morton);
         }
 
+        if (rc[i].morton) {
+            printf(", \'mblock\':%d", rc[i].morton_block);
+        }
 
         printf("}");
 
