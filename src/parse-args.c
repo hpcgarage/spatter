@@ -59,7 +59,7 @@ void error(char *what, int code);
 void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
-void hydro_pattern(size_t *pat, size_t dim);
+void xkp_pattern(size_t *pat, size_t dim);
 
 char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs:";
 void parse_backend(int argc, char **argv);
@@ -736,16 +736,17 @@ void parse_p(char* optarg, struct run_config *rc) {
             rc->type = CONFIG_FILE;
         }
 
-        // The static Hydro pattern
-        // HYDRO:dim
-        else if (!strcmp(optarg, "HYDRO")) {
-            rc->type = HYDRO;
+        // The Exxon Kernel Proxy-derived stencil
+        // It used to be called HYDRO so we will accept that too
+        // XKP:dim
+        else if (!strcmp(optarg, "XKP") || !strcmp(optarg, "HYDRO")) {
+            rc->type = XKP;
 
             size_t dim = 0;
             char *dim_char = strtok(arg, ":");
-            if (!dim_char) error("HYDRO: size not found", 1);
+            if (!dim_char) error("XKP: size not found", 1);
             if (sscanf(dim_char, "%zu", &dim) < 1)
-                error("HYDRO: Dimension not parsed", 1);
+                error("XKP: Dimension not parsed", 1);
 
             rc->pattern_len = 73;
 
@@ -754,7 +755,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             rc->deltas[0] = rc->delta;
             rc->deltas_len = 1;
 
-            hydro_pattern(rc->pattern, dim);
+            xkp_pattern(rc->pattern, dim);
 
 
         }
@@ -1048,7 +1049,7 @@ void add4(ssize_t *dest, ssize_t *a, ssize_t *b, int *off)
     *off += 4;
 }
 
-void hydro_pattern(size_t *pat_, size_t dim) {
+void xkp_pattern(size_t *pat_, size_t dim) {
 
     ssize_t pat[73];
     for (int i = 0; i < 73; i++) {
