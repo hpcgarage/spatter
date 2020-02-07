@@ -14,6 +14,7 @@
 #define MAX_PATTERN_LEN 1024
 
 #include <sgtype.h>
+#include <stdint.h>
 
 /** @brief Supported benchmark backends
  */
@@ -49,6 +50,7 @@ enum idx_type
     LAPLACIAN,
     CUSTOM,
     CONFIG_FILE,
+    XKP,
     INVALID_IDX
 };
 
@@ -87,6 +89,11 @@ struct run_config
     double *time_ms;
     long long **papi_ctr;
     int papi_counters;
+    int morton;
+    int morton_block;
+    uint32_t *morton_order;
+    uint32_t *morton_order_dev;
+    int stride_kernel;
 };
 
 struct backend_config

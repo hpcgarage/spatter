@@ -11,9 +11,8 @@ void sg_zero_time(void){
 
 double diff_ms(void)
 {
- unsigned long long diff_ns, diff_s; 
+ unsigned long long diff_ns, diff_s;
  double diff_ms;
- struct timespec temp;
 
 if ((endtime.tv_nsec-starttime.tv_nsec)<0) {
 	diff_s = endtime.tv_sec-(starttime.tv_sec+1);
@@ -27,10 +26,10 @@ if ((endtime.tv_nsec-starttime.tv_nsec)<0) {
 }
 
  diff_ms = ((double)diff_s * 1000.0) + ((double)diff_ns / 1000000.0);
- 
+
  //Print out for debugging
  //printf("The difference in ms is %f\n",diff_ms);
- 
+
  return diff_ms;
 
 }

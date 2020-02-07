@@ -3,7 +3,7 @@
 // Implementation from:
 // "A linear algorithm for generating random numbers with a given distribution"
 // Software Engineering, IEEE Transactions (Volume:17, Issue: 9, pp. 972-975)
-// Vose, M.D. ; Dept. of Comput. Sci., Tennessee Univ., Knoxville, TN, USA 
+// Vose, M.D. ; Dept. of Comput. Sci., Tennessee Univ., Knoxville, TN, USA
 //
 ///////////////////////////////////////////////////////////////////////////// */
 
@@ -27,26 +27,18 @@ static __thread unsigned int rndx, rtab[55];
 static int nrndm()
 {
   unsigned int k;
-  
+
   for (k = 0; k < 24; k++) rtab[k] -= rtab[k+31];
   for (k = 24; k < 55; k++) rtab[k] -= rtab[k-24];
   return 0;
 }
 
-static void error_rnd(char *s)
-{
-  printf("%s\n",s);
-  exit(1);
-}
-
-
 ////////////////////////////////////////////////////////////
-
 
 void vrand_init(unsigned int j)
 {
   unsigned int h,i,k;
-  
+
   for (rtab[54] = j |= (k = i = 1); i < 55; i++)
     h = (21*i)%55, rtab[--h] = k, k = j - k, j = rtab[h];
   while (i--){
@@ -59,9 +51,9 @@ void vrand_init(unsigned int j)
 dist_t *vrand_dist_alloc(unsigned int n)
 {
   dist_t *d;
-  d = (dist_t *)sp_malloc(sizeof(dist_t), 1, ALIGN_CACHE);
-  d->a = (int *)sp_malloc(d->n, sizeof(int), ALIGN_CACHE);
-  d->p = (double *)sp_malloc(d->n, sizeof(double), ALIGN_CACHE);
+  d = (dist_t *)malloc(sizeof(dist_t));
+  d->a = (int *)malloc(d->n * sizeof(int));
+  d->p = (double *)malloc(d->n *sizeof(double));
   d->n = n;
   return d;
 }
@@ -85,22 +77,22 @@ dist_t *vrand_dist_init(dist_t *d, double s)
     d->p and d->a are overwritten by the initialization process.
   */
   int j,k,t,stop,*a; double q,*p;
-  
+
   stop = d->n, q = s/stop, j = k = 0;
-  
+
   d->m1 = stop/TWO_32;
   d->m2 = s/(stop * TWO_32);
-  
+
   a = d->a;
   p = d->p;
-  
+
   getsmall; getlarge;
-  
+
  loop:
-  
+
   a[t] = k;
   p[k] += p[t] - q;
-  
+
   if (p[k] >= q) {
     if (j == stop) goto end;
     getsmall;
@@ -111,12 +103,12 @@ dist_t *vrand_dist_init(dist_t *d, double s)
   if (j < k) getsmall;
   getlarge;
   goto loop;
-  
+
  cleanup:
-  
+
   a[t] = t;
   while (j < stop) { a[j] = j; j++; }
-  
+
  end:
   return d;
 }

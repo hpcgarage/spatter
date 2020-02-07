@@ -12,6 +12,7 @@
 #include "sgtime.h"
 #include "trace-util.h"
 #include "sp_alloc.h"
+#include "morton.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -55,13 +56,13 @@ int validate_flag = 0, quiet_flag = 0;
 int aggregate_flag = 1;
 int compress_flag = 0;
 int papi_nevents = 0;
+int stride_kernel = -1;
 #ifdef USE_PAPI
 char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 int papi_event_codes[PAPI_MAX_COUNTERS];
 long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[];
 #endif
-
 
 void print_papi_names() {
 #ifdef USE_PAPI
@@ -168,7 +169,6 @@ void report_time2(struct run_config* rc, int nrc) {
         double min = bw[0];
         double max = bw[0];
         double hmean = 0;
-        double stddev = 0;
         double first, med, third;
 
         qsort(bw, nrc, sizeof(double), compare);
@@ -213,15 +213,6 @@ void report_time2(struct run_config* rc, int nrc) {
 
         double hstderr = theta_22 * sig_1x / sqrt(nrc);
 
-
-
-        /*
-        for (int i = 0; i < nrc; i++) {
-            stddev += pow(bw[i] - hmean, 2);
-        }
-        stddev = sqrt((1./nrc)*stddev);
-        */
-
         printf("\n%-11s %-12s %-12s %-12s %-12s\n", "Min", "25%","Med","75%", "Max");
         printf("%-12.6g %-12.6g %-12.6g %-12.6g %-12.6g\n", min, first, med, third, max);
         printf("%-12s %-12s\n", "H.Mean", "H.StdErr");
@@ -248,6 +239,8 @@ void print_sizet(size_t *buf, size_t len){
 }
 
 void emit_configs(struct run_config *rc, int nconfigs);
+uint64_t isqrt(uint64_t x);
+uint64_t icbrt(uint64_t x);
 
 
 int main(int argc, char **argv)
@@ -263,10 +256,9 @@ int main(int argc, char **argv)
     sgDataBuf  target;
 
     // OpenCL Specific
+    #ifdef USE_OPENCL
     size_t global_work_size = 1;
     char   *kernel_string;
-
-    #ifdef USE_OPENCL
     cl_uint work_dim = 1;
     #endif
 
@@ -314,7 +306,7 @@ int main(int argc, char **argv)
     if (err !=PAPI_VER_CURRENT && err > 0) {
         error ("PAPI library version mismatch", ERROR);
     }
-    if (err < 0) papi_err(err);
+    if (err < 0) papi_err(err, __LINE__, __FILE__);
     err = PAPI_is_initialized();
     if (err != PAPI_LOW_LEVEL_INITED) {
         error ("PAPI was not initialized", ERROR);
@@ -323,13 +315,13 @@ int main(int argc, char **argv)
     // OK, now that papi is finally inizlized, we need to make our EventSet
     // First, convert names to codes
     for (int i = 0; i < papi_nevents; i++) {
-        papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]));
+        papi_err(PAPI_event_name_to_code(papi_event_names[i],&papi_event_codes[i]), __LINE__, __FILE__);
     }
 
     int EventSet = PAPI_NULL;
-    papi_err(PAPI_create_eventset(&EventSet));
+    papi_err(PAPI_create_eventset(&EventSet), __LINE__, __FILE__);
     for (int i = 0; i < papi_nevents; i++) {
-        papi_err(PAPI_add_event(EventSet, papi_event_codes[i]));
+        papi_err(PAPI_add_event(EventSet, papi_event_codes[i]), __LINE__, __FILE__);
     }
 
 #endif
@@ -357,7 +349,7 @@ int main(int argc, char **argv)
     size_t max_target_size = 0;
     size_t max_pat_len = 0;
     size_t max_ptrs = 0;
-    size_t max_nruns = 0;
+    size_t max_morton = 0;
     for (int i = 0; i < nrc; i++) {
 
         size_t max_pattern_val = rc2[i].pattern[0];
@@ -386,6 +378,20 @@ int main(int argc, char **argv)
 
         if (rc2[i].pattern_len > max_pat_len) {
             max_pat_len = rc2[i].pattern_len;
+        }
+
+        if (rc2[i].morton == 1) {
+            rc2[i].morton_order = z_order_1d(rc2[i].generic_len, rc2[i].morton_block);
+        } else if (rc2[i].morton == 2) {
+            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len), rc2[i].morton_block);
+        } else if (rc2[i].morton == 3) {
+            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len), rc2[i].morton_block);
+        }
+
+        if (rc2[i].morton) {
+            if (rc2[i].generic_len > max_morton) {
+                max_morton = rc2[i].generic_len;
+            }
         }
     }
 
@@ -421,6 +427,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
     }
+    //    printf("-- here -- \n");
 
     // Populate buffers on host
     #pragma omp parallel for
@@ -440,11 +447,13 @@ int main(int argc, char **argv)
     #endif
 
     #ifdef USE_CUDA
-    sgIdx_t* pat_dev;
+    sgIdx_t *pat_dev;
+    uint32_t *order_dev;
     if (backend == CUDA) {
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_cuda(&source);
         cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_morton);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
@@ -491,19 +500,19 @@ int main(int argc, char **argv)
         int wpt = 1;
         if (backend == CUDA) {
             float time_ms = 2;
-            for (int i = -1; i < (int)rc2[k].nruns; i++) {
+            for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
                 unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                 unsigned long local_work_size = rc2[k].local_work_size;
                 unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt);
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].morton, rc2[k].morton_order, order_dev, rc[k].stride_kernel);
                 } else {
                     time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                 }
 
-                if (i!= -1) rc2[k].time_ms[i] = time_ms;
+                if (i>=0) rc2[k].time_ms[i] = time_ms;
             }
 
 
@@ -523,7 +532,7 @@ int main(int argc, char **argv)
 
                 if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI
-                if (i!=-1) profile_start(EventSet);
+                if (i!=-1) profile_start(EventSet, __LINE__, __FILE__);
 #endif
 
                 switch (rc2[k].kernel) {
@@ -550,7 +559,11 @@ int main(int argc, char **argv)
                             gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].deltas_len <= 1) {
-                            gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                            if (rc2[k].morton) {
+                                gather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].morton_order);
+                            } else {
+                                gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                            }
                         } else {
                             gather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);
                         }
@@ -561,7 +574,7 @@ int main(int argc, char **argv)
                 }
 
 #ifdef USE_PAPI
-                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
 
@@ -579,7 +592,7 @@ int main(int argc, char **argv)
 
                 if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI
-                if (i!=-1) profile_start(EventSet);
+                if (i!=-1) profile_start(EventSet, __LINE__, __FILE__);
 #endif
 
                 //TODO: Rewrite serial kernel
@@ -598,7 +611,7 @@ int main(int argc, char **argv)
                 //double time_ms = sg_get_time_ms();
                 //if (i!=0) report_time(k, time_ms/1000., rc2[k], i);
 #ifdef USE_PAPI
-                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i]);
+                if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
             }
@@ -712,17 +725,32 @@ int main(int argc, char **argv)
         }
         */
     //}
-  }
+    }
 
-  // Free Memory
-  free(source.host_ptr);
-  for (size_t i = 0; i < target.nptrs; i++) {
+    // Free Memory
+    free(source.host_ptr);
+    for (size_t i = 0; i < target.nptrs; i++) {
       free(target.host_ptrs[i]);
-  }
-  if (target.nptrs != 0) {
+    }
+    if (target.nptrs != 0) {
       free(target.host_ptrs);
-  }
+    }
+
+    for (int i = 0; i < nrc; i++) {
+        if (rc2[i].morton_order) {
+            free(rc2[i].morton_order);
+        }
+        free(rc2[i].time_ms);
+#ifdef USE_PAPI
+        for (int j = 0; j < rc2[i].nruns; j++){
+            free(rc2[i].papi_ctr[j]);
+        }
+        free(rc2[i].papi_ctr);
+#endif
+    }
+
   free(rc);
+  //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
 }
 
 void emit_configs(struct run_config *rc, int nconfigs)
@@ -751,6 +779,9 @@ void emit_configs(struct run_config *rc, int nconfigs)
             break;
         case SG:
             printf("\'kernel\':\'GS\', ");
+            break;
+        case INVALID_KERNEL:
+            error ("Invalid kernel sent to emit_configs", ERROR);
             break;
         }
 
@@ -803,6 +834,19 @@ void emit_configs(struct run_config *rc, int nconfigs)
             printf("\'threads\':%zu", rc[i].omp_threads);
         }
 
+        // OpenMP Threads
+        if (rc[i].stride_kernel!=-1) {
+            printf("\'stride_kernel\':%d", rc[i].stride_kernel);
+        }
+
+        // Morton
+        if (rc[i].morton) {
+            printf(", \'morton\':%d", rc[i].morton);
+        }
+
+        if (rc[i].morton) {
+            printf(", \'mblock\':%d", rc[i].morton_block);
+        }
 
         printf("}");
 
@@ -812,4 +856,45 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
     }
     printf(" ]\n\n");
+}
+
+// From http://www.codecodex.com/wiki/Calculate_an_integer_square_root
+uint64_t isqrt(uint64_t x)
+{
+    uint64_t op, res, one;
+
+    op = x;
+    res = 0;
+
+    /* "one" starts at the highest power of four <= than the argument. */
+    one = 1 << 30;  /* second-to-top bit set */
+    while (one > op) one >>= 2;
+
+    while (one != 0) {
+
+        if (op >= res + one) {
+            op -= res + one;
+            res += one << 1;  // <-- faster than 2 * one
+        }
+        res >>= 1;
+        one >>= 2;
+    }
+    return res;
+}
+
+// From https://gist.github.com/anonymous/729557
+uint64_t icbrt(uint64_t x) {
+    int s;
+    uint64_t y;
+    uint64_t b;
+    y = 0;
+    for (s = 63; s >= 0; s -= 3) {
+        y += y;
+        b = 3*y*((uint64_t) y + 1) + 1;
+        if ((x >> s) >= b) {
+                x -= b << s;
+                y++;
+        }
+    }
+    return y;
 }

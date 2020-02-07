@@ -26,6 +26,9 @@
 #define CLPLATFORM  1010
 #define CLDEVICE    1011
 #define PAPI_ARG    1012
+#define MORTON      1013
+#define MBLOCK      1014
+#define STRIDE      1015
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -39,6 +42,7 @@ extern int validate_flag;
 extern int quiet_flag;
 extern int aggregate_flag;
 extern int compress_flag;
+extern int stride_kernel;
 
 #ifdef USE_PAPI
 extern int papi_nevents;
@@ -55,6 +59,7 @@ void error(char *what, int code);
 void safestrcopy(char *dest, char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
+void xkp_pattern(size_t *pat, size_t dim);
 
 char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs:";
 void parse_backend(int argc, char **argv);
@@ -184,6 +189,8 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
             rc[0][i] = parse_json_config(value->u.array.values[i]);
         }
 
+        json_value_free(value);
+        free(file_contents);
         //exit(0);
         return;
     }
@@ -194,14 +201,13 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
 struct run_config parse_runs(int argc, char **argv)
 {
-    int supress_errors = 0;
-
     int pattern_found = 0;
-
-    volatile char *argv0copy = argv[0];
 
     struct run_config rc = {0};
     rc.delta = -1;
+    rc.stride_kernel = -1;
+    rc.morton_block = 1;
+    rc.morton_order = NULL;
 #ifdef USE_OPENMP
     rc.omp_threads = omp_get_max_threads();
 #else
@@ -233,6 +239,9 @@ struct run_config parse_runs(int argc, char **argv)
         {"papi",            required_argument, NULL, 0},
         {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
+        {"morton",          optional_argument, NULL, MORTON},
+        {"mblock",          optional_argument, NULL, MBLOCK},
+        {"stride",          optional_argument, NULL, STRIDE},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
     };
@@ -305,6 +314,7 @@ struct run_config parse_runs(int argc, char **argv)
                 break;
             case 'n':
                 safestrcopy(rc.name, optarg);
+                //printf("Parsed name as %s\n", optarg);
                 break;
             case 'p':
                 safestrcopy(rc.generator, optarg);
@@ -352,6 +362,15 @@ struct run_config parse_runs(int argc, char **argv)
 
                 break;
                 }
+            case MORTON:
+                sscanf(optarg,"%d", &rc.morton);
+                break;
+            case MBLOCK:
+                sscanf(optarg,"%d", &rc.morton_block);
+                break;
+            case STRIDE:
+                sscanf(optarg,"%d", &rc.stride_kernel);
+                break;
             default:
                 break;
 
@@ -412,6 +431,7 @@ struct run_config parse_runs(int argc, char **argv)
 
     if (!strcasecmp(rc.name, "NONE")) {
         if (rc.type != CUSTOM) {
+            //printf("Parsed name as %s\n", rc.generator);
             safestrcopy(rc.name, rc.generator);
         } else {
             safestrcopy(rc.name, "CUSTOM");
@@ -516,10 +536,8 @@ void parse_backend(int argc, char **argv)
     safestrcopy(kernel_file,     "NONE");
     safestrcopy(kernel_name,     "NONE");
 
-    int supress_errors = 0;
-
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be rest between calls.
+    //must be reset between calls.
     optind = 1;
 	static struct option long_options[] =
     {
@@ -538,6 +556,11 @@ void parse_backend(int argc, char **argv)
         {"compress",        optional_argument, NULL, 'c'},
         {"papi",            required_argument, NULL, PAPI_ARG},
         {"local-work-size", required_argument, NULL, 'z'},
+        {"morton",          optional_argument, NULL, 0},
+        {"mblock",          optional_argument, NULL, 0},
+        {"count",           optional_argument, NULL, 0},
+        {"stride",          optional_argument, NULL, 0},
+        {"runs",            optional_argument, NULL, 0},
         {0, 0, 0, 0}
     };
 
@@ -713,6 +736,30 @@ void parse_p(char* optarg, struct run_config *rc) {
             rc->type = CONFIG_FILE;
         }
 
+        // The Exxon Kernel Proxy-derived stencil
+        // It used to be called HYDRO so we will accept that too
+        // XKP:dim
+        else if (!strcmp(optarg, "XKP") || !strcmp(optarg, "HYDRO")) {
+            rc->type = XKP;
+
+            size_t dim = 0;
+            char *dim_char = strtok(arg, ":");
+            if (!dim_char) error("XKP: size not found", 1);
+            if (sscanf(dim_char, "%zu", &dim) < 1)
+                error("XKP: Dimension not parsed", 1);
+
+            rc->pattern_len = 73;
+
+            // The default delta is 1
+            rc->delta = 1;
+            rc->deltas[0] = rc->delta;
+            rc->deltas_len = 1;
+
+            xkp_pattern(rc->pattern, dim);
+
+
+        }
+
         // Parse Uniform Stride Arguments, which are
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM")) {
@@ -722,7 +769,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             // Read the length
             char *len = strtok(arg,":");
             if (!len) error("UNIFORM: Index Length not found", 1);
-            if (sscanf(len, "%zd", &(rc->pattern_len)) < 1)
+            if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
             // Read the stride
@@ -808,7 +855,7 @@ void parse_p(char* optarg, struct run_config *rc) {
             size_t ms1_deltas_len = 0;
 
             // Parse index length
-            sscanf(len, "%zd", &(rc->pattern_len));
+            sscanf(len, "%zu", &(rc->pattern_len));
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");
@@ -977,4 +1024,91 @@ void error(char *what, int code){
 void safestrcopy(char *dest, char *src){
     dest[0] = '\0';
     strncat(dest, src, STRING_SIZE-1);
+}
+
+int compare_ssizet(const void *a, const void *b)
+{
+    if (*(ssize_t*)a > *(ssize_t*)b) return 1;
+    else if (*(ssize_t*)a < *(ssize_t*)b) return -1;
+    else return 0;
+}
+
+void copy4(ssize_t *dest, ssize_t *a, int *off)
+{
+    for (int i = 0; i < 4; i++) {
+        dest[i + *off] = a[i];
+    }
+    *off += 4;
+}
+
+void add4(ssize_t *dest, ssize_t *a, ssize_t *b, int *off)
+{
+    for (int i = 0; i < 4; i++) {
+        dest[i + *off] = a[i] + b[i];
+    }
+    *off += 4;
+}
+
+void xkp_pattern(size_t *pat_, size_t dim) {
+
+    ssize_t pat[73];
+    for (int i = 0; i < 73; i++) {
+        pat[i] = i;
+    }
+
+    ssize_t Xp[4];
+    ssize_t Xn[4];
+    ssize_t Yp[4];
+    ssize_t Yn[4];
+    ssize_t Zp[4];
+    ssize_t Zn[4];
+
+    Xp[0] =  1; Xp[1] =  2; Xp[2] =  3; Xp[3] =  4;
+    Xn[0] = -1; Xn[1] = -2; Xn[2] = -3; Xn[3] = -4;
+    Yp[0] = dim;  Yp[1] =  2*dim; Yp[2] =  3*dim; Yp[3] =  4*dim;
+    Yn[0] = -dim; Yn[1] = -2*dim; Yn[2] = -3*dim; Yn[3] = -4*dim;
+    Zp[0] = dim*dim;  Zp[1] =  2*dim*dim; Zp[2] =  3*dim*dim; Zp[3] =  4*dim*dim;
+    Zn[0] = -dim*dim; Zn[1] = -2*dim*dim; Zn[2] = -3*dim*dim; Zn[3] = -4*dim*dim;
+
+    int idx = 0;
+    pat[idx++] = 0;
+    copy4(pat, Xp, &idx);
+    copy4(pat, Xn, &idx);
+    copy4(pat, Yp, &idx);
+    copy4(pat, Yn, &idx);
+    copy4(pat, Zp, &idx);
+    copy4(pat, Zn, &idx);
+
+    add4(pat, Xp, Yp, &idx);
+    add4(pat, Xp, Zp, &idx);
+    add4(pat, Xp, Yn, &idx);
+    add4(pat, Xp, Zn, &idx);
+
+    add4(pat, Xn, Yp, &idx);
+    add4(pat, Xn, Zp, &idx);
+    add4(pat, Xn, Yn, &idx);
+    add4(pat, Xn, Zn, &idx);
+
+    add4(pat, Yp, Zp, &idx);
+    add4(pat, Yp, Zn, &idx);
+    add4(pat, Yn, Zp, &idx);
+    add4(pat, Yn, Zn, &idx);
+
+    qsort(pat, 73, sizeof(ssize_t), compare_ssizet);
+
+    ssize_t min = pat[0];
+    for (int i = 1; i < 73; i++) {
+        if (pat[i] < min) {
+            min = pat[i];
+        }
+    }
+
+    for (int i = 0; i < 73; i++) {
+        pat[i] -= min;
+    }
+
+    for (int i = 0; i < 73; i++) {
+        pat_[i] = pat[i];
+    }
+
 }

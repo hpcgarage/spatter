@@ -1,15 +1,16 @@
 #ifndef CUDA_BACKEND_H
 #define CUDA_BACKEND_H
 #include <cuda_runtime.h>
+#include <stdint.h>
 #include "../include/parse-args.h"
 #include "sgbuf.h"
 
 extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
-extern float cuda_sg_wrapper(enum sg_kernel kernel, 
-                       size_t vector_len, 
-                       long unsigned dim, long unsigned* grid, long unsigned* block, 
-                       double* target, double *source, 
+extern float cuda_sg_wrapper(enum sg_kernel kernel,
+                       size_t vector_len,
+                       long unsigned dim, long unsigned* grid, long unsigned* block,
+                       double* target, double *source,
                        long* ti, long* si, unsigned int shmem);
 
 extern float cuda_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
@@ -20,7 +21,7 @@ extern float cuda_block_wrapper(long unsigned dim, long unsigned* grid, long uns
         size_t pat_len,
         size_t delta,
         size_t n,
-        size_t wrap, int wpt);
+        size_t wrap, int wpt, size_t morton, uint32_t *order, uint32_t *order_dev, int stride);
 extern float cuda_block_random_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
