@@ -573,7 +573,7 @@ int main(int argc, char **argv)
                             gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].deltas_len <= 1) {
-                            if (rc2[k].ro_morton) {
+                            if (rc2[k].ro_morton || rc2[k].ro_hilbert) {
                                 gather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].ro_order);
                             } else {
                                 gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
