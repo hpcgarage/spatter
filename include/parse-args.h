@@ -89,11 +89,13 @@ struct run_config
     double *time_ms;
     long long **papi_ctr;
     int papi_counters;
-    int morton;
-    int morton_block;
-    uint32_t *morton_order;
-    uint32_t *morton_order_dev;
     int stride_kernel;
+    // Reorder based kernels
+    int ro_morton;
+    int ro_hilbert;
+    int ro_block;
+    uint32_t *ro_order;
+    uint32_t *ro_order_dev;
 };
 
 struct backend_config

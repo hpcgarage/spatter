@@ -27,7 +27,8 @@
 #define CLDEVICE    1011
 #define PAPI_ARG    1012
 #define MORTON      1013
-#define MBLOCK      1014
+#define HILBERT     1016
+#define ROBLOCK     1014
 #define STRIDE      1015
 
 #define INTERACTIVE "INTERACTIVE"
@@ -206,8 +207,8 @@ struct run_config parse_runs(int argc, char **argv)
     struct run_config rc = {0};
     rc.delta = -1;
     rc.stride_kernel = -1;
-    rc.morton_block = 1;
-    rc.morton_order = NULL;
+    rc.ro_block = 1;
+    rc.ro_order = NULL;
 #ifdef USE_OPENMP
     rc.omp_threads = omp_get_max_threads();
 #else
@@ -240,7 +241,9 @@ struct run_config parse_runs(int argc, char **argv)
         {"cl-device",       required_argument, NULL, 0},
         {"verbose",         no_argument,       NULL, 0},
         {"morton",          optional_argument, NULL, MORTON},
-        {"mblock",          optional_argument, NULL, MBLOCK},
+        {"hilbert",         optional_argument, NULL, HILBERT},
+        {"mblock",          optional_argument, NULL, ROBLOCK},
+        {"roblock",         optional_argument, NULL, ROBLOCK},
         {"stride",          optional_argument, NULL, STRIDE},
         {"aggregate",       optional_argument, NULL, 1},
         {0, 0, 0, 0}
@@ -363,10 +366,13 @@ struct run_config parse_runs(int argc, char **argv)
                 break;
                 }
             case MORTON:
-                sscanf(optarg,"%d", &rc.morton);
+                sscanf(optarg,"%d", &rc.ro_morton);
                 break;
-            case MBLOCK:
-                sscanf(optarg,"%d", &rc.morton_block);
+            case HILBERT:
+                sscanf(optarg,"%d", &rc.ro_hilbert);
+                break;
+            case ROBLOCK:
+                sscanf(optarg,"%d", &rc.ro_block);
                 break;
             case STRIDE:
                 sscanf(optarg,"%d", &rc.stride_kernel);
@@ -557,6 +563,7 @@ void parse_backend(int argc, char **argv)
         {"papi",            required_argument, NULL, PAPI_ARG},
         {"local-work-size", required_argument, NULL, 'z'},
         {"morton",          optional_argument, NULL, 0},
+        {"hilbert",         optional_argument, NULL, 0},
         {"mblock",          optional_argument, NULL, 0},
         {"count",           optional_argument, NULL, 0},
         {"stride",          optional_argument, NULL, 0},

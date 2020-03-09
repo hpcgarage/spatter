@@ -13,6 +13,7 @@
 #include "trace-util.h"
 #include "sp_alloc.h"
 #include "morton.h"
+#include "hilbert3d.h"
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -349,7 +350,7 @@ int main(int argc, char **argv)
     size_t max_target_size = 0;
     size_t max_pat_len = 0;
     size_t max_ptrs = 0;
-    size_t max_morton = 0;
+    size_t max_ro_len = 0;
     for (int i = 0; i < nrc; i++) {
 
         size_t max_pattern_val = rc2[i].pattern[0];
@@ -380,17 +381,30 @@ int main(int argc, char **argv)
             max_pat_len = rc2[i].pattern_len;
         }
 
-        if (rc2[i].morton == 1) {
-            rc2[i].morton_order = z_order_1d(rc2[i].generic_len, rc2[i].morton_block);
-        } else if (rc2[i].morton == 2) {
-            rc2[i].morton_order = z_order_2d(isqrt(rc2[i].generic_len), rc2[i].morton_block);
-        } else if (rc2[i].morton == 3) {
-            rc2[i].morton_order = z_order_3d(icbrt(rc2[i].generic_len), rc2[i].morton_block);
+        if (rc2[i].ro_morton == 1) {
+            rc2[i].ro_order = z_order_1d(rc2[i].generic_len, rc2[i].ro_block);
+        } else if (rc2[i].ro_morton == 2) {
+            rc2[i].ro_order = z_order_2d(isqrt(rc2[i].generic_len), rc2[i].ro_block);
+        } else if (rc2[i].ro_morton == 3) {
+            rc2[i].ro_order = z_order_3d(icbrt(rc2[i].generic_len), rc2[i].ro_block);
         }
 
-        if (rc2[i].morton) {
-            if (rc2[i].generic_len > max_morton) {
-                max_morton = rc2[i].generic_len;
+        if (rc2[i].ro_hilbert == 1) {
+            //yes, use z order function
+            rc2[i].ro_order = z_order_1d(rc2[i].generic_len, rc2[i].ro_block);
+        } else if (rc2[i].ro_hilbert == 2) {
+            error ("Not yet implemented", ERROR);
+        } else if (rc2[i].ro_hilbert == 3) {
+            rc2[i].ro_order = h_order_3d(icbrt(rc2[i].generic_len), rc2[i].ro_block);
+        }
+
+        if ((rc2[i].ro_hilbert || rc2[i].ro_morton) && !rc2[i].ro_order) {
+            error("Unable to generate reorder pattern.", ERROR);
+        }
+
+        if (rc2[i].ro_morton || rc[i].ro_morton) {
+            if (rc2[i].generic_len > max_ro_len) {
+                max_ro_len = rc2[i].generic_len;
             }
         }
     }
@@ -453,7 +467,7 @@ int main(int argc, char **argv)
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_cuda(&source);
         cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
-        cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_morton);
+        cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_ro_len);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
@@ -507,7 +521,7 @@ int main(int argc, char **argv)
                 unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].morton, rc2[k].morton_order, order_dev, rc[k].stride_kernel);
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel);
                 } else {
                     time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                 }
@@ -559,8 +573,8 @@ int main(int argc, char **argv)
                             gather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                         }
                         else if (rc2[k].deltas_len <= 1) {
-                            if (rc2[k].morton) {
-                                gather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].morton_order);
+                            if (rc2[k].ro_morton) {
+                                gather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].ro_order);
                             } else {
                                 gather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                             }
@@ -737,8 +751,8 @@ int main(int argc, char **argv)
     }
 
     for (int i = 0; i < nrc; i++) {
-        if (rc2[i].morton_order) {
-            free(rc2[i].morton_order);
+        if (rc2[i].ro_order) {
+            free(rc2[i].ro_order);
         }
         free(rc2[i].time_ms);
 #ifdef USE_PAPI
@@ -840,12 +854,17 @@ void emit_configs(struct run_config *rc, int nconfigs)
         }
 
         // Morton
-        if (rc[i].morton) {
-            printf(", \'morton\':%d", rc[i].morton);
+        if (rc[i].ro_morton) {
+            printf(", \'morton\':%d", rc[i].ro_morton);
         }
 
-        if (rc[i].morton) {
-            printf(", \'mblock\':%d", rc[i].morton_block);
+        // Morton
+        if (rc[i].ro_hilbert) {
+            printf(", \'hilbert\':%d", rc[i].ro_hilbert);
+        }
+
+        if (rc[i].ro_morton || rc[i].ro_hilbert) {
+            printf(", \'roblock\':%d", rc[i].ro_block);
         }
 
         printf("}");
