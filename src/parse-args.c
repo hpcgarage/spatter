@@ -9,6 +9,7 @@
 #include "backend-support-tests.h"
 #include "sp_alloc.h"
 #include "json.h"
+#include "pcg_basic.h"
 
 #ifdef USE_CUDA
 #include "../src/cuda/cuda-backend.h"
@@ -62,10 +63,49 @@ void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
 
-char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs:";
+char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs::o:";
 void parse_backend(int argc, char **argv);
 
 char jsonfilename[STRING_SIZE];
+
+static struct option long_options[] =
+{
+    // Run Config
+    {"kernel-name",     required_argument, NULL, 'k'},
+    {"pattern",         required_argument, NULL, 'p'},
+    {"delta",           required_argument, NULL, 'd'},
+    {"count",           required_argument, NULL, 'l'},
+    {"wrap",            required_argument, NULL, 'w'},
+    {"random",          optional_argument, NULL, 's'},
+    {"vector-len",      required_argument, NULL, 'v'},
+    {"runs",            required_argument, NULL, 'R'},      
+    {"omp-threads",     required_argument, NULL, 't'},
+    {"op",              required_argument, NULL, 'o'},      
+    {"local-work-size", required_argument, NULL, 'z'},      
+    {"shared-mem",      required_argument, NULL, 'm'},
+    {"name",            required_argument, NULL, 'n'},
+    {"morton",          optional_argument, NULL, MORTON},   
+    {"hilbert",         optional_argument, NULL, HILBERT},  
+    {"mblock",          optional_argument, NULL, ROBLOCK},  
+    {"roblock",         optional_argument, NULL, ROBLOCK},  
+    {"stride",          optional_argument, NULL, STRIDE},   
+    /* Output */
+    {"no-print-header", no_argument,       NULL, 'q'},
+    {"verbose",         no_argument,       &verbose, 1},
+    /* Backend */
+    {"backend",         required_argument, NULL, 'b'},
+    {"cl-platform",     required_argument, NULL, CLPLATFORM},
+    {"cl-device",       required_argument, NULL, CLDEVICE},
+    {"kernel-file",     required_argument, NULL, 'f'},
+    {"interactive",     no_argument,       NULL, 'i'},
+    /* Other */
+    {"validate",        no_argument, &validate_flag, 1},
+    {"aggregate",       optional_argument, NULL, 'a'},
+    {"compress",        optional_argument, NULL, 'c'},
+    {"papi",            required_argument, NULL, PAPI_ARG},
+    {"count",           optional_argument, NULL, 0},
+    {0, 0, 0, 0}
+};
 
 int get_num_configs(json_value* value) {
     if (value->type != json_array) {
@@ -221,33 +261,7 @@ struct run_config parse_runs(int argc, char **argv)
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
     //must be rest between calls.
     optind = 0;
-	static struct option long_options[] =
-    {
-        // Run Config
-        {"kernel-name",     required_argument, NULL, 'k'},
-        {"pattern",         required_argument, NULL, 'p'},
-        {"delta",           required_argument, NULL, 'd'},
-        {"count",           required_argument, NULL, 'l'},
-        {"wrap",            required_argument, NULL, 'w'},
-        {"random",          required_argument, NULL, 's'},
-        {"vector-len",      required_argument, NULL, 'v'},
-        {"runs",            required_argument, NULL, 'R'},
-        {"omp-threads",     required_argument, NULL, 't'},
-        {"op",              required_argument, NULL, 'o'},
-        {"local-work-size", required_argument, NULL, 'z'},
-        {"shared-mem",      required_argument, NULL, 'm'},
-        {"name",            required_argument, NULL, 'n'},
-        {"papi",            required_argument, NULL, 0},
-        {"cl-device",       required_argument, NULL, 0},
-        {"verbose",         no_argument,       NULL, 0},
-        {"morton",          optional_argument, NULL, MORTON},
-        {"hilbert",         optional_argument, NULL, HILBERT},
-        {"mblock",          optional_argument, NULL, ROBLOCK},
-        {"roblock",         optional_argument, NULL, ROBLOCK},
-        {"stride",          optional_argument, NULL, STRIDE},
-        {"aggregate",       optional_argument, NULL, 1},
-        {0, 0, 0, 0}
-    };
+
 
     int c = 0;
     int option_index = 0;
@@ -289,7 +303,14 @@ struct run_config parse_runs(int argc, char **argv)
                 }
                 break;
             case 's':
-                sscanf(optarg, "%zu", &rc.random_seed);
+                // Parsing the seed parameter
+                // If no argument was passed, use the current time in seconds since the epoch as the random seed
+                if (optarg == NULL || strlen(optarg) == 0) {
+                    rc.random_seed = time(NULL);
+                }
+                else {
+                    sscanf(optarg, "%zu", &rc.random_seed);
+                }
                 break;
             case 't':
                 sscanf(optarg, "%zu", &rc.omp_threads);
@@ -545,31 +566,6 @@ void parse_backend(int argc, char **argv)
     //Do NOT remove this - as we call getopt_long_only in multiple places, this
     //must be reset between calls.
     optind = 1;
-	static struct option long_options[] =
-    {
-        /* Output */
-        {"no-print-header", no_argument,       NULL, 'q'},
-        {"verbose",         no_argument,       &verbose, 1},
-        /* Backend */
-        {"backend",         required_argument, NULL, 'b'},
-        {"cl-platform",     required_argument, NULL, CLPLATFORM},
-        {"cl-device",       required_argument, NULL, CLDEVICE},
-        {"kernel-file",     required_argument, NULL, 'f'},
-        {"interactive",     no_argument,       NULL, 'i'},
-        /* Other */
-        {"validate",        no_argument, &validate_flag, 1},
-        {"aggregate",       optional_argument, NULL, 'a'},
-        {"compress",        optional_argument, NULL, 'c'},
-        {"papi",            required_argument, NULL, PAPI_ARG},
-        {"local-work-size", required_argument, NULL, 'z'},
-        {"morton",          optional_argument, NULL, 0},
-        {"hilbert",         optional_argument, NULL, 0},
-        {"mblock",          optional_argument, NULL, 0},
-        {"count",           optional_argument, NULL, 0},
-        {"stride",          optional_argument, NULL, 0},
-        {"runs",            optional_argument, NULL, 0},
-        {0, 0, 0, 0}
-    };
 
     int c = 0;
     int option_index = 0;
