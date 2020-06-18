@@ -142,7 +142,17 @@ struct run_config parse_json_config(json_value *value){
         json_object_entry cur = value->u.object.values[i];
 
         if (cur.value->type == json_string) {
-            snprintf(argv[i+1], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
+            if (!strcasecmp(cur.name, "kernel")) {
+                if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER")) {
+                    error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
+                    snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
+                } else {
+                    error("Ambigous Kernel Type: Assuming kernel-file option.", WARN);
+                    snprintf(argv[i+1], STRING_SIZE, "--kernel-file=%s", cur.value->u.string.ptr);
+                }
+            } else {
+                snprintf(argv[i+1], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
+            }
         } else if (cur.value->type == json_integer) {
             snprintf(argv[i+1], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
         } else if (cur.value->type == json_array) {
