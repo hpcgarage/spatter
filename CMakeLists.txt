@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
 
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#Set target project name
+# Set target project name
 SET (TRGT spatter)
 
 # Set default values
@@ -81,7 +81,7 @@ ENDIF ()
 
  
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3 -g")
    #Use sanitize=address for debugging of access issues 
    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()
@@ -252,6 +252,16 @@ message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
 message (STATUS "compiler is ${CMAKE_C_COMPILER}")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
+
+
+# Build tests
+mark_as_advanced( BUILD_TESTS )
+set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
+if( BUILD_TESTS )
+    enable_testing()
+    add_subdirectory( tests )
+endif( BUILD_TESTS )
+
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4

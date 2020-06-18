@@ -44,22 +44,23 @@
 const char* SPATTER_VERSION="0.4";
 
 //SGBench specific enums
-enum sg_backend backend = INVALID_BACKEND;
+extern enum sg_backend backend;
 
 //Strings defining program behavior
-char platform_string[STRING_SIZE];
-char device_string[STRING_SIZE];
-char kernel_file[STRING_SIZE];
-char kernel_name[STRING_SIZE];
+extern char platform_string[STRING_SIZE];
+extern char device_string[STRING_SIZE];
+extern char kernel_file[STRING_SIZE];
+extern char kernel_name[STRING_SIZE];
 
-int cuda_dev = -1;
-int validate_flag = 0, quiet_flag = 0;
-int aggregate_flag = 1;
-int compress_flag = 0;
-int papi_nevents = 0;
-int stride_kernel = -1;
+extern int cuda_dev;
+extern int validate_flag;
+extern int quiet_flag;
+extern int aggregate_flag;
+extern int compress_flag;
+extern int papi_nevents;
+extern int stride_kernel;
 #ifdef USE_PAPI
-char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
+extern char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 int papi_event_codes[PAPI_MAX_COUNTERS];
 long long papi_event_values[PAPI_MAX_COUNTERS];
 extern const char* const papi_ctr_str[];
