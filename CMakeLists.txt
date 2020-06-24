@@ -1,5 +1,5 @@
-# 3.8 is specified since this is the first version with CUDA support
-CMAKE_MINIMUM_REQUIRED (VERSION 3.8 FATAL_ERROR)
+# 3.10 is specified since this is the first version with FindCUDAToolkit support
+CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
 
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -131,30 +131,16 @@ ENDIF ()
 # Enable OpenMP
 IF (USE_OPENMP)
     FIND_PACKAGE (OpenMP REQUIRED)
-    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
-        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -homp")
-        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -homp")
-    ENDIF ()
-    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -fopenmp")
-        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -fopenmp")
-    ENDIF ()
-    IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
-        SET (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -qopenmp")
-        SET (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -qopenmp")
-    ENDIF ()
-    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    if(OpenMP_FOUND)
+	# enable pragma regions in the code for OpenMP
+        ADD_DEFINITIONS (-DUSE_OPENMP)
+        ADD_DEFINITIONS (-DUSE_OMP_SIMD)
+        INCLUDE_DIRECTORIES (src/openmp)
 
-    # enable pragma regions in the code for OpenMP
-    ADD_DEFINITIONS (-DUSE_OPENMP)
-    ADD_DEFINITIONS (-DUSE_OMP_SIMD)
-    INCLUDE_DIRECTORIES (src/openmp)
-
-    # Pull the OpenMP-specific files and kernels into the build
-    FILE (GLOB BACKEND_C_FILES_OMP src/openmp/*.c)
-    FILE (GLOB BACKEND_H_FILES_OMP src/openmp/*.h)
+        # Pull the OpenMP-specific files and kernels into the build
+        FILE (GLOB BACKEND_C_FILES_OMP src/openmp/*.c)
+        FILE (GLOB BACKEND_H_FILES_OMP src/openmp/*.h)
+    ENDIF ()
 ENDIF ()
 
 # Enable CUDA
@@ -218,6 +204,10 @@ set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
+IF (USE_OPENMP)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenMP::OpenMP_CXX)
+ENDIF()
+
 IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
