@@ -5,6 +5,8 @@ set( TESTAPPS #list apps
         parse_uniform_stride_1
         parse_uniform_stride_suite
         parse_ms1_suite
+        parse_custom_suite
+        parse_omp_threads_suite
     )
 
 file(GLOB src
