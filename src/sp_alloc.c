@@ -34,7 +34,13 @@ void check_safe_mult(size_t a, size_t b) {
 void *sp_malloc (size_t size, size_t count, size_t align) {
     check_safe_mult(size, count);
     check_size(size*count);
+#ifdef USE_POSIX_MEMALIGN
+    void *ptr = NULL;
+    int ret = posix_memalign (&ptr,align,size*count);
+    if (ret!=0) ptr = NULL;
+#else
     void *ptr = aligned_alloc (align, size*count);
+#endif
     if (!ptr) {
         printf("Attepmted to allocate %zu bytes (%zu * %zu)\n", size*count, size , count);
         error("Error: failed to allocate memory", ERROR);
