@@ -931,10 +931,10 @@ void parse_p(char* optarg, struct run_config *rc) {
 
             ms1_deltas_len = read;
 
-            rc->pattern[0] = 0;
-            size_t last = 0;
+            rc->pattern[0] = -1;
+            size_t last = -1;
             ssize_t j;
-            for (int i = 1; i < rc->pattern_len; i++) {
+            for (int i = 0; i < rc->pattern_len; i++) {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1) {
                    rc->pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
                 } else {
