@@ -7,3 +7,4 @@ build_*
 modulefiles/
 /configure_*
 src/python/env
+.vscode/

@@ -3,6 +3,7 @@ set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
 set( TESTAPPS #list apps
         parse_uniform_stride_1
+        parse_uniform_stride_suite
     )
 
 file(GLOB src
