@@ -13,7 +13,7 @@ int omp_thread_test(int thread_count, int argc, char** argv)
 {
     #ifndef USE_OPENMP
     return EXIT_SUCCESS;
-    #endif
+    #else
 
     int nrc = 0; 
     struct run_config *rc = NULL;
@@ -58,6 +58,7 @@ int omp_thread_test(int thread_count, int argc, char** argv)
 
     free(rc);
     return EXIT_SUCCESS;
+    #endif
 }
 
 

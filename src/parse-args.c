@@ -103,7 +103,7 @@ static struct option long_options[] =
     {"aggregate",       optional_argument, NULL, 'a'},
     {"compress",        optional_argument, NULL, 'c'},
     {"papi",            required_argument, NULL, PAPI_ARG},
-    {"count",           optional_argument, NULL, 0},
+    //{"count",           optional_argument, NULL, 0},
     {0, 0, 0, 0}
 };
 

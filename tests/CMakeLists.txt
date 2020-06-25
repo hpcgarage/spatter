@@ -1,5 +1,7 @@
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
+get_filename_component(full_path_json_test_data "${CMAKE_CURRENT_SOURCE_DIR}/test-data/amg.json" ABSOLUTE)
+add_definitions(-DJSON_SRC="${full_path_json_test_data}")
 
 set( TESTAPPS #list apps
         parse_uniform_stride_1
@@ -7,6 +9,7 @@ set( TESTAPPS #list apps
         parse_ms1_suite
         parse_custom_suite
         parse_omp_threads_suite
+        parse_json_suite
     )
 
 file(GLOB src
