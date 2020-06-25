@@ -87,6 +87,14 @@ int main (int argc, char **argv)
     sprintf(argv_[2], "-t-1");
     if (omp_thread_test(-1, argc_, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    sprintf(argv_[2], "-omp-threads=4");
+    if (omp_thread_test(4, argc_, argv_) != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+    
+    sprintf(argv_[2], "--omp-threads=0");
+    if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)
+        return EXIT_FAILURE;
     
     argc_ = 2;
     if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)

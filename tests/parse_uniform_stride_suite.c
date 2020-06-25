@@ -56,6 +56,27 @@ int main (int argc, char **argv)
             if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)
                 return EXIT_FAILURE;
         }
+
+        for (int j = 8; j <= 64; j *= 2)
+        {
+            sprintf(argv_[1], "-p UNIFORM:%d:%d", j, i);
+            if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)
+                return EXIT_FAILURE;
+        }
+
+        for (int j = 8; j <= 64; j *= 2)
+        {
+            sprintf(argv_[1], "-pattern=UNIFORM:%d:%d", j, i);
+            if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)
+                return EXIT_FAILURE;
+        }
+
+                for (int j = 8; j <= 64; j *= 2)
+        {
+            sprintf(argv_[1], "--pattern=UNIFORM:%d:%d", j, i);
+            if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)
+                return EXIT_FAILURE;
+        }
     }
 
     return EXIT_SUCCESS;

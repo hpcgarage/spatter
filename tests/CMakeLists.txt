@@ -10,6 +10,8 @@ set( TESTAPPS #list apps
         parse_custom_suite
         parse_omp_threads_suite
         parse_json_suite
+        parse_run_config_suite
+        parse_random_suite
     )
 
 file(GLOB src
