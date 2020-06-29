@@ -1,15 +1,16 @@
-#include <getopt.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include "parse-args.h"
 #include "backend-support-tests.h"
 #include "sp_alloc.h"
 #include "json.h"
 #include "pcg_basic.h"
+#include "argtable3.h"
 
 #ifdef USE_CUDA
 #include "../src/cuda/cuda-backend.h"
@@ -24,15 +25,6 @@
 int papi_nevents;
 char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 #endif
-
-#define VALIDATE    1005
-#define CLPLATFORM  1010
-#define CLDEVICE    1011
-#define PAPI_ARG    1012
-#define MORTON      1013
-#define HILBERT     1016
-#define ROBLOCK     1014
-#define STRIDE      1015
 
 #define INTERACTIVE "INTERACTIVE"
 
@@ -56,53 +48,81 @@ enum sg_backend backend = INVALID_BACKEND;
 int verbose;
 FILE *err_file;
 
-void safestrcopy(char *dest, char *src);
+void safestrcopy(char *dest, const char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
 void parse_backend(int argc, char **argv);
 
-static char short_options[] = "W:l:k:qv:R:p:d:f:b:z:m:yw:t:n:aqcs::o:";
+void** argtable;
+unsigned int number_of_arguments = 31;
+struct arg_lit *verb, *help, *no_print_header, *interactive, *validate, *aggregate, *compress;
+struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *kernelName, *delta, *name, *papi, *op;
+struct arg_int *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg; 
+struct arg_file *kernelFile;
+struct arg_end *end;
 
-static struct option long_options[] =
+void initialize_argtable()
 {
-    // Run Config
-    {"kernel-name",     required_argument, NULL, 'k'},
-    {"pattern",         required_argument, NULL, 'p'},
-    {"delta",           required_argument, NULL, 'd'},
-    {"count",           required_argument, NULL, 'l'},
-    {"wrap",            required_argument, NULL, 'w'},
-    {"random",          optional_argument, NULL, 's'},
-    {"vector-len",      required_argument, NULL, 'v'},
-    {"runs",            required_argument, NULL, 'R'},      
-    {"omp-threads",     required_argument, NULL, 't'},
-    {"op",              required_argument, NULL, 'o'},      
-    {"local-work-size", required_argument, NULL, 'z'},      
-    {"shared-mem",      required_argument, NULL, 'm'},
-    {"name",            required_argument, NULL, 'n'},
-    {"morton",          optional_argument, NULL, MORTON},   
-    {"hilbert",         optional_argument, NULL, HILBERT},  
-    {"mblock",          optional_argument, NULL, ROBLOCK},  
-    {"roblock",         optional_argument, NULL, ROBLOCK},  
-    {"stride",          optional_argument, NULL, STRIDE},   
-    /* Output */
-    {"no-print-header", no_argument,       NULL, 'q'},
-    {"verbose",         no_argument,       &verbose, 1},
-    /* Backend */
-    {"backend",         required_argument, NULL, 'b'},
-    {"cl-platform",     required_argument, NULL, CLPLATFORM},
-    {"cl-device",       required_argument, NULL, CLDEVICE},
-    {"kernel-file",     required_argument, NULL, 'f'},
-    {"interactive",     no_argument,       NULL, 'i'},
-    /* Other */
-    {"validate",        no_argument, &validate_flag, 1},
-    {"aggregate",       optional_argument, NULL, 'a'},
-    {"compress",        optional_argument, NULL, 'c'},
-    {"papi",            required_argument, NULL, PAPI_ARG},
-    {0, 0, 0, 0}
-};
+    // Initialize the argtable on the stack just because it is easier and how the documentation handles it
+    void* temp_argtable[] = 
+    {
+    // Arguments that do not take parameters
+    help            = arg_litn(NULL, "help", 0, 1, "Displays info about commands and then exits."),
+    verb            = arg_litn(NULL, "verbose", 0, 1, "Print info about default arguments that you have not overridden."),
+    no_print_header = arg_litn("q", "no-print-header", 0, 1, "Do not print header information."),
+    interactive     = arg_litn("i", "interactive", 0, 1, "Pick the platform and the device interactively."),
+    validate        = arg_litn(NULL, "validate", 0, 1, "TODO"),
+    aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)"),
+    compress        = arg_litn("c", "compress", 0, 1, "TODO"),
+    // Benchmark Configuration
+    pattern         = arg_strn("p", "pattern", "<pattern>", 1, 1, "Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."),
+    kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]"),
+    op              = arg_strn("o", "op", "<s>", 0, 1, "TODO"),
+    delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]"),
+    count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform."),
+    wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]"),
+    runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]"),
+    omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]"),
+    vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO"),
+    local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU."),
+    shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control)."),
+    name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output."),
+    random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified."),
+    // Backend Configuration
+    backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial."),
+    cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching)."),
+    cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching)."),
+    kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file."),
+    // Other Configurations
+    morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO"),
+    hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO"),
+    roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO"),
+    stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO"),
+    papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO"),
+    end             = arg_end(20)
+    };
 
-void copy_str_ignore_leading_space(char* dest, char* source)
+    // Random has an option to provide an argument. Default its value to -1.
+    random_arg->hdr.flag |= ARG_HASOPTVALUE;
+    random_arg->ival[0] = -1;
+
+    // Set default values
+    kernelName->sval[0] = "Gather\0";
+    delta->sval[0] = "8\0";
+    wrap->ival[0] = 1;
+    runs->ival[0] = 10;    
+
+    // Malloc a new argtable and then transfer over the data from the stack-based argtable to the heap-based one
+    void** malloc_argtable = (void**) malloc(sizeof(void*) * number_of_arguments);
+    memcpy(malloc_argtable, temp_argtable, sizeof(void*) * number_of_arguments);
+
+    // Set the global argtable equal to the malloc argtable
+    argtable = malloc_argtable;
+}
+
+
+void copy_str_ignore_leading_space(char* dest, const char* source)
 {
     if (source[0] == ' ')
         safestrcopy(dest, &source[1]);
@@ -199,6 +219,15 @@ struct run_config parse_json_config(json_value *value)
     //yeah its hacky - parse_args ignores the first arg
     safestrcopy(argv[0], argv[1]);
 
+    int nerrors = arg_parse(argc, argv, argtable);
+
+    if (nerrors > 0)
+    {
+        arg_print_errors(stdout, end, "Spatter");
+        printf("Error while parsing json file.\n");
+        exit(0);
+    }
+
     rc = parse_runs(argc, argv);
 
     for (int i = 0; i < argc; i++) 
@@ -211,29 +240,42 @@ struct run_config parse_json_config(json_value *value)
 
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 {
-    parse_backend(argc, argv);
+    initialize_argtable();
+    int nerrors = arg_parse(argc, argv, argtable);
 
-    // Parse command-line arguments to in case of specified json file.
-    int json = 0;
-    for (int i = 0; i < argc; i++) 
+    if (help->count > 0)
     {
-        // POSIX-style concatenation of argument and value
-        if (strstr(argv[i], "-pFILE")) 
-        {
-            safestrcopy(jsonfilename, strchr(argv[i],'=')+1);
-            json = 1;
-            break;
-        } 
-        // Argument and value separated by a space
-        else if (strstr(argv[i], "-p") &&  i < argc-1 && strstr(argv[i+1], "FILE")) 
-        {
-            safestrcopy(jsonfilename, strchr(argv[i+1],'=')+1);
-            json = 1;
-            break;
-        }
+        printf("Usage:\n");
+        arg_print_syntax(stdout, argtable, "\n");
+        arg_print_glossary(stdout, argtable, " %-28s %s\n");
+        exit(0);
     }
 
-    if (json) {
+    if (nerrors > 0)
+    {
+        arg_print_errors(stdout, end, "Spatter");
+        printf("Try './spatter --help' for more information.\n");
+        exit(0);
+    }
+
+    parse_backend(argc, argv);
+
+    
+    // Parse command-line arguments to in case of specified json file.
+    int json = 0;
+
+   if (pattern->count > 0)
+   {
+       if (strstr(pattern->sval[0], "FILE"))
+       {
+           printf("FILE found.\n");
+           safestrcopy(jsonfilename, strchr(pattern->sval[0], '=') + 1);
+           json = 1;
+       }
+   }
+
+    if (json) 
+    {
         FILE *fp;
         struct stat filestatus;
         int file_size;
@@ -302,142 +344,132 @@ struct run_config parse_runs(int argc, char **argv)
     rc.kernel = INVALID_KERNEL;
     safestrcopy(rc.name,"NONE");
 
-
-    //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be reset between calls.
-    optind = 0;
-
-
-    int c = 0;
-    int option_index = 0;
-
-    while(c != -1){
-
-    	c = getopt_long_only (argc, argv, short_options, long_options, &option_index);
-
-        switch(c){
-            case CLPLATFORM:
-                copy_str_ignore_leading_space(platform_string, optarg);
-                break;
-            case CLDEVICE:
-                copy_str_ignore_leading_space(device_string, optarg);
-               break;
-            case 'k':
-                copy_str_ignore_leading_space(kernel_name, optarg);
-                if (!strcasecmp("SG", kernel_name))
-                    rc.kernel=SG;
-                else if (!strcasecmp("SCATTER", kernel_name))
-                    rc.kernel=SCATTER;
-                else if (!strcasecmp("GATHER", kernel_name))
-                    rc.kernel=GATHER;
-                else
-                {
-                    char output[STRING_SIZE];
-                    sprintf(output, "Invalid kernel %s\n", kernel_name);
-                    error(output, ERROR);
-                }
-                break;
-            case 'o':
-                copy_str_ignore_leading_space(op_string, optarg);
-                if (!strcasecmp("COPY", op_string))
-                    rc.op = OP_COPY;
-                else if (!strcasecmp("ACCUM", op_string))
-                    rc.op = OP_ACCUM;
-                else
-                    error("Unrecognzied op type", ERROR);
-                break;
-            case 's':
-                // Parsing the seed parameter
-                // If no argument was passed, use the current time in seconds since the epoch as the random seed
-                if (optarg == NULL || strlen(optarg) == 0)
-                    rc.random_seed = time(NULL);
-                else
-                    sscanf(optarg, "%zu", &rc.random_seed);
-                break;
-            case 't':
-                sscanf(optarg, "%zu", &rc.omp_threads);
-                break;
-            case 'v':
-                sscanf(optarg, "%zu", &rc.vector_len);
-                if (rc.vector_len < 1)
-                    error("Invalid vector len", ERROR);
-                break;
-            case 'R':
-                sscanf(optarg, "%zu", &rc.nruns);
-                break;
-            case 'w':
-                sscanf(optarg,"%zu", &rc.wrap);
-                break;
-            case 'l':
-                sscanf(optarg,"%zu", &(rc.generic_len));
-                break;
-            case 'z':
-                sscanf(optarg,"%zu", &rc.local_work_size);
-                break;
-            case 'm':
-                sscanf(optarg,"%u", &rc.shmem);
-                break;
-            case 'n':
-                copy_str_ignore_leading_space(rc.name, optarg);
-                break;
-            case 'p':
-                copy_str_ignore_leading_space(rc.generator, optarg);
-                parse_p(rc.generator, &rc);
-                pattern_found = 1;
-                break;
-            case 'd':
-                {
-                    char *delim = ",";
-                    char *ptr = strtok(optarg, delim);
-                    size_t read = 0;
-                    if (!ptr)
-                        error("Pattern not found", ERROR);
-
-                    if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
-                        error("Failed to parse first pattern element", ERROR);
-
-                    while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) 
-                    {
-                        if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
-                            error("Failed to parse pattern", ERROR);
-                    }
-                    rc.deltas_len = read;
-
-                    // rotate
-                    for (size_t i = 0; i < rc.deltas_len; i++)
-                        rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
-                    
-                    // compute prefix-sum
-                    for (size_t i = 1; i < rc.deltas_len; i++)
-                        rc.deltas_ps[i] += rc.deltas_ps[i-1];
-                    
-                    // compute max
-                    size_t m = rc.deltas_ps[0];
-                    for (size_t i = 1; i < rc.deltas_len; i++) 
-                    {
-                        if (rc.deltas_ps[i] > m)
-                            m = rc.deltas_ps[i];
-                    }
-                    rc.delta = m;
-
-                    break;
-                }
-            case MORTON:
-                sscanf(optarg,"%d", &rc.ro_morton);
-                break;
-            case HILBERT:
-                sscanf(optarg,"%d", &rc.ro_hilbert);
-                break;
-            case ROBLOCK:
-                sscanf(optarg,"%d", &rc.ro_block);
-                break;
-            case STRIDE:
-                sscanf(optarg,"%d", &rc.stride_kernel);
-                break;
-            default:
-                break;
+   if (kernelName->count > 0)
+   {
+        copy_str_ignore_leading_space(kernel_name, kernelName->sval[0]);
+        if (!strcasecmp("SG", kernel_name))
+            rc.kernel=SG;
+        else if (!strcasecmp("SCATTER", kernel_name))
+            rc.kernel=SCATTER;
+        else if (!strcasecmp("GATHER", kernel_name))
+            rc.kernel=GATHER;
+        else
+        {
+            char output[STRING_SIZE];
+            sprintf(output, "Invalid kernel %s\n", kernel_name);
+            error(output, ERROR);
         }
+   }
+
+   if (op->count > 0)
+   {
+        copy_str_ignore_leading_space(op_string, op->sval[0]);
+        if (!strcasecmp("COPY", op_string))
+            rc.op = OP_COPY;
+        else if (!strcasecmp("ACCUM", op_string))
+            rc.op = OP_ACCUM;
+        else
+            error("Unrecognzied op type", ERROR);
+   }
+
+   if (random_arg->count > 0)
+   {
+        // Parsing the seed parameter
+        // If no argument was passed, use the current time in seconds since the epoch as the random seed
+        if (random_arg->ival[0] == -1)
+            rc.random_seed = time(NULL);
+        else
+            //sscanf(optarg, "%zu", &rc.random_seed);
+            rc.random_seed = random_arg->ival[0];
+   }
+
+    if (omp_threads->count > 0)
+        rc.omp_threads = omp_threads->ival[0];
+
+    if (vector_len->count > 0)
+    {
+        rc.vector_len = vector_len->ival[0];
+        if (rc.vector_len < 1)
+            error("Invalid vector len!", ERROR);
     }
+
+    if (runs->count > 0)
+        rc.nruns = runs->ival[0];
+
+    if (wrap->count > 0)
+        rc.wrap = wrap->ival[0];
+
+    if (count->count > 0)
+        rc.generic_len = count->ival[0];
+
+    if (local_work_size->count > 0)
+        rc.local_work_size = local_work_size->ival[0];
+
+    if (shared_memory->count > 0)
+        rc.shmem = shared_memory->ival[0];
+
+    if (name->count > 0)
+        copy_str_ignore_leading_space(rc.name, name->sval[0]);
+
+    if (pattern->count > 0)
+    {
+        copy_str_ignore_leading_space(rc.generator, pattern->sval[0]);
+        //char* filePtr = strstr(rc.generator, "FILE");
+        //if (filePtr)
+        //    safestrcopy(rc.generator, filePtr);
+        parse_p(rc.generator, &rc);
+        pattern_found = 1;
+    }
+
+    if (delta->count > 0)
+    {
+        char delta_temp[STRING_SIZE];
+        copy_str_ignore_leading_space(delta_temp, delta->sval[0]);
+        char *delim = ",";
+        char *ptr = strtok(delta_temp, delim);
+        size_t read = 0;
+        if (!ptr)
+            error("Pattern not found", ERROR);
+
+        if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
+            error("Failed to parse first pattern element in deltas", ERROR);
+
+        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) 
+        {
+            if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
+                error("Failed to parse pattern", ERROR);
+        }
+        rc.deltas_len = read;
+
+        // rotate
+        for (size_t i = 0; i < rc.deltas_len; i++)
+            rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
+        
+        // compute prefix-sum
+        for (size_t i = 1; i < rc.deltas_len; i++)
+            rc.deltas_ps[i] += rc.deltas_ps[i-1];
+        
+        // compute max
+        size_t m = rc.deltas_ps[0];
+        for (size_t i = 1; i < rc.deltas_len; i++) 
+        {
+            if (rc.deltas_ps[i] > m)
+                m = rc.deltas_ps[i];
+        }
+        rc.delta = m;
+    }
+
+    if (morton->count > 0)
+        rc.ro_morton = morton->ival[0];
+
+    if (hilbert->count > 0)
+        rc.ro_hilbert = hilbert->ival[0];
+
+    if (roblock->count > 0)
+        rc.ro_block = roblock->ival[0];
+
+    if (stride->count > 0)
+        rc.stride_kernel = stride->ival[0];
 
     // VALIDATE ARGUMENTS
     if (!pattern_found)
@@ -596,75 +628,58 @@ void parse_backend(int argc, char **argv)
     safestrcopy(kernel_file,     "NONE");
     safestrcopy(kernel_name,     "NONE");
 
-    //Do NOT remove this - as we call getopt_long_only in multiple places, this
-    //must be reset between calls.
-    optind = 1;
+   if (backend_arg->count > 0)
+   {
+        if(!strcasecmp("OPENCL", backend_arg->sval[0]))
+            backend = OPENCL;
+        else if(!strcasecmp("OPENMP", backend_arg->sval[0]))
+            backend = OPENMP;
+        else if(!strcasecmp("CUDA", backend_arg->sval[0]))
+            backend = CUDA;
+        else if(!strcasecmp("SERIAL", backend_arg->sval[0]))
+            backend = SERIAL;
+        else
+            error ("Unrecognized Backend", ERROR);
+   }
 
-    int c = 0;
-    int option_index = 0;
+   if (cl_platform->count > 0)
+        copy_str_ignore_leading_space(platform_string, cl_platform->sval[0]);
 
-    while(c != -1){
+    if (cl_device->count > 0)
+        copy_str_ignore_leading_space(device_string, cl_device->sval[0]);
 
-    	c = getopt_long_only (argc, argv, short_options, long_options, &option_index);
+    if (interactive->count > 0)
+    {
+        safestrcopy(platform_string, INTERACTIVE);
+        safestrcopy(device_string, INTERACTIVE);
+    }
 
-        switch(c){
-            case 'b':
-                if(!strcasecmp("OPENCL", optarg))
-                    backend = OPENCL;
-                else if(!strcasecmp("OPENMP", optarg))
-                    backend = OPENMP;
-                else if(!strcasecmp("CUDA", optarg))
-                    backend = CUDA;
-                else if(!strcasecmp("SERIAL", optarg))
-                    backend = SERIAL;
-                else
-                    error ("Unrecognized Backend", ERROR);
-                break;
-            case CLPLATFORM:
-                safestrcopy(platform_string, optarg);
-                break;
-            case CLDEVICE:
-                safestrcopy(device_string, optarg);
-               break;
-            case 'i':
-                safestrcopy(platform_string, INTERACTIVE);
-                safestrcopy(device_string, INTERACTIVE);
-                break;
-            case 'f':
-                safestrcopy(kernel_file, optarg);
-                break;
-            case 'q':
-                quiet_flag++;
-                break;
-            case 'a':
-                if (optarg == NULL) 
-                    aggregate_flag = 0;
-                else
-                    sscanf(optarg, "%d", &aggregate_flag);
-                break;
-            case 'c':
-                if (optarg == NULL)
-                    compress_flag = 1;
-                else
-                    sscanf(optarg, "%d", &compress_flag);
-                break;
-            case PAPI_ARG:
-#ifdef USE_PAPI
-                {
-                    char *pch = strtok(optarg, ",");
-                    while (pch != NULL) 
-                    {
-                        safestrcopy(papi_event_names[papi_nevents++], pch);
-                        pch = strtok (NULL, ",");
-                        if (papi_nevents == PAPI_MAX_COUNTERS) 
-                            break;
-                    }
-                }
-#endif
-                break;
-            default:
-                break;
+    if (kernelFile->count > 0)
+        copy_str_ignore_leading_space(kernel_file, kernelFile->filename[0]);
+
+    if (no_print_header->count > 0)
+        quiet_flag++;
+
+    if (aggregate->count > 0)
+        aggregate_flag = 1;
+
+    if (compress->count > 0)
+        compress_flag = 1;
+
+    if (papi->count > 0)
+    {
+        #ifdef USE_PAPI
+        {
+            char *pch = strtok(papi->sval[0], ",");
+            while (pch != NULL) 
+            {
+                safestrcopy(papi_event_names[papi_nevents++], pch);
+                pch = strtok (NULL, ",");
+                if (papi_nevents == PAPI_MAX_COUNTERS) 
+                    break;
+            }
         }
+        #endif
     }
 
     /* Check argument coherency */
@@ -954,6 +969,7 @@ void parse_p(char* optarg, struct run_config *rc)
     // CUSTOM mode means that the user supplied a single index buffer on the command line
     else 
     {
+        printf("Parse P Custom Pattern: %s\n", optarg);
         rc->type = CUSTOM;
         char *delim = ",";
         char *ptr = strtok(optarg, delim);
@@ -962,7 +978,7 @@ void parse_p(char* optarg, struct run_config *rc)
             error("Pattern not found", 1);
 
         if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1)
-            error("Failed to parse first pattern element", 1);
+            error("Failed to parse first pattern element in custom mode", 1);
 
         while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) 
         {
@@ -1049,7 +1065,7 @@ void error(char *what, int code)
         exit(code);
 }
 
-void safestrcopy(char *dest, char *src)
+void safestrcopy(char *dest, const char *src)
 {
     dest[0] = '\0';
     strncat(dest, src, STRING_SIZE-1);
