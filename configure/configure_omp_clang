@@ -1,0 +1,26 @@
+# Configure file for compiling with MAC OSX's version of Clang
+# NOTE: gcc 4.9.1 is recommended for OpenMP 4.0 support;
+# gcc 6.1 is required for OpenMP 4.5 support
+# Execute from the main directory using ./configure/configure_<myplatform>
+
+BACKEND=omp
+COMPILER=clang
+
+BUILD_DIR=build_${BACKEND}_${COMPILER}
+
+mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+rm -rf CMake*
+
+CC=clang
+CXX=clang++
+FLAGS="-O3"
+
+#Make sure to use tabs rather than spaces for newline entries
+cmake -D CMAKE_BUILD_TYPE=Release \
+	-D CMAKE_C_COMPILER=${CC} \
+	-D CMAKE_CXX_COMPILER=${CXX} \
+	-D CMAKE_C_FLAGS=${FLAGS} \
+	-D USE_OPENCL=0 \
+	-D USE_OPENMP=1 \
+	-D USE_CUDA=0 \
+	..

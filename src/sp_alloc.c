@@ -42,7 +42,7 @@ void *sp_malloc (size_t size, size_t count, size_t align) {
     void *ptr = aligned_alloc (align, size*count);
 #endif
     if (!ptr) {
-        printf("Attepmted to allocate %zu bytes (%zu * %zu)\n", size*count, size , count);
+        printf("Attempted to allocate %zu bytes (%zu * %zu)\n", size*count, size , count);
         error("Error: failed to allocate memory", ERROR);
     }
     return ptr;
