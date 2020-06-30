@@ -55,14 +55,6 @@ int k_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
         return EXIT_FAILURE;
     }
 
-    sprintf(argv_[2], "-kernel-name=GATHER");
-    parse_args(argc_, argv_, nrc, &rc);
-    if (rc[0].kernel != 2)
-    {
-        printf("Test failure on run_config suite: -kernel-name with argument GATHER resulted in kernel %d.\n", rc[0].kernel);
-        return EXIT_FAILURE;
-    }
-
     sprintf(argv_[2], "--kernel-name=GATHER");
     parse_args(argc_, argv_, nrc, &rc);
     if (rc[0].kernel != 2)
@@ -71,27 +63,11 @@ int k_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
         return EXIT_FAILURE;
     }
 
-    sprintf(argv_[2], "-kernel-name=SCATTER");
-    parse_args(argc_, argv_, nrc, &rc);
-    if (rc[0].kernel != 1)
-    {
-        printf("Test failure on run_config suite: -kernel-name k with argument SCATTER resulted in kernel %d.\n", rc[0].kernel);
-        return EXIT_FAILURE;
-    }
-
     sprintf(argv_[2], "--kernel-name=SCATTER");
     parse_args(argc_, argv_, nrc, &rc);
     if (rc[0].kernel != 1)
     {
         printf("Test failure on run_config suite: --kernel-name with argument SCATTER resulted in kernel %d.\n", rc[0].kernel);
-        return EXIT_FAILURE;
-    }
-
-    sprintf(argv_[2], "-kernel-name=SG");
-    parse_args(argc_, argv_, nrc, &rc);
-    if (rc[0].kernel != 3)
-    {
-        printf("Test failure on run_config suite: -kernel-name k with argument SG resulted in kernel %d.\n", rc[0].kernel);
         return EXIT_FAILURE;
     }
 

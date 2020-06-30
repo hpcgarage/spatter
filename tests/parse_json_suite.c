@@ -26,12 +26,6 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 
     for (int i = 0; i < runCount; i++)
     {
-        if (rc[i].deltas[0] != strides[i])
-        {
-            printf("Test failure on JSON Parse: stride for run_config %d was %ld, expected %d.\n", i, rc[i].deltas[0], strides[i]);
-            return EXIT_FAILURE;
-        }
-
         if (rc[i].pattern_len != patternLengths[i])
         {
             printf("Test failure on JSON Parse: pattern length for run_config %d was %ld, expected %d.\n", i, rc[i].pattern_len, patternLengths[i]);
@@ -40,7 +34,7 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 
         if (rc[i].generic_len != counts[i])
         {
-            printf("Test failure on JSON Parse: counts for run_config %d was %ld, expected %d.\n", i, rc[i].vector_len, counts[i]);
+            printf("Test failure on JSON Parse: counts for run_config %d was %ld, expected %d.\n", i, rc[i].generic_len, counts[i]);
             return EXIT_FAILURE;
         }
 
