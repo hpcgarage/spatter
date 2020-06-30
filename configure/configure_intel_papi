@@ -9,6 +9,9 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}_papi
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 PAPI_DIR=/opt/papi
 
 CC=icc

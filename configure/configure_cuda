@@ -6,6 +6,9 @@ BUILD_DIR=build_cuda
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_CXX_COMPILER=nvcc \

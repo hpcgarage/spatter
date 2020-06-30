@@ -6,6 +6,9 @@ BUILD_DIR=build_omp_cce
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_C_COMPILER=cc \

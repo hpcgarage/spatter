@@ -6,6 +6,9 @@ BUILD_DIR=build_cce_papi
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 PAPI_DIR=/opt/cray/pe/papi/default/
 
 #Make sure to use tabs rather than spaces for newline entries

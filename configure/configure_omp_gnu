@@ -11,6 +11,9 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake*
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 CC=gcc
 CXX=g++
 FLAGS="-O3"
