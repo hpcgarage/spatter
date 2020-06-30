@@ -22,6 +22,13 @@ int main (int argc, char **argv)
 
     parse_args(argc_, argv_, &nrc, &rc);
 
+    
+    if (nrc != 1)
+        printf("Test failure on Uniform Stride: Expected number of runs to be 1, actually was %d.\n", nrc);
+
+    if (rc == NULL)
+        printf("Test failure on Uniform Stride: failed to create or allocate run_config struct.\n");
+
     int gold[8] = {0,1,2,3,4,5,6,7};
 
     for (int i = 0; i < 8; i++) {

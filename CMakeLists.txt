@@ -218,6 +218,14 @@ IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
 
+# Link argtable
+
+INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/external/argtable3/src")
+LINK_DIRECTORIES("${PROJECT_SOURCE_DIR}/external/argtable3")
+ADD_SUBDIRECTORY("${PROJECT_SOURCE_DIR}/external/argtable3")
+TARGET_LINK_LIBRARIES(${TRGT} LINK_PUBLIC argtable3_static)
+
+
 # Link math library for json
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
