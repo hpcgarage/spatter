@@ -8,7 +8,9 @@ BUILD_DIR=build_ocl
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
-git submodule update --init --recursive
+
+#Run the submodule update script
+./configure/git_submodule_init.sh
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \

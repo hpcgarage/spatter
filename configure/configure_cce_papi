@@ -5,7 +5,9 @@ BUILD_DIR=build_cce_papi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
-git submodule update --init --recursive
+
+#Run the submodule update script
+./configure/git_submodule_init.sh
 
 PAPI_DIR=/opt/cray/pe/papi/default/
 
