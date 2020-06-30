@@ -8,6 +8,7 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}_papi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
+git submodule update --init --recursive
 
 PAPI_DIR=/opt/papi
 

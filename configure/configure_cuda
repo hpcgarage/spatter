@@ -5,6 +5,7 @@ BUILD_DIR=build_cuda
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
+git submodule update --init --recursive
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \

@@ -8,6 +8,7 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}
 #Create directory if needed - clean CMake cached files
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake*
+git submodule update --init --recursive
 
 CC=cc
 CXX=CC

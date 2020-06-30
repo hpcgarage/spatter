@@ -5,6 +5,7 @@ BUILD_DIR=build_omp_arm
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
+git submodule update --init --recursive
 
 #Make sure to use tabs rather than spaces for newline entries
 #Specify the ThunderX2 flags to tune for the TX2 architecture

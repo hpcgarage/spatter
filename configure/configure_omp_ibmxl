@@ -8,6 +8,7 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
+git submodule update --init --recursive
 
 CC=xlc_r
 CXX=xlc++_r
