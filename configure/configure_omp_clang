@@ -3,6 +3,9 @@
 # gcc 6.1 is required for OpenMP 4.5 support
 # Execute from the main directory using ./configure/configure_<myplatform>
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 BACKEND=omp
 COMPILER=clang
 

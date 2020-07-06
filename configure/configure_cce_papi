@@ -1,13 +1,13 @@
 # Configure file for compiling with Cray (CCE) OpenMP
 # Execute from the main directory using ./configure/configure_omp_cce
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 BUILD_DIR=build_cce_papi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
-
-#Run the submodule update script
-./configure/git_submodule_init.sh
 
 PAPI_DIR=/opt/cray/pe/papi/default/
 
