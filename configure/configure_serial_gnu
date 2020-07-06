@@ -1,6 +1,9 @@
 # Configure file for compiling using the serial backend only
 # Execute from the main directory using ./configure/configure_<my_platform>
 
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
 BACKEND=serial
 COMPILER=gnu
 BUILD_DIR=build_${BACKEND}_${COMPILER}
@@ -8,9 +11,6 @@ BUILD_DIR=build_${BACKEND}_${COMPILER}
 #Create directory if needed - clean CMake cached files
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake*
-
-#Run the submodule update script
-./configure/git_submodule_init.sh
 
 CC=gcc
 CXX=g++
