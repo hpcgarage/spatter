@@ -91,23 +91,33 @@ Spatter has a large number of arguments, broken up into two types. Backend confi
 Backend configuration arguments determine which language and device will be used. Spatter can be compiled with support for multiple backends, so it is possible to choose between backends and devices at runtime. Spatter will attempt intelliigently pick a backend for you, so you may not need to worry about these arguments at all! It is only necessary to specifiy which `--backend` you want if you have compiled with support for more than one, and it is only necessary to specify which `--device` you want if there would be ambiguity (for instance, if you have more than one GPU available). If you want to see what Spatter has chosen for you, you can run with `--verbose`.
 
 ```
-./spatter <arguments>
-    -b, --backend=<backend>
-        Specify backend: OpenCL, OpenMP, CUDA, or Serial
-    --cl-platform=<platform>
-        Specify platform if using OpenCL (case-insensitve, fuzzy matching)
-    --cl-device=<device>
-        Specify device if using OpenCL (case-insensitve, fuzzy matching)
-    --interactive
-        Pick the platform and device interactively
-    -f, --kernel-file=<file>
-        Specify the location of an OpenCL kernel file
-    -q, --no-print-header
-        Do not print header info. (May be repeated up to 3 times.)
-    --verbose
-        Print info about default arguments that you have not overridden
-    --aggregate=<0,1>
-        Report a minimum time for all runs of a given configuration for 2 or more runs [Default 1] (Do not use with PAPI) 
+./spatter --help
+Usage:
+ [-qiac] [--help] [--verbose] [--validate] -p <pattern> [-k <kernel>] [-o <s>] [-d <delta[,delta,...]>] [-l <n>] [-w <n>] [-R <n>] [-t <n>] [-v <n>] [-z <n>] [-m <n>] [-n <name>] [-s [<n>]] [-b <backend>] [--cl-platform=<platform>] [--cl-device=<device>] [-f <FILE>] [--morton=<n>] [--hilbert=<n>] [--roblock=<n>] [--stride=<n>] [--papi=<s>]
+ --help                       Displays info about commands and then exits.
+ --verbose                    Print info about default arguments that you have not overridden.
+ -q, --no-print-header        Do not print header information.
+ -i, --interactive            Pick the platform and the device interactively.
+ --validate                   TODO
+ -a, --aggregate              Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)
+ -c, --compress               TODO
+ -p, --pattern=<pattern>      Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -k, --kernel-name=<kernel>   Specify the kernel you want to run. [Default: Gather]
+ -o, --op=<s>                 TODO
+ -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
+ -l, --count=<n>              Number of Gathers or Scatters to perform.
+ -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
+ -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
+ -t, --omp-threads=<n>        Number of OpenMP threads. [Default: OMP_MAX_THREADS]
+ -v, --vector-len=<n>         TODO
+ -z, --local-work-size=<n>    Numer of Gathers or Scatters performed by each thread on a GPU.
+ -m, --shared-memory=<n>      Amount of dummy shared memory to allocate on GPUs (used for occupancy control).
+ -n, --name=<name>            Specify and name this configuration in the output.
+ -s, --random=[<n>]           Sets the seed, or uses a random one if no seed is specified.
+ -b, --backend=<backend>      Specify a backend: OpenCL, OpenMP, CUDA, or Serial.
+ --cl-platform=<platform>     Specify platform if using OpenCL (case-insensitive, fuzzy matching).
+ --cl-device=<device>         Specify device if using OpenCL (case-insensitive, fuzzy matching).
+ -f, --kernel-file=<FILE>     Specify the location of an OpenCL kernel file.
 ```
         
         
