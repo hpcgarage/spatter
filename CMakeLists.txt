@@ -17,7 +17,7 @@ SET (USE_SYCL 0 CACHE BOOL "If set, builds with SYCL support")
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
 # Check for support for at least one backend
-IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
+IF (NOT (USE_SYCL OR USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
     MESSAGE (
         FATAL_ERROR
             "You must build with support for at least one backend. Pass at least one of -D USE_SYCL=1 -DUSE_CUDA=1 -DUSE_OPENCL=1 -DUSE_SERIAL=1 or -DUSE_OPENMP=1 to cmake."
@@ -32,14 +32,14 @@ ENDIF ()
 
 # Set SYCL compuler
 IF (USE_SYCL)
-    SET (CMAKE_SYCL_COMPILER /opt/intel/inteloneapi/compiler/2021.1-beta07/bin/dpcpp)
+	SET (CMAKE_CXX_COMPILER /opt/intel/inteloneapi/compiler/2021.1-beta07/linux/bin/dpcpp)
 ENDIF ()
 
 # Declare project languages
 IF (USE_CUDA)
     PROJECT (${TRGT} C CXX CUDA)
 ELSEIF (USE_SYCL)
-    PROJECT (${TRGT} C CXX SYCL)
+    PROJECT (${TRGT} C CXX)
 ELSE ()
     PROJECT (${TRGT} C CXX)
 ENDIF ()

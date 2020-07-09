@@ -9,14 +9,15 @@ BUILD_DIR=build_sycl
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
+source /opt/intel/inteloneapi/setvars.sh
+
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
-	-D CMAKE_CXX_COMPILER=dpcpp \
 	-D CMAKE_CXX_FLAGS="-O3 " \
 	-D USE_CUDA=0 \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=0 \
-    -d USE_SYCL=1 \
+    	-D USE_SYCL=1 \
 	..    
 
 #Unused options
