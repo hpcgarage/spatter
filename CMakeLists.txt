@@ -218,6 +218,8 @@ SET (
     ${CUDA_C_FILES}
     ${PAPI_C_FILES}
     ${PAPI_H_FILES}
+    ${SYCL_CPP_FILES}
+    ${SYCL_HPP_FILES}
 )
 
 # Specify the executable and source files
