@@ -12,6 +12,7 @@ SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
 SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
 SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
+SET (USE_SYCL 0 CACHE BOOL "If set, builds with SYCL support")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
@@ -19,7 +20,7 @@ ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
     MESSAGE (
         FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DUSE_CUDA=1 -DUSE_OPENCL=1 -DUSE_SERIAL=1 or -DUSE_OPENMP=1 to cmake."
+            "You must build with support for at least one backend. Pass at least one of -D USE_SYCL=1 -DUSE_CUDA=1 -DUSE_OPENCL=1 -DUSE_SERIAL=1 or -DUSE_OPENMP=1 to cmake."
     )
 ENDIF ()
 
@@ -29,9 +30,16 @@ IF (USE_CUDA)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
+# Set SYCL compuler
+IF (USE_SYCL)
+    SET (CMAKE_SYCL_COMPILER /opt/intel/inteloneapi/compiler/2021.1-beta07/bin/dpcpp)
+ENDIF ()
+
 # Declare project languages
 IF (USE_CUDA)
     PROJECT (${TRGT} C CXX CUDA)
+ELSEIF (USE_SYCL)
+    PROJECT (${TRGT} C CXX SYCL)
 ELSE ()
     PROJECT (${TRGT} C CXX)
 ENDIF ()
@@ -166,6 +174,16 @@ IF (USE_CUDA)
     FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
     FILE (GLOB CUDA_C_FILES src/cuda/*.c)
     FILE (GLOB CUDA_H_FILES src/cuda/*.h)
+ENDIF ()
+
+IF (USE_SYCL)
+    ADD_DEFINITIONS (-DUSE_SYCL)
+    INCLUDE_DIRECTORIES (src/sycl)
+    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/opt/intel/inteloneapi/compiler/2021.1-beta07/linux/include/sycl")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/intel/inteloneapi/compiler/2021.1-beta07/linux/include/sycl")
+
+    FILE (GLOB SYCL_CPP_FILES src/sycl/*.cpp)
+    FILE (GLOB SYCL_HPP_FILES src/sycl/*.hpp)
 ENDIF ()
 
 IF (USE_PAPI) 
