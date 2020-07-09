@@ -24,6 +24,7 @@ enum sg_backend
     OPENMP, /**< OpenMP CPU Backend */
     CUDA,   /**< CUDA Backend */
     SERIAL,   /**< SERIAL Backend */
+    SYCL, /**< SYCL Backend */
     INVALID_BACKEND /**< Used as a default backend */
 };
 

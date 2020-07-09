@@ -1,14 +1,14 @@
 #include <CL/sycl.hpp>
 #include <chrono>
 #include <vector>
-#include "../../include/sgtype.h"
+#include "sycl_backend.hpp"
 #include "sycl_dev_profile.hpp"
 
 using namespace cl::sycl;
 
 class Gather;
 
-double sycl_gather(double* src, size_t src_len, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned long global_work_size, unsigned long local_work_size)
+double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned long global_work_size, unsigned long local_work_size)
 {
     {
         // Enable profiling so that we can record the kernel execution time
@@ -25,7 +25,7 @@ double sycl_gather(double* src, size_t src_len, sgIdx_t* idx, size_t idx_len, si
         std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>> startTimeList;
 
         // Create the buffers for accessing data
-        buffer<double, 1> srcBuf(src, src_len * sizeof(double));
+        buffer<double, 1> srcBuf(src_size);
         buffer<double, 1> idxBuf(idx, idx_len * sizeof(sgIdx_t));
 
         // Define the dimensions of the operation

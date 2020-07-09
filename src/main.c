@@ -36,6 +36,10 @@
     #include "papi_helper.h"
 #endif
 
+#if defined( USE_SYCL )
+    #include "sycl_backend.hpp"
+#endif
+
 #define ALIGNMENT (4096)
 
 #define xstr(s) str(s)
@@ -92,6 +96,7 @@ void print_system_info(){
     if(backend == OPENMP) printf("OPENMP\n");
     if(backend == OPENCL) printf("OPENCL\n");
     if(backend == CUDA) printf("CUDA\n");
+    if(backend == SYCL) printf("SYCL\n");
 
 
     printf("Aggregate Results? %s\n", aggregate_flag ? "YES" : "NO");
@@ -534,6 +539,20 @@ int main(int argc, char **argv)
         }
 
         #endif // USE_CUDA
+
+        #ifdef USE_SYCL
+
+        if (backend == SYCL)
+        {
+            unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+            unsigned long local_work_size = rc2[k].local_work_size;
+            double time_millis = 0;
+            if (rc2[k].kernel == GATHER)
+                time_millis = sycl_gather(source.host_ptr, source.size, rc2[k].pattern, rc2[j].pattern_len, rc2[k].delta, global_work_size, local_work_size);
+            if (i>=0) rc2[k].time_ms[i] = time_millis;
+        }
+
+        #endif // USE_SYCL
 
 
 
