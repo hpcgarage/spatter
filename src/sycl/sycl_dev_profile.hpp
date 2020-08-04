@@ -1,3 +1,6 @@
+
+#ifndef SYCL_DEV_PROFILE
+#define SYCL_DEV_PROFILE
 #include <chrono>
 
 using wall_clock_t = std::chrono::high_resolution_clock;
@@ -95,3 +98,5 @@ class example_profiler {
     return timeValue * static_cast<T>(1e-6);
   }
 };
+
+#endif

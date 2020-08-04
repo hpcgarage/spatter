@@ -1,4 +1,5 @@
 #ifndef SYCL_BACKEND
+#define SYCL_BACKEND
 
 #include "../../include/sgtype.h"
 

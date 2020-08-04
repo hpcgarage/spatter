@@ -23,6 +23,7 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
             intel::fpga_emulator_selector device_selector;
         #else
             intel::fpga_selector device_selector;
+        #endif
 
         // Create the device queue
         queue device_queue(device_selector, NULL, pl);

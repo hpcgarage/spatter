@@ -195,11 +195,7 @@ IF (USE_CUDA)
 ENDIF ()
 
 IF (USE_SYCL)
-    ADD_DEFINITIONS (-DUSE_SYCL)
     INCLUDE_DIRECTORIES (src/sycl)
-    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/opt/intel/inteloneapi/compiler/2021.1-beta07/linux/include/sycl")
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/intel/inteloneapi/compiler/2021.1-beta07/linux/include/sycl")
-
     FILE (GLOB SYCL_CPP_FILES src/sycl/*.cpp)
     FILE (GLOB SYCL_HPP_FILES src/sycl/*.hpp)
 ENDIF ()
