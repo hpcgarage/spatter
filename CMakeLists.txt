@@ -13,6 +13,10 @@ SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
 SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
 SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
 SET (USE_SYCL 0 CACHE BOOL "If set, builds with SYCL support")
+SET (USE_CPU_HOST 0 CACHE BOOL "If set (with USE_SYCL), builds targeting host device")
+SET (USE_FPGA_EMULATOR 0 CACHE BOOL "If set (with USE_SYCL), builds targeting FPGA emulation")
+SET (USE_FPGA_REPORT 0 CACHE BOOL "If set (with USE_SYCL), builds targeting FPGA emulation with static report generation")
+SET (USE_FPGA_PROFILING 0 CACHE BOOL "If set (with USE_SYCL), builds FPGA bitstream with vTune profiling enabled")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
@@ -30,9 +34,23 @@ IF (USE_CUDA)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
-# Set SYCL compuler
+# Set SYCL compiler flags and definitions
 IF (USE_SYCL)
-	SET (CMAKE_CXX_COMPILER /opt/intel/inteloneapi/compiler/2021.1-beta07/linux/bin/dpcpp)
+	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${ONEAPI_BASE}/compiler/2021.1-beta07/linux/include/sycl")
+    ADD_DEFINITIONS (-DUSE_SYCL)
+    IF (USE_CPU_HOST)
+        ADD_DEFINITIONS (-DCPU_HOST)
+    ELSEIF (USE_FPGA_EMULATOR)
+        ADD_DEFINITIONS (-DFPGA_EMULATOR)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga")
+    ELSEIF (USE_FPGA_REPORT)
+        ADD_DEFINITIONS (-DFPGA_EMULATOR)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -fsycl-link -Xshardware")
+    ELSEIF (USE_FPGA_PROFILING)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware -Xsprofile")
+    ELSE()
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware")
+    ENDIF()
 ENDIF ()
 
 # Declare project languages

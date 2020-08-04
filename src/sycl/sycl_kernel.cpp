@@ -1,6 +1,8 @@
 #include <CL/sycl.hpp>
+#include <CL/sycl/intel/fpga_extensions.hpp>
 #include <chrono>
 #include <vector>
+#include <iostream>
 #include "sycl_backend.hpp"
 #include "sycl_dev_profile.hpp"
 
@@ -12,17 +14,28 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
 {
     {
         // Enable profiling so that we can record the kernel execution time
-        auto property_list = property_list{property::queue::enable_profiling()};
+        property_list pl{property::queue::enable_profiling()};
 
-        // Device Selection (this will only run on GPUs or CPUs)
-        default_selector device_selector;
+        // Device Selection
+        #if defined(CPU_HOST)
+            host_selector device_selector;
+        #elif defined(FPGA_EMULATOR)
+            intel::fpga_emulator_selector device_selector;
+        #else
+            intel::fpga_selector device_selector;
 
         // Create the device queue
-        queue device_queue(device_selector, NULL, property_list);
+        queue device_queue(device_selector, NULL, pl);
 
         // Create data structures for recording events
         std::vector<event> eventList;
         std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>> startTimeList;
+
+        //Query platform and device
+        platform platform = device_queue.get_context().get_platform();
+        sycl::device device = device_queue.get_device();
+        std::cout << "Platform name: " <<  platform.get_info<sycl::info::platform::name>().c_str() << std::endl;
+        std::cout << "Device name: " <<  device.get_info<sycl::info::device::name>().c_str() << std::endl;
 
         // Create the buffers for accessing data
         buffer<double, 1> srcBuf(src_size);
