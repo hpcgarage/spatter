@@ -37,8 +37,8 @@
 #endif
 
 #if defined( USE_SYCL )
-    #include "sycl/sycl_backend.hpp"
-#endif
+    #include "sycl/sycl_backend.h"
+    #endif
 
 #define ALIGNMENT (4096)
 
@@ -541,16 +541,21 @@ int main(int argc, char **argv)
         #endif // USE_CUDA
 
         #ifdef USE_SYCL
-
+	int wpt = 1;
         if (backend == SYCL)
 	{
 	    double time_millis = 0.0;
 	    for (int i = -10; i < (int)rc2[k].nruns; i++) 
 	    {
-                unsigned long global_work_size = rc2[k].generic_len * rc2[k].pattern_len;
-                unsigned long local_work_size = rc2[k].local_work_size;
-                if (rc2[k].kernel == GATHER)
-                    time_millis = sycl_gather(source.host_ptr, source.size, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, global_work_size, local_work_size);
+		unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+		unsigned long local_work_size = rc2[k].local_work_size;
+		unsigned int grid[1] = {global_work_size / local_work_size};
+		unsigned int block[1] = {local_work_size};
+                //unsigned long global_work_size = rc2[k].generic_len * rc2[k].pattern_len;
+                //unsigned long local_work_size = rc2[k].local_work_size;
+                
+		if (rc2[k].kernel == GATHER)
+                    time_millis = sycl_gather(source.host_ptr, source.size, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, grid, block, 1);
                 if (i >= 0) 
 		    rc2[k].time_ms[i] = time_millis;
 	    } 
