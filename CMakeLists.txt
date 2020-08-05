@@ -252,6 +252,11 @@ IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
 
+# Link sycl if using
+IF (USE_SYCL)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC sycl)
+ENDIF ()
+
 # Link argtable
 
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/external/argtable3/src")

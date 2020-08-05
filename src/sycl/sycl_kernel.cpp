@@ -8,6 +8,8 @@
 
 using namespace cl::sycl;
 
+#define MAX_IDX_LEN 2048
+
 class Gather;
 
 double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned int* grid, unsigned int* block, unsigned int dim)
@@ -16,6 +18,12 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
     {
         std::cerr << "Error: dim != 1, unsupported dim size!" << std::endl;
         exit(EXIT_FAILURE);
+    }
+
+    if (idx_len > MAX_IDX_LEN)
+    {
+	std::cerr << "Error: idx_len exceeds MAX_IDX_LEN!" << std::endl;
+	exit(EXIT_FAILURE);
     }
 
     {
@@ -64,7 +72,7 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
             // Kernel
             auto kernel = [=]()
             {
-                int idx_shared[idx_len];
+                int idx_shared[MAX_IDX_LEN];
                 int ngatherperblock = block[0] / idx_len; 
 
                 for (int bid = 0; bid < grid[0]; ++bid)
@@ -84,7 +92,7 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
                 }
             };
 
-            cgh.single_Task<Gather>(kernel);
+            cgh.single_task<Gather>(kernel);
         }));
 
         // Wait for asynchronous execution of kernel to complete
