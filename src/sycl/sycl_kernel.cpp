@@ -10,8 +10,14 @@ using namespace cl::sycl;
 
 class Gather;
 
-double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned long global_work_size, unsigned long local_work_size)
+double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned int* grid, unsigned int* block, unsigned int dim)
 {
+    if (dim != 1)
+    {
+        std::cerr << "Error: dim != 1, unsupported dim size!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     {
         // Enable profiling so that we can record the kernel execution time
         property_list pl{property::queue::enable_profiling()};
@@ -40,10 +46,10 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
 
         // Create the buffers for accessing data
         buffer<double, 1> srcBuf(src_size);
-        buffer<double, 1> idxBuf(idx, idx_len * sizeof(sgIdx_t));
+        buffer<double, 1> idxBuf(idx_len * sizeof(sgIdx_t));
 
         // Define the dimensions of the operation
-        range<2> numOfItems(global_work_size / local_work_size, local_work_size);
+        //range<1> numOfItems((global_work_size / local_work_size) * local_work_size);
 
         // Record the start time
         startTimeList.push_back(std::chrono::high_resolution_clock::now());
@@ -56,24 +62,29 @@ double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, s
             auto idxAccessor = idxBuf.get_access<access::mode::read>(cgh);
 
             // Kernel
-            auto kernel = [=](id<2> id)
+            auto kernel = [=]()
             {
-                double x;
+                int idx_shared[idx_len];
+                int ngatherperblock = block[0] / idx_len; 
 
-                // Ported over from CUDA kernel...
-                int tid = id[1];
-                int bid = id[0];
-                int ngatherperblock = (global_work_size / local_work_size) / idx_len;
-                int gatherid = tid / idx_len;
+                for (int bid = 0; bid < grid[0]; ++bid)
+                {
+                    for (int tid = 0; tid < block[0]; ++tid)
+                    {
+                        if (tid < idx_len)
+                            idx_shared[tid] = idx[tid];
 
-                int src_offset = (bid * ngatherperblock + gatherid) * delta;
+                        int gatherid = tid / idx_len;
+                        double *src_loc = src + (bid * ngatherperblock + gatherid) * delta; // this is likely highly inefficient for FPGA
+                        double x;
 
-                // Gather
-                x = srcAccessor[idxAccessor[tid % idx_len] + offset];
+                        x = src_loc[idx_shared[tid % idx_len]]; 
+                        
+                    }
+                }
             };
 
-            cgh.parallel_for<Gather>(numOfItems, kernel);
-
+            cgh.single_Task<Gather>(kernel);
         }));
 
         // Wait for asynchronous execution of kernel to complete
