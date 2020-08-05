@@ -548,7 +548,7 @@ struct run_config parse_runs(int argc, char **argv)
         error ("Compiled without OpenMP support but requsted more than 1 thread, using 1 instead", WARN);
 #endif
 
-#if defined USE_CUDA || defined USE_OPENCL
+#if defined USE_CUDA || defined USE_OPENCL || defined USE_SYCL
     if (rc.local_work_size == 0) 
     {
         error ("Local_work_size not set. Default is 1", WARN);
@@ -704,6 +704,11 @@ void parse_backend(int argc, char **argv)
             backend = SERIAL;
             error ("No backend specified, guessing Serial", WARN);
         }
+        else if (sg_sycl_support())
+        {
+            backend = SYCL;
+            error ("No backend specified, guessing SYCL", WARN);
+        }
         else
             error ("No backends available! Please recompile spatter with at least one backend.", ERROR);
     }
@@ -728,6 +733,11 @@ void parse_backend(int argc, char **argv)
     {
         if (!sg_serial_support())
             error("You did not compile with support for serial execution", ERROR);
+    }
+    else if (backend == SYCL)
+    {
+        if (!sg_sycl_support())
+            error("You did not compile with support for SYCL", ERROR);
     }
 
     if (backend == OPENCL)

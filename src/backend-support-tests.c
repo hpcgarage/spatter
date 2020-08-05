@@ -1,5 +1,14 @@
 #include "backend-support-tests.h"
 
+int sg_sycl_support()
+{
+#if defined USE_SYCL
+    return 1;
+#else
+    return 0;
+#endif
+}
+
 int sg_cuda_support()
 {
 #if defined USE_CUDA
@@ -9,7 +18,6 @@ int sg_cuda_support()
 #endif
 }
 
-
 int sg_opencl_support()
 {
 #if defined USE_OPENCL
@@ -18,7 +26,6 @@ int sg_opencl_support()
     return 0;
 #endif
 }
-
 
 int sg_openmp_support()
 {
