@@ -3,8 +3,9 @@
 #include <chrono>
 #include <vector>
 #include <iostream>
-#include "sycl_backend.hpp"
+//#include "sycl_backend.h"
 #include "sycl_dev_profile.hpp"
+#include "sgtype.h"
 
 using namespace cl::sycl;
 
@@ -12,7 +13,7 @@ using namespace cl::sycl;
 
 class Gather;
 
-double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned int* grid, unsigned int* block, unsigned int dim)
+extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t idx_len, size_t delta, unsigned int* grid, unsigned int* block, unsigned int dim)
 {
     if (dim != 1)
     {

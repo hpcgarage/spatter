@@ -37,8 +37,8 @@
 #endif
 
 #if defined( USE_SYCL )
-    #include "sycl/sycl_backend.hpp"
-#endif
+    #include "sycl/sycl_backend.h"
+    #endif
 
 #define ALIGNMENT (4096)
 

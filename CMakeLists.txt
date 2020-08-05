@@ -197,7 +197,7 @@ ENDIF ()
 IF (USE_SYCL)
     INCLUDE_DIRECTORIES (src/sycl)
     FILE (GLOB SYCL_CPP_FILES src/sycl/*.cpp)
-    FILE (GLOB SYCL_HPP_FILES src/sycl/*.hpp)
+    FILE (GLOB SYCL_HPP_FILES src/sycl/*.hpp src/sycl/*.h)
 ENDIF ()
 
 IF (USE_PAPI) 
@@ -233,7 +233,7 @@ SET (
     ${PAPI_C_FILES}
     ${PAPI_H_FILES}
     ${SYCL_CPP_FILES}
-    ${SYCL_HPP_FILES}
+    #${SYCL_HPP_FILES}
 )
 
 # Specify the executable and source files
