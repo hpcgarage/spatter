@@ -55,8 +55,8 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
         std::cout << "Device name: " <<  device.get_info<sycl::info::device::name>().c_str() << std::endl;
 
         // Create the buffers for accessing data
-        buffer<double, 1> srcBuf(src_size);
-        buffer<double, 1> idxBuf(idx_len * sizeof(sgIdx_t));
+        buffer<double, 1> srcBuf(src, src_size);
+        buffer<sgIdx_t, 1> idxBuf(idx, idx_len * sizeof(sgIdx_t));
 
         // Define the dimensions of the operation
         //range<1> numOfItems((global_work_size / local_work_size) * local_work_size);
@@ -146,8 +146,8 @@ extern "C" double sycl_scatter(double* src, size_t src_size, sgIdx_t* idx, size_
         std::cout << "Device name: " <<  device.get_info<sycl::info::device::name>().c_str() << std::endl;
 
         // Create the buffers for accessing data
-        buffer<double, 1> srcBuf(src_size);
-        buffer<double, 1> idxBuf(idx_len * sizeof(sgIdx_t));
+        buffer<double, 1> srcBuf(src, src_size);
+        buffer<sgIdx_t, 1> idxBuf(idx, idx_len * sizeof(sgIdx_t));
 
         // Define the dimensions of the operation
         //range<1> numOfItems((global_work_size / local_work_size) * local_work_size);
@@ -177,8 +177,9 @@ extern "C" double sycl_scatter(double* src, size_t src_size, sgIdx_t* idx, size_
 
                         int gatherid = tid / idx_len;
                         int src_offset =  (bid * ngatherperblock + gatherid) * delta;
+			int idx_shared_val = idx_shared[tid % idx_len];
 
-                        srcAccessor[idx_shared[tid % idx_len] + src_offset] = idx_shared[tid % idx_len]; 
+                        srcAccessor[idx_shared_val + src_offset] = idx_shared_val; 
                     }
                 }
             };

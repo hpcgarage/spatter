@@ -17,6 +17,7 @@ SET (USE_CPU_HOST 0 CACHE BOOL "If set (with USE_SYCL), builds targeting host de
 SET (USE_FPGA_EMULATOR 0 CACHE BOOL "If set (with USE_SYCL), builds targeting FPGA emulation")
 SET (USE_FPGA_REPORT 0 CACHE BOOL "If set (with USE_SYCL), builds targeting FPGA emulation with static report generation")
 SET (USE_FPGA_PROFILING 0 CACHE BOOL "If set (with USE_SYCL), builds FPGA bitstream with vTune profiling enabled")
+SET (USE_DEBUG_FLAG 0 CACHE BOOL "If set, compiles Spatter with -g flag for gdb debugging")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
@@ -32,6 +33,10 @@ ENDIF ()
 IF (USE_CUDA)
     SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
+ENDIF ()
+
+IF (USE_DEBUG_FLAG)
+	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 ENDIF ()
 
 # Set SYCL compiler flags and definitions
@@ -50,6 +55,7 @@ IF (USE_SYCL)
     ELSE () #Use CPU emulation by default
 	    message("Building for CPU host emulation")
 	    ADD_DEFINITIONS (-DCPU_HOST)
+    ENDIF ()
 ENDIF ()
 
 # Declare project languages
