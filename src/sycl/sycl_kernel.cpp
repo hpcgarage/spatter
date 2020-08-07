@@ -7,6 +7,8 @@
 #include "sycl_dev_profile.hpp"
 #include "sgtype.h"
 
+#define USE_OPTIMIZED_SYCL
+
 using namespace cl::sycl;
 
 #define MAX_IDX_LEN 2048
@@ -74,6 +76,40 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
             // Kernel
             auto kernel = [=]()
             {
+                #ifdef USE_OPTIMIZED_SYCL
+
+                // Create local vars when possible
+                size_t idx_len_local = idx_len;
+                size_t delta_local = delta;
+                int idx_shared[MAX_IDX_LEN];
+                int ngatherperblock = block[0] / idx_len_local;
+                int gridDim = grid[0];
+                int blockDim = block[0];
+
+                // First, perform setting of idx_shared
+                // Unroll this because it can and should be done in parallel
+                #pragma unroll
+                for (int i = 0; i < idx_len_local; ++i)
+                    idx_shared[i] = idxAccessor[i];
+
+                // Next, condense nested loop into a single loop
+                // Unroll this loop as well
+                #pragma unroll
+                for (int i = 0; i < gridDim * blockDim; ++i)
+                {
+                    // Create local vars as deep as possible
+                    int tid = i % blockDim;
+                    int bid = i / blockDim;
+                    int gatherid = tid / idx_len_local;
+                    int src_offset = (bid * ngatherperblock * gatherid) * delta_local;
+                    int idx_shared_val = idx_shared[gatherid];
+                    int src_index = idx_shared_val + src_offset;
+                    double x;
+
+                    x = srcAccessor[src_index];
+                }
+                
+                #else
                 int idx_shared[MAX_IDX_LEN];
                 int ngatherperblock = block[0] / idx_len; 
 
@@ -91,6 +127,7 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                         x = srcAccessor[idx_shared[tid % idx_len] + src_offset]; 
                     }
                 }
+                #endif
             };
 
             cgh.single_task<Gather>(kernel);
@@ -165,6 +202,39 @@ extern "C" double sycl_scatter(double* src, size_t src_size, sgIdx_t* idx, size_
             // Kernel
             auto kernel = [=]()
             {
+                #ifdef USE_OPTIMIZED_SYCL
+
+                // Create local vars when possible
+                size_t idx_len_local = idx_len;
+                size_t delta_local = delta;
+                int idx_shared[MAX_IDX_LEN];
+                int ngatherperblock = block[0] / idx_len_local;
+                int gridDim = grid[0];
+                int blockDim = block[0];
+
+                // First, perform setting of idx_shared
+                // Unroll this because it can and should be done in parallel
+                #pragma unroll
+                for (int i = 0; i < idx_len_local; ++i)
+                    idx_shared[i] = idxAccessor[i];
+
+                // Next, condense nested loop into a single loop
+                // Unroll this loop as well
+                #pragma unroll
+                for (int i = 0; i < gridDim * blockDim; ++i)
+                {
+                    // Create local vars as deep as possible
+                    int tid = i % blockDim;
+                    int bid = i / blockDim;
+                    int gatherid = tid / idx_len_local;
+                    int src_offset = (bid * ngatherperblock * gatherid) * delta_local;
+                    int idx_shared_val = idx_shared[gatherid];
+                    int src_index = idx_shared_val + src_offset;
+
+                    srcAccessor[src_index] = idx_shared_val;
+                }
+
+                #else
                 int idx_shared[MAX_IDX_LEN];
                 int ngatherperblock = block[0] / idx_len; 
 
@@ -177,11 +247,12 @@ extern "C" double sycl_scatter(double* src, size_t src_size, sgIdx_t* idx, size_
 
                         int gatherid = tid / idx_len;
                         int src_offset =  (bid * ngatherperblock + gatherid) * delta;
-			int idx_shared_val = idx_shared[tid % idx_len];
+			            int idx_shared_val = idx_shared[tid % idx_len];
 
                         srcAccessor[idx_shared_val + src_offset] = idx_shared_val; 
                     }
                 }
+                #endif
             };
 
             cgh.single_task<Scatter>(kernel);
