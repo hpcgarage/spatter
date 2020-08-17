@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309L
+
 #ifndef SGTIME_H
 #define SGTIME_H
 
