@@ -73,7 +73,7 @@ void initialize_argtable()
     verb            = arg_litn(NULL, "verbose", 0, 1, "Print info about default arguments that you have not overridden."),
     no_print_header = arg_litn("q", "no-print-header", 0, 1, "Do not print header information."),
     interactive     = arg_litn("i", "interactive", 0, 1, "Pick the platform and the device interactively."),
-    validate        = arg_litn(NULL, "validate", 0, 1, "TODO"),
+    validate        = arg_litn(NULL, "validate", 0, 1, "Perform extra validation checks to ensure data validity"),
     aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)"),
     compress        = arg_litn("c", "compress", 0, 1, "TODO"),
     // Benchmark Configuration
@@ -660,6 +660,9 @@ void parse_backend(int argc, char **argv)
 
     if (no_print_header->count > 0)
         quiet_flag++;
+
+    if (validate->count > 0)
+        validate_flag++;
 
     if (aggregate->count > 0)
         aggregate_flag = 1;

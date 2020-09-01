@@ -261,12 +261,14 @@ SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\
 
 
 # Build tests
-mark_as_advanced( BUILD_TESTS )
-set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
-if( BUILD_TESTS )
-    enable_testing()
-    add_subdirectory( tests )
-endif( BUILD_TESTS )
+if ( USE_OPENMP )
+    mark_as_advanced( BUILD_TESTS )
+    set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
+    if( BUILD_TESTS )
+        enable_testing()
+        add_subdirectory( tests )
+    endif( BUILD_TESTS )
+endif( USE_OPENMP )
 
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
