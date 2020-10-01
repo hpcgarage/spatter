@@ -59,6 +59,9 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
         // Create the buffers for accessing data
         buffer<double, 1> srcBuf(src, src_size);
         buffer<sgIdx_t, 1> idxBuf(idx, idx_len * sizeof(sgIdx_t));
+	buffer<unsigned int, 1> gridBuf(grid, 1 * sizeof(unsigned int));
+	buffer<unsigned int, 1> blockBuf(block, 1 * sizeof(unsigned int));
+	//buffer<size_t, 1> idxLenBuf(&idx_len, 1 * sizeof(size_t));
 
         // Define the dimensions of the operation
         //range<1> numOfItems((global_work_size / local_work_size) * local_work_size);
@@ -72,6 +75,9 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
             // Create accessors
             auto srcAccessor = srcBuf.get_access<access::mode::read>(cgh);
             auto idxAccessor = idxBuf.get_access<access::mode::read>(cgh);
+	    auto gridAccessor = gridBuf.get_access<access::mode::read>(cgh);
+	    auto blockAccessor = blockBuf.get_access<access::mode::read>(cgh);
+	    //auto idxLenAccessor = idxLenBuf.get_access<access::mode::read>(cgh);
 
             // Kernel
             auto kernel = [=]()
@@ -82,9 +88,9 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                 size_t idx_len_local = idx_len;
                 size_t delta_local = delta;
                 int idx_shared[MAX_IDX_LEN];
-                int ngatherperblock = block[0] / idx_len_local;
-                int gridDim = grid[0];
-                int blockDim = block[0];
+                int ngatherperblock = blockAccessor[0] / idx_len_local;
+                int gridDim = gridAccessor[0];
+                int blockDim = blockAccessor[0];
 
                 // First, perform setting of idx_shared
                 // Unroll this because it can and should be done in parallel
@@ -110,12 +116,15 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                 }
                 
                 #else
+		
                 int idx_shared[MAX_IDX_LEN];
-                int ngatherperblock = block[0] / idx_len; 
-
-                for (int bid = 0; bid < grid[0]; ++bid)
+                //int ngatherperblock = block[0] / idx_len; 
+		//int ngatherperblock = (int) ((size_t) block[0]) / idx_len;
+		//int ngatherperblock = blockAccessor[0] / idxLenAccessor[0];
+		int ngatherperblock = blockAccessor[0] / idx_len;
+                for (int bid = 0; bid < gridAccessor[0]; ++bid)
                 {
-                    for (int tid = 0; tid < block[0]; ++tid)
+                    for (int tid = 0; tid < blockAccessor[0]; ++tid)
                     {
                         if (tid < idx_len)
                             idx_shared[tid] = idxAccessor[tid];
@@ -127,6 +136,8 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                         x = srcAccessor[idx_shared[tid % idx_len] + src_offset]; 
                     }
                 }
+		
+		//double x = 1.0 + 2.0;
                 #endif
             };
 
