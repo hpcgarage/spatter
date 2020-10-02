@@ -40,23 +40,23 @@ IF (USE_DEBUG_FLAG)
 ENDIF ()
 
 # Set SYCL compiler flags and definitions
-IF (USE_SYCL)
-    ADD_DEFINITIONS (-DUSE_SYCL)
-    IF (USE_FPGA_EMULATOR)
-	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga")
-	    ADD_DEFINITIONS (-DFPGA_EMULATOR)
-    ELSEIF (USE_FPGA_REPORT)
-	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -fsycl-link -Xshardware")
-	    ADD_DEFINITIONS (-DFPGA_EMULATOR)
-    ELSEIF (USE_FPGA_BITSTREAM)
-	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware")
-    ELSEIF (USE_FPGA_PROFILING)
-	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware -Xsprofile")
-    ELSE () #Use CPU emulation by default
-	    message("Building for CPU host emulation")
-	    ADD_DEFINITIONS (-DCPU_HOST)
-    ENDIF ()
-ENDIF ()
+# IF (USE_SYCL)
+#    ADD_DEFINITIONS (-DUSE_SYCL)
+#    IF (USE_FPGA_EMULATOR)
+#	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga")
+#	    ADD_DEFINITIONS (-DFPGA_EMULATOR)
+#    ELSEIF (USE_FPGA_REPORT)
+#	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -fsycl-link -Xshardware")
+#	    ADD_DEFINITIONS (-DFPGA_EMULATOR)
+#    ELSEIF (USE_FPGA_BITSTREAM)
+#	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga")
+#    ELSEIF (USE_FPGA_PROFILING)
+#	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware -Xsprofile")
+#    ELSE () #Use CPU emulation by default
+#	    message("Building for CPU host emulation")
+#	    ADD_DEFINITIONS (-DCPU_HOST)
+#    ENDIF ()
+# ENDIF ()
 
 # Declare project languages
 IF (USE_CUDA)
@@ -203,6 +203,31 @@ IF (USE_SYCL)
     INCLUDE_DIRECTORIES (src/sycl)
     FILE (GLOB SYCL_CPP_FILES src/sycl/*.cpp)
     FILE (GLOB SYCL_HPP_FILES src/sycl/*.hpp src/sycl/*.h)
+    # Set SYCL compiler flags and definitions
+    ADD_DEFINITIONS (-DUSE_SYCL)
+    IF (USE_FPGA_EMULATOR)
+        #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga")
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -fintelfpga)
+        ADD_DEFINITIONS (-DFPGA_EMULATOR)
+    ELSEIF (USE_FPGA_REPORT)
+        #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -fsycl-link -Xshardware")
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -fintelfpga)
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -fsycl-link)
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -Xshardware)
+        ADD_DEFINITIONS (-DFPGA_EMULATOR)
+    ELSEIF (USE_FPGA_BITSTREAM)
+        #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware")
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -fintelfpga)
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -Xshardware)
+    ELSEIF (USE_FPGA_PROFILING)
+        #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fintelfpga -Xshardware -Xsprofile")
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -fintelfpga)
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -Xshardware)
+        SET_SOURCE_FILES_PROPERTIES(SYCL_CPP_FILES PROPERTIES COMPILE_FLAGS -Xsprofile)
+    ELSE () #Use CPU emulation by default
+        message("Building for CPU host emulation")
+        ADD_DEFINITIONS (-DCPU_HOST)
+    ENDIF ()
 ENDIF ()
 
 IF (USE_PAPI) 
@@ -243,6 +268,7 @@ SET (
 
 # Specify the executable and source files
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
+
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
 set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
 
@@ -258,7 +284,7 @@ IF (USE_OPENCL)
 ENDIF ()
 
 # Link sycl if using
-IF (USE_SYCL)
+IF (USE_SYCL AND NOT (USE_FPGA_BITSTREAM OR USE_FPGA_PROFILING))
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC sycl)
 ENDIF ()
 

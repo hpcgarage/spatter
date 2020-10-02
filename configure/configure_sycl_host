@@ -1,0 +1,29 @@
+# Configure file for compiling with SYCL
+# Execute from the main directory using ./configure/configure_sycl_host
+
+#Run the submodule update script
+./configure/git_submodule_init.sh
+
+BUILD_DIR=build_sycl_host
+
+mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+rm -rf CMake* 
+
+source /opt/intel/inteloneapi/setvars.sh
+
+#Make sure to use tabs rather than spaces for newline entries
+cmake -D CMAKE_BUILD_TYPE=Release \
+	-D CMAKE_CXX_FLAGS="-O3 " \
+	-D CMAKE_TOOLCHAIN_FILE=cmake/oneapi-toolchain.cmake \
+	-D USE_CUDA=0 \
+	-D USE_OPENCL=0 \
+	-D USE_OPENMP=0 \
+	-D USE_SYCL=1 \
+	-D USE_FPGA_EMULATOR=0 \
+    -D USE_CPU_HOST=1 \
+	..    
+
+#Unused options
+#      -D USE_KOKKOS=0 -D KOKKOS_DIRECTORY=${KOKKOS_DIR}   \
+#      -D KOKKOS_WRAPPER=${KOKKOS_DIR}/bin/nvcc_wrapper    \
+#      -D USE_CUDA=0 -D CUDA_FLAGS="-arch sm_70"           \
