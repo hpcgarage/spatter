@@ -271,7 +271,7 @@ if ( USE_OPENMP )
 endif( USE_OPENMP )
 
 # Validation flag
-SET (VALIDATE_DATA 1 CACHE BOOL "Performs additional validation")
+SET (VALIDATE_DATA 0 CACHE BOOL "Performs additional validation")
 IF (USE_OPENMP OR USE_CUDA)
     IF (VALIDATE_DATA)
         ADD_DEFINITIONS(-DVALIDATE)

@@ -247,9 +247,6 @@ uint64_t icbrt(uint64_t x);
 
 int main(int argc, char **argv)
 {
-    #ifdef VALIDATE
-    printf("validating\n");
-    #endif
 
     // =======================================
     // Declare Variables
@@ -444,9 +441,11 @@ int main(int argc, char **argv)
     target.host_ptrs = (sgData_t**) sp_malloc(sizeof(sgData_t*), target.nptrs, ALIGN_CACHE);
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
+        #ifdef VALIDATE
         if (validate_flag) { // Fill target buffer with data for validation purposes
             random_data(target.host_ptrs[i], target.len);
         }
+        #endif
     }
     //    printf("-- here -- \n");
 
@@ -663,6 +662,7 @@ int main(int argc, char **argv)
     // =======================================
     // Validation
     // =======================================
+    #ifdef VALIDATE
     if(validate_flag) {
         // Validate that the last item written to buffer is actually there
         // Supported kernels for this last write validation are:
@@ -715,7 +715,6 @@ int main(int argc, char **argv)
 
         #ifdef USE_CUDA
                 if (backend == CUDA) {
-                    printf("using cuda\n");
                     char is_written_data_missing = 1;
                     struct run_config *rc_final = rc2 + (nrc - 1);
                     size_t V = rc_final->pattern_len;
@@ -736,6 +735,7 @@ int main(int argc, char **argv)
                 }
         #endif
     }
+    #endif
 
     // Free Memory
     free(source.host_ptr);

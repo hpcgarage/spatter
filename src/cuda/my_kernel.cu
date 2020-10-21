@@ -227,10 +227,12 @@ __global__ void scatter_block(double *src, sgIdx_t* idx, int idx_len, size_t del
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
 
+    #ifdef VALIDATE
     if (validate) {
         final_block_idx_dev = blockIdx.x;
         final_thread_idx_dev = threadIdx.x;
     }
+    #endif
 
     if (tid < V) {
         idx_shared[tid] = idx[tid];
@@ -293,10 +295,12 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
 
+    #ifdef VALIDATE
     if (validate) {
         final_block_idx_dev = blockIdx.x;
         final_thread_idx_dev = threadIdx.x;
     }
+    #endif
 
     if (tid < V) {
         idx_shared[tid] = idx[tid];
@@ -307,19 +311,22 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
     
+    #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = src_loc[idx_shared[tid%V]];
-    } else {
-        double x;
-
-        //for (int i = 0; i < wpb; i++) {
-            x = src_loc[idx_shared[tid%V]];
-            //src_loc[idx_shared[tid%V]] = 1337.;
-            //src_loc += delta;
-        //}
-
-        if (x==0.5) src[0] = x;
+        return;
     }
+    #endif
+    
+    double x;
+
+    //for (int i = 0; i < wpb; i++) {
+        x = src_loc[idx_shared[tid%V]];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+
+    if (x==0.5) src[0] = x;
 
 }
 
@@ -331,10 +338,12 @@ __global__ void gather_block_morton(double *src, sgIdx_t* idx, int idx_len, size
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
 
+    #ifdef VALIDATE
     if (validate) {
         final_block_idx_dev = blockIdx.x;
         final_thread_idx_dev = threadIdx.x;
     }
+    #endif
 
     if (tid < V) {
         idx_shared[tid] = idx[tid];
@@ -345,19 +354,22 @@ __global__ void gather_block_morton(double *src, sgIdx_t* idx, int idx_len, size
 
     double *src_loc = src + (bid*ngatherperblock+order[gatherid])*delta;
 
+    #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = src_loc[idx_shared[tid%V]];
-    } else {
-        double x;
-
-        //for (int i = 0; i < wpb; i++) {
-            x = src_loc[idx_shared[tid%V]];
-            //src_loc[idx_shared[tid%V]] = 1337.;
-            //src_loc += delta;
-        //}
-
-        if (x==0.5) src[0] = x;
+        return;
     }
+    #endif
+
+    double x;
+
+    //for (int i = 0; i < wpb; i++) {
+        x = src_loc[idx_shared[tid%V]];
+        //src_loc[idx_shared[tid%V]] = 1337.;
+        //src_loc += delta;
+    //}
+
+    if (x==0.5) src[0] = x;
 
 }
 
@@ -367,29 +379,33 @@ __global__ void gather_block_stride(double *src, sgIdx_t* idx, int idx_len, size
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
 
+    #ifdef VALIDATE
     if (validate) {
         final_block_idx_dev = blockIdx.x;
         final_thread_idx_dev = threadIdx.x;
     }
+    #endif
 
     int ngatherperblock = blockDim.x / V;
     int gatherid = tid / V;
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
 
+    #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = src_loc[stride*(tid%V)];
-    } else {
-        double x;
-
-        //for (int i = 0; i < wpb; i++) {
-        x = src_loc[stride*(tid%V)];
-        //src_loc[idx_shared[tid%V]] = 1337.;
-        //src_loc += delta;
-        //}
-
-        if (x==0.5) src[0] = x;
     }
+    #endif
+
+    double x;
+
+    //for (int i = 0; i < wpb; i++) {
+    x = src_loc[stride*(tid%V)];
+    //src_loc[idx_shared[tid%V]] = 1337.;
+    //src_loc += delta;
+    //}
+
+    if (x==0.5) src[0] = x;
 
 }
 
