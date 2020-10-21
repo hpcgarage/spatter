@@ -270,6 +270,14 @@ if ( USE_OPENMP )
     endif( BUILD_TESTS )
 endif( USE_OPENMP )
 
+# Validation flag
+SET (VALIDATE_DATA 1 CACHE BOOL "Performs additional validation")
+IF (USE_OPENMP OR USE_CUDA)
+    IF (VALIDATE_DATA)
+        ADD_DEFINITIONS(-DVALIDATE)
+    ENDIF ()
+ENDIF ()
+
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4

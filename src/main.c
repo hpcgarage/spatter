@@ -247,6 +247,9 @@ uint64_t icbrt(uint64_t x);
 
 int main(int argc, char **argv)
 {
+    #ifdef VALIDATE
+    printf("validating\n");
+    #endif
 
     // =======================================
     // Declare Variables
