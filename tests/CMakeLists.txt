@@ -27,9 +27,19 @@ list(REMOVE_ITEM src_files "${full_path_main_c}")
 
 foreach( APP ${TESTAPPS} )
  add_executable( "${APP}" "${APP}.c" ${src_files})
- target_link_libraries( "${APP}" m )
- target_link_libraries( "${APP}" OpenMP::OpenMP_CXX)
- target_link_libraries("${APP}" argtable3_static)
+ target_link_libraries( "${APP}" PRIVATE m )
+ IF (USE_OPENMP)
+     TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
+ ENDIF()
+ IF (USE_CUDA)
+    FIND_LIBRARY (
+        CUDART_LIBRARY cudart
+        HINTS
+            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
+    )
+    TARGET_LINK_LIBRARIES (${APP} PRIVATE ${CUDART_LIBRARY})
+ ENDIF ()
+ target_link_libraries("${APP}" PRIVATE argtable3_static)
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
 endforeach( APP ${TESTAPPS} )
 

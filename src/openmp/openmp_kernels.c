@@ -4,6 +4,10 @@
 #include <stdio.h>
 #define SIMD 8
 
+#if !defined( USE_OPENMP )
+#define omp_get_thread_num() 0
+#endif
+
 void gather_smallbuf(
         sgData_t** restrict target,
         sgData_t* const restrict source,
