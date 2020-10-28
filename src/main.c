@@ -441,6 +441,11 @@ int main(int argc, char **argv)
     target.host_ptrs = (sgData_t**) sp_malloc(sizeof(sgData_t*), target.nptrs, ALIGN_CACHE);
     for (size_t i = 0; i < target.nptrs; i++) {
         target.host_ptrs[i] = (sgData_t*) sp_malloc(target.size, 1, ALIGN_PAGE);
+        #ifdef VALIDATE
+        if (validate_flag) { // Fill target buffer with data for validation purposes
+            random_data(target.host_ptrs[i], target.len);
+        }
+        #endif
     }
     //    printf("-- here -- \n");
 
@@ -472,6 +477,9 @@ int main(int argc, char **argv)
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
+    int final_block_idx = -1;
+    int final_thread_idx = -1;
+    double final_gather_data = -1;
     #endif
 
 
@@ -522,7 +530,7 @@ int main(int argc, char **argv)
                 unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                 unsigned long block[arr_len] = {local_work_size};
                 if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel);
+                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
                     time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                 }
@@ -654,93 +662,80 @@ int main(int argc, char **argv)
     // =======================================
     // Validation
     // =======================================
+    #ifdef VALIDATE
     if(validate_flag) {
+        // Validate that the last item written to buffer is actually there
+        // Supported kernels for this last write validation are:
+        // 
+        // OPENMP:
+        // scatter_smallbuf
+        // gather_smallbuf
+        // gather_smallbuf_morton
+        //
+        // CUDA:
+        // scatter_block
+        // gather_block
+        // gather_block_morton
+        // gather_block_stride
 
-        //TODO: Rewrite validataion
-/*
-#ifdef USE_OPENCL
-        if (backend == OPENCL) {
-            clEnqueueReadBuffer(queue, target.dev_ptr_opencl, 1, 0, target.size,
-                target.host_ptr, 0, NULL, &e);
-            clWaitForEvents(1, &e);
-        }
-#endif
-
-#ifdef USE_CUDA
-        if (backend == CUDA) {
-            cudaError_t cerr;
-            cerr = cudaMemcpy(target.host_ptr, target.dev_ptr_cuda, target.size, cudaMemcpyDeviceToHost);
-            if(cerr != cudaSuccess){
-                printf("transfer failed\n");
-            }
-            cudaDeviceSynchronize();
-        }
-#endif
-
-        sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size);
-        memcpy(target_backup_host, target.host_ptr, target.size);
-
-    // =======================================
-	VALIDATION
-       =======================================
-    //
-    if(validate_flag) {
-#ifdef USE_OPENCL
-        if (backend == OPENCL) {
-            clEnqueueReadBuffer(queue, target.dev_ptr_opencl, 1, 0, target.size,
-                target.host_ptr, 0, NULL, &e);
-            clWaitForEvents(1, &e);
-        }
-#endif
-
-#ifdef USE_CUDA
-        if (backend == CUDA) {
-            cudaError_t cerr;
-            cerr = cudaMemcpy(target.host_ptr, target.dev_ptr_cuda, target.size, cudaMemcpyDeviceToHost);
-            if(cerr != cudaSuccess){
-                printf("transfer failed\n");
-            }
-            cudaDeviceSynchronize();
-        }
-#endif
-
-        sgData_t *target_backup_host = (sgData_t*) sg_safe_cpu_alloc(target.size);
-        memcpy(target_backup_host, target.host_ptr, target.size);
-
-    	// TODO: Issue - 13: Replace the hard-coded execution of each function with calls to the serial backend
-        switch (kernel) {
-            case SG:
-                for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[si.host_ptr[i]];
+        #ifdef USE_OPENMP
+            if (backend == OPENMP) {
+                // use the last run config
+                struct run_config *rc_final = rc2 + (nrc - 1);
+                if (rc_final->op == OP_COPY) { //accum kernel validation currently not supported
+                    char is_written_data_missing = 1; //
+                    sgData_t *source_data_ptr = source.host_ptr + rc_final->delta * (rc_final->generic_len - 1);
+                    if (rc_final->ro_morton || rc_final->ro_hilbert) {
+                        source_data_ptr = source.host_ptr + rc_final->delta * rc_final->ro_order[rc_final->generic_len - 1];
+                    } else {
+                        source_data_ptr = source.host_ptr + rc_final->delta * (rc_final->generic_len - 1);
+                    }
+                    // we don't know which thread wrote the data, so check all targets
+                    for (int t = 0; t < rc_final->omp_threads; t++) {
+                        sgData_t *target_data_ptr = target.host_ptrs[t] + rc_final->pattern_len * ((rc_final->generic_len - 1) % rc_final->wrap);
+                        //check that all data in the pattern is written
+                        char matches_pattern = 1;
+                        for (int d = 0; d < rc_final->pattern_len; d++) { 
+                            if (source_data_ptr[rc_final->pattern[d]] != target_data_ptr[d]) {
+                                matches_pattern = 0;
+                                break;
+                            }
+                        }
+                        if (matches_pattern) {
+                            is_written_data_missing = 0;
+                            break;
+                        }
+                    }
+                    if (is_written_data_missing) {
+                        printf("VALIDATION ERROR: The data that was supposed to be last written to buffer is missing\n");
+                    }
                 }
-                break;
-            case SCATTER:
-                for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[ti.host_ptr[i]] = source.host_ptr[i];
-                }
-                break;
-            case GATHER:
-                for (size_t i = 0; i < index_len; i++){
-                    target.host_ptr[i] = source.host_ptr[si.host_ptr[i]];
-                }
-                break;
-        }
-
-
-        int num_err = 0;
-        for (size_t i = 0; i < target.len; i++) {
-            if (target.host_ptr[i] != target_backup_host[i]) {
-                printf("%zu: host %lf, device %lf\n", i, target.host_ptr[i], target_backup_host[i]);
-                num_err++;
             }
-            if (num_err > 99) {
-                printf("Too many errors. Exiting.\n");
-                exit(1);
-            }
-        }
-        */
-    //}
+        #endif
+
+        #ifdef USE_CUDA
+                if (backend == CUDA) {
+                    char is_written_data_missing = 1;
+                    struct run_config *rc_final = rc2 + (nrc - 1);
+                    size_t V = rc_final->pattern_len;
+                    double src = (source.host_ptr + (final_block_idx * (rc_final->local_work_size / V) + final_thread_idx / V) * rc_final->delta)[rc_final->pattern[final_thread_idx % V]];
+                    if (rc_final->kernel == SCATTER) {
+                        is_written_data_missing = src != rc_final->pattern[final_thread_idx % V];
+                    } else if (rc_final->kernel == GATHER) {
+                        if (rc_final->ro_morton) {
+                            src = (source.host_ptr + (final_block_idx * (rc_final->local_work_size / V) + rc_final->ro_order[final_thread_idx / V]) * rc_final->delta)[rc_final->pattern[final_thread_idx % V]];
+                        } else if (rc_final->stride_kernel >= 0) {
+                            src = (source.host_ptr + (final_block_idx * (rc_final->local_work_size / V) + final_thread_idx / V) * rc_final->delta)[rc_final->pattern[rc_final->stride_kernel * (final_thread_idx % V)]];
+                        }
+                        is_written_data_missing = src != final_gather_data;
+                    }
+                    if (is_written_data_missing) {
+                        printf("VALIDATION ERROR: The data that was supposed to be last written to buffer is missing\n");
+                    }
+                }
+        #endif
     }
+    #endif
 
     // Free Memory
     free(source.host_ptr);
