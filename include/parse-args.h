@@ -15,6 +15,7 @@
 
 #include <sgtype.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 /** @brief Supported benchmark backends
  */
