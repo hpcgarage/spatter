@@ -9,6 +9,13 @@
 
 #define USE_OPTIMIZED_SYCL
 
+//For debugging on Intel FPGAs, we follow the guidance from this URL: https://community.intel.com/t5/Intel-oneAPI-Data-Parallel-C/calling-printf-from-within-kernel/td-p/1183830
+#ifdef __SYCL_DEVICE_ONLY__
+          #define CONSTANT __attribute__((opencl_constant))
+#else
+          #define CONSTANT
+#endif
+
 using namespace cl::sycl;
 
 #define MAX_IDX_LEN 2048
@@ -87,6 +94,10 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
             {
                 #ifdef USE_OPTIMIZED_SYCL
 
+		//Adding printf "breakpoints" to the kernel 
+                static const CONSTANT char FMT[] = "n: %u\n";
+                sycl::intel::experimental::printf(FMT, 1);
+
                 // Create local vars when possible
                 size_t idx_len_local = idx_len;
                 size_t delta_local = delta;
@@ -94,12 +105,16 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                 int ngatherperblock = blockAccessor[0] / idx_len_local;
                 int gridDim = gridAccessor[0];
                 int blockDim = blockAccessor[0];
-
+                
+		sycl::intel::experimental::printf(FMT, 2);
+	
                 // First, perform setting of idx_shared
                 // Unroll this because it can and should be done in parallel
                 #pragma unroll
                 for (int i = 0; i < idx_len_local; ++i)
                     idx_shared[i] = idxAccessor[i];
+
+		sycl::intel::experimental::printf(FMT, 3);
 
                 // Next, condense nested loop into a single loop
                 // Unroll this loop as well
@@ -118,6 +133,9 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                     x = srcAccessor[src_index];
                 }
                 
+		sycl::intel::experimental::printf(FMT, 4);
+
+		//Non-optimized version of this SYCL kernel from the OneAPI guide
                 #else
 		
                 int idx_shared[MAX_IDX_LEN];
