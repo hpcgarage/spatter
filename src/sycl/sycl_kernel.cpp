@@ -1,5 +1,6 @@
 #include <CL/sycl.hpp>
-#include <CL/sycl/intel/fpga_extensions.hpp>
+#include "/tools/intel/oneapi/1.0/compiler/2021.1.1/linux/include/sycl/CL/sycl/INTEL/fpga_extensions.hpp"
+//#include <CL/sycl/intel/fpga_extensions.hpp>
 #include <chrono>
 #include <vector>
 #include <iostream>
@@ -47,10 +48,10 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
             host_selector device_selector;
         #elif defined(FPGA_EMULATOR)
             std::cout << "Using FPGA emulation." << std::endl;
-            intel::fpga_emulator_selector device_selector;
+	    sycl::INTEL::fpga_emulator_selector device_selector;
         #else
             std::cout << "Using FPGA hardware (bitstream)." << std::endl;
-            intel::fpga_selector device_selector;
+	    sycl::INTEL::fpga_selector device_selector;
         #endif
 
         // Create the device queue
@@ -96,7 +97,7 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
 
 		//Adding printf "breakpoints" to the kernel 
                 static const CONSTANT char FMT[] = "n: %u\n";
-                sycl::intel::experimental::printf(FMT, 1);
+                //sycl::ONEAPI::experimental::printf(FMT, 1);
 
                 // Create local vars when possible
                 size_t idx_len_local = idx_len;
@@ -106,7 +107,7 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                 int gridDim = gridAccessor[0];
                 int blockDim = blockAccessor[0];
                 
-		sycl::intel::experimental::printf(FMT, 2);
+		//sycl::ONEAPI::experimental::printf(FMT, 2);
 	
                 // First, perform setting of idx_shared
                 // Unroll this because it can and should be done in parallel
@@ -114,7 +115,7 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                 for (int i = 0; i < idx_len_local; ++i)
                     idx_shared[i] = idxAccessor[i];
 
-		sycl::intel::experimental::printf(FMT, 3);
+		//sycl::ONEAPI::experimental::printf(FMT, 3);
 
                 // Next, condense nested loop into a single loop
                 // Unroll this loop as well
@@ -133,7 +134,7 @@ extern "C" double sycl_gather(double* src, size_t src_size, sgIdx_t* idx, size_t
                     x = srcAccessor[src_index];
                 }
                 
-		sycl::intel::experimental::printf(FMT, 4);
+		//sycl::ONEAPI::experimental::printf(FMT, 4);
 
 		//Non-optimized version of this SYCL kernel from the OneAPI guide
                 #else
@@ -196,9 +197,9 @@ extern "C" double sycl_scatter(double* src, size_t src_size, sgIdx_t* idx, size_
         #if defined(CPU_HOST)
             host_selector device_selector;
         #elif defined(FPGA_EMULATOR)
-            intel::fpga_emulator_selector device_selector;
+	    sycl::INTEL::fpga_emulator_selector device_selector;
         #else
-            intel::fpga_selector device_selector;
+	    sycl::INTEL::fpga_selector device_selector;
         #endif
 
         // Create the device queue
