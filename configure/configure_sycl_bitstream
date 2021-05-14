@@ -9,7 +9,7 @@ BUILD_DIR=build_sycl_bitstream
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
-source /opt/intel/inteloneapi/setvars.sh
+source /tools/intel/oneapi/1.0/setvars.sh
 
 #Make sure to use tabs rather than spaces for newline entries
 cmake -D CMAKE_BUILD_TYPE=Release \
