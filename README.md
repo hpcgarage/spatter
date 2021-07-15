@@ -45,7 +45,11 @@ To build with CMake from the main source directory:
 cd build_omp_gnu
 make
 ```
-or use one of the other configure scripts to compile with different backends. 
+or use one of the other configure scripts to compile with different backends. You might also need to initialize `git submodule` before building using:
+```
+git submodule init
+git submodule update
+```
 
 <!--
 
