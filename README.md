@@ -3,7 +3,9 @@ This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. Vie
 
 ## Publications and Citing Spatter
 
-Please see our latest paper submission on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the ArXiv bibtex listing.
+Please see our latest paper submission on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
+
+Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating Gather and Scatter Performance on CPUs and GPUs. In The International Symposium on Memory Systems (pp. 209-222). September 2020.
 
 ### Other recent publications 
 * [SC19 Student Research Competition Poster](https://sc19.supercomputing.org/proceedings/src_poster/src_poster_pages/spostg136.html) ([PDF](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_poster_sc19.pdf))
