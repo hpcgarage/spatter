@@ -57,52 +57,51 @@ void parse_backend(int argc, char **argv);
 
 void** argtable;
 unsigned int number_of_arguments = 31;
-struct arg_lit *verb, *help, *no_print_header, *interactive, *validate, *aggregate, *compress;
+struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
 struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *kernelName, *delta, *name, *papi, *op;
-struct arg_int *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg; 
+struct arg_int *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
 
 void initialize_argtable()
 {
     // Initialize the argtable on the stack just because it is easier and how the documentation handles it
-    void* temp_argtable[] = 
-    {
+    void** malloc_argtable = (void**) malloc(sizeof(void*) * number_of_arguments);
+
     // Arguments that do not take parameters
-    help            = arg_litn(NULL, "help", 0, 1, "Displays info about commands and then exits."),
-    verb            = arg_litn(NULL, "verbose", 0, 1, "Print info about default arguments that you have not overridden."),
-    no_print_header = arg_litn("q", "no-print-header", 0, 1, "Do not print header information."),
-    interactive     = arg_litn("i", "interactive", 0, 1, "Pick the platform and the device interactively."),
-    validate        = arg_litn(NULL, "validate", 0, 1, "Perform extra validation checks to ensure data validity"),
-    aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)"),
-    compress        = arg_litn("c", "compress", 0, 1, "TODO"),
+    malloc_argtable[0] = help            = arg_litn(NULL, "help", 0, 1, "Displays info about commands and then exits.");
+    malloc_argtable[1] = verb            = arg_litn(NULL, "verbose", 0, 1, "Print info about default arguments that you have not overridden.");
+    malloc_argtable[2] = no_print_header = arg_intn("q", "no-print-header", "<n>", 0, 1, "Do not print header information.");
+    malloc_argtable[3] = interactive     = arg_litn("i", "interactive", 0, 1, "Pick the platform and the device interactively.");
+    malloc_argtable[4] = validate        = arg_litn(NULL, "validate", 0, 1, "Perform extra validation checks to ensure data validity");
+    malloc_argtable[5] = aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)");
+    malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
     // Benchmark Configuration
-    pattern         = arg_strn("p", "pattern", "<pattern>", 1, 1, "Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."),
-    kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]"),
-    op              = arg_strn("o", "op", "<s>", 0, 1, "TODO"),
-    delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]"),
-    count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform."),
-    wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]"),
-    runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]"),
-    omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]"),
-    vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO"),
-    local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU."),
-    shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control)."),
-    name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output."),
-    random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified."),
+    malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 1, 1, "Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[8] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]");
+    malloc_argtable[9] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
+    malloc_argtable[10] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[11] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
+    malloc_argtable[12] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
+    malloc_argtable[13] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
+    malloc_argtable[14] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
+    malloc_argtable[15] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
+    malloc_argtable[16] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
+    malloc_argtable[17] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
+    malloc_argtable[18] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
+    malloc_argtable[19] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
     // Backend Configuration
-    backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial."),
-    cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching)."),
-    cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching)."),
-    kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file."),
+    malloc_argtable[20] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[21] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[22] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[23] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
     // Other Configurations
-    morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO"),
-    hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO"),
-    roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO"),
-    stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO"),
-    papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO"),
-    end             = arg_end(20)
-    };
+    malloc_argtable[24] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
+    malloc_argtable[25] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
+    malloc_argtable[26] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
+    malloc_argtable[27] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
+    malloc_argtable[28] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
+    malloc_argtable[29] = end             = arg_end(20);
 
     // Random has an option to provide an argument. Default its value to -1.
     random_arg->hdr.flag |= ARG_HASOPTVALUE;
@@ -112,11 +111,7 @@ void initialize_argtable()
     kernelName->sval[0] = "Gather\0";
     delta->sval[0] = "8\0";
     wrap->ival[0] = 1;
-    runs->ival[0] = 10;    
-
-    // Malloc a new argtable and then transfer over the data from the stack-based argtable to the heap-based one
-    void** malloc_argtable = (void**) malloc(sizeof(void*) * number_of_arguments);
-    memcpy(malloc_argtable, temp_argtable, sizeof(void*) * number_of_arguments);
+    runs->ival[0] = 10;
 
     // Set the global argtable equal to the malloc argtable
     argtable = malloc_argtable;
@@ -127,11 +122,11 @@ void copy_str_ignore_leading_space(char* dest, const char* source)
 {
     if (source[0] == ' ')
         safestrcopy(dest, &source[1]);
-    else   
+    else
         safestrcopy(dest, source);
 }
 
-int get_num_configs(json_value* value) 
+int get_num_configs(json_value* value)
 {
     if (value->type != json_array) {
         error("get_num_configs was not passed an array", ERROR);
@@ -142,12 +137,12 @@ int get_num_configs(json_value* value)
 
 void parse_json_kernel(json_object_entry cur, char** argv, int i)
 {
-    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "SP")) 
+    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "SP"))
     {
         error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
         snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
-    } 
-    else 
+    }
+    else
     {
         error("Ambigous Kernel Type: Assuming kernel-file option.", WARN);
         snprintf(argv[i+1], STRING_SIZE, "--kernel-file=%s", cur.value->u.string.ptr);
@@ -158,18 +153,32 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
 {
     int index = 0;
     index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
-    for (int j = 0; j < cur.value->u.array.length; j++) 
+
+    for (int j = 0; j < cur.value->u.array.length; j++)
     {
-        if (cur.value->u.array.values[j]->type != json_integer) 
+        if (cur.value->u.array.values[j]->type != json_integer)
         {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
-        index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
-        if (j != cur.value->u.array.length-1) 
-        {
-            index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
+	char buffer[50];
+	int check = snprintf(buffer, 50, "%zd", cur.value->u.array.values[j]->u.integer);
+        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+	
+	if (check == added) {
+	    index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+	    
+	    if (index >= STRING_SIZE-1) break;
+	    else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
+                index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
+            }
         }
-    }
+	else {
+		index--;
+		argv[i+1][index] = '\0';
+		break;
+	}
+
+   }
 }
 
 struct run_config parse_json_config(json_value *value)
@@ -184,34 +193,34 @@ struct run_config parse_json_config(json_value *value)
 
     int argc = value->u.object.length + 1;
     char **argv = (char **)sp_malloc(sizeof(char*), argc*2, ALIGN_CACHE);
-    
-    for (int i = 0; i < argc; i++) 
+
+    for (int i = 0; i < argc; i++)
         argv[i] = (char *)sp_malloc(1, STRING_SIZE*2, ALIGN_CACHE);
 
-    for (int i = 0; i < argc-1; i++) 
+    for (int i = 0; i < argc-1; i++)
     {
         json_object_entry cur = value->u.object.values[i];
 
         if (cur.value->type == json_string)
         {
-            if (!strcasecmp(cur.name, "kernel")) 
+            if (!strcasecmp(cur.name, "kernel"))
             {
                 parse_json_kernel(cur, argv, i);
-            } 
-            else 
+            }
+            else
             {
                 snprintf(argv[i+1], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
             }
-        } 
-        else if (cur.value->type == json_integer) 
+        }
+        else if (cur.value->type == json_integer)
         {
             snprintf(argv[i+1], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
-        } 
-        else if (cur.value->type == json_array) 
+        }
+        else if (cur.value->type == json_array)
         {
             parse_json_array(cur, argv, i);
-        } 
-        else 
+        }
+        else
         {
             error ("Unexpected json type", ERROR);
         }
@@ -231,9 +240,9 @@ struct run_config parse_json_config(json_value *value)
 
     rc = parse_runs(argc, argv);
 
-    for (int i = 0; i < argc; i++) 
+    for (int i = 0; i < argc; i++)
         free(argv[i]);
-    
+
     free(argv);
 
     return rc;
@@ -261,7 +270,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
     parse_backend(argc, argv);
 
-    
+
     // Parse command-line arguments to in case of specified json file.
     int json = 0;
 
@@ -269,13 +278,13 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
    {
        if (strstr(pattern->sval[0], "FILE"))
        {
-           printf("FILE found.\n");
            safestrcopy(jsonfilename, strchr(pattern->sval[0], '=') + 1);
+           printf("Reading patterns from %s.\n", jsonfilename);
            json = 1;
        }
    }
 
-    if (json) 
+    if (json)
     {
         FILE *fp;
         struct stat filestatus;
@@ -289,12 +298,12 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         file_size = filestatus.st_size;
         file_contents = (char *)sp_malloc(file_size, 1+1, ALIGN_CACHE);
-        
+
         fp = fopen(jsonfilename, "rt");
         if (!fp)
             error ("Unable to open Json file", ERROR);
-        
-        if (fread(file_contents, file_size, 1, fp) != 1) 
+
+        if (fread(file_contents, file_size, 1, fp) != 1)
         {
             fclose(fp);
             error ("Unable to read content of Json file", ERROR);
@@ -324,6 +333,8 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         rc[0][0] = parse_runs(argc, argv);
         *nrc = 1;
     }
+
+    free(argtable);
 
     return;
 }
@@ -435,24 +446,32 @@ struct run_config parse_runs(int argc, char **argv)
         if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
             error("Failed to parse first pattern element in deltas", ERROR);
 
-        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) 
+        spIdx_t *mydeltas;
+        spIdx_t *mydeltas_ps;
+
+        mydeltas = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+        mydeltas_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+
+        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN)
         {
             if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
                 error("Failed to parse pattern", ERROR);
         }
+        rc.deltas = mydeltas;
+        rc.deltas_ps = mydeltas_ps;
         rc.deltas_len = read;
 
         // rotate
         for (size_t i = 0; i < rc.deltas_len; i++)
             rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
-        
+
         // compute prefix-sum
         for (size_t i = 1; i < rc.deltas_len; i++)
             rc.deltas_ps[i] += rc.deltas_ps[i-1];
-        
+
         // compute max
         size_t m = rc.deltas_ps[0];
-        for (size_t i = 1; i < rc.deltas_len; i++) 
+        for (size_t i = 1; i < rc.deltas_len; i++)
         {
             if (rc.deltas_ps[i] > m)
                 m = rc.deltas_ps[i];
@@ -475,32 +494,32 @@ struct run_config parse_runs(int argc, char **argv)
     // VALIDATE ARGUMENTS
     if (!pattern_found)
         error ("Please specify a pattern", ERROR);
-    
-    if (rc.vector_len == 0) 
+
+    if (rc.vector_len == 0)
     {
         error ("Vector length not set. Default is 1", WARN);
         rc.vector_len = 1;
     }
 
-    if (rc.wrap == 0) 
+    if (rc.wrap == 0)
     {
         error ("length of smallbuf not specified. Default is 1 (slot of size pattern_len elements)", WARN);
         rc.wrap = 1;
     }
 
-    if (rc.nruns == 0) 
+    if (rc.nruns == 0)
     {
         error ("Number of runs not specified. Default is 10 ", WARN);
         rc.nruns = 10;
     }
 
-    if (rc.generic_len == 0) 
+    if (rc.generic_len == 0)
     {
         error ("Length not specified. Default is 1024 (gathers/scatters)", WARN);
         rc.generic_len = 1024;
     }
 
-    if (rc.kernel == INVALID_KERNEL) 
+    if (rc.kernel == INVALID_KERNEL)
     {
         error("Kernel unspecified, guess GATHER", WARN);
         rc.kernel = GATHER;
@@ -514,7 +533,7 @@ struct run_config parse_runs(int argc, char **argv)
     else if (rc.kernel == SG)
         sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
 
-    if (rc.delta <= -1) 
+    if (rc.delta <= -1)
     {
         error("delta not specified, default is 8\n", WARN);
         rc.delta = 8;
@@ -524,7 +543,7 @@ struct run_config parse_runs(int argc, char **argv)
     if (rc.op != OP_COPY)
         error("OP must be OP_COPY", WARN);
 
-    if (!strcasecmp(rc.name, "NONE")) 
+    if (!strcasecmp(rc.name, "NONE"))
     {
         if (rc.type != CUSTOM)
             safestrcopy(rc.name, rc.generator);
@@ -534,12 +553,12 @@ struct run_config parse_runs(int argc, char **argv)
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
-    if (rc.omp_threads > max_threads) 
+    if (rc.omp_threads > max_threads)
     {
         error ("Too many OpenMP threads requested, using the max instead", WARN);
         rc.omp_threads = max_threads;
     }
-    if (rc.omp_threads == 0) 
+    if (rc.omp_threads == 0)
     {
         error ("Number of OpenMP threads not specified, using the max", WARN);
         rc.omp_threads = max_threads;
@@ -550,7 +569,7 @@ struct run_config parse_runs(int argc, char **argv)
 #endif
 
 #if defined USE_CUDA || defined USE_OPENCL
-    if (rc.local_work_size == 0) 
+    if (rc.local_work_size == 0)
     {
         error ("Local_work_size not set. Default is 1", WARN);
         rc.local_work_size = 1;
@@ -659,7 +678,7 @@ void parse_backend(int argc, char **argv)
         copy_str_ignore_leading_space(kernel_file, kernelFile->filename[0]);
 
     if (no_print_header->count > 0)
-        quiet_flag++;
+        quiet_flag = no_print_header->ival[0];
 
     if (validate->count > 0)
         validate_flag++;
@@ -675,11 +694,11 @@ void parse_backend(int argc, char **argv)
         #ifdef USE_PAPI
         {
             char *pch = strtok(papi->sval[0], ",");
-            while (pch != NULL) 
+            while (pch != NULL)
             {
                 safestrcopy(papi_event_names[papi_nevents++], pch);
                 pch = strtok (NULL, ",");
-                if (papi_nevents == PAPI_MAX_COUNTERS) 
+                if (papi_nevents == PAPI_MAX_COUNTERS)
                     break;
             }
         }
@@ -688,22 +707,22 @@ void parse_backend(int argc, char **argv)
 
     /* Check argument coherency */
     if (backend == INVALID_BACKEND){
-        if (sg_cuda_support()) 
+        if (sg_cuda_support())
         {
             backend = CUDA;
             error ("No backend specified, guessing CUDA", WARN);
         }
-        else if (sg_opencl_support()) 
+        else if (sg_opencl_support())
         {
             backend = OPENCL;
             error ("No backend specified, guessing OpenCL", WARN);
         }
-        else if (sg_openmp_support()) 
+        else if (sg_openmp_support())
         {
             backend = OPENMP;
             error ("No backend specified, guessing OpenMP", WARN);
         }
-        else if (sg_serial_support()) 
+        else if (sg_serial_support())
         {
             backend = SERIAL;
             error ("No backend specified, guessing Serial", WARN);
@@ -749,10 +768,10 @@ void parse_backend(int argc, char **argv)
     }
 
     #ifdef USE_CUDA
-    if (backend == CUDA) 
+    if (backend == CUDA)
     {
         int dev = find_device_cuda(device_string);
-        if (dev == -1) 
+        if (dev == -1)
         {
             error("Specified CUDA device not found or no device specified. Using device 0", WARN);
             dev = 0;
@@ -762,7 +781,7 @@ void parse_backend(int argc, char **argv)
     }
     #endif
 
-    if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL) 
+    if (!strcasecmp(kernel_file, "NONE") && backend == OPENCL)
     {
         error("Kernel file unspecified, guessing kernels/kernels_vector.cl", WARN);
         safestrcopy(kernel_file, "kernels/kernels_vector.cl");
@@ -771,18 +790,18 @@ void parse_backend(int argc, char **argv)
     return;
 }
 
-void parse_p(char* optarg, struct run_config *rc) 
+void parse_p(char* optarg, struct run_config *rc)
 {
     rc->type = INVALID_IDX;
     char *arg = 0;
-    if ((arg=strchr(optarg, ':'))) 
+    if ((arg=strchr(optarg, ':')))
     {
         *arg = '\0';
         arg++; //arg now points to arguments to the pattern type
 
         // FILE mode indicates that we will load a
         // config from a file
-        if (!strcmp(optarg, "FILE")) 
+        if (!strcmp(optarg, "FILE"))
         {
             //TODO
             //safestrcopy(idx_pattern_file, arg);
@@ -792,13 +811,13 @@ void parse_p(char* optarg, struct run_config *rc)
         // The Exxon Kernel Proxy-derived stencil
         // It used to be called HYDRO so we will accept that too
         // XKP:dim
-        else if (!strcmp(optarg, "XKP") || !strcmp(optarg, "HYDRO")) 
+        else if (!strcmp(optarg, "XKP") || !strcmp(optarg, "HYDRO"))
         {
             rc->type = XKP;
 
             size_t dim = 0;
             char *dim_char = strtok(arg, ":");
-            if (!dim_char) 
+            if (!dim_char)
                 error("XKP: size not found", 1);
             if (sscanf(dim_char, "%zu", &dim) < 1)
                 error("XKP: Dimension not parsed", 1);
@@ -815,13 +834,13 @@ void parse_p(char* optarg, struct run_config *rc)
 
         // Parse Uniform Stride Arguments, which are
         // UNIFORM:index_length:stride
-        else if (!strcmp(optarg, "UNIFORM")) 
+        else if (!strcmp(optarg, "UNIFORM"))
         {
             rc->type = UNIFORM;
 
             // Read the length
             char *len = strtok(arg,":");
-            if (!len) 
+            if (!len)
                 error("UNIFORM: Index Length not found", 1);
             if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
@@ -829,21 +848,21 @@ void parse_p(char* optarg, struct run_config *rc)
             // Read the stride
             char *stride = strtok(NULL, ":");
             ssize_t strideval = 0;
-            if (!stride) 
+            if (!stride)
                 error("UNIFORM: Stride not found", 1);
             if (sscanf(stride, "%zd", &strideval) < 1)
                 error("UNIFORM: Stride not parsed", 1);
 
             char *delta = strtok(NULL, ":");
-            if (delta) 
+            if (delta)
             {
-                if (!strcmp(delta, "NR")) 
+                if (!strcmp(delta, "NR"))
                 {
                     rc->delta = strideval*rc->pattern_len;
                     rc->deltas[0] = rc->delta;
                     rc->deltas_len = 1;
-                } 
-                else 
+                }
+                else
                 {
                     if (sscanf(delta, "%zd", &(rc->delta)) < 1)
                         error("UNIFORM: delta not parsed", 1);
@@ -857,7 +876,7 @@ void parse_p(char* optarg, struct run_config *rc)
         }
 
         //LAPLACIAN:DIM:ORDER:N
-        else if (!strcmp(optarg, "LAPLACIAN")) 
+        else if (!strcmp(optarg, "LAPLACIAN"))
         {
             int dim_val, order_val, problem_size_val;
 
@@ -865,21 +884,21 @@ void parse_p(char* optarg, struct run_config *rc)
 
             // Read the dimension
             char *dim = strtok(arg,":");
-            if (!dim) 
+            if (!dim)
                 error("LAPLACIAN: Dimension not found", 1);
             if (sscanf(dim, "%d", &dim_val) < 1)
                 error("LAPLACIAN: Dimension not parsed", 1);
 
             // Read the order
             char *order = strtok(NULL, ":");
-            if (!order) 
+            if (!order)
                 error("LAPLACIAN: Order not found", 1);
             if (sscanf(order, "%d", &order_val) < 1)
                 error("LAPLACIAN: Order not parsed", 1);
 
             // Read the problem size
             char *problem_size = strtok(NULL, ":");
-            if (!problem_size) 
+            if (!problem_size)
                 error("LAPLACIAN: Problem size not found", 1);
             if (sscanf(problem_size, "%d", &problem_size_val) < 1)
                 error("LAPLACIAN: Problem size not parsed", 1);
@@ -898,7 +917,7 @@ void parse_p(char* optarg, struct run_config *rc)
         // The elements of both lists should be nonnegative and
         // the the elements of list_of_breaks should be strictly less
         // than index_length
-        else if (!strcmp(optarg, "MS1")) 
+        else if (!strcmp(optarg, "MS1"))
         {
             rc->type = MS1;
 
@@ -906,8 +925,8 @@ void parse_p(char* optarg, struct run_config *rc)
             char *breaks = strtok(NULL,":");
             char *gaps = strtok(NULL,":");
 
-            size_t ms1_breaks[MAX_PATTERN_LEN];
-            size_t ms1_deltas[MAX_PATTERN_LEN];
+            size_t *ms1_breaks = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+            size_t *ms1_deltas = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
             size_t ms1_breaks_len = 0;
             size_t ms1_deltas_len = 0;
 
@@ -922,7 +941,7 @@ void parse_p(char* optarg, struct run_config *rc)
             if (sscanf(ptr, "%zu", &(ms1_breaks[read++])) < 1)
                 error("MS1: Failed to parse first break", 1);
 
-            while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) 
+            while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN)
             {
                 if (sscanf(ptr, "%zu", &(ms1_breaks[read++])) < 1)
                     error("MS1: Failed to parse breaks", 1);
@@ -930,7 +949,7 @@ void parse_p(char* optarg, struct run_config *rc)
 
             ms1_breaks_len = read;
 
-            if(!gaps) 
+            if(!gaps)
             {
                 printf("1\n");
                 error("error", ERROR);
@@ -943,7 +962,7 @@ void parse_p(char* optarg, struct run_config *rc)
                 if (sscanf(ptr, "%zu", &(ms1_deltas[read++])) < 1)
                     error("Failed to parse first delta", 1);
 
-                while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN) 
+                while ((ptr = strtok(NULL, ",")) && read < MAX_PATTERN_LEN)
                 {
                     if (sscanf(ptr, "%zu", &(ms1_deltas[read++])) < 1)
                         error("Failed to parse deltas", 1);
@@ -957,7 +976,7 @@ void parse_p(char* optarg, struct run_config *rc)
             rc->pattern[0] = -1;
             size_t last = -1;
             ssize_t j;
-            for (int i = 0; i < rc->pattern_len; i++) 
+            for (int i = 0; i < rc->pattern_len; i++)
             {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1)
                    rc->pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
@@ -965,15 +984,19 @@ void parse_p(char* optarg, struct run_config *rc)
                     rc->pattern[i] = last + 1;
                 last = rc->pattern[i];
             }
+
+            free(ms1_breaks);
+            free(ms1_deltas);
         }
         else
             error("Unrecognized mode in -p argument", 1);
     }
 
     // CUSTOM mode means that the user supplied a single index buffer on the command line
-    else 
+    else
     {
-        printf("Parse P Custom Pattern: %s\n", optarg);
+	if (quiet_flag < 3)
+        	printf("Parse P Custom Pattern: %s\n", optarg);
         rc->type = CUSTOM;
         char *delim = ",";
         char *ptr = strtok(optarg, delim);
@@ -981,28 +1004,32 @@ void parse_p(char* optarg, struct run_config *rc)
         if (!ptr)
             error("Pattern not found", 1);
 
-        if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1)
+        spIdx_t *mypat;
+
+        mypat = sp_malloc(sizeof(spIdx_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+
+        if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
             error("Failed to parse first pattern element in custom mode", 1);
 
-        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN) 
+        while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN)
         {
-            if (sscanf(ptr, "%zu", &(rc->pattern[read++])) < 1)
+            if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
+        rc->pattern = mypat;
         rc->pattern_len = read;
-
     }
 
     if (rc->pattern_len == 0)
         error("Pattern length of 0", ERROR);
-    
+
     if (rc->type == INVALID_IDX)
         error("No pattern type set", ERROR);
 }
 
 ssize_t setincludes(size_t key, size_t* set, size_t set_len)
 {
-    for (size_t i = 0; i < set_len; i++) 
+    for (size_t i = 0; i < set_len; i++)
     {
         if (set[i] == key)
             return i;
@@ -1017,7 +1044,7 @@ void print_run_config(struct run_config rc)
     for (size_t i = 0; i < rc.pattern_len; i++)
     {
         printf("%zu", rc.pattern[i]);
-        if (i != rc.pattern_len-1) 
+        if (i != rc.pattern_len-1)
             printf(" ");
     }
     printf("]\n");
@@ -1028,7 +1055,7 @@ void print_run_config(struct run_config rc)
         for (size_t i = 0; i < rc.deltas_len; i++)
         {
             printf("%zu", rc.deltas[i]);
-            if (i != rc.deltas_len-1) 
+            if (i != rc.deltas_len-1)
                 printf(" ");
         }
         printf("]\n");
@@ -1037,14 +1064,14 @@ void print_run_config(struct run_config rc)
         for (size_t i = 0; i < rc.deltas_len; i++)
         {
             printf("%zu", rc.deltas_ps[i]);
-            if (i != rc.deltas_len-1) 
+            if (i != rc.deltas_len-1)
                 printf(" ");
         }
         printf("] (%zu)\n", rc.delta);
-    } 
+    }
     else
         printf("Delta: %zu\n", rc.delta);
-    
+
     printf("kern: %s\n", kernel_name);
     printf("genlen: %zu\n", rc.generic_len);
 }
@@ -1059,13 +1086,13 @@ void error(char *what, int code)
             fprintf(err_file, "Warning: ");
     }
 
-    if (verbose || code) 
+    if (verbose || code)
     {
         fprintf(err_file, "%s", what);
         fprintf(err_file, "\n");
     }
-    
-    if(code) 
+
+    if(code)
         exit(code);
 }
 

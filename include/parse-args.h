@@ -10,8 +10,8 @@
 #define ERROR 1
 
 
-#define STRING_SIZE 10000
-#define MAX_PATTERN_LEN 1024
+#define STRING_SIZE 1000000
+#define MAX_PATTERN_LEN 1048576
 
 #include <sgtype.h>
 #include <stdint.h>
@@ -67,9 +67,9 @@ enum state
 struct run_config
 {
     // keep arrays at top so they are aligned
-    spIdx_t  pattern[MAX_PATTERN_LEN];
-    size_t deltas[MAX_PATTERN_LEN];
-    size_t deltas_ps[MAX_PATTERN_LEN];
+    spIdx_t *pattern;
+    size_t *deltas;
+    size_t *deltas_ps;
     spSize_t pattern_len;
     ssize_t delta;
     size_t deltas_len;
