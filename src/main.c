@@ -36,6 +36,10 @@
     #include "papi_helper.h"
 #endif
 
+#if defined( USE_MPI )
+	#include "mpi.h"
+#endif
+
 #define ALIGNMENT (4096)
 
 #define xstr(s) str(s)
@@ -247,6 +251,9 @@ uint64_t icbrt(uint64_t x);
 
 int main(int argc, char **argv)
 {
+#ifdef USE_MPI
+    MPI_Init(&argc, &argv);
+#endif
 
     // =======================================
     // Declare Variables
@@ -582,6 +589,10 @@ int main(int argc, char **argv)
     // Print config info
 
     for (int k = 0; k < nrc; k++) {
+#ifdef USE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
         // Time OpenCL Kernel
         #ifdef USE_OPENCL
         if (backend == OPENCL) {
@@ -613,8 +624,6 @@ int main(int argc, char **argv)
         }
 
         #endif // USE_CUDA
-
-
 
         // Time OpenMP Kernel
         #ifdef USE_OPENMP
@@ -678,6 +687,8 @@ int main(int argc, char **argv)
         }
         #endif // USE_OPENMP
 
+	
+
         // Time Serial Kernel
         #ifdef USE_SERIAL
         if (backend == SERIAL) {
@@ -712,6 +723,10 @@ int main(int argc, char **argv)
         }
         #endif // USE_SERIAL
     }
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     report_time2(rc2, nrc);
 
@@ -835,6 +850,10 @@ int main(int argc, char **argv)
 
   free(rc);
   //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
+ 
+#ifdef USE_MPI 
+  MPI_Finalize();
+#endif
 }
 
 void emit_configs(struct run_config *rc, int nconfigs)
