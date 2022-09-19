@@ -12,6 +12,7 @@ SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
 SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
 SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
 SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
+SET (USE_MPI 0 CACHE BOOL "If set, builds with MPI support")
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
@@ -133,6 +134,10 @@ IF (USE_SERIAL)
     FILE (GLOB BACKEND_H_FILES_SERIAL src/serial/*.h)
     MESSAGE ("Using serial backend")
 ENDIF ()
+
+IF (USE_MPI)
+    ADD_DEFINITIONS (-DUSE_MPI)
+ENDIF()
 
 # Enable OpenMP
 IF (USE_OPENMP)
