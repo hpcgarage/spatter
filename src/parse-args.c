@@ -836,6 +836,7 @@ void parse_p(char* optarg, struct run_config *rc)
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM"))
         {
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = UNIFORM;
 
             // Read the length

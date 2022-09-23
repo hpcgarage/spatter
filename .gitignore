@@ -8,3 +8,4 @@ modulefiles/
 /configure_*
 src/python/env
 .vscode/
+build_omp_gnu
