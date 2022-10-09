@@ -881,6 +881,7 @@ void parse_p(char* optarg, struct run_config *rc)
         {
             int dim_val, order_val, problem_size_val;
 
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = LAPLACIAN;
 
             // Read the dimension
@@ -905,6 +906,7 @@ void parse_p(char* optarg, struct run_config *rc)
                 error("LAPLACIAN: Problem size not parsed", 1);
 
             rc->delta = 1;
+            rc->deltas = sp_malloc(sizeof(1), rc->delta, ALIGN_CACHE);
             rc->deltas[0] = rc->delta;
             rc->deltas_len = 1;
 
@@ -920,6 +922,7 @@ void parse_p(char* optarg, struct run_config *rc)
         // than index_length
         else if (!strcmp(optarg, "MS1"))
         {
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = MS1;
 
             char *len = strtok(arg,":");
