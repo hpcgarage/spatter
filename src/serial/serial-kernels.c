@@ -50,13 +50,14 @@ void sg_smallbuf_serial(
         sgIdx_t* const restrict gather_pat,
         sgIdx_t* const restrict scatter_pat,
         size_t pat_len,
-        size_t delta,
+        size_t delta_gather,
+        size_t delta_scatter,
         size_t n,
         size_t wrap) {
 
     for (size_t i = 0; i < n; i++) {
-        sgData_t *tl = scatter + delta * i;
-        sgData_t *sl = gather + delta * i;
+        sgData_t *tl = scatter + delta_scatter * i;
+        sgData_t *sl = gather + delta_gather * i;
 
         #pragma novector
         for (size_t j = 0; j < pat_len; j++) {
