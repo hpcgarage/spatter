@@ -50,16 +50,16 @@ int verbose;
 FILE *err_file;
 
 void safestrcopy(char *dest, const char *src);
-void parse_p(char*, enum idx_type *, spIdx_t *, spSize_t *, ssize_t *, size_t *, size_t *);
+void parse_p(char*, enum idx_type *, spIdx_t **, spSize_t *, ssize_t *, size_t **, size_t *);
 
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
 void parse_backend(int argc, char **argv);
 
 void** argtable;
-unsigned int number_of_arguments = 33;
+unsigned int number_of_arguments = 35;
 struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
-struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *name, *papi, *op;
+struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *delta_gather, *delta_scatter, *name, *papi, *op;
 struct arg_int *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
@@ -79,32 +79,34 @@ void initialize_argtable()
     malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
     // Benchmark Configuration
     malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[8] = pattern_gather  = arg_strn("x", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
-    malloc_argtable[9] = pattern_scatter = arg_strn("y", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[8] = pattern_gather  = arg_strn("w", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
+    malloc_argtable[9] = pattern_scatter = arg_strn("x", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
     malloc_argtable[10] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]");
     malloc_argtable[11] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
     malloc_argtable[12] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[13] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
-    malloc_argtable[14] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
-    malloc_argtable[15] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
-    malloc_argtable[16] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
-    malloc_argtable[17] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
-    malloc_argtable[18] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
-    malloc_argtable[19] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
-    malloc_argtable[20] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
-    malloc_argtable[21] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
+    malloc_argtable[13] = delta_gather    = arg_strn("y", "delta gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[14] = delta_scatter   = arg_strn("z", "delta scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[15] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
+    malloc_argtable[16] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
+    malloc_argtable[17] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
+    malloc_argtable[18] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
+    malloc_argtable[19] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
+    malloc_argtable[20] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
+    malloc_argtable[21] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
+    malloc_argtable[22] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
+    malloc_argtable[23] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
     // Backend Configuration
-    malloc_argtable[22] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
-    malloc_argtable[23] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[24] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[25] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
+    malloc_argtable[24] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[25] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[26] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[27] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
     // Other Configurations
-    malloc_argtable[26] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
-    malloc_argtable[27] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
-    malloc_argtable[28] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
-    malloc_argtable[29] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
-    malloc_argtable[30] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
-    malloc_argtable[31] = end             = arg_end(20);
+    malloc_argtable[28] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
+    malloc_argtable[29] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
+    malloc_argtable[30] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
+    malloc_argtable[31] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
+    malloc_argtable[32] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
+    malloc_argtable[33] = end             = arg_end(20);
 
     // Random has an option to provide an argument. Default its value to -1.
     random_arg->hdr.flag |= ARG_HASOPTVALUE;
@@ -113,6 +115,8 @@ void initialize_argtable()
     // Set default values
     kernelName->sval[0] = "Gather\0";
     delta->sval[0] = "8\0";
+    delta_gather->sval[0] = "8\0";
+    delta_scatter->sval[0] = "8\0";
     wrap->ival[0] = 1;
     runs->ival[0] = 10;
 
@@ -349,7 +353,12 @@ struct run_config parse_runs(int argc, char **argv)
     int pattern_gather_found = 0;
 
     struct run_config rc = {0};
+    rc.pattern_len = 0;
+    rc.pattern_gather_len = 0;
+    rc.pattern_scatter_len = 0;
     rc.delta = -1;
+    rc.delta_gather = -1;
+    rc.delta_scatter = -1;
     rc.stride_kernel = -1;
     rc.ro_block = 1;
     rc.ro_order = NULL;
@@ -434,21 +443,21 @@ struct run_config parse_runs(int argc, char **argv)
         //char* filePtr = strstr(rc.generator, "FILE");
         //if (filePtr)
         //    safestrcopy(rc.generator, filePtr);
-        parse_p(rc.generator, &rc.type, rc.pattern, &rc.pattern_len, &rc.delta, rc.deltas, &rc.deltas_len);
+        parse_p(rc.generator, &rc.type, &rc.pattern, &rc.pattern_len, &rc.delta, &rc.deltas, &rc.deltas_len);
         pattern_found = 1;
     }
 
     if (pattern_gather->count > 0)
     {
         copy_str_ignore_leading_space(rc.generator, pattern_gather->sval[0]);
-        parse_p(rc.generator, &rc.type_gather, rc.pattern_gather, &rc.pattern_gather_len, &rc.delta_gather, rc.deltas_gather, &rc.deltas_gather_len);
+        parse_p(rc.generator, &rc.type_gather, &rc.pattern_gather, &rc.pattern_gather_len, &rc.delta_gather, &rc.deltas_gather, &rc.deltas_gather_len);
         pattern_gather_found = 1;
     }
 
     if (pattern_scatter->count > 0)
     {
         copy_str_ignore_leading_space(rc.generator, pattern_scatter->sval[0]);
-        parse_p(rc.generator, &rc.type_scatter, rc.pattern_scatter, &rc.pattern_scatter_len, &rc.delta_scatter, rc.deltas_scatter, &rc.deltas_scatter_len);
+        parse_p(rc.generator, &rc.type_scatter, &rc.pattern_scatter, &rc.pattern_scatter_len, &rc.delta_scatter, &rc.deltas_scatter, &rc.deltas_scatter_len);
         pattern_scatter_found = 1;
     }
 
@@ -497,6 +506,100 @@ struct run_config parse_runs(int argc, char **argv)
                 m = rc.deltas_ps[i];
         }
         rc.delta = m;
+    }
+
+    if (delta_gather->count > 0)
+    {
+        char delta_gather_temp[STRING_SIZE];
+        copy_str_ignore_leading_space(delta_gather_temp, delta_gather->sval[0]);
+        char *delim_gather = ",";
+        char *ptr_gather = strtok(delta_gather_temp, delim_gather);
+        if (!ptr_gather)
+            error("Pattern not found", ERROR);
+
+        spIdx_t *mydeltas_gather;
+        spIdx_t *mydeltas_gather_ps;
+
+        mydeltas_gather = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+        mydeltas_gather_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+
+        size_t read_gather = 0;
+        if (sscanf(ptr_gather, "%zu", &(mydeltas_gather[read_gather++])) < 1)
+            error("Failed to parse first pattern element in deltas", ERROR);
+
+        while ((ptr_gather = strtok(NULL, delim_gather)) && read_gather < MAX_PATTERN_LEN)
+        {
+            if (sscanf(ptr_gather, "%zu", &(mydeltas_gather[read_gather++])) < 1)
+                error("Failed to parse pattern", ERROR);
+        }
+
+        rc.deltas_gather = mydeltas_gather;
+        rc.deltas_gather_ps = mydeltas_gather_ps;
+        rc.deltas_gather_len = read_gather;
+
+        // rotate
+        for (size_t i = 0; i < rc.deltas_gather_len; i++)
+            rc.deltas_gather_ps[i] = rc.deltas_gather[((i-1)+rc.deltas_gather_len)%rc.deltas_gather_len];
+
+        // compute prefix-sum
+        for (size_t i = 1; i < rc.deltas_gather_len; i++)
+            rc.deltas_gather_ps[i] += rc.deltas_gather_ps[i-1];
+
+        // compute max
+        size_t m = rc.deltas_gather_ps[0];
+        for (size_t i = 1; i < rc.deltas_gather_len; i++)
+        {
+            if (rc.deltas_gather_ps[i] > m)
+                m = rc.deltas_gather_ps[i];
+        }
+        rc.delta_gather = m;
+    }
+
+    if (delta_scatter->count > 0)
+    {
+        char delta_scatter_temp[STRING_SIZE];
+        copy_str_ignore_leading_space(delta_scatter_temp, delta_scatter->sval[0]);
+        char *delim_scatter = ",";
+        char *ptr_scatter = strtok(delta_scatter_temp, delim_scatter);
+        if (!ptr_scatter)
+            error("Pattern not found", ERROR);
+
+        spIdx_t *mydeltas_scatter;
+        spIdx_t *mydeltas_scatter_ps;
+
+        mydeltas_scatter = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+        mydeltas_scatter_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
+
+        size_t read_scatter = 0;
+        if (sscanf(ptr_scatter, "%zu", &(mydeltas_scatter[read_scatter++])) < 1)
+            error("Failed to parse first pattern element in deltas", ERROR);
+
+        while ((ptr_scatter = strtok(NULL, delim_scatter)) && read_scatter < MAX_PATTERN_LEN)
+        {
+            if (sscanf(ptr_scatter, "%zu", &(mydeltas_scatter[read_scatter++])) < 1)
+                error("Failed to parse pattern", ERROR);
+        }
+
+        rc.deltas_scatter = mydeltas_scatter;
+        rc.deltas_scatter_ps = mydeltas_scatter_ps;
+        rc.deltas_scatter_len = read_scatter;
+
+        // rotate
+        for (size_t i = 0; i < rc.deltas_scatter_len; i++)
+            rc.deltas_scatter_ps[i] = rc.deltas_scatter[((i-1)+rc.deltas_scatter_len)%rc.deltas_scatter_len];
+
+        // compute prefix-sum
+        for (size_t i = 1; i < rc.deltas_scatter_len; i++)
+            rc.deltas_scatter_ps[i] += rc.deltas_scatter_ps[i-1];
+
+        // compute max
+        size_t m = rc.deltas_scatter_ps[0];
+        for (size_t i = 1; i < rc.deltas_scatter_len; i++)
+        {
+            if (rc.deltas_scatter_ps[i] > m)
+                m = rc.deltas_scatter_ps[i];
+        }
+        rc.delta_scatter = m;
     }
 
     if (morton->count > 0)
@@ -559,11 +662,34 @@ struct run_config parse_runs(int argc, char **argv)
     else if (rc.kernel == SG)
         sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
 
-    if (rc.delta <= -1)
+    if (pattern_found)
     {
-        error("delta not specified, default is 8\n", WARN);
-        rc.delta = 8;
-        rc.deltas_len = 1;
+        if (rc.delta <= -1)
+        {
+            error("delta not specified, default is 8\n", WARN);
+            rc.delta = 8;
+            rc.deltas_len = 1;
+        }
+    }
+
+    if (pattern_gather_found)
+    {
+        if (rc.delta_gather <= -1)
+        {
+            error("delta gather not specified, default is 8\n", WARN);
+            rc.delta_gather = 8;
+            rc.deltas_gather_len = 1;
+        }
+    }
+
+    if (pattern_scatter_found)
+    {
+        if (rc.delta_scatter <= -1)
+        {
+            error("delta scatter not specified, default is 8\n", WARN);
+            rc.delta_scatter = 8;
+            rc.deltas_scatter_len = 1;
+        }
     }
 
     if (rc.op != OP_COPY)
@@ -601,6 +727,7 @@ struct run_config parse_runs(int argc, char **argv)
         rc.local_work_size = 1;
     }
 #endif
+
     return rc;
 }
 
@@ -820,7 +947,7 @@ void parse_backend(int argc, char **argv)
     return;
 }
 
-void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t *rc_pattern_len, ssize_t *rc_delta, size_t *rc_deltas, size_t *rc_deltas_len)
+void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_t *rc_pattern_len, ssize_t *rc_delta, size_t **rc_deltas, size_t *rc_deltas_len)
 {
     *rc_type = INVALID_IDX;
     char *arg = 0;
@@ -856,10 +983,10 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
 
             // The default delta is 1
             *rc_delta = 1;
-            rc_deltas[0] = *rc_delta;
+            *rc_deltas[0] = *rc_delta;
             *rc_deltas_len = 1;
 
-            xkp_pattern(rc_pattern, dim);
+            xkp_pattern(*rc_pattern, dim);
         }
 
         // Parse Uniform Stride Arguments, which are
@@ -875,7 +1002,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
             if (sscanf(len, "%zu", &(*rc_pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
-            rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
 
             // Read the stride
             char *stride = strtok(NULL, ":");
@@ -887,26 +1014,26 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
 
             // Fill the pattern buffer
             for (int i = 0; i < *rc_pattern_len; i++)
-                rc_pattern[i] = i*strideval;
+                *rc_pattern[i] = i*strideval;
 
             char *delta = strtok(NULL, ":");
             if (delta)
             {
-                if (!rc_deltas) {
-                    rc_deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
+                if (!(*rc_deltas)) {
+                    *rc_deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
                 }
                 *rc_deltas_len = 1;
 
                 if (!strcmp(delta, "NR"))
                 {
                     *rc_delta = strideval*(*rc_pattern_len);
-                    rc_deltas[0] = *rc_delta;
+                    *rc_deltas[0] = *rc_delta;
                 }
                 else
                 {
                     if (sscanf(delta, "%zd", &(*rc_delta)) < 1)
                         error("UNIFORM: delta not parsed", 1);
-                    rc_deltas[0] = *rc_delta;
+                    *rc_deltas[0] = *rc_delta;
                 }
             }
 
@@ -917,7 +1044,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
         {
             int dim_val, order_val, problem_size_val;
 
-            rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
             *rc_type = LAPLACIAN;
 
             // Read the dimension
@@ -942,13 +1069,13 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
                 error("LAPLACIAN: Problem size not parsed", 1);
 
             *rc_delta = 1;
-            if (!rc_deltas) {
-                rc_deltas = sp_malloc(sizeof(spIdx_t), *rc_delta, ALIGN_CACHE);
+            if (!(*rc_deltas)) {
+                *rc_deltas = sp_malloc(sizeof(spIdx_t), *rc_delta, ALIGN_CACHE);
             }
-            rc_deltas[0] = *rc_delta;
+            *rc_deltas[0] = *rc_delta;
             *rc_deltas_len = 1;
 
-            laplacian(dim_val, order_val, problem_size_val, rc_pattern, rc_pattern_len);
+            laplacian(dim_val, order_val, problem_size_val, *rc_pattern, rc_pattern_len);
         }
 
         // Mostly Stride 1 Mode
@@ -973,7 +1100,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
 
             // Parse index length
             sscanf(len, "%zu", &(*rc_pattern_len));
-            rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");
@@ -1015,16 +1142,16 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
 
             ms1_deltas_len = read;
 
-            rc_pattern[0] = -1;
+            *rc_pattern[0] = -1;
             size_t last = -1;
             ssize_t j;
             for (int i = 0; i < *rc_pattern_len; i++)
             {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1)
-                   rc_pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
+                   *rc_pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
                 else
-                    rc_pattern[i] = last + 1;
-                last = rc_pattern[i];
+                    *rc_pattern[i] = last + 1;
+                last = *rc_pattern[i];
             }
 
             free(ms1_breaks);
@@ -1058,7 +1185,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t *rc_pattern, spSize_t
             if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
-        rc_pattern = mypat;
+        *rc_pattern = mypat;
         *rc_pattern_len = read;
     }
 

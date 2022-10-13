@@ -371,23 +371,23 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < nrc; i++) {
         size_t max_pattern_val;
-        ssize_t delta;
+        ssize_t pattern_delta;
 
         if (rc2[i].kernel == SG) {
             size_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
             size_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
             max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
         
-            delta = rc2[i].delta_gather >= rc2[i].delta_scatter ? rc2[i].delta_gather : rc2[i].delta_scatter;
+            pattern_delta = rc2[i].delta_gather >= rc2[i].delta_scatter ? rc2[i].delta_gather : rc2[i].delta_scatter;
         }
         else {
             max_pattern_val = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
             
-            delta = rc2[i].delta;
+            pattern_delta = rc2[i].delta;
         }
         //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
 
-        size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*delta) * sizeof(sgData_t);
+        size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*pattern_delta) * sizeof(sgData_t);
         //printf("max_pattern_val: %zu, source_size %zu\n", max_pattern_val, cur_source_size);
         //printf("\n");
 
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
 
         size_t cur_target_size;
         if (rc2[i].kernel == SG) {
-            cur_target_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*delta) * sizeof(sgData_t);
+            cur_target_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*pattern_delta) * sizeof(sgData_t);
         }
         else {
             cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
@@ -490,6 +490,7 @@ int main(int argc, char **argv)
         }
         #endif
     }
+    target.host_ptr = target.host_ptrs[0];
     //    printf("-- here -- \n");
 
     // Populate buffers on host
