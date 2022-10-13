@@ -313,6 +313,7 @@ int main(int argc, char **argv)
         }
 #endif
     }
+
     // =======================================
     // Initialize PAPI Library
     // =======================================
@@ -604,11 +605,15 @@ int main(int argc, char **argv)
 
                 switch (rc2[k].kernel) {
                     case SG:
+                        /*
                         if (rc2[k].op == OP_COPY) {
                             //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
                         } else {
                             //sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                         }
+                        */
+                        assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                        sg_smallbuf(source.host_ptr, target.host_ptr, rc2[k].pattern_gather, rc2[k].pattern_scatter, rc2[k].pattern_gather_len, rc2[k].delta_gather, rc2[k].delta_scatter, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case SCATTER:
                         if (rc2[k].random_seed >= 1) {
@@ -673,7 +678,6 @@ int main(int argc, char **argv)
                         gather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case SG:
-                        printf("Serial Concurrent Gather Scatter\n");
                         assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                         sg_smallbuf_serial(target.host_ptr, source.host_ptr, rc2[k].pattern_gather, rc2[k].pattern_scatter, rc2[k].pattern_gather_len, rc2[k].delta_gather, rc2[k].delta_scatter, rc2[k].generic_len, rc2[k].wrap);
                         break;
