@@ -350,7 +350,7 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
 
-    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER) {
+    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != SG) {
         printf("Error: Unsupported kernel\n");
         exit(1);
     }
@@ -707,6 +707,10 @@ int main(int argc, char **argv)
                         break;
                     case GATHER:
                         gather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
+                    case SG:
+                        printf("Serial Concurrent Gather Scatter\n");
+                        sg_smallbuf_serial(target.host_ptr, source.host_ptr, rc2[k].pattern, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     default:
                         printf("Error: Unable to determine kernel\n");
