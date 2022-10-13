@@ -8,6 +8,47 @@
 #define omp_get_thread_num() 0
 #endif
 
+void sg_smallbuf(
+        sgData_t* restrict gather,
+        sgData_t* restrict scatter,
+        sgIdx_t* const restrict gather_pat,
+        sgIdx_t* const restrict scatter_pat,
+        size_t pat_len,
+        size_t delta_gather,
+        size_t delta_scatter,
+        size_t n,
+        size_t wrap) {
+#ifdef __GNUC__
+    #pragma omp parallel
+#else
+    #pragma omp parallel shared(pat)
+#endif
+    {
+        int t = omp_get_thread_num();
+
+#ifdef __CRAYC__
+    #pragma concurrent
+#endif
+#ifdef __INTEL_COMPILER
+    #pragma ivdep
+#endif
+#pragma omp for
+        for (size_t i = 0; i < n; i++) {
+            sgData_t *tl = scatter + delta_scatter * i;
+            sgData_t *sl = gather + delta_gather * i;
+#ifdef __CRAYC__
+    #pragma concurrent
+#endif
+#if defined __CRAYC__ || defined __INTEL_COMPILER
+    #pragma vector always,unaligned
+#endif
+            for (size_t j = 0; j < pat_len; j++) {
+                tl[scatter_pat[j]] = sl[gather_pat[j]];
+            }
+        }
+    }
+}
+
 void gather_smallbuf(
         sgData_t** restrict target,
         sgData_t* const restrict source,

@@ -79,6 +79,17 @@ void gather_stride16(
         size_t    delta,
         size_t    n);
 
+void sg_smallbuf(
+        sgData_t* restrict gather,
+        sgData_t* restrict scatter,
+        sgIdx_t* const restrict gather_pat,
+        sgIdx_t* const restrict scatter_pat,
+        size_t pat_len,
+        size_t delta_gather,
+        size_t delta_scatter,
+        size_t n,
+        size_t wrap);
+
 void gather_smallbuf(
         sgData_t** restrict target,
         sgData_t* restrict source,
