@@ -137,8 +137,14 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
 
-    bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
-    actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    if (rc.kernel == SG) {
+        bytes_moved = sizeof(sgData_t) * rc.pattern_gather_len * rc.generic_len;
+        actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    }
+    else {
+        bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
+        actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    }
     printf("%-7d %-12.4g %-12.6g", ii, time, actual_bandwidth);
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {
@@ -861,6 +867,26 @@ void emit_configs(struct run_config *rc, int nconfigs)
         }
         printf("], ");
 
+        // Pattern Gather
+        printf("\'pattern_gather\':[");
+        for (int j = 0; j < rc[i].pattern_gather_len; j++) {
+            printf("%zu", rc[i].pattern_gather[j]);
+            if (j != rc[i].pattern_gather_len-1) {
+                printf(",");
+            }
+        }
+        printf("], ");
+
+        // Pattern Scatter
+        printf("\'pattern_scatter\':[");
+        for (int j = 0; j < rc[i].pattern_scatter_len; j++) {
+            printf("%zu", rc[i].pattern_scatter[j]);
+            if (j != rc[i].pattern_scatter_len-1) {
+                printf(",");
+            }
+        }
+        printf("], ");
+
         //Delta
         //TODO: multidelta
         if (rc[i].deltas_len == 1) {
@@ -877,6 +903,41 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
         }
         printf(", ");
+
+        //Delta Gather
+        //TODO: multidelta
+        if (rc[i].deltas_gather_len == 1) {
+            printf("\'delta_gather\':%zd", rc[i].delta_gather);
+        } else {
+            printf("\'deltas_gather\':[");
+            for (int j = 0; j < rc[i].deltas_gather_len; j++) {
+                printf("%zu", rc[i].deltas_gather[j]);
+                if (j != rc[i].deltas_gather_len-1) {
+                    printf(",");
+                }
+            }
+            printf("]");
+
+        }
+        printf(", ");
+
+        //Delta Scatter
+        //TODO: multidelta
+        if (rc[i].deltas_scatter_len == 1) {
+            printf("\'delta_scatter\':%zd", rc[i].delta_scatter);
+        } else {
+            printf("\'deltas_scatter\':[");
+            for (int j = 0; j < rc[i].deltas_scatter_len; j++) {
+                printf("%zu", rc[i].deltas_scatter[j]);
+                if (j != rc[i].deltas_scatter_len-1) {
+                    printf(",");
+                }
+            }
+            printf("]");
+
+        }
+        printf(", ");
+
 
         // Len
         printf("\'length\':%zu, ", rc[i].generic_len);
