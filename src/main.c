@@ -512,13 +512,19 @@ int main(int argc, char **argv)
 
     #ifdef USE_CUDA
     sgIdx_t *pat_dev;
+    sgIdx_t *pat_gath_dev;
+    sgIdx_t *pat_scat_dev;
     uint32_t *order_dev;
     if (backend == CUDA) {
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_cuda(&source);
+        create_dev_buffers_cuda(&target);
         cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&pat_gath_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&pat_scat_dev, sizeof(sgIdx_t) * max_pat_len);
         cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_ro_len);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
+        cudaMemcpy(target.dev_ptr_cuda, target.host_ptr, target.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
     int final_block_idx = -1;
@@ -573,14 +579,25 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
-                unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
-                unsigned long local_work_size = rc2[k].local_work_size;
-                unsigned long grid[arr_len]  = {global_work_size/local_work_size};
-                unsigned long block[arr_len] = {local_work_size};
-                if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                if (rc2[k].kernel == SG) {
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+   assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                    time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
-                    time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+                    if (rc2[k].random_seed == 0) {
+                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                    } else {
+                        time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                    }
                 }
 
                 if (i>=0) rc2[k].time_ms[i] = time_ms;
