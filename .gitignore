@@ -8,3 +8,8 @@ modulefiles/
 /configure_*
 src/python/env
 .vscode/
+venv
+*customcpu.txt
+*customgpu.txt
+*.ipynb_checkpoints
+**/__pycache__/*
