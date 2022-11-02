@@ -35,9 +35,26 @@ COLORS = {
         'knl':'green',
         'npl':'purple',    #PLACEHOLDER
         'hsw':'#64d1a2',
-        'customcpu':'red',
-        'customgpu':'red',
+        'customcpu':'white',
+        'customgpu':'white',
        }
+
+SYMBOLS = {
+        'gv100':'s',
+        'k40':'v',
+        'p100':'^',
+        'titan':'<',
+        'clx':'P',
+        'bdw':'p',
+        'skx':'d',
+        'tx2':'D',
+        'knl':'>',
+        'npl':'h',
+        'hsw':'o',
+        'customcpu':'o',
+        'customgpu':'o',
+
+}
 
 EXPERIMENTS = {'ustride':'Uniform Stride', 'stream': 'Stream', 'nekbone':'Nekbone', 'lulesh':'LULESH', 'amg':'AMG', 'pennant':'PENNANT'}
 
