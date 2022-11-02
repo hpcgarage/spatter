@@ -872,7 +872,7 @@ void emit_configs(struct run_config *rc, int nconfigs)
             printf("\'kernel\':\'Scatter\', ");
             break;
         case SG:
-            printf("\'kernel\':\'GS\', ");
+            printf("\'kernel\':\'SG\', ");
             break;
         case INVALID_KERNEL:
             error ("Invalid kernel sent to emit_configs", ERROR);

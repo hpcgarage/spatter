@@ -50,8 +50,7 @@ int verbose;
 FILE *err_file;
 
 void safestrcopy(char *dest, const char *src);
-void parse_p(char*, enum idx_type *, spIdx_t **, spSize_t *, ssize_t *, size_t **, size_t *);
-
+void parse_p(char*, struct run_config *, int mode);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
 void parse_backend(int argc, char **argv);
@@ -95,11 +94,10 @@ void initialize_argtable()
     malloc_argtable[21] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
     malloc_argtable[22] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
     malloc_argtable[23] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
-    // Backend Configuration
     malloc_argtable[24] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
     malloc_argtable[25] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
     malloc_argtable[26] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[27] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
+    malloc_argtable[27] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
     // Other Configurations
     malloc_argtable[28] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
     malloc_argtable[29] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
@@ -353,9 +351,6 @@ struct run_config parse_runs(int argc, char **argv)
     int pattern_gather_found = 0;
 
     struct run_config rc = {0};
-    rc.pattern_len = 0;
-    rc.pattern_gather_len = 0;
-    rc.pattern_scatter_len = 0;
     rc.delta = -1;
     rc.delta_gather = -1;
     rc.delta_scatter = -1;
@@ -443,21 +438,21 @@ struct run_config parse_runs(int argc, char **argv)
         //char* filePtr = strstr(rc.generator, "FILE");
         //if (filePtr)
         //    safestrcopy(rc.generator, filePtr);
-        parse_p(rc.generator, &rc.type, &rc.pattern, &rc.pattern_len, &rc.delta, &rc.deltas, &rc.deltas_len);
+        parse_p(rc.generator, &rc, 0);
         pattern_found = 1;
     }
 
     if (pattern_gather->count > 0)
     {
         copy_str_ignore_leading_space(rc.generator, pattern_gather->sval[0]);
-        parse_p(rc.generator, &rc.type_gather, &rc.pattern_gather, &rc.pattern_gather_len, &rc.delta_gather, &rc.deltas_gather, &rc.deltas_gather_len);
+        parse_p(rc.generator, &rc, 1);
         pattern_gather_found = 1;
     }
 
     if (pattern_scatter->count > 0)
     {
         copy_str_ignore_leading_space(rc.generator, pattern_scatter->sval[0]);
-        parse_p(rc.generator, &rc.type_scatter, &rc.pattern_scatter, &rc.pattern_scatter_len, &rc.delta_scatter, &rc.deltas_scatter, &rc.deltas_scatter_len);
+        parse_p(rc.generator, &rc, 2);
         pattern_scatter_found = 1;
     }
 
@@ -508,7 +503,7 @@ struct run_config parse_runs(int argc, char **argv)
         rc.delta = m;
     }
 
-    if (delta_gather->count > 0)
+   if (delta_gather->count > 0)
     {
         char delta_gather_temp[STRING_SIZE];
         copy_str_ignore_leading_space(delta_gather_temp, delta_gather->sval[0]);
@@ -601,6 +596,7 @@ struct run_config parse_runs(int argc, char **argv)
         }
         rc.delta_scatter = m;
     }
+
 
     if (morton->count > 0)
         rc.ro_morton = morton->ival[0];
@@ -727,7 +723,6 @@ struct run_config parse_runs(int argc, char **argv)
         rc.local_work_size = 1;
     }
 #endif
-
     return rc;
 }
 
@@ -752,8 +747,28 @@ void static laplacian_branch(int depth, int order, int n, int **pos, int *pos_le
     return;
 }
 
-void static laplacian(int dim, int order, int n, spIdx_t *rc_pattern, spSize_t *rc_pattern_len)
+void static laplacian(int dim, int order, int n, struct run_config *rc, int mode)
 {
+    spIdx_t **pattern;
+    spSize_t *pattern_len;
+
+    if (mode == 0) { // Normal pattern
+        pattern = &rc->pattern;
+        pattern_len = &rc->pattern_len;
+    }
+    else if (mode == 1) { // Gather pattern (SG Kernel)
+        pattern = &rc->pattern_gather;
+        pattern_len = &rc->pattern_gather_len;
+    }
+    else if (mode == 2) { // Scatter pattern (SG Kernel)
+        pattern = &rc->pattern_scatter;
+        pattern_len = &rc->pattern_scatter_len;
+    }
+    else {
+        printf("laplacian: invalid mode %d\n", mode);
+        exit(1);
+    }
+
 
     if (dim < 1) {
         error("laplacian: dim must be positive", ERROR);
@@ -771,25 +786,25 @@ void static laplacian(int dim, int order, int n, spIdx_t *rc_pattern, spSize_t *
         laplacian_branch(i, order, n, &pos, &pos_len);
     }
 
-    *rc_pattern_len = final_len;
+    *pattern_len = final_len;
 
-    rc_pattern = sp_calloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+    *pattern = sp_calloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
 
     int max = pos[pos_len-1];
 
-    for (int i = 0; i < *rc_pattern_len; i++) {
-        rc_pattern[i] = 2;
+    for (int i = 0; i < *pattern_len; i++) {
+        (*pattern)[i] = 2;
     }
 
     //populate rc->pattern
     for(int i = 0; i < pos_len; i++) {
-        rc_pattern[i] = (-pos[pos_len - i - 1] + max);
+        (*pattern)[i] = (-pos[pos_len - i - 1] + max);
     }
 
-    rc_pattern[pos_len] = max;
+    (*pattern)[pos_len] = max;
 
     for(int i = 0; i < pos_len; i++) {
-        rc_pattern[pos_len+1+i] = pos[i] + max;
+        (*pattern)[pos_len+1+i] = pos[i] + max;
     }
 
     free(pos);
@@ -947,9 +962,41 @@ void parse_backend(int argc, char **argv)
     return;
 }
 
-void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_t *rc_pattern_len, ssize_t *rc_delta, size_t **rc_deltas, size_t *rc_deltas_len)
+void parse_p(char* optarg, struct run_config *rc, int mode)
 {
-    *rc_type = INVALID_IDX;
+    spIdx_t **pattern;
+    spSize_t *pattern_len;
+    ssize_t *delta;
+    size_t **deltas;
+    size_t *deltas_len;
+
+    if (mode == 0) { // Normal pattern
+        pattern = &rc->pattern;
+        pattern_len = &rc->pattern_len;
+        delta = &rc->delta;
+        deltas = &rc->deltas_gather;
+        deltas_len = &rc->deltas_len;
+    }
+    else if (mode == 1) { // Gather pattern (SG Kernel)
+        pattern = &rc->pattern_gather;
+        pattern_len = &rc->pattern_gather_len;
+        delta = &rc->delta_gather;
+        deltas = &rc->deltas_gather;
+        deltas_len = &rc->deltas_gather_len;
+    }
+    else if (mode == 2) { // Scatter pattern (SG Kernel)
+        pattern = &rc->pattern_scatter;
+        pattern_len = &rc->pattern_scatter_len;
+        delta = &rc->delta_scatter;
+        deltas = &rc->deltas_scatter;
+        deltas_len = &rc->deltas_scatter_len;
+    }
+    else {
+        printf("parse_p: invalid mode %d\n", mode);
+        exit(1);
+    }
+
+    rc->type = INVALID_IDX;
     char *arg = 0;
     if ((arg=strchr(optarg, ':')))
     {
@@ -962,7 +1009,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
         {
             //TODO
             //safestrcopy(idx_pattern_file, arg);
-            *rc_type = CONFIG_FILE;
+            rc->type = CONFIG_FILE;
         }
 
         // The Exxon Kernel Proxy-derived stencil
@@ -970,7 +1017,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
         // XKP:dim
         else if (!strcmp(optarg, "XKP") || !strcmp(optarg, "HYDRO"))
         {
-            *rc_type = XKP;
+            rc->type = XKP;
 
             size_t dim = 0;
             char *dim_char = strtok(arg, ":");
@@ -979,30 +1026,30 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
             if (sscanf(dim_char, "%zu", &dim) < 1)
                 error("XKP: Dimension not parsed", 1);
 
-            *rc_pattern_len = 73;
+            *pattern_len = 73;
 
             // The default delta is 1
-            *rc_delta = 1;
-            *rc_deltas[0] = *rc_delta;
-            *rc_deltas_len = 1;
+            *delta = 1;
+            *deltas[0] = *delta;
+            *deltas_len = 1;
 
-            xkp_pattern(*rc_pattern, dim);
+            xkp_pattern(*pattern, dim);
         }
 
         // Parse Uniform Stride Arguments, which are
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM"))
         {
-            *rc_type = UNIFORM;
+            rc->type = UNIFORM;
 
             // Read the length
             char *len = strtok(arg,":");
             if (!len)
                 error("UNIFORM: Index Length not found", 1);
-            if (sscanf(len, "%zu", &(*rc_pattern_len)) < 1)
+            if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
-            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
 
             // Read the stride
             char *stride = strtok(NULL, ":");
@@ -1013,27 +1060,27 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
                 error("UNIFORM: Stride not parsed", 1);
 
             // Fill the pattern buffer
-            for (int i = 0; i < *rc_pattern_len; i++)
-                *rc_pattern[i] = i*strideval;
+            for (int i = 0; i < *pattern_len; i++)
+                (*pattern)[i] = i*strideval;
 
-            char *delta = strtok(NULL, ":");
-            if (delta)
+            char *delta2 = strtok(NULL, ":");
+            if (delta2)
             {
-                if (!(*rc_deltas)) {
-                    *rc_deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
+                if (!deltas) {
+                    *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
                 }
-                *rc_deltas_len = 1;
+                *deltas_len = 1;
 
-                if (!strcmp(delta, "NR"))
+                if (!strcmp(delta2, "NR"))
                 {
-                    *rc_delta = strideval*(*rc_pattern_len);
-                    *rc_deltas[0] = *rc_delta;
+                    *delta = strideval*(*pattern_len);
+                    (*deltas)[0] = *delta;
                 }
                 else
                 {
-                    if (sscanf(delta, "%zd", &(*rc_delta)) < 1)
+                    if (sscanf(delta2, "%zd", &(*delta)) < 1)
                         error("UNIFORM: delta not parsed", 1);
-                    *rc_deltas[0] = *rc_delta;
+                    (*deltas)[0] = *delta;
                 }
             }
 
@@ -1044,8 +1091,8 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
         {
             int dim_val, order_val, problem_size_val;
 
-            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
-            *rc_type = LAPLACIAN;
+            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+            rc->type = LAPLACIAN;
 
             // Read the dimension
             char *dim = strtok(arg,":");
@@ -1068,14 +1115,14 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
             if (sscanf(problem_size, "%d", &problem_size_val) < 1)
                 error("LAPLACIAN: Problem size not parsed", 1);
 
-            *rc_delta = 1;
-            if (!(*rc_deltas)) {
-                *rc_deltas = sp_malloc(sizeof(spIdx_t), *rc_delta, ALIGN_CACHE);
+            *delta = 1;
+            if (!(*deltas)) {
+                *deltas = sp_malloc(sizeof(spIdx_t), *delta, ALIGN_CACHE);
             }
-            *rc_deltas[0] = *rc_delta;
-            *rc_deltas_len = 1;
+            (*deltas)[0] = *delta;
+            *deltas_len = 1;
 
-            laplacian(dim_val, order_val, problem_size_val, *rc_pattern, rc_pattern_len);
+            laplacian(dim_val, order_val, problem_size_val, rc, mode);
         }
 
         // Mostly Stride 1 Mode
@@ -1087,7 +1134,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
         // than index_length
         else if (!strcmp(optarg, "MS1"))
         {
-            *rc_type = MS1;
+            rc->type = MS1;
 
             char *len = strtok(arg,":");
             char *breaks = strtok(NULL,":");
@@ -1099,8 +1146,8 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
             size_t ms1_deltas_len = 0;
 
             // Parse index length
-            sscanf(len, "%zu", &(*rc_pattern_len));
-            *rc_pattern = sp_malloc(sizeof(spIdx_t), *rc_pattern_len, ALIGN_CACHE);
+            sscanf(len, "%zu", &(*pattern_len));
+            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");
@@ -1142,16 +1189,16 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
 
             ms1_deltas_len = read;
 
-            *rc_pattern[0] = -1;
+            (*pattern)[0] = -1;
             size_t last = -1;
             ssize_t j;
-            for (int i = 0; i < *rc_pattern_len; i++)
+            for (int i = 0; i < *pattern_len; i++)
             {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1)
-                   *rc_pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
+                   (*pattern)[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
                 else
-                    *rc_pattern[i] = last + 1;
-                last = *rc_pattern[i];
+                    (*pattern)[i] = last + 1;
+                last = (*pattern)[i];
             }
 
             free(ms1_breaks);
@@ -1166,7 +1213,7 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
     {
 	if (quiet_flag < 3)
         	printf("Parse P Custom Pattern: %s\n", optarg);
-        *rc_type = CUSTOM;
+        rc->type = CUSTOM;
         char *delim = ",";
         char *ptr = strtok(optarg, delim);
         size_t read = 0;
@@ -1185,14 +1232,14 @@ void parse_p(char* optarg, enum idx_type *rc_type, spIdx_t **rc_pattern, spSize_
             if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
-        *rc_pattern = mypat;
-        *rc_pattern_len = read;
+        *pattern = mypat;
+        *pattern_len = read;
     }
 
-    if (*rc_pattern_len == 0)
+    if (*pattern_len == 0)
         error("Pattern length of 0", ERROR);
 
-    if (*rc_type == INVALID_IDX)
+    if (rc->type == INVALID_IDX)
         error("No pattern type set", ERROR);
 }
 
