@@ -160,30 +160,33 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
         {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
-	char buffer[50];
-	int check = snprintf(buffer, 50, "%zd", cur.value->u.array.values[j]->u.integer);
-        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
-	
-	if (check == added) {
-	    index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
-	    
-	    if (index >= STRING_SIZE-1) break;
-	    else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
-                index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
-            }
+
+        char buffer[1000];
+        for (int i = 0; i < 1000; i++) {
+            buffer[i] = 'b';
         }
-	else {
-		index--;
-		argv[i+1][index] = '\0';
-		break;
-	}
+        int check = snprintf(buffer, 50, "%lld", cur.value->u.array.values[j]->u.integer);
+        int added = snprintf(buffer, STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
+
+        if (check == added) {
+            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
+            if (index >= STRING_SIZE-1) break;
+            else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
+                    index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
+                }
+            }
+        else {
+            index--;
+            argv[i+1][index] = '\0';
+            break;
+        }
 
    }
 }
 
-struct run_config parse_json_config(json_value *value)
+struct run_config *parse_json_config(json_value *value)
 {
-    struct run_config rc = {0};
+    struct run_config *rc = (struct run_config*)malloc(sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -238,7 +241,7 @@ struct run_config parse_json_config(json_value *value)
         exit(0);
     }
 
-    rc = parse_runs(argc, argv);
+    *rc = parse_runs(argc, argv);
 
     for (int i = 0; i < argc; i++)
         free(argv[i]);
@@ -274,15 +277,15 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     // Parse command-line arguments to in case of specified json file.
     int json = 0;
 
-   if (pattern->count > 0)
-   {
+    if (pattern->count > 0)
+    {
        if (strstr(pattern->sval[0], "FILE"))
        {
            safestrcopy(jsonfilename, strchr(pattern->sval[0], '=') + 1);
            printf("Reading patterns from %s.\n", jsonfilename);
            json = 1;
        }
-   }
+    }
 
     if (json)
     {
@@ -321,8 +324,10 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
 
-        for (int i = 0; i < *nrc; i++)
-            rc[0][i] = parse_json_config(value->u.array.values[i]);
+        for (int i = 0; i < *nrc; i++) {
+            struct run_config *rctemp = parse_json_config(value->u.array.values[i]);
+            rc[0][i] = *rctemp;
+        }
 
         json_value_free(value);
         free(file_contents);
@@ -1012,8 +1017,9 @@ void parse_p(char* optarg, struct run_config *rc)
     // CUSTOM mode means that the user supplied a single index buffer on the command line
     else
     {
-	if (quiet_flag < 3)
-        	printf("Parse P Custom Pattern: %s\n", optarg);
+        if (quiet_flag > 3) {
+            printf("Parse P Custom Pattern: %s\n", optarg);
+        }
         rc->type = CUSTOM;
         char *delim = ",";
         char *ptr = strtok(optarg, delim);
