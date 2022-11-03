@@ -22,7 +22,7 @@ if (_kernel == 'Scatter'):
     KERNEL    = 'Scatter'
 
 ######################### Script Params ###########################
-PLATFORMS = ['bdw', 'npl', 'tx2', 'titan', 'p100', 'gv100']
+PLATFORMS = ['bdw', 'npl', 'tx2', 'titan', 'p100', 'gv100', 'clx', 'skx']
 STRIDES   = [0, 4]
 #EXPER     = {'pennant': [2, 5, 14,10]} # Gather
 #KERNEL    = 'Gather'
