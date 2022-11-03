@@ -53,41 +53,17 @@ git submodule init
 git submodule update
 ```
 
-<!--
-
-### Quick Start
-
-The only required argument to spatter is the amount of data to move. It will guess all other arguments such as kernel and device. However, this produces data for a single sparsity (default is 1) and doesn't do any tuning. To obtain more useful output, continue on to the next section.
-
+## Running Spatter
+Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).
 ```
-./spatter -l 2048
+./spatter -pUNIFORM:8:1 -l$((2**24))
 ```
 
 ### Run Your Own Platform Comparison
 
 You can quickly compare one of your platforms to some of the GPUs we have tested on. We will add much more flexibility to this in the future, but for now, we will assume you are using CUDA. 
 
-You must have R installed to generate the plot. 
-
-Steps:
-
-1. You will need the bandwidth of your GPU. If you don't know it, you can go to `tests/run_babel_stream.sh` and run it. The results will be in `tests/BabelStream-3.3/babelstream_DEVICENAME_cuda.txt`. Note the max copy bandwidth.
-
-2. Go to your build folder (`build_cuda`) and run `sparsity_test.sh`. This will take a while. (But it will be optimized soon!) 
-
-3. Go to the `quickstart` directory (sibling of your build directory) and run `./gather_comparison.sh ../build_cuda/sg_sparse_roofline_cuda_user_GATHER.ssv BANDWIDTH`, where `BANDWIDTH` is the bandwidth from step 1. 
-
-4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
-
-![Gather Comparison](.resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
-
--->
-
-## Running Spatter
-Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).
-```
-./spatter -pUNIFORM:8:1 -l$((2**24))
-```
+In the `noteboooks/` directory, open up [Plots.ipynb](notebooks/Plots.ipynb). This notebook will guide you through running the standard testsuites found in `standard-suite/`, and it will plot the data for you.
 
 
 ### Arguments
