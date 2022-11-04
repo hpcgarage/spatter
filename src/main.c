@@ -693,7 +693,7 @@ int main(int argc, char **argv)
         #ifdef USE_SERIAL
         if (backend == SERIAL) {
 
-            for (int i = 0; i <= rc2[k].nruns; i++) {
+            for (int i = -1; i <= rc2[k].nruns; i++) {
 
                 if (i!=-1) sg_zero_time();
 #ifdef USE_PAPI

@@ -6,6 +6,12 @@ SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set target project name
 SET (TRGT spatter)
 
+# Use for debugging. TODO: Set this automatically
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Use ASAN when debugging
+    SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 # Set default values
 SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
 SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
@@ -266,14 +272,14 @@ SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\
 
 
 # Build tests
-if ( USE_OPENMP )
+if ( USE_OPENMP OR USE_SERIAL )
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )
         enable_testing()
         add_subdirectory( tests )
-    endif( BUILD_TESTS )
-endif( USE_OPENMP )
+    endif()
+endif()
 
 # Validation flag
 SET (VALIDATE_DATA 0 CACHE BOOL "Performs additional validation")

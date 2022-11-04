@@ -153,40 +153,38 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
 {
     int index = 0;
     index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
+    printf("argv[%d]: %s\n", i+1, argv[i+1]);
 
-    for (int j = 0; j < cur.value->u.array.length; j++)
-    {
-        if (cur.value->u.array.values[j]->type != json_integer)
-        {
+    for (int j = 0; j < cur.value->u.array.length; j++) {
+        if (cur.value->u.array.values[j]->type != json_integer) {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
 
-        char buffer[1000];
-        for (int i = 0; i < 1000; i++) {
-            buffer[i] = 'b';
-        }
-        int check = snprintf(buffer, 50, "%lld", cur.value->u.array.values[j]->u.integer);
-        int added = snprintf(buffer, STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
+        char buffer[STRING_SIZE];
+        int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
+        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
 
         if (check == added) {
-            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
-            if (index >= STRING_SIZE-1) break;
-            else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
-                    index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
-                }
+            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+
+            if (index >= STRING_SIZE-1) {
+                break;
+            } else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
+                index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
             }
-        else {
+
+        } else {
             index--;
             argv[i+1][index] = '\0';
             break;
         }
-
-   }
+    }
 }
 
 struct run_config *parse_json_config(json_value *value)
 {
-    struct run_config *rc = (struct run_config*)malloc(sizeof(struct run_config));
+
+    struct run_config *rc = (struct run_config *)malloc(sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -324,9 +322,11 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
 
-        for (int i = 0; i < *nrc; i++) {
+
+        for (int i = 0; i < *nrc; i++){
             struct run_config *rctemp = parse_json_config(value->u.array.values[i]);
             rc[0][i] = *rctemp;
+            free(rctemp);
         }
 
         json_value_free(value);
