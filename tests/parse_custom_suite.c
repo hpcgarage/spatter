@@ -41,13 +41,11 @@ int custom_test(int indexLength, int* values, int argc, char** argv)
 int main (int argc, char **argv)
 {
     int argc_ = 2;
-    char **argv_ = (char**)malloc(sizeof(char*) * (argc_ - 1));
-    for (int i = 0; i < argc_; i++) {
-        argv_[i] = (char*)malloc(sizeof(char)*STRLEN);
-    }
-    strcpy(argv_[0], "./spatter");
+    char **argv_ = (char**)malloc(sizeof(char*) * argc_);
 
-    sprintf(argv_[1], "-p1,2,3,4,5,6,7,8,9");
+    asprintf(&argv_[0], "./spatter");
+    asprintf(&argv_[1], "-p1,2,3,4,5,6,7,8,9");
+
     int testValues[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     if (custom_test(8, testValues, argc_, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
@@ -56,6 +54,9 @@ int main (int argc, char **argv)
     int testValues1[1] = {0};
     if (custom_test(1, testValues1, argc_, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    free(argv_[0]);
+    free(argv_[1]);
 
     return EXIT_SUCCESS;
 }

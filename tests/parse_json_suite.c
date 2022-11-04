@@ -7,7 +7,7 @@
 
 int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int** patterns, int* counts, int argc, char** argv)
 {
-    int nrc = 0; 
+    int nrc = 0;
     struct run_config *rc = NULL;
 
     parse_args(argc, argv, &nrc, &rc);
@@ -73,27 +73,30 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 
 int main (int argc, char **argv)
 {
-    #ifndef JSON_SRC
+#ifndef JSON_SRC
     printf("JSON SRC Directory not defined!\n");
     return EXIT_FAILURE;
-    #else
+#else
     int argc_ = 2;
-    char **argv_ = (char**)malloc(sizeof(char*) * (argc_ - 1));
-    for (int i = 0; i < argc_; i++) {
-        argv_[i] = (char*)malloc(sizeof(char)*STRLEN);
-    }
-    strcpy(argv_[0], "./spatter");
-    sprintf(argv_[1], "-pFILE=%s", JSON_SRC);
+    char **argv_ = (char**)malloc(sizeof(char*) * argc_);
 
-    int strides[2] = {1, 1};
+    asprintf(&argv_[0], "./spatter");
+    asprintf(&argv_[1], "-pFILE=%s", JSON_SRC);
+
+    int strides[2]        = {1, 1};
     int patternLengths[2] = {16, 16};
-    int pattern1[16] = {1333, 0, 1, 2, 36, 37, 38, 72, 73, 74, 1296, 1297, 1298, 1332, 1334, 1368};
-    int pattern2[16] = {1333, 0, 1, 36, 37, 72, 73, 1296, 1297, 1332, 1368, 1369, 2592, 2593, 2628, 2629};
-    int* patterns[2] = {pattern1, pattern2};
-    int counts[2] = {1454647, 1454647};
-    if (json_test(2, "GATHER", strides, patternLengths, patterns, counts, argc_, argv_) != EXIT_SUCCESS)
+    int pattern1[16]      = {1333, 0, 1, 2, 36, 37, 38, 72, 73, 74, 1296, 1297, 1298, 1332, 1334, 1368};
+    int pattern2[16]      = {1333, 0, 1, 36, 37, 72, 73, 1296, 1297, 1332, 1368, 1369, 2592, 2593, 2628, 2629};
+    int* patterns[2]      = {pattern1, pattern2};
+    int counts[2]         = {1454647, 1454647};
+
+    if (json_test(2, "GATHER", strides, patternLengths, patterns, counts, argc_, argv_) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
+    }
+
+    free(argv_[0]);
+    free(argv_[1]);
 
     return EXIT_SUCCESS;
-    #endif
+#endif
 }

@@ -181,9 +181,9 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
    }
 }
 
-struct run_config parse_json_config(json_value *value)
+struct run_config *parse_json_config(json_value *value)
 {
-    struct run_config rc = {0};
+    struct run_config *rc = (struct run_config *)malloc(sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -238,7 +238,7 @@ struct run_config parse_json_config(json_value *value)
         exit(0);
     }
 
-    rc = parse_runs(argc, argv);
+    *rc = parse_runs(argc, argv);
 
     for (int i = 0; i < argc; i++)
         free(argv[i]);
@@ -321,8 +321,11 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
 
-        for (int i = 0; i < *nrc; i++)
-            rc[0][i] = parse_json_config(value->u.array.values[i]);
+        for (int i = 0; i < *nrc; i++){
+            struct run_config *rctemp = parse_json_config(value->u.array.values[i]);
+            rc[0][i] = *rctemp;
+            free(rctemp);
+        }
 
         json_value_free(value);
         free(file_contents);
