@@ -42,7 +42,7 @@ int uniform_stride_test(int indexLength, int stride, int argc, char** argv)
 int main (int argc, char **argv)
 {
     int argc_ = 2;
-    char **argv_ = (char**)malloc(sizeof(char*) * (argc_ - 1));
+    char **argv_ = (char**)malloc(sizeof(char*) * argc_);
     for (int i = 0; i < argc_; i++) {
         argv_[i] = (char*)malloc(sizeof(char)*STRLEN);
     }
