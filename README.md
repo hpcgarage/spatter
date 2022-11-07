@@ -63,7 +63,7 @@ Spatter is highly configurable, but a basic run is rather simple. You must at le
 
 You can quickly compare one of your platforms to some of the GPUs we have tested on. We will add much more flexibility to this in the future, but for now, we will assume you are using CUDA. 
 
-In the `noteboooks/` directory, open up [Plots.ipynb](notebooks/Plots.ipynb). This notebook will guide you through running the standard testsuites found in `standard-suite/`, and it will plot the data for you.
+In the `noteboooks/` directory, open up [GettingStarted.ipynb](notebooks/GettingStarted.ipynb). This notebook will guide you through running the standard testsuites found in `standard-suite/`, and it will plot the data for you.
 
 
 ### Arguments
