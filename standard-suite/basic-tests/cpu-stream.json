@@ -1,0 +1,4 @@
+[
+	{"pattern": "UNIFORM:8:1:NR", "kernel": "Scatter", "count": 250000000},
+	{"pattern": "UNIFORM:8:1:NR", "kernel": "Gather", "count": 250000000}
+]

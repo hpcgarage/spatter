@@ -7,9 +7,12 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  build-and-run:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Build-Serial
       run: ./configure/configure_serial_gnu && make -C build_serial_gnu
+    - name: Test-Serial
+      run: make test -C build_serial_gnu
+    

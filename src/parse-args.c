@@ -153,37 +153,37 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
 {
     int index = 0;
     index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
+    printf("argv[%d]: %s\n", i+1, argv[i+1]);
 
-    for (int j = 0; j < cur.value->u.array.length; j++)
-    {
-        if (cur.value->u.array.values[j]->type != json_integer)
-        {
+    for (int j = 0; j < cur.value->u.array.length; j++) {
+        if (cur.value->u.array.values[j]->type != json_integer) {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
-	char buffer[50];
-	int check = snprintf(buffer, 50, "%zd", cur.value->u.array.values[j]->u.integer);
+
+        char buffer[STRING_SIZE];
+        int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
         int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
-	
-	if (check == added) {
-	    index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
-	    
-	    if (index >= STRING_SIZE-1) break;
-	    else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
+
+        if (check == added) {
+            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+
+            if (index >= STRING_SIZE-1) {
+                break;
+            } else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
                 index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
             }
-        }
-	else {
-		index--;
-		argv[i+1][index] = '\0';
-		break;
-	}
 
-   }
+        } else {
+            index--;
+            argv[i+1][index] = '\0';
+            break;
+        }
+    }
 }
 
-struct run_config parse_json_config(json_value *value)
+struct run_config *parse_json_config(json_value *value)
 {
-    struct run_config rc = {0};
+    struct run_config *rc = (struct run_config *)malloc(sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -238,7 +238,7 @@ struct run_config parse_json_config(json_value *value)
         exit(0);
     }
 
-    rc = parse_runs(argc, argv);
+    *rc = parse_runs(argc, argv);
 
     for (int i = 0; i < argc; i++)
         free(argv[i]);
@@ -321,8 +321,11 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
 
-        for (int i = 0; i < *nrc; i++)
-            rc[0][i] = parse_json_config(value->u.array.values[i]);
+        for (int i = 0; i < *nrc; i++){
+            struct run_config *rctemp = parse_json_config(value->u.array.values[i]);
+            rc[0][i] = *rctemp;
+            free(rctemp);
+        }
 
         json_value_free(value);
         free(file_contents);
@@ -439,12 +442,8 @@ struct run_config parse_runs(int argc, char **argv)
         copy_str_ignore_leading_space(delta_temp, delta->sval[0]);
         char *delim = ",";
         char *ptr = strtok(delta_temp, delim);
-        size_t read = 0;
         if (!ptr)
             error("Pattern not found", ERROR);
-
-        if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
-            error("Failed to parse first pattern element in deltas", ERROR);
 
         spIdx_t *mydeltas;
         spIdx_t *mydeltas_ps;
@@ -452,11 +451,16 @@ struct run_config parse_runs(int argc, char **argv)
         mydeltas = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
         mydeltas_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
 
+        size_t read = 0;
+        if (sscanf(ptr, "%zu", &(mydeltas[read++])) < 1)
+            error("Failed to parse first pattern element in deltas", ERROR);
+
         while ((ptr = strtok(NULL, delim)) && read < MAX_PATTERN_LEN)
         {
-            if (sscanf(ptr, "%zu", &(rc.deltas[read++])) < 1)
+            if (sscanf(ptr, "%zu", &(mydeltas[read++])) < 1)
                 error("Failed to parse pattern", ERROR);
         }
+
         rc.deltas = mydeltas;
         rc.deltas_ps = mydeltas_ps;
         rc.deltas_len = read;
@@ -586,7 +590,7 @@ ssize_t power(int base, int exp) {
 }
 
 // Yes, there is no need for recursion here but I did this in python first. I'll
-// updatte this later with a cleaner implementation
+// update this later with a cleaner implementation
 void static laplacian_branch(int depth, int order, int n, int **pos, int *pos_len)
 {
     *pos = (int*)realloc(*pos, ((*pos_len)+order) * sizeof(int));
@@ -619,6 +623,9 @@ void static laplacian(int dim, int order, int n, struct run_config *rc)
     }
 
     rc->pattern_len = final_len;
+
+    rc->pattern = sp_calloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
+
     int max = pos[pos_len-1];
 
     for (int i = 0; i < rc->pattern_len; i++) {
@@ -636,6 +643,7 @@ void static laplacian(int dim, int order, int n, struct run_config *rc)
         rc->pattern[pos_len+1+i] = pos[i] + max;
     }
 
+    free(pos);
     return;
 }
 
@@ -836,7 +844,6 @@ void parse_p(char* optarg, struct run_config *rc)
         // UNIFORM:index_length:stride
         else if (!strcmp(optarg, "UNIFORM"))
         {
-            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = UNIFORM;
 
             // Read the length
@@ -846,6 +853,8 @@ void parse_p(char* optarg, struct run_config *rc)
             if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
+
             // Read the stride
             char *stride = strtok(NULL, ":");
             ssize_t strideval = 0;
@@ -854,26 +863,31 @@ void parse_p(char* optarg, struct run_config *rc)
             if (sscanf(stride, "%zd", &strideval) < 1)
                 error("UNIFORM: Stride not parsed", 1);
 
+            // Fill the pattern buffer
+            for (int i = 0; i < rc->pattern_len; i++)
+                rc->pattern[i] = i*strideval;
+
             char *delta = strtok(NULL, ":");
             if (delta)
             {
+                if (!rc->deltas) {
+                    rc->deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
+                }
+                rc->deltas_len = 1;
+
                 if (!strcmp(delta, "NR"))
                 {
                     rc->delta = strideval*rc->pattern_len;
                     rc->deltas[0] = rc->delta;
-                    rc->deltas_len = 1;
                 }
                 else
                 {
                     if (sscanf(delta, "%zd", &(rc->delta)) < 1)
                         error("UNIFORM: delta not parsed", 1);
                     rc->deltas[0] = rc->delta;
-                    rc->deltas_len = 1;
                 }
             }
 
-            for (int i = 0; i < rc->pattern_len; i++)
-                rc->pattern[i] = i*strideval;
         }
 
         //LAPLACIAN:DIM:ORDER:N
@@ -906,7 +920,9 @@ void parse_p(char* optarg, struct run_config *rc)
                 error("LAPLACIAN: Problem size not parsed", 1);
 
             rc->delta = 1;
-            rc->deltas = sp_malloc(sizeof(1), rc->delta, ALIGN_CACHE);
+            if (!rc->deltas) {
+                rc->deltas = sp_malloc(sizeof(spIdx_t), rc->delta, ALIGN_CACHE);
+            }
             rc->deltas[0] = rc->delta;
             rc->deltas_len = 1;
 
@@ -922,7 +938,6 @@ void parse_p(char* optarg, struct run_config *rc)
         // than index_length
         else if (!strcmp(optarg, "MS1"))
         {
-            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = MS1;
 
             char *len = strtok(arg,":");
@@ -936,6 +951,7 @@ void parse_p(char* optarg, struct run_config *rc)
 
             // Parse index length
             sscanf(len, "%zu", &(rc->pattern_len));
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");
