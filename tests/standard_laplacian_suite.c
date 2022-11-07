@@ -1,9 +1,10 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 int laplacian_test() {
     int dimension = 1, pseudo_order = 1, problem_size = 100;
     for (int i = 0; i < 10; i++) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pLAPLACIAN:%d:%d:%d", dimension, pseudo_order, problem_size);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
@@ -19,7 +20,7 @@ int laplacian_test() {
 
 int laplacian_test_delta() {
     for (int delta = 1; delta < 100; delta *= 2) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pLAPLACIAN:2:2:100 -d%d", delta);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);

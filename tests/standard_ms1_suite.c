@@ -1,10 +1,11 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 int ms1_test_1() {
     int length = 4, locations = 2, gaps = 16;
     for (int i = 0; i < 10; i++) {
-        const char *command;
-        int ret = asprintf(&command, "./spatter -pMS1:%d:%d:%d", length);
+        char *command;
+        int ret = asprintf(&command, "./spatter -pMS1:%d:%d:%d", length, locations, gaps);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;
@@ -20,7 +21,7 @@ int ms1_test_1() {
 int ms1_test_2() {
     int length = 4, length2 = 1, locations = 2, locations2 = 16;
     for (int i = 0; i < 10; i++) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pMS1:%d:%d,%d:%d", length, length2, locations, locations2);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
@@ -38,7 +39,7 @@ int ms1_test_2() {
 int ms1_test_3() {
     int length = 4, length2 = 1, locations = 2, locations2 = 16, gaps = 11;
     for (int i = 0; i < 10; i++) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pMS1:%d:%d,%d:%d,%d", length, length2, locations, locations2, gaps);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
@@ -56,7 +57,7 @@ int ms1_test_3() {
 
 int ms1_test_delta1() {
     for (int delta = 1; delta < 100; delta*=2) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pMS1:8:4:32 -d%d", delta);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
@@ -69,7 +70,7 @@ int ms1_test_delta1() {
 
 int ms1_test_delta2() {
     for (int delta = 1; delta < 100; delta*=2) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pMS1:8:2,3:20 -d%d", delta);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
@@ -82,7 +83,7 @@ int ms1_test_delta2() {
 
 int ms1_test_delta3() {
     for (int delta = 1; delta < 100; delta*=2) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pMS1:8:2,3:20,22 -d%d", delta);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);

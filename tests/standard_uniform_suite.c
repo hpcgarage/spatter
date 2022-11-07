@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 int uniform_test_length_gap() {
@@ -18,7 +19,7 @@ int uniform_test_length_gap() {
 
 int uniform_test_delta() {
     for (int delta = 1; delta < 100; delta *= 2) {
-        const char *command;
+        char *command;
         int ret = asprintf(&command, "./spatter -pUNIFORM:8:4 -d%d", delta);
         if (ret == -1 || system(command) == EXIT_FAILURE) {
             printf("Test failure on %s", command);
