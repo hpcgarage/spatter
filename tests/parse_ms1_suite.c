@@ -81,11 +81,10 @@ int ms1_test(int indexLength, int gapLocationCount, int* gapLocations, int gapSi
     return EXIT_SUCCESS;
 }
 
-
 int main (int argc, char **argv)
 {
     int argc_ = 2;
-    char **argv_ = (char**)malloc(sizeof(char*) * (argc_ - 1));
+    char **argv_ = (char**)malloc(sizeof(char*) * argc_);
     for (int i = 0; i < argc_; i++) {
         argv_[i] = (char*)malloc(sizeof(char)*STRLEN);
     }

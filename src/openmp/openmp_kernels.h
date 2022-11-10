@@ -1,7 +1,9 @@
 #ifndef OMP_KERNELS_H
 #define OMP_KERNELS_H
 
+#if defined( USE_OPENMP )
 #include <omp.h>
+#endif
 #include <stdlib.h>
 #include <stdint.h>
 #include "../include/sgtype.h"
