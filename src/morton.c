@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include "morton.h"
 #include "sp_alloc.h"
+#include "unused.h"
 
 // Return the smallest power of 2 greater than or equal to `x`
 uint64_t next_pow2(uint64_t x)
@@ -47,8 +48,8 @@ void unpack_2d(uint64_t d, uint64_t *x, uint64_t *y)
 uint32_t *get_square(uint64_t dim, uint64_t block)
 {
     uint32_t *square = (uint32_t*)malloc(sizeof(uint32_t) * block * block);
-    for (int i = 0; i < block; i++) {
-        for (int j = 0; j < block; j++) {
+    for (uint64_t i = 0; i < block; i++) {
+        for (uint64_t j = 0; j < block; j++) {
             square[i*block + j] = i*dim + j;
         }
     }
@@ -71,7 +72,7 @@ uint32_t *_z_block_2d(uint32_t* old_list, uint64_t dim, uint64_t block) {
         int base = x * block + y * dim * block;
         //int base = old_list[i] * (block * block);
         int off  = i * (block * block);
-        for (int j = 0; j < block*block; j++) {
+        for (uint64_t j = 0; j < block*block; j++) {
             list[off+j] = base + square[j];
         }
     }
@@ -180,9 +181,9 @@ uint32_t *get_cube(uint64_t dim, uint64_t block)
         return NULL;
     }
 
-    for (int i = 0; i < block; i++) {
-        for (int j = 0; j < block; j++) {
-            for (int k = 0; k < block; k++) {
+    for (uint64_t i = 0; i < block; i++) {
+        for (uint64_t j = 0; j < block; j++) {
+            for (uint64_t k = 0; k < block; k++) {
                 cube[i*block*block + j*block + k] = i*dim*dim + j*dim + k;
             }
         }
@@ -214,7 +215,7 @@ uint32_t *_z_block_3d(uint32_t* old_list, uint64_t dim, uint64_t block) {
         int base = x * block + y * dim * block + z * dim * dim * block;
         //int base = old_list[i] * (block * block);
         int off  = i * (block * block * block);
-        for (int j = 0; j < block*block*block; j++) {
+        for (uint64_t j = 0; j < block*block*block; j++) {
             list[off+j] = base + cube[j];
         }
     }
@@ -293,7 +294,10 @@ uint32_t *z_order_3d(uint64_t dim, uint64_t block)
     return list;
 }
 
-uint32_t *z_order_1d(uint64_t dim, uint64_t block)
+// TODO: Removed unused block paramemter. I believe it is only
+// to match the signature of the other z_order_* methods. Unless
+// we are using a function pointer somewhere we shouldn't need it.
+uint32_t *z_order_1d(uint64_t dim, uint64_t UNUSED(block))
 {
     uint64_t i;
     uint32_t *list = NULL;

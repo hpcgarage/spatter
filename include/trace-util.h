@@ -3,6 +3,8 @@
 
 #include "sgtype.h"
 
+//TODO: Remove. No longer used.
+#if 0
 struct instruction {
     int type;
     size_t data_type_size;
@@ -23,4 +25,5 @@ void read_trace(struct trace *t, const char *filename);
 void print_trace(struct trace t);
 
 void reweight_trace(struct trace t);
+#endif
 #endif

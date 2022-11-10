@@ -81,6 +81,8 @@ void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t g
 
 }
 
+//TODO: Remove: No longer used.
+#if 0
 struct instruction get_random_instr_orig (struct trace tr) {
     double r = (double)rand() / (double)RAND_MAX;
     for (int i = 0; i < tr.length-1; i++) {
@@ -111,8 +113,11 @@ struct instruction get_random_instr(struct trace tr)
 
   return tr.in[ vrand_dist(tr_dist) ];
 }
+#endif
 
 //returns the size of the buffer required
+//TODO: Remove. No longer used.
+#if 0
 size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 //for now, assume that all specified numbers are for 8-byte data types
 // and reads are 8 byte alignd
@@ -158,42 +163,44 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
             max = idx[i];
     }
     // Pageinate the positive zero-based indicies in idx[].
-    long *pages = NULL, npages = 0;
+    long *pages = NULL;
     long  page,pidx;
     long  page_bits = 26; // 26 => 64MiB
     long  new_idx;
-    long  new_max = 0;
+    size_t npages = 0;
+    spIdx_t  new_max = 0;
     for(size_t i = 0; i < len; i++) {
-      // Turn address into page.
-      page = (idx[i]*8) >> page_bits;
-      // Find existing / make new page entry.
-      pidx = -1;
-      for(size_t p = 0; p < npages; p++) {
-	if( pages[p] == page ) {
-	  pidx = p;
-	  break;
-	}
-      }
-      if( pidx == -1 ) {
-	pidx = npages;
-	npages++;
-	if( !(pages = realloc(pages,npages*sizeof(long))) ) {
-	  fprintf(stderr,"trace_indices(): Failed to allocate new page entry (%ld).\n",npages);
-	}
-	pages[pidx] = page;
-      }
-      // Replace sparse page bits in address with dense page index bits.
-      new_idx  = (pidx << page_bits) | ((idx[i]*8) & ((1l<<page_bits)-1l));
-      new_idx /= 8;
-      idx[i] = new_idx;
-      if( idx[i] > new_max ) {
-	new_max = idx[i];
-      }
+        // Turn address into page.
+        page = (idx[i]*8) >> page_bits;
+        // Find existing / make new page entry.
+        pidx = -1;
+        for(size_t p = 0; p < npages; p++) {
+            if( pages[p] == page ) {
+                pidx = p;
+                break;
+            }
+        }
+        if( pidx == -1 ) {
+            pidx = npages;
+            npages++;
+            if( !(pages = realloc(pages,npages*sizeof(long))) ) {
+              fprintf(stderr,"trace_indices(): Failed to allocate new page entry (%ld).\n",npages);
+            }
+            pages[pidx] = page;
+        }
+        // Replace sparse page bits in address with dense page index bits.
+        new_idx  = (pidx << page_bits) | ((idx[i]*8) & ((1l<<page_bits)-1l));
+        new_idx /= 8;
+        idx[i] = new_idx;
+        if( idx[i] > new_max ) {
+            new_max = idx[i];
+        }
     }
     max = new_max;
     if( npages ) free(pages);
     return max;
 }
+#endif
 
 void compress_indices( sgIdx_t *idx, size_t len) {
     // Pageinate the positive zero-based indicies in idx[].
@@ -206,7 +213,7 @@ void compress_indices( sgIdx_t *idx, size_t len) {
         page = (idx[i]*8) >> page_bits;
         // Find existing / make new page entry.
         pidx = -1;
-        for(size_t p = 0; p < npages; p++) {
+        for(long p = 0; p < npages; p++) {
             if( pages[p] == page ) {
                 pidx = p;
                 break;

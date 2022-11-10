@@ -28,6 +28,7 @@
  */
 
 #include "json.h"
+#include "unused.h"
 
 #ifdef _MSC_VER
    #ifndef _CRT_SECURE_NO_WARNINGS
@@ -75,12 +76,12 @@ typedef struct
 
 } json_state;
 
-static void * default_alloc (size_t size, int zero, void * user_data)
+static void * default_alloc (size_t size, int zero, void * UNUSED(user_data))
 {
    return zero ? calloc (1, size) : malloc (size);
 }
 
-static void default_free (void * ptr, void * user_data)
+static void default_free (void * ptr, void * UNUSED(user_data))
 {
    free (ptr);
 }

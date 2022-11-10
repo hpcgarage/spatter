@@ -53,7 +53,7 @@ void safestrcopy(char *dest, const char *src);
 void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
-void parse_backend(int argc, char **argv);
+void parse_backend();
 
 void** argtable;
 unsigned int number_of_arguments = 31;
@@ -155,17 +155,17 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
     index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
     printf("argv[%d]: %s\n", i+1, argv[i+1]);
 
-    for (int j = 0; j < cur.value->u.array.length; j++) {
+    for (unsigned int j = 0; j < cur.value->u.array.length; j++) {
         if (cur.value->u.array.values[j]->type != json_integer) {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
 
         char buffer[STRING_SIZE];
-        int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
-        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+        int check = snprintf(buffer, STRING_SIZE, "%lld", cur.value->u.array.values[j]->u.integer);
+        int added = snprintf(buffer, STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
 
         if (check == added) {
-            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%lld", cur.value->u.array.values[j]->u.integer);
 
             if (index >= STRING_SIZE-1) {
                 break;
@@ -214,7 +214,7 @@ struct run_config *parse_json_config(json_value *value)
         }
         else if (cur.value->type == json_integer)
         {
-            snprintf(argv[i+1], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
+            snprintf(argv[i+1], STRING_SIZE, "--%s=%lld", cur.name, cur.value->u.integer);
         }
         else if (cur.value->type == json_array)
         {
@@ -238,7 +238,7 @@ struct run_config *parse_json_config(json_value *value)
         exit(0);
     }
 
-    *rc = parse_runs(argc, argv);
+    *rc = parse_runs();
 
     for (int i = 0; i < argc; i++)
         free(argv[i]);
@@ -268,7 +268,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
         exit(0);
     }
 
-    parse_backend(argc, argv);
+    parse_backend();
 
 
     // Parse command-line arguments to in case of specified json file.
@@ -333,7 +333,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     else
     {
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), 1, ALIGN_CACHE);
-        rc[0][0] = parse_runs(argc, argv);
+        rc[0][0] = parse_runs();
         *nrc = 1;
     }
 
@@ -342,7 +342,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     return;
 }
 
-struct run_config parse_runs(int argc, char **argv)
+struct run_config parse_runs()
 {
     int pattern_found = 0;
 
@@ -511,9 +511,9 @@ struct run_config parse_runs(int argc, char **argv)
         rc.wrap = 1;
     }
 
-    if (rc.nruns == 0)
+    if (rc.nruns <= 0)
     {
-        error ("Number of runs not specified. Default is 10 ", WARN);
+        error ("Number of runs not specified or not positive. Using default of 10 ", WARN);
         rc.nruns = 10;
     }
 
@@ -557,7 +557,7 @@ struct run_config parse_runs(int argc, char **argv)
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
-    if (rc.omp_threads > max_threads)
+    if (rc.omp_threads > (unsigned int)max_threads)
     {
         error ("Too many OpenMP threads requested, using the max instead", WARN);
         rc.omp_threads = max_threads;
@@ -628,7 +628,7 @@ void static laplacian(int dim, int order, int n, struct run_config *rc)
 
     int max = pos[pos_len-1];
 
-    for (int i = 0; i < rc->pattern_len; i++) {
+    for (spSize_t i = 0; i < rc->pattern_len; i++) {
         rc->pattern[i] = 2;
     }
 
@@ -647,7 +647,7 @@ void static laplacian(int dim, int order, int n, struct run_config *rc)
     return;
 }
 
-void parse_backend(int argc, char **argv)
+void parse_backend()
 {
     err_file = stderr;
 
@@ -864,7 +864,7 @@ void parse_p(char* optarg, struct run_config *rc)
                 error("UNIFORM: Stride not parsed", 1);
 
             // Fill the pattern buffer
-            for (int i = 0; i < rc->pattern_len; i++)
+            for (spSize_t i = 0; i < rc->pattern_len; i++)
                 rc->pattern[i] = i*strideval;
 
             char *delta = strtok(NULL, ":");
@@ -996,7 +996,8 @@ void parse_p(char* optarg, struct run_config *rc)
             rc->pattern[0] = -1;
             size_t last = -1;
             ssize_t j;
-            for (int i = 0; i < rc->pattern_len; i++)
+            for (spSize_t i = 0; i < rc->pattern_len; i++)
+                //TODO: Rewrite serial kernel
             {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1)
                    rc->pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];

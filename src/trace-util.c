@@ -6,6 +6,8 @@
 #include "sp_alloc.h"
 #include "trace-util.h"
 
+//TODO: Remove. No longer used.
+#if 0
 void read_trace (struct trace *t, const char *filename)
 {
     FILE *fp = fopen(filename, "r");
@@ -92,3 +94,4 @@ void reweight_trace(struct trace t){
         t.in[i].cpct = cpct_accum;
     }
 }
+#endif

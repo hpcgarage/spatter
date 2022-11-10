@@ -77,7 +77,7 @@ struct run_config
     enum idx_type type;
     spSize_t generic_len;
     size_t wrap;
-    size_t nruns;
+    int nruns;
     char pattern_file[STRING_SIZE];
     char generator[STRING_SIZE];
     char name[STRING_SIZE];
@@ -117,7 +117,7 @@ struct backend_config
  *  @param argv Value passed to main
  */
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
-struct run_config parse_runs(int arrr, char **argv);
+struct run_config parse_runs();
 void error (char* what, int code);
 void print_run_config(struct run_config rc);
 #endif

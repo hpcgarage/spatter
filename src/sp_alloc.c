@@ -19,8 +19,8 @@ void check_size(size_t size) {
 }
 
 void check_safe_mult(size_t a, size_t b) {
-    int hi_bit_a = 0;
-    int hi_bit_b = 0;
+    unsigned int hi_bit_a = 0;
+    unsigned int hi_bit_b = 0;
 
     while (a >>= 1) hi_bit_a++;
     while (b >>= 1) hi_bit_b++;

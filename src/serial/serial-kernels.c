@@ -15,7 +15,9 @@ void gather_smallbuf_serial(
        //is hard to optimize out with a compiler
        sgData_t *tl = target[0] + pat_len*(i%target_len);
 
-       #pragma novector    
+#ifndef __clang__
+       #pragma novector
+#endif
        for (size_t j = 0; j < pat_len; j++) {
                tl[j] = sl[pat[j]];
            }
@@ -36,7 +38,9 @@ void scatter_smallbuf_serial(
            sgData_t *tl = target + delta * i;
            sgData_t *sl = source[0] + pat_len*(i%source_len);
 
-       #pragma novector 
+#ifndef __clang__
+       #pragma novector
+#endif
        for (size_t j = 0; j < pat_len; j++) {
                tl[pat[j]] = sl[j];
            }

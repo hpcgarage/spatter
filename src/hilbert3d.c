@@ -266,7 +266,7 @@ uint32_t *h_order_3d(uint64_t dim_len, uint64_t block)
         int z = indices[i] / blocked_dim / blocked_dim;
         int base = x*block + y*dim_len*block + z*dim_len*dim_len*block;
         int off = i * (block*block*block);
-        for (int j = 0; j < block*block*block; j++) {
+        for (unsigned int j = 0; j < block*block*block; j++) {
             new_indices[off+j] = base+cube[j];
         }
     }
