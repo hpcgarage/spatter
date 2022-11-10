@@ -1049,7 +1049,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             char *len = strtok(arg,":");
             if (!len)
                 error("UNIFORM: Index Length not found", 1);
-            if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
+            if (sscanf(len, "%zu", &(*pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
             *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
