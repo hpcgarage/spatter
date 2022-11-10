@@ -78,13 +78,13 @@ void initialize_argtable()
     malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
     // Benchmark Configuration
     malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[8] = pattern_gather  = arg_strn("t", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
-    malloc_argtable[9] = pattern_scatter = arg_strn("u", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[8] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
+    malloc_argtable[9] = pattern_scatter = arg_strn("h", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
     malloc_argtable[10] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]");
     malloc_argtable[11] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
     malloc_argtable[12] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[13] = delta_gather    = arg_strn("y", "delta gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[14] = delta_scatter   = arg_strn("z", "delta scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[13] = delta_gather    = arg_strn("x", "delta gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[14] = delta_scatter   = arg_strn("y", "delta scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
     malloc_argtable[15] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
     malloc_argtable[16] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
     malloc_argtable[17] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
