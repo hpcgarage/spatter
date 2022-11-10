@@ -30,7 +30,7 @@ int laplacian_test_delta() {
     return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
+int main() {
     if (laplacian_test() != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }

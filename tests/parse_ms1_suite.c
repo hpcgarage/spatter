@@ -68,7 +68,7 @@ int ms1_test(int indexLength, int gapLocationCount, int* gapLocations, int gapSi
         {
             currentValue++;
         }
-        if (currentValue != rc[0].pattern[i])
+        if ((unsigned long)currentValue != rc[0].pattern[i])
         {
             printf("Test failure on MS1, patterns do not match!\n Got pattern: ");
             print_long_unsigned_int_array(indexLength, rc[0].pattern);
@@ -81,7 +81,7 @@ int ms1_test(int indexLength, int gapLocationCount, int* gapLocations, int gapSi
     return EXIT_SUCCESS;
 }
 
-int main (int argc, char **argv)
+int main ()
 {
     int argc_ = 2;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);

@@ -5,9 +5,9 @@
 
 #define STRLEN (1024)
 
-int uniform_stride_test(int indexLength, int stride, int argc, char** argv)
+int uniform_stride_test(unsigned int indexLength, unsigned int stride, int argc, char** argv)
 {
-    int nrc = 0; 
+    int nrc = 0;
     struct run_config *rc = NULL;
 
     parse_args(argc, argv, &nrc, &rc);
@@ -24,7 +24,7 @@ int uniform_stride_test(int indexLength, int stride, int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < indexLength; i++)
+    for (unsigned int i = 0; i < indexLength; i++)
     {
         if (rc[0].pattern[i] != i * stride)
         {
@@ -39,7 +39,7 @@ int uniform_stride_test(int indexLength, int stride, int argc, char** argv)
 }
 
 
-int main (int argc, char **argv)
+int main ()
 {
     int argc_ = 2;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);
@@ -48,9 +48,9 @@ int main (int argc, char **argv)
     }
     strcpy(argv_[0], "./spatter");
     
-    for (int i = 1; i <= 16; i *= 2)
+    for (unsigned int i = 1; i <= 16; i *= 2)
     {
-        for (int j = 8; j <= 64; j *= 2)
+        for (unsigned int j = 8; j <= 64; j *= 2)
         {
             sprintf(argv_[1], "-pUNIFORM:%d:%d", j, i);
             if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)

@@ -253,7 +253,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 100)
     {
-        printf("Test failure on run_config suite: -R with argument 100 had incorrect value of %zu.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 100 had incorrect value of %d.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -263,7 +263,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 500)
     {
-        printf("Test failure on run_config suite: -R with argument 500 had incorrect value of %zu.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 500 had incorrect value of %d.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -273,7 +273,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 1000)
     {
-        printf("Test failure on run_config suite: -R with argument 1000 had incorrect value of %zu.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 1000 had incorrect value of %d.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -464,7 +464,7 @@ int other_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
     return EXIT_SUCCESS;
 }
 
-int main (int argc, char **argv)
+int main ()
 {
     int argc_ = 3;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);

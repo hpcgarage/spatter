@@ -30,7 +30,7 @@ int uniform_test_delta() {
     return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
+int main() {
     if (uniform_test_length_gap() != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }

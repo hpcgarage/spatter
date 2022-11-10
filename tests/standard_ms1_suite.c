@@ -94,7 +94,7 @@ int ms1_test_delta3() {
     return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
+int main() {
     if (ms1_test_1() != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }

@@ -5,7 +5,7 @@
 
 #define STRLEN (1024)
 
-int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int** patterns, int* counts, int argc, char** argv)
+int json_test(int runCount, char* kernel, int* patternLengths, int** patterns, int* counts, int argc, char** argv)
 {
     int nrc = 0;
     struct run_config *rc = NULL;
@@ -26,13 +26,13 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 
     for (int i = 0; i < runCount; i++)
     {
-        if (rc[i].pattern_len != patternLengths[i])
+        if (rc[i].pattern_len != (unsigned int)patternLengths[i])
         {
             printf("Test failure on JSON Parse: pattern length for run_config %d was %ld, expected %d.\n", i, rc[i].pattern_len, patternLengths[i]);
             return EXIT_FAILURE;
         }
 
-        if (rc[i].generic_len != counts[i])
+        if (rc[i].generic_len != (unsigned int)counts[i])
         {
             printf("Test failure on JSON Parse: counts for run_config %d was %ld, expected %d.\n", i, rc[i].generic_len, counts[i]);
             return EXIT_FAILURE;
@@ -58,7 +58,7 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 
         for (int j = 0; j < patternLengths[i]; j++)
         {
-            if (patterns[i][j] != rc[i].pattern[j])
+            if ((unsigned int)patterns[i][j] != rc[i].pattern[j])
             {
                 printf("Test failure on JSON Parse: pattern mismatch at index %d, got value %ld but expected %d.\n", j, rc[i].pattern[j], patterns[i][j]);
                 return EXIT_FAILURE;
@@ -71,7 +71,7 @@ int json_test(int runCount, char* kernel, int* strides, int* patternLengths, int
 }
 
 
-int main (int argc, char **argv)
+int main ()
 {
 #ifndef JSON_SRC
     printf("JSON SRC Directory not defined!\n");
@@ -83,14 +83,13 @@ int main (int argc, char **argv)
     asprintf(&argv_[0], "./spatter");
     asprintf(&argv_[1], "-pFILE=%s", JSON_SRC);
 
-    int strides[2]        = {1, 1};
     int patternLengths[2] = {16, 16};
     int pattern1[16]      = {1333, 0, 1, 2, 36, 37, 38, 72, 73, 74, 1296, 1297, 1298, 1332, 1334, 1368};
     int pattern2[16]      = {1333, 0, 1, 36, 37, 72, 73, 1296, 1297, 1332, 1368, 1369, 2592, 2593, 2628, 2629};
     int* patterns[2]      = {pattern1, pattern2};
     int counts[2]         = {1454647, 1454647};
 
-    if (json_test(2, "GATHER", strides, patternLengths, patterns, counts, argc_, argv_) != EXIT_SUCCESS) {
+    if (json_test(2, "GATHER", patternLengths, patterns, counts, argc_, argv_) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 

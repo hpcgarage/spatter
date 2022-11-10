@@ -5,7 +5,7 @@
 
 #define STRLEN (1024)
 
-int main (int argc, char **argv)
+int main ()
 {
     int nrc = 0;
     struct run_config *rc;
@@ -18,7 +18,6 @@ int main (int argc, char **argv)
 
     strcpy(argv_[0], "./spatter");
     strcpy(argv_[1], "-pUNIFORM:8:1");
-    argv[2] = NULL;
 
     parse_args(argc_, argv_, &nrc, &rc);
 
@@ -29,7 +28,7 @@ int main (int argc, char **argv)
     if (rc == NULL)
         printf("Test failure on Uniform Stride: failed to create or allocate run_config struct.\n");
 
-    int gold[8] = {0,1,2,3,4,5,6,7};
+    spIdx_t gold[8] = {0,1,2,3,4,5,6,7};
 
     for (int i = 0; i < 8; i++) {
         if (gold[i] != rc[0].pattern[i]) {

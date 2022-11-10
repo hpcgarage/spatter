@@ -25,13 +25,10 @@ int random_test(int seed, int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    // Be generous and give the test a relatively large margin of error all things considered
-    if (seed < 0 && time(NULL) - rc[0].random_seed > 5)
-    {
-        printf("Test failure on random argument: expected a random seed approximately near %ld but instead got %zu.\n", time(NULL), rc[0].random_seed);
-        return EXIT_FAILURE;
-    }
-    else if (seed >= 0 && rc[0].random_seed != seed)
+    // If this function is passed seed=-1, that means the seed it unset
+    // and should be random. We'l only check the cases where it is set
+    // explicitly.
+    if (seed >= 0 && rc[0].random_seed != (unsigned int)seed)
     {
         printf("Test failure on random argument: expected a random seed of %d but got a seed of %zu.\n", seed, rc[0].random_seed);
         return EXIT_FAILURE;
@@ -42,7 +39,7 @@ int random_test(int seed, int argc, char** argv)
 }
 
 
-int main (int argc, char **argv)
+int main ()
 {
     int argc_ = 3;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);
