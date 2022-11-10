@@ -1030,9 +1030,15 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
                 error("XKP: Dimension not parsed", 1);
 
             *pattern_len = 73;
+            
+            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
 
             // The default delta is 1
             *delta = 1;
+
+            if (!*deltas) {
+                *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
+            }
             *deltas[0] = *delta;
             *deltas_len = 1;
 
