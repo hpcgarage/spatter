@@ -19,7 +19,7 @@ int main (int argc, char **argv)
     strcpy(argv_[0], "./spatter");
     strcpy(argv_[1], "-hUNIFORM:8:1");
     strcpy(argv_[2], "-gUNIFORM:8:1");
-    strcpy(argv_[3], "-kSG");
+    strcpy(argv_[3], "-kGS");
 
     parse_args(argc_, argv_, &nrc, &rc);
 

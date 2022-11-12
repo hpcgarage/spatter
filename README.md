@@ -133,18 +133,18 @@ The second set of arguments are benchmark  configuration arguments, and these de
         See the section on Patterns. 
     -g, --pattern-gather=<Built-in pattern>
     -g, --pattern-gather=FILE=<config file>
-        See the section on Patterns. (Used with kernel=SG)
+        See the section on Patterns. (Used with kernel=GS)
     -h, --pattern-scatter=<Built-in pattern>
     -h, --pattern-scatter=FILE=<config file>
-        See the section on Patterns. (Used with kernel=SG)
+        See the section on Patterns. (Used with kernel=GS)
     -k, --kernel-name=<kernel>
         Specify the kernel you want to run [Default: Gather]
     -d, --delta=<delta[,delta,...]>
         Specify one or more deltas [Default: 8]
     -x, --delta-gather=<delta[,delta,...]>
-        Specify one or more deltas [Default: 8] (Used with kernel=SG)
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
     -y --delta-scatter=<delta[,delta,...]>
-        Specify one or more deltas [Default: 8] (Used with kernel=SG)
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
     -l, --count=<N>
         Number of Gathers or Scatters to do
     -w, --wrap=<N>

@@ -137,7 +137,7 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
 
-    if (rc.kernel == SG) {
+    if (rc.kernel == GS) {
         bytes_moved = sizeof(sgData_t) * rc.pattern_gather_len * rc.generic_len;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     }
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
 
-    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != SG) {
+    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != GS) {
         printf("Error: Unsupported kernel\n");
         exit(1);
     }
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
         size_t max_pattern_val;
         ssize_t pattern_delta;
 
-        if (rc2[i].kernel == SG) {
+        if (rc2[i].kernel == GS) {
             size_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
             size_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
             max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
         }
 
         size_t cur_target_size;
-        if (rc2[i].kernel == SG) {
+        if (rc2[i].kernel == GS) {
             cur_target_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*pattern_delta) * sizeof(sgData_t);
         }
         else {
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
             max_ptrs = rc2[i].omp_threads;
         }
 
-        if (rc2[i].kernel == SG) {
+        if (rc2[i].kernel == GS) {
             assert(rc2[i].pattern_gather_len == rc2[i].pattern_scatter_len);
             if (rc2[i].pattern_gather_len > max_pat_len) {
                 max_pat_len = rc2[i].pattern_gather_len;
@@ -579,7 +579,7 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
-                if (rc2[k].kernel == SG) {
+                if (rc2[k].kernel == GS) {
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
@@ -622,7 +622,7 @@ int main(int argc, char **argv)
 #endif
 
                 switch (rc2[k].kernel) {
-                    case SG:
+                    case GS:
                         /*
                         if (rc2[k].op == OP_COPY) {
                             //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
@@ -695,7 +695,7 @@ int main(int argc, char **argv)
                     case GATHER:
                         gather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
-                    case SG:
+                    case GS:
                         assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                         sg_smallbuf_serial(target.host_ptr, source.host_ptr, rc2[k].pattern_gather, rc2[k].pattern_scatter, rc2[k].pattern_gather_len, rc2[k].delta_gather, rc2[k].delta_scatter, rc2[k].generic_len, rc2[k].wrap);
                         break;
@@ -871,8 +871,8 @@ void emit_configs(struct run_config *rc, int nconfigs)
         case SCATTER:
             printf("\'kernel\':\'Scatter\', ");
             break;
-        case SG:
-            printf("\'kernel\':\'SG\', ");
+        case GS:
+            printf("\'kernel\':\'GS\', ");
             break;
         case INVALID_KERNEL:
             error ("Invalid kernel sent to emit_configs", ERROR);

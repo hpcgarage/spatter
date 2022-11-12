@@ -179,7 +179,7 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
             exit(1);
         }
     }
-    else if(kernel == SG)
+    else if(kernel == GS)
     {
         if (vector_len == 1)
             sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
@@ -837,7 +837,7 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
             exit(1);
         }
     }
-    else if(kernel == SG)
+    else if(kernel == GS)
     {
         if (vector_len == 1)
             sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);

@@ -142,7 +142,7 @@ int get_num_configs(json_value* value)
 
 void parse_json_kernel(json_object_entry cur, char** argv, int i)
 {
-    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "SG"))
+    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "GS"))
     {
         error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
         snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
@@ -371,8 +371,8 @@ struct run_config parse_runs(int argc, char **argv)
    if (kernelName->count > 0)
    {
         copy_str_ignore_leading_space(kernel_name, kernelName->sval[0]);
-        if (!strcasecmp("SG", kernel_name))
-            rc.kernel=SG;
+        if (!strcasecmp("GS", kernel_name))
+            rc.kernel=GS;
         else if (!strcasecmp("SCATTER", kernel_name))
             rc.kernel=SCATTER;
         else if (!strcasecmp("GATHER", kernel_name))
@@ -614,13 +614,13 @@ struct run_config parse_runs(int argc, char **argv)
         rc.stride_kernel = stride->ival[0];
 
     // VALIDATE ARGUMENTS
-    if (rc.kernel != SG && !pattern_found)
+    if (rc.kernel != GS && !pattern_found)
         error ("Please specify a pattern", ERROR);
 
-    if ((rc.kernel == SG && !pattern_scatter_found) || (rc.kernel == SG && !pattern_gather_found))
-        error ("Please specify a gather pattern and a scatter pattern for an SG kernel", ERROR);
+    if ((rc.kernel == GS && !pattern_scatter_found) || (rc.kernel == GS && !pattern_gather_found))
+        error ("Please specify a gather pattern and a scatter pattern for an GS kernel", ERROR);
 
-    if (rc.kernel == SG && (rc.pattern_gather_len != rc.pattern_scatter_len))
+    if (rc.kernel == GS && (rc.pattern_gather_len != rc.pattern_scatter_len))
         error ("Gather pattern and scatter pattern must have the same length", ERROR);
 
     if (rc.vector_len == 0)
@@ -658,7 +658,7 @@ struct run_config parse_runs(int argc, char **argv)
         sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
     else if (rc.kernel == GATHER)
         sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
-    else if (rc.kernel == SG)
+    else if (rc.kernel == GS)
         sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
 
     if (pattern_found)
@@ -759,11 +759,11 @@ void static laplacian(int dim, int order, int n, struct run_config *rc, int mode
         pattern = &rc->pattern;
         pattern_len = &rc->pattern_len;
     }
-    else if (mode == 1) { // Gather pattern (SG Kernel)
+    else if (mode == 1) { // Gather pattern (GS Kernel)
         pattern = &rc->pattern_gather;
         pattern_len = &rc->pattern_gather_len;
     }
-    else if (mode == 2) { // Scatter pattern (SG Kernel)
+    else if (mode == 2) { // Scatter pattern (GS Kernel)
         pattern = &rc->pattern_scatter;
         pattern_len = &rc->pattern_scatter_len;
     }
@@ -980,14 +980,14 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
         deltas = &rc->deltas_gather;
         deltas_len = &rc->deltas_len;
     }
-    else if (mode == 1) { // Gather pattern (SG Kernel)
+    else if (mode == 1) { // Gather pattern (GS Kernel)
         pattern = &rc->pattern_gather;
         pattern_len = &rc->pattern_gather_len;
         delta = &rc->delta_gather;
         deltas = &rc->deltas_gather;
         deltas_len = &rc->deltas_gather_len;
     }
-    else if (mode == 2) { // Scatter pattern (SG Kernel)
+    else if (mode == 2) { // Scatter pattern (GS Kernel)
         pattern = &rc->pattern_scatter;
         pattern_len = &rc->pattern_scatter_len;
         delta = &rc->delta_scatter;

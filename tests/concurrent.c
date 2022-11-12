@@ -4,7 +4,7 @@
 int uniform_concurrent_test() {
     for (int i = 1; i <= 10; i++) {
         char *command;
-        int ret = asprintf(&command, "../spatter -kSG -hUNIFORM:%d:%d -gUNIFORM:%d:%d ", i, i, i, i);
+        int ret = asprintf(&command, "../spatter -kGS -hUNIFORM:%d:%d -gUNIFORM:%d:%d ", i, i, i, i);
         if (ret == -1 || system(command) != EXIT_SUCCESS) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;

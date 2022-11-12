@@ -33,7 +33,7 @@ enum sg_kernel
     INVALID_KERNEL=0,
     SCATTER,
     GATHER,
-    SG,
+    GS,
 };
 
 enum sg_op
