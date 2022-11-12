@@ -179,7 +179,7 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
             exit(1);
         }
     }
-    else if(kernel == SG)
+    else if(kernel == GS)
     {
         if (vector_len == 1)
             sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
@@ -837,7 +837,7 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
             exit(1);
         }
     }
-    else if(kernel == SG)
+    else if(kernel == GS)
     {
         if (vector_len == 1)
             sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
@@ -874,3 +874,129 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
     return time_ms;
 
 }*/
+
+template<int V>
+__global__ void sg_block(double *source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_scat, spSize_t pat_len, size_t delta_gather, size_t delta_scatter, int wpt, char validate)
+{
+    __shared__ int idx_gath[V];
+    __shared__ int idx_scat[V];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    if (tid < V) {
+        idx_gath[tid] = pat_gath[tid];
+        idx_scat[tid] = pat_scat[tid];
+    }
+
+    int ngatherperblock = blockDim.x / V;
+    int nscatterperblock = ngatherperblock;
+
+    int gatherid = tid / V;
+    int scatterid = gatherid;
+
+    double *source_loc = source + (bid*ngatherperblock+gatherid)*delta_gather;
+    double *target_loc = target + (bid*nscatterperblock+scatterid)*delta_scatter;
+    
+    #ifdef VALIDATE
+    if (validate) {
+        final_gather_data_dev = source_loc[idx_gath[tid%V]];
+        return;
+    }
+    #endif
+    
+    target_loc[idx_scat[tid%V]] = source_loc[idx_gath[tid%V]];
+}
+
+#define INSTANTIATE3(V)\
+template __global__ void sg_block<V>(double* source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_scat, spSize_t pat_len, size_t delta_gather, size_t delta_scatter, int wpt, char validate);
+   
+//INSTANTIATE3(1);
+//INSTANTIATE3(2);
+//INSTANTIATE3(4);
+//INSTANTIATE3(5);
+INSTANTIATE3(8);
+INSTANTIATE3(16);
+INSTANTIATE3(32);
+INSTANTIATE3(64);
+INSTANTIATE3(73);
+INSTANTIATE3(128);
+INSTANTIATE3(256);
+INSTANTIATE3(512);
+INSTANTIATE3(1024);
+
+extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
+        double *source,
+        double *target,
+        struct run_config* rc,
+        sgIdx_t* pat_gath_dev,
+        sgIdx_t* pat_scat_dev,
+        int wpt,
+        int *final_block_idx,
+        int *final_thread_idx,
+        double *final_gather_data,
+        char validate)
+{
+    dim3 grid_dim, block_dim;
+    cudaEvent_t start, stop;
+
+    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
+    cudaMemcpy(pat_gath_dev, rc->pattern_gather, sizeof(sgIdx_t)*rc->pattern_gather_len, cudaMemcpyHostToDevice);
+    cudaMemcpy(pat_scat_dev, rc->pattern_scatter, sizeof(sgIdx_t)*rc->pattern_scatter_len, cudaMemcpyHostToDevice);
+
+    size_t delta_gather = rc->delta_gather;
+    size_t delta_scatter = rc->delta_scatter;
+
+    spSize_t pat_len = rc->pattern_gather_len;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaDeviceSynchronize();
+    cudaEventRecord(start);
+   
+    // KERNEL
+    if (pat_len == 8) {
+        sg_block<8><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 16) {
+        sg_block<16><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 32) {
+        sg_block<32><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 64) {
+        sg_block<64><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 73) {
+        sg_block<73><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 128) {
+        sg_block<128><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 256) {
+        sg_block<256><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 512) {
+        sg_block<512><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 1024) {
+        sg_block<1024><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    } else {
+        printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+    }
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) 
+        printf("Error: %s\n", cudaGetErrorString(err));        
+     
+    cudaMemcpyFromSymbol(final_block_idx, final_block_idx_dev, sizeof(int), 0, cudaMemcpyDeviceToHost);
+    cudaMemcpyFromSymbol(final_thread_idx, final_thread_idx_dev, sizeof(int), 0, cudaMemcpyDeviceToHost);
+
+
+    float time_ms = 0;
+    cudaEventElapsedTime(&time_ms, start, stop);
+    return time_ms; 
+}

@@ -33,7 +33,7 @@ enum sg_kernel
     INVALID_KERNEL=0,
     SCATTER,
     GATHER,
-    SG,
+    GS,
 };
 
 enum sg_op
@@ -68,13 +68,27 @@ struct run_config
 {
     // keep arrays at top so they are aligned
     spIdx_t *pattern;
+    spIdx_t *pattern_gather;
+    spIdx_t *pattern_scatter;
     size_t *deltas;
     size_t *deltas_ps;
+    size_t *deltas_gather;
+    size_t *deltas_gather_ps;
+    size_t *deltas_scatter;
+    size_t *deltas_scatter_ps;
     spSize_t pattern_len;
+    spSize_t pattern_gather_len;
+    spSize_t pattern_scatter_len;
     ssize_t delta;
     size_t deltas_len;
+    ssize_t delta_gather;
+    size_t deltas_gather_len;
+    ssize_t delta_scatter;
+    size_t deltas_scatter_len;
     enum sg_kernel kernel;
     enum idx_type type;
+    enum idx_type type_gather;
+    enum idx_type type_scatter;
     spSize_t generic_len;
     size_t wrap;
     size_t nruns;

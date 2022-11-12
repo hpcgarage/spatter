@@ -98,10 +98,14 @@ Usage:
  --validate                   TODO
  -a, --aggregate              Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)
  -c, --compress               TODO
- -p, --pattern=<pattern>      Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -p, --pattern=<pattern>      Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -g, --pattern-gather=<pattern> Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -h, --pattern-scatter=<pattern> Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
  -k, --kernel-name=<kernel>   Specify the kernel you want to run. [Default: Gather]
  -o, --op=<s>                 TODO
  -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
+ -x, --delta gather=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
+ -y, --delta scatter=<delta[,delta,...]> Specify one or more deltas. [Default: 8] 
  -l, --count=<n>              Number of Gathers or Scatters to perform.
  -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
@@ -127,10 +131,20 @@ The second set of arguments are benchmark  configuration arguments, and these de
     -p, --pattern=<Built-in pattern>
     -p, --pattern=FILE=<config file>
         See the section on Patterns. 
+    -g, --pattern-gather=<Built-in pattern>
+    -g, --pattern-gather=FILE=<config file>
+        See the section on Patterns. (Used with kernel=GS)
+    -h, --pattern-scatter=<Built-in pattern>
+    -h, --pattern-scatter=FILE=<config file>
+        See the section on Patterns. (Used with kernel=GS)
     -k, --kernel-name=<kernel>
         Specify the kernel you want to run [Default: Gather]
     -d, --delta=<delta[,delta,...]>
         Specify one or more deltas [Default: 8]
+    -x, --delta-gather=<delta[,delta,...]>
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
+    -y --delta-scatter=<delta[,delta,...]>
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
     -l, --count=<N>
         Number of Gathers or Scatters to do
     -w, --wrap=<N>
