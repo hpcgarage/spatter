@@ -21,4 +21,15 @@ void scatter_smallbuf_serial(
         size_t delta,
         size_t n,
         size_t source_len);
+
+void sg_smallbuf_serial(
+        sgData_t* restrict gather,
+        sgData_t* restrict scatter,
+        sgIdx_t* const restrict gather_pat,
+        sgIdx_t* const restrict scatter_pat,
+        size_t pat_len,
+        size_t delta_gather,
+        size_t delta_scatter,
+        size_t n,
+        size_t wrap);
 #endif

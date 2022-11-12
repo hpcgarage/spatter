@@ -1,23 +1,14 @@
-# Spatter 
-This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
+# Spatter  
 
-## Publications and Citing Spatter
+Spatter is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
 
-Please see our latest paper on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
+![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build.yml/badge.svg)
 
-Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating Gather and Scatter Performance on CPUs and GPUs. In The International Symposium on Memory Systems (pp. 209-222). September 2020.
-
-### Other recent publications 
-* [SC19 Student Research Competition Poster](https://sc19.supercomputing.org/proceedings/src_poster/src_poster_pages/spostg136.html) ([PDF](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_poster_sc19.pdf))
-* [SC19 poster abstract (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_abstract_sc19.pdf)
-
-### Slides 
-* [SC19 Georgia Tech Booth Talk (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_booth_talk_sc19.pdf)
 
 ## Purpose 
-For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do not reuse data much, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search  for new approaches to better utilize what little memory bandwidth is available. 
+For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do have much data reuse, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search for new approaches to better utilize whatever memory bandwidth is available.
 
-With this benchmark, we aim to characterize the performance of memory systems in a novel way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures. We will use these results to predict the impact of new memory access primitives. 
+With this benchmark, we aim to characterize the performance of memory systems in a new way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures.
 
 <!---
 ### Kernels
@@ -83,10 +74,14 @@ Usage:
  --validate                   TODO
  -a, --aggregate              Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)
  -c, --compress               TODO
- -p, --pattern=<pattern>      Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -p, --pattern=<pattern>      Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -g, --pattern-gather=<pattern> Valid wtih [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -h, --pattern-scatter=<pattern> Valid with [kernel-name: GS]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
  -k, --kernel-name=<kernel>   Specify the kernel you want to run. [Default: Gather]
  -o, --op=<s>                 TODO
  -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
+ -x, --delta gather=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
+ -y, --delta scatter=<delta[,delta,...]> Specify one or more deltas. [Default: 8] 
  -l, --count=<n>              Number of Gathers or Scatters to perform.
  -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
@@ -112,10 +107,20 @@ The second set of arguments are benchmark  configuration arguments, and these de
     -p, --pattern=<Built-in pattern>
     -p, --pattern=FILE=<config file>
         See the section on Patterns. 
+    -g, --pattern-gather=<Built-in pattern>
+    -g, --pattern-gather=FILE=<config file>
+        See the section on Patterns. (Used with kernel=GS)
+    -h, --pattern-scatter=<Built-in pattern>
+    -h, --pattern-scatter=FILE=<config file>
+        See the section on Patterns. (Used with kernel=GS)
     -k, --kernel-name=<kernel>
         Specify the kernel you want to run [Default: Gather]
     -d, --delta=<delta[,delta,...]>
         Specify one or more deltas [Default: 8]
+    -x, --delta-gather=<delta[,delta,...]>
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
+    -y --delta-scatter=<delta[,delta,...]>
+        Specify one or more deltas [Default: 8] (Used with kernel=GS)
     -l, --count=<N>
         Number of Gathers or Scatters to do
     -w, --wrap=<N>
@@ -222,3 +227,16 @@ For your convienience, we also provide a python script to help you create config
     {"kernel":"Gather", "pattern":(1,2,3,4), "count":4}
 ]
 ```
+
+## Publications and Citing Spatter
+
+Please see our paper on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
+
+Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating Gather and Scatter Performance on CPUs and GPUs. In The International Symposium on Memory Systems (pp. 209-222). September 2020.
+
+### Other publications
+* [SC19 Student Research Competition Poster](https://sc19.supercomputing.org/proceedings/src_poster/src_poster_pages/spostg136.html) ([PDF](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_poster_sc19.pdf))
+* [SC19 poster abstract (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_abstract_sc19.pdf)
+
+### Slides
+* [SC19 Georgia Tech Booth Talk (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_booth_talk_sc19.pdf)
