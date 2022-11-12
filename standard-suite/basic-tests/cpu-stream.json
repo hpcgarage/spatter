@@ -1,4 +1,5 @@
 [
 	{"pattern": "UNIFORM:8:1:NR", "kernel": "Scatter", "count": 16777216},
-	{"pattern": "UNIFORM:8:1:NR", "kernel": "Gather", "count": 16777216}
+	{"pattern": "UNIFORM:8:1:NR", "kernel": "Gather", "count": 16777216},
+	{"pattern-gather": "UNIFORM:8:1:NR", "pattern-scatter": "UNIFORM:8:1:NR", "kernel": "GS", "count": 16777216}
 ]

@@ -68,6 +68,8 @@ import ntpath #get_arch
 import os     #get_arch
 import math   #get_gap
 from io import StringIO
+import matplotlib.pyplot as plt
+import pickle
 
 ALLARCH = list(GPU_NAMES.keys()) + list(CPU_NAMES.keys())
 ALLNAMES = {**GPU_NAMES, **CPU_NAMES}
@@ -160,3 +162,58 @@ def file2df(filename, restrict_pat_len=0, archtype=None):
         table = table[table['pat_len'] == 256]
 
     return table
+
+def ustride_plot(df_custom, kernel):
+    
+    # Concatenate the new data to the old data
+    with open('pattern_results_ext.pkl', 'rb') as file:
+        df = pickle.load(file)
+    
+    if df_custom is not None:
+        df = pd.concat([df, df_custom], ignore_index=True)
+    
+    # We ran with many different length patterns to see which was best. 8 is good for CPUs 
+    # and 256 is good for GPUs. Set N above to use a different set of experiments.
+    if df_custom is None or 'customcpu' in set(df_custom['arch']):
+        patlen = 8
+    else: 
+        patlen = 256
+    df = df[df['pat_len'] == patlen]
+
+    # Just keep the ustride experiments from the old data
+    df = df[df['experiment'] == 'ustride']
+
+    # Remove Cascade Lake as it's very similar to Skylake
+    df = df[df['arch']!='clx']
+
+
+    df_ustride = df[df['kernel']==kernel]
+    fig, ax = plt.subplots()
+    ax.set_yscale('log')
+    ax.set_title(f'Uniform Stride Experiment - {kernel}')
+    ax.set_ylabel('Utilized Bandwidth (MB/s)')
+    ax.set_xlabel('Stride')
+    
+    for arch in set(df['arch']):    
+        if (arch == 'customcpu' or arch == 'customgpu'):
+            edgecolor = 'black'
+            linecolor = 'black'
+        else:
+            edgecolor = None
+            linecolor = COLORS[arch]
+        label = ALLNAMES[arch]
+            
+        yvals = df_ustride[df_ustride['arch']==arch]['bw']
+        xvals = range(1, len(yvals)+1)
+        sym = SYMBOLS[arch]
+        ax.scatter(xvals, yvals, color=COLORS[arch], edgecolors=edgecolor, label=label, marker=sym)
+        ax.plot(xvals, yvals, color=linecolor, linewidth=0.7)
+        
+    string_labels = []
+    for i in range(0,len(yvals)):
+        string_labels.append(r"$2^{%d}$" % i)
+
+    plt.xticks(range(1,len(yvals)+1),string_labels)
+    
+    ax.legend()
+    plt.show()
