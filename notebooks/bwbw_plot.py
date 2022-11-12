@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from colour import Color
-from cycler import cycler
+#from colour import Color
+#from cycler import cycler
 #import model_bw as model
 
 if (len(sys.argv) > 1):
@@ -182,16 +182,16 @@ for g in STRIDES:
 # Plot application results
 for ex in EXPER.keys():
 
-    # Generate color list for cycler
-    start_color = Color('#00adff')
-    end_color   = Color('#03034f')
-    n_colors    = len(EXPER[ex])
-    #color_list = list(start_color.range_to(end_color, len(EXPER.keys())))
-    color_list = list(start_color.range_to(end_color,n_colors))
-    color_list = [c.hex for c in color_list]
-    color_list = np.repeat(color_list, len(PLATFORMS)+2)
-    ax.set_prop_cycle(cycler('color', color_list))
-    #print(color_list)
+    ## Generate color list for cycler
+    #start_color = Color('#00adff')
+    #end_color   = Color('#03034f')
+    #n_colors    = len(EXPER[ex])
+    ##color_list = list(start_color.range_to(end_color, len(EXPER.keys())))
+    #color_list = list(start_color.range_to(end_color,n_colors))
+    #color_list = [c.hex for c in color_list]
+    #color_list = np.repeat(color_list, len(PLATFORMS)+2)
+    #ax.set_prop_cycle(cycler('color', color_list))
+    ##print(color_list)
 
     i = 0
     for con in EXPER[ex]:

@@ -189,6 +189,7 @@ def ustride_plot(df_custom, kernel):
 
     df_ustride = df[df['kernel']==kernel]
     fig, ax = plt.subplots()
+    fig.set_size_inches(6, 6)
     ax.set_yscale('log')
     ax.set_title(f'Uniform Stride Experiment - {kernel}')
     ax.set_ylabel('Utilized Bandwidth (MB/s)')
@@ -207,7 +208,7 @@ def ustride_plot(df_custom, kernel):
         xvals = range(1, len(yvals)+1)
         sym = SYMBOLS[arch]
         ax.scatter(xvals, yvals, color=COLORS[arch], edgecolors=edgecolor, label=label, marker=sym)
-        ax.plot(xvals, yvals, color=linecolor, linewidth=0.7)
+        ax.plot(xvals, yvals, color=linecolor, linewidth=0.7, label='_nolegend_')
         
     string_labels = []
     for i in range(0,len(yvals)):
