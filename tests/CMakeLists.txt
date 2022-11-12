@@ -17,6 +17,7 @@ set( TESTAPPS #list apps
         standard_ms1_suite
         standard_laplacian_suite
         concurrent
+        standard_suite
     )
 
 file(GLOB src

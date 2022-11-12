@@ -138,7 +138,7 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
     double actual_bandwidth = 0;
 
     if (rc.kernel == GS) {
-        bytes_moved = sizeof(sgData_t) * rc.pattern_gather_len * rc.generic_len;
+        bytes_moved = sizeof(sgData_t) * (rc.pattern_scatter_len + rc.pattern_gather_len) * rc.generic_len;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     }
     else {

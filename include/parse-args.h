@@ -131,7 +131,7 @@ struct backend_config
  *  @param argv Value passed to main
  */
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
-struct run_config parse_runs(int arrr, char **argv);
+struct run_config *parse_runs(int arrr, char **argv);
 void error (char* what, int code);
 void print_run_config(struct run_config rc);
 #endif
