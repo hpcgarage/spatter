@@ -12,9 +12,11 @@ set( TESTAPPS #list apps
         parse_json_suite
         parse_run_config_suite
         parse_random_suite
+        parse_concurrent
         standard_uniform_suite
         standard_ms1_suite
         standard_laplacian_suite
+        concurrent
     )
 
 file(GLOB src
