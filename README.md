@@ -24,7 +24,7 @@ Concurrent Gather/Scatter:
     
 ![Gather Comparison](.resources/sgexplain2.png?raw=true "Gather Comparison")
     
-This diagram depicts the full Scatter+Gather. Gather performs on the top half of this diagram and Scatter the second half.
+This diagram depicts a combined Gather/Scatter. Gather performs on the top half of this diagram and Scatter the second half.
 
 ## Building
 CMake is required to build Spatter
