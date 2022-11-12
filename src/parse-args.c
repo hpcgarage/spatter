@@ -189,7 +189,7 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
 struct run_config *parse_json_config(json_value *value)
 {
 
-    struct run_config *rc = (struct run_config *)malloc(sizeof(struct run_config));
+    struct run_config *rc = (struct run_config *)calloc(1,sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -244,7 +244,7 @@ struct run_config *parse_json_config(json_value *value)
         exit(0);
     }
 
-    *rc = parse_runs(argc, argv);
+    rc = parse_runs(argc, argv);
 
     for (int i = 0; i < argc; i++)
         free(argv[i]);
@@ -340,7 +340,7 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     else
     {
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), 1, ALIGN_CACHE);
-        rc[0][0] = parse_runs(argc, argv);
+        rc[0][0] = *parse_runs(argc, argv);
         *nrc = 1;
     }
 
@@ -349,36 +349,36 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     return;
 }
 
-struct run_config parse_runs(int argc, char **argv)
+struct run_config *parse_runs(int argc, char **argv)
 {
     int pattern_found = 0;
     int pattern_scatter_found = 0;
     int pattern_gather_found = 0;
 
-    struct run_config rc = {0};
-    rc.delta = -1;
-    rc.delta_gather = -1;
-    rc.delta_scatter = -1;
-    rc.stride_kernel = -1;
-    rc.ro_block = 1;
-    rc.ro_order = NULL;
+    struct run_config *rc = (struct run_config *)calloc(1, sizeof(struct run_config));
+    rc->delta = -1;
+    rc->delta_gather = -1;
+    rc->delta_scatter = -1;
+    rc->stride_kernel = -1;
+    rc->ro_block = 1;
+    rc->ro_order = NULL;
 #ifdef USE_OPENMP
-    rc.omp_threads = omp_get_max_threads();
+    rc->omp_threads = omp_get_max_threads();
 #else
-    rc.omp_threads = 1;
+    rc->omp_threads = 1;
 #endif
-    rc.kernel = INVALID_KERNEL;
-    safestrcopy(rc.name,"NONE");
+    rc->kernel = INVALID_KERNEL;
+    safestrcopy(rc->name,"NONE");
 
    if (kernelName->count > 0)
    {
         copy_str_ignore_leading_space(kernel_name, kernelName->sval[0]);
         if (!strcasecmp("GS", kernel_name))
-            rc.kernel=GS;
+            rc->kernel=GS;
         else if (!strcasecmp("SCATTER", kernel_name))
-            rc.kernel=SCATTER;
+            rc->kernel=SCATTER;
         else if (!strcasecmp("GATHER", kernel_name))
-            rc.kernel=GATHER;
+            rc->kernel=GATHER;
         else
         {
             char output[STRING_SIZE];
@@ -391,9 +391,9 @@ struct run_config parse_runs(int argc, char **argv)
    {
         copy_str_ignore_leading_space(op_string, op->sval[0]);
         if (!strcasecmp("COPY", op_string))
-            rc.op = OP_COPY;
+            rc->op = OP_COPY;
         else if (!strcasecmp("ACCUM", op_string))
-            rc.op = OP_ACCUM;
+            rc->op = OP_ACCUM;
         else
             error("Unrecognzied op type", ERROR);
    }
@@ -403,61 +403,61 @@ struct run_config parse_runs(int argc, char **argv)
         // Parsing the seed parameter
         // If no argument was passed, use the current time in seconds since the epoch as the random seed
         if (random_arg->ival[0] == -1)
-            rc.random_seed = time(NULL);
+            rc->random_seed = time(NULL);
         else
-            //sscanf(optarg, "%zu", &rc.random_seed);
-            rc.random_seed = random_arg->ival[0];
+            //sscanf(optarg, "%zu", rc->random_seed);
+            rc->random_seed = random_arg->ival[0];
    }
 
     if (omp_threads->count > 0)
-        rc.omp_threads = omp_threads->ival[0];
+        rc->omp_threads = omp_threads->ival[0];
 
     if (vector_len->count > 0)
     {
-        rc.vector_len = vector_len->ival[0];
-        if (rc.vector_len < 1)
+        rc->vector_len = vector_len->ival[0];
+        if (rc->vector_len < 1)
             error("Invalid vector len!", ERROR);
     }
 
     if (runs->count > 0)
-        rc.nruns = runs->ival[0];
+        rc->nruns = runs->ival[0];
 
     if (wrap->count > 0)
-        rc.wrap = wrap->ival[0];
+        rc->wrap = wrap->ival[0];
 
     if (count->count > 0)
-        rc.generic_len = count->ival[0];
+        rc->generic_len = count->ival[0];
 
     if (local_work_size->count > 0)
-        rc.local_work_size = local_work_size->ival[0];
+        rc->local_work_size = local_work_size->ival[0];
 
     if (shared_memory->count > 0)
-        rc.shmem = shared_memory->ival[0];
+        rc->shmem = shared_memory->ival[0];
 
     if (name->count > 0)
-        copy_str_ignore_leading_space(rc.name, name->sval[0]);
+        copy_str_ignore_leading_space(rc->name, name->sval[0]);
 
     if (pattern->count > 0)
     {
-        copy_str_ignore_leading_space(rc.generator, pattern->sval[0]);
-        //char* filePtr = strstr(rc.generator, "FILE");
+        copy_str_ignore_leading_space(rc->generator, pattern->sval[0]);
+        //char* filePtr = strstr(rc->generator, "FILE");
         //if (filePtr)
-        //    safestrcopy(rc.generator, filePtr);
-        parse_p(rc.generator, &rc, 0);
+        //    safestrcopy(rc->generator, filePtr);
+        parse_p(rc->generator, rc, 0);
         pattern_found = 1;
     }
 
     if (pattern_gather->count > 0)
     {
-        copy_str_ignore_leading_space(rc.generator, pattern_gather->sval[0]);
-        parse_p(rc.generator, &rc, 1);
+        copy_str_ignore_leading_space(rc->generator, pattern_gather->sval[0]);
+        parse_p(rc->generator, rc, 1);
         pattern_gather_found = 1;
     }
 
     if (pattern_scatter->count > 0)
     {
-        copy_str_ignore_leading_space(rc.generator, pattern_scatter->sval[0]);
-        parse_p(rc.generator, &rc, 2);
+        copy_str_ignore_leading_space(rc->generator, pattern_scatter->sval[0]);
+        parse_p(rc->generator, rc, 2);
         pattern_scatter_found = 1;
     }
 
@@ -486,26 +486,26 @@ struct run_config parse_runs(int argc, char **argv)
                 error("Failed to parse pattern", ERROR);
         }
 
-        rc.deltas = mydeltas;
-        rc.deltas_ps = mydeltas_ps;
-        rc.deltas_len = read;
+        rc->deltas = mydeltas;
+        rc->deltas_ps = mydeltas_ps;
+        rc->deltas_len = read;
 
         // rotate
-        for (size_t i = 0; i < rc.deltas_len; i++)
-            rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
+        for (size_t i = 0; i < rc->deltas_len; i++)
+            rc->deltas_ps[i] = rc->deltas[((i-1)+rc->deltas_len)%rc->deltas_len];
 
         // compute prefix-sum
-        for (size_t i = 1; i < rc.deltas_len; i++)
-            rc.deltas_ps[i] += rc.deltas_ps[i-1];
+        for (size_t i = 1; i < rc->deltas_len; i++)
+            rc->deltas_ps[i] += rc->deltas_ps[i-1];
 
         // compute max
-        size_t m = rc.deltas_ps[0];
-        for (size_t i = 1; i < rc.deltas_len; i++)
+        size_t m = rc->deltas_ps[0];
+        for (size_t i = 1; i < rc->deltas_len; i++)
         {
-            if (rc.deltas_ps[i] > m)
-                m = rc.deltas_ps[i];
+            if (rc->deltas_ps[i] > m)
+                m = rc->deltas_ps[i];
         }
-        rc.delta = m;
+        rc->delta = m;
     }
 
    if (delta_gather->count > 0)
@@ -533,26 +533,26 @@ struct run_config parse_runs(int argc, char **argv)
                 error("Failed to parse pattern", ERROR);
         }
 
-        rc.deltas_gather = mydeltas_gather;
-        rc.deltas_gather_ps = mydeltas_gather_ps;
-        rc.deltas_gather_len = read_gather;
+        rc->deltas_gather = mydeltas_gather;
+        rc->deltas_gather_ps = mydeltas_gather_ps;
+        rc->deltas_gather_len = read_gather;
 
         // rotate
-        for (size_t i = 0; i < rc.deltas_gather_len; i++)
-            rc.deltas_gather_ps[i] = rc.deltas_gather[((i-1)+rc.deltas_gather_len)%rc.deltas_gather_len];
+        for (size_t i = 0; i < rc->deltas_gather_len; i++)
+            rc->deltas_gather_ps[i] = rc->deltas_gather[((i-1)+rc->deltas_gather_len)%rc->deltas_gather_len];
 
         // compute prefix-sum
-        for (size_t i = 1; i < rc.deltas_gather_len; i++)
-            rc.deltas_gather_ps[i] += rc.deltas_gather_ps[i-1];
+        for (size_t i = 1; i < rc->deltas_gather_len; i++)
+            rc->deltas_gather_ps[i] += rc->deltas_gather_ps[i-1];
 
         // compute max
-        size_t m = rc.deltas_gather_ps[0];
-        for (size_t i = 1; i < rc.deltas_gather_len; i++)
+        size_t m = rc->deltas_gather_ps[0];
+        for (size_t i = 1; i < rc->deltas_gather_len; i++)
         {
-            if (rc.deltas_gather_ps[i] > m)
-                m = rc.deltas_gather_ps[i];
+            if (rc->deltas_gather_ps[i] > m)
+                m = rc->deltas_gather_ps[i];
         }
-        rc.delta_gather = m;
+        rc->delta_gather = m;
     }
 
     if (delta_scatter->count > 0)
@@ -580,152 +580,152 @@ struct run_config parse_runs(int argc, char **argv)
                 error("Failed to parse pattern", ERROR);
         }
 
-        rc.deltas_scatter = mydeltas_scatter;
-        rc.deltas_scatter_ps = mydeltas_scatter_ps;
-        rc.deltas_scatter_len = read_scatter;
+        rc->deltas_scatter = mydeltas_scatter;
+        rc->deltas_scatter_ps = mydeltas_scatter_ps;
+        rc->deltas_scatter_len = read_scatter;
 
         // rotate
-        for (size_t i = 0; i < rc.deltas_scatter_len; i++)
-            rc.deltas_scatter_ps[i] = rc.deltas_scatter[((i-1)+rc.deltas_scatter_len)%rc.deltas_scatter_len];
+        for (size_t i = 0; i < rc->deltas_scatter_len; i++)
+            rc->deltas_scatter_ps[i] = rc->deltas_scatter[((i-1)+rc->deltas_scatter_len)%rc->deltas_scatter_len];
 
         // compute prefix-sum
-        for (size_t i = 1; i < rc.deltas_scatter_len; i++)
-            rc.deltas_scatter_ps[i] += rc.deltas_scatter_ps[i-1];
+        for (size_t i = 1; i < rc->deltas_scatter_len; i++)
+            rc->deltas_scatter_ps[i] += rc->deltas_scatter_ps[i-1];
 
         // compute max
-        size_t m = rc.deltas_scatter_ps[0];
-        for (size_t i = 1; i < rc.deltas_scatter_len; i++)
+        size_t m = rc->deltas_scatter_ps[0];
+        for (size_t i = 1; i < rc->deltas_scatter_len; i++)
         {
-            if (rc.deltas_scatter_ps[i] > m)
-                m = rc.deltas_scatter_ps[i];
+            if (rc->deltas_scatter_ps[i] > m)
+                m = rc->deltas_scatter_ps[i];
         }
-        rc.delta_scatter = m;
+        rc->delta_scatter = m;
     }
 
 
     if (morton->count > 0)
-        rc.ro_morton = morton->ival[0];
+        rc->ro_morton = morton->ival[0];
 
     if (hilbert->count > 0)
-        rc.ro_hilbert = hilbert->ival[0];
+        rc->ro_hilbert = hilbert->ival[0];
 
     if (roblock->count > 0)
-        rc.ro_block = roblock->ival[0];
+        rc->ro_block = roblock->ival[0];
 
     if (stride->count > 0)
-        rc.stride_kernel = stride->ival[0];
+        rc->stride_kernel = stride->ival[0];
 
     // VALIDATE ARGUMENTS
-    if (rc.kernel != GS && !pattern_found)
+    if (rc->kernel != GS && !pattern_found)
         error ("Please specify a pattern", ERROR);
 
-    if ((rc.kernel == GS && !pattern_scatter_found) || (rc.kernel == GS && !pattern_gather_found))
+    if ((rc->kernel == GS && !pattern_scatter_found) || (rc->kernel == GS && !pattern_gather_found))
         error ("Please specify a gather pattern and a scatter pattern for an GS kernel", ERROR);
 
-    if (rc.kernel == GS && (rc.pattern_gather_len != rc.pattern_scatter_len))
+    if (rc->kernel == GS && (rc->pattern_gather_len != rc->pattern_scatter_len))
         error ("Gather pattern and scatter pattern must have the same length", ERROR);
 
-    if (rc.vector_len == 0)
+    if (rc->vector_len == 0)
     {
         error ("Vector length not set. Default is 1", WARN);
-        rc.vector_len = 1;
+        rc->vector_len = 1;
     }
 
-    if (rc.wrap == 0)
+    if (rc->wrap == 0)
     {
         error ("length of smallbuf not specified. Default is 1 (slot of size pattern_len elements)", WARN);
-        rc.wrap = 1;
+        rc->wrap = 1;
     }
 
-    if (rc.nruns == 0)
+    if (rc->nruns == 0)
     {
         error ("Number of runs not specified. Default is 10 ", WARN);
-        rc.nruns = 10;
+        rc->nruns = 10;
     }
 
-    if (rc.generic_len == 0)
+    if (rc->generic_len == 0)
     {
         error ("Length not specified. Default is 1024 (gathers/scatters)", WARN);
-        rc.generic_len = 1024;
+        rc->generic_len = 1024;
     }
 
-    if (rc.kernel == INVALID_KERNEL)
+    if (rc->kernel == INVALID_KERNEL)
     {
         error("Kernel unspecified, guess GATHER", WARN);
-        rc.kernel = GATHER;
+        rc->kernel = GATHER;
         safestrcopy(kernel_name, "gather");
     }
 
-    if (rc.kernel == SCATTER)
-        sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
-    else if (rc.kernel == GATHER)
-        sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
-    else if (rc.kernel == GS)
-        sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
+    if (rc->kernel == SCATTER)
+        sprintf(kernel_name, "%s%zu", "scatter", rc->vector_len);
+    else if (rc->kernel == GATHER)
+        sprintf(kernel_name, "%s%zu", "gather", rc->vector_len);
+    else if (rc->kernel == GS)
+        sprintf(kernel_name, "%s%zu", "sg", rc->vector_len);
 
     if (pattern_found)
     {
-        if (rc.delta <= -1)
+        if (rc->delta <= -1)
         {
             error("delta not specified, default is 8\n", WARN);
-            rc.delta = 8;
-            rc.deltas_len = 1;
+            rc->delta = 8;
+            rc->deltas_len = 1;
         }
     }
 
     if (pattern_gather_found)
     {
-        if (rc.delta_gather <= -1)
+        if (rc->delta_gather <= -1)
         {
             error("delta gather not specified, default is 8\n", WARN);
-            rc.delta_gather = 8;
-            rc.deltas_gather_len = 1;
+            rc->delta_gather = 8;
+            rc->deltas_gather_len = 1;
         }
     }
 
     if (pattern_scatter_found)
     {
-        if (rc.delta_scatter <= -1)
+        if (rc->delta_scatter <= -1)
         {
             error("delta scatter not specified, default is 8\n", WARN);
-            rc.delta_scatter = 8;
-            rc.deltas_scatter_len = 1;
+            rc->delta_scatter = 8;
+            rc->deltas_scatter_len = 1;
         }
     }
 
-    if (rc.op != OP_COPY)
+    if (rc->op != OP_COPY)
         error("OP must be OP_COPY", WARN);
 
-    if (!strcasecmp(rc.name, "NONE"))
+    if (!strcasecmp(rc->name, "NONE"))
     {
-        if (rc.type != CUSTOM)
-            safestrcopy(rc.name, rc.generator);
+        if (rc->type != CUSTOM)
+            safestrcopy(rc->name, rc->generator);
         else
-            safestrcopy(rc.name, "CUSTOM");
+            safestrcopy(rc->name, "CUSTOM");
     }
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
-    if (rc.omp_threads > max_threads)
+    if (rc->omp_threads > max_threads)
     {
         error ("Too many OpenMP threads requested, using the max instead", WARN);
-        rc.omp_threads = max_threads;
+        rc->omp_threads = max_threads;
     }
-    if (rc.omp_threads == 0)
+    if (rc->omp_threads == 0)
     {
         error ("Number of OpenMP threads not specified, using the max", WARN);
-        rc.omp_threads = max_threads;
+        rc->omp_threads = max_threads;
     }
 #else
-    if (rc.omp_threads > 1)
+    if (rc->omp_threads > 1)
         error ("Compiled without OpenMP support but requsted more than 1 thread, using 1 instead", WARN);
 #endif
 
 #if defined USE_CUDA || defined USE_OPENCL
-    if (rc.local_work_size == 0)
+    if (rc->local_work_size == 0)
     {
         error ("Local_work_size not set. Default is 1", WARN);
-        rc.local_work_size = 1;
+        rc->local_work_size = 1;
     }
 #endif
     return rc;
@@ -976,25 +976,25 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
     size_t *deltas_len;
 
     if (mode == 0) { // Normal pattern
-        pattern = &rc->pattern;
+        pattern     = &rc->pattern;
         pattern_len = &rc->pattern_len;
-        delta = &rc->delta;
-        deltas = &rc->deltas_gather;
-        deltas_len = &rc->deltas_len;
+        delta       = &rc->delta;
+        deltas      = &rc->deltas_gather;
+        deltas_len  = &rc->deltas_len;
     }
     else if (mode == 1) { // Gather pattern (GS Kernel)
-        pattern = &rc->pattern_gather;
+        pattern     = &rc->pattern_gather;
         pattern_len = &rc->pattern_gather_len;
-        delta = &rc->delta_gather;
-        deltas = &rc->deltas_gather;
-        deltas_len = &rc->deltas_gather_len;
+        delta       = &rc->delta_gather;
+        deltas      = &rc->deltas_gather;
+        deltas_len  = &rc->deltas_gather_len;
     }
     else if (mode == 2) { // Scatter pattern (GS Kernel)
-        pattern = &rc->pattern_scatter;
+        pattern     = &rc->pattern_scatter;
         pattern_len = &rc->pattern_scatter_len;
-        delta = &rc->delta_scatter;
-        deltas = &rc->deltas_scatter;
-        deltas_len = &rc->deltas_scatter_len;
+        delta       = &rc->delta_scatter;
+        deltas      = &rc->deltas_scatter;
+        deltas_len  = &rc->deltas_scatter_len;
     }
     else {
         printf("parse_p: invalid mode %d\n", mode);
@@ -1038,7 +1038,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             // The default delta is 1
             *delta = 1;
 
-            if (!*deltas) {
+            if (!(*deltas)) {
                 *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
             }
             *deltas[0] = *delta;
@@ -1077,7 +1077,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             char *delta2 = strtok(NULL, ":");
             if (delta2)
             {
-                if (!deltas) {
+                if (!*deltas) {
                     *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
                 }
                 *deltas_len = 1;
