@@ -297,6 +297,14 @@ int main(int argc, char **argv)
     if (compress_flag) {
         for (int i = 0; i < nrc; i++) {
             compress_indices(rc[i].pattern, rc[i].pattern_len);
+            
+            if (rc[i].kernel == GS || rc[i].kernel == MULTISCATTER) {
+                compress_indices(rc[i].pattern_scatter, rc[i].pattern_scatter_len);
+            }
+       
+            if (rc[i].kernel == GS || rc[i].kernel == MULTIGATHER) {
+                compress_indices(rc[i].pattern_gather, rc[i].pattern_gather_len);
+            }
         }
     }
 
@@ -374,7 +382,25 @@ int main(int argc, char **argv)
         size_t max_pattern_val;
         ssize_t pattern_delta;
 
-        if (rc2[i].kernel == GS) {
+        if (rc2[i].kernel == MULTISCATTER) {
+            size_t max_pattern_val_outer = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
+            size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
+
+            assert(rc2[i].pattern_len > max_pattern_val_inner);
+
+            max_pattern_val = max_pattern_val_outer >= max_pattern_val_inner ? max_pattern_val_outer : max_pattern_val_inner;
+            pattern_delta = rc2[i].delta >= rc2[i].delta_scatter ? rc2[i].delta : rc2[i].delta_scatter;
+        }
+        else if (rc2[i].kernel == MULTIGATHER) {
+            size_t max_pattern_val_outer = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
+            size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
+
+            assert(rc2[i].pattern_len > max_pattern_val_inner);
+
+            max_pattern_val = max_pattern_val_outer >= max_pattern_val_inner ? max_pattern_val_outer : max_pattern_val_inner;
+            pattern_delta = rc2[i].delta >= rc2[i].delta_gather ? rc2[i].delta : rc2[i].delta_gather;
+        }
+        else if (rc2[i].kernel == GS) {
             size_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
             size_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
             max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
@@ -412,7 +438,23 @@ int main(int argc, char **argv)
             max_ptrs = rc2[i].omp_threads;
         }
 
-        if (rc2[i].kernel == GS) {
+        if (rc2[i].kernel == MULTISCATTER) {
+            if (rc2[i].pattern_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_len;
+            }
+            if (rc2[i].pattern_scatter_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_scatter_len;
+            }
+        }
+        else if (rc2[i].kernel == MULTIGATHER) {
+            if (rc2[i].pattern_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_len;
+            }
+            if (rc2[i].pattern_gather_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_gather_len;
+            }
+        }
+        else if (rc2[i].kernel == GS) {
             assert(rc2[i].pattern_gather_len == rc2[i].pattern_scatter_len);
             if (rc2[i].pattern_gather_len > max_pat_len) {
                 max_pat_len = rc2[i].pattern_gather_len;
@@ -423,7 +465,6 @@ int main(int argc, char **argv)
                 max_pat_len = rc2[i].pattern_len;
             }
         }
-
 
 
         if (rc2[i].ro_morton == 1) {
@@ -630,8 +671,6 @@ int main(int argc, char **argv)
 
                 switch (rc2[k].kernel) {
                     case MULTISCATTER:
-                      printf("TBD: OpenMP MultiScatter\n");
-                      
                       if (rc2[k].random_seed >= 1) {
                         multiscatter_smallbuf_random(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                       }
@@ -640,8 +679,6 @@ int main(int argc, char **argv)
                       }
                       break;
                     case MULTIGATHER:
-                      printf("TBD: OpenMP MultiGather\n");
-
                       if (rc2[k].random_seed >= 1) {
                         multigather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
                       }
@@ -725,11 +762,9 @@ int main(int argc, char **argv)
                 //TODO: Rewrite serial kernel
                 switch (rc2[k].kernel) {
                     case MULTISCATTER:
-                        printf("TBD: Serial MultiScatter\n");
                         multiscatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case MULTIGATHER:
-                        printf("TBD: Serial MultiGather\n");
                         multigather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case SCATTER:
