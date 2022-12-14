@@ -18,7 +18,7 @@ void multiscatter_smallbuf_serial(
         sgData_t* restrict target,
         sgData_t** restrict source,
         sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restict inner_pat,
+        sgIdx_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,

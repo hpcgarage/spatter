@@ -9,7 +9,6 @@ void multigather_smallbuf_serial(
         size_t delta,
         size_t n,
         size_t target_len) {
-    printf("Serial MultiGather\n");
 
     for (size_t i = 0; i < n; i++) {
         sgData_t *sl = source + delta * i;
