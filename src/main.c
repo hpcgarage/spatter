@@ -622,10 +622,20 @@ int main(int argc, char **argv)
             for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
                 if (rc2[k].kernel == MULTISCATTER) {
-                  printf("TBD: CUDA Multiscatter\n");
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};                  
+
+                  time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == MULTIGATHER) {
-                  printf("TBD: CUDA Multigather\n");
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};                  
+
+                  time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == GS) {
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
@@ -633,7 +643,7 @@ int main(int argc, char **argv)
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                     unsigned long block[arr_len] = {local_work_size};
 
-   assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                    assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                     time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
