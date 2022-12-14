@@ -142,7 +142,7 @@ int get_num_configs(json_value* value)
 
 void parse_json_kernel(json_object_entry cur, char** argv, int i)
 {
-    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "GS"))
+    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "GS") || !strcasecmp(cur.value->u.string.ptr, "MULTISCATTER") || !strcasecmp(cur.value->u.string.ptr, "MULTIGATHER"))
     {
         error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
         snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
@@ -373,7 +373,11 @@ struct run_config *parse_runs(int argc, char **argv)
    if (kernelName->count > 0)
    {
         copy_str_ignore_leading_space(kernel_name, kernelName->sval[0]);
-        if (!strcasecmp("GS", kernel_name))
+        if (!strcasecmp("MULTISCATTER", kernel_name))
+            rc->kernel = MULTISCATTER;
+        else if (!strcasecmp("MULTIGATHER", kernel_name))
+            rc->kernel = MULTIGATHER;
+        else if (!strcasecmp("GS", kernel_name))
             rc->kernel=GS;
         else if (!strcasecmp("SCATTER", kernel_name))
             rc->kernel=SCATTER;
@@ -619,6 +623,12 @@ struct run_config *parse_runs(int argc, char **argv)
     if (rc->kernel != GS && !pattern_found)
         error ("Please specify a pattern", ERROR);
 
+    if ((rc->kernel == MULTISCATTER && !pattern_scatter_found) || (rc->kernel == MULTISCATTER && !pattern_found))
+        error ("Please specify an inner scatter pattern (scatter pattern -h) and an outer scatter pattern (pattern -p", ERROR);
+
+    if ((rc->kernel == MULTIGATHER && !pattern_gather_found) || (rc->kernel == MULTIGATHER && !pattern_found))
+        error ("Please specify an inner gather pattern (gather pattern -g) and an outer gather pattern (pattern -p", ERROR); 
+
     if ((rc->kernel == GS && !pattern_scatter_found) || (rc->kernel == GS && !pattern_gather_found))
         error ("Please specify a gather pattern and a scatter pattern for an GS kernel", ERROR);
 
@@ -662,6 +672,10 @@ struct run_config *parse_runs(int argc, char **argv)
         sprintf(kernel_name, "%s%zu", "gather", rc->vector_len);
     else if (rc->kernel == GS)
         sprintf(kernel_name, "%s%zu", "sg", rc->vector_len);
+    else if (rc->kernel == MULTISCATTER)
+        sprintf(kernel_name, "%s%zu", "multiscatter", rc->vector_len);
+    else if (rc->kernel == MULTIGATHER)
+        sprintf(kernel_name, "%s%zu", "multigather", rc->vector_len);
 
     if (pattern_found)
     {
