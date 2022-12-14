@@ -34,6 +34,8 @@ enum sg_kernel
     SCATTER,
     GATHER,
     GS,
+    MULTISCATTER,
+    MULTIGATHER
 };
 
 enum sg_op

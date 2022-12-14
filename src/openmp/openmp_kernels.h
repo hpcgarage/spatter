@@ -81,6 +81,71 @@ void gather_stride16(
         size_t    delta,
         size_t    n);
 
+void multigather_smallbuf(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t target_len);
+
+void multigather_smallbuf_morton(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t target_len,
+        uint32_t *order);
+
+void multiscatter_smallbuf(
+        sgData_t* restrict target,
+        sgData_t** restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t source_len);
+
+void multigather_smallbuf_random(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t target_len,
+        long initstate);
+
+void multiscatter_smallbuf_random(
+        sgData_t* restrict target,
+        sgData_t** restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t delta,
+        size_t n,
+        size_t source_len,
+        long initstate);
+
+void multigather_smallbuf_multidelta(
+        sgData_t** restrict target,
+        sgData_t* restrict source,
+        sgIdx_t* const restrict outer_pat,
+        sgIdx_t* const restrict inner_pat,
+        size_t pat_len,
+        size_t *delta,
+        size_t n,
+        size_t target_len,
+        size_t delta_len);
+
+
 void sg_smallbuf(
         sgData_t* restrict gather,
         sgData_t* restrict scatter,

@@ -359,10 +359,11 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
 
-    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != GS) {
+    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != GS && rc2[0].kernel != MULTISCATTER && rc2[0].kernel != MULTIGATHER) {
         printf("Error: Unsupported kernel\n");
         exit(1);
     }
+
     size_t max_source_size = 0;
     size_t max_target_size = 0;
     size_t max_pat_len = 0;
@@ -579,7 +580,13 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -10; i < (int)rc2[k].nruns; i++) {
 #define arr_len (1)
-                if (rc2[k].kernel == GS) {
+                if (rc2[k].kernel == MULTISCATTER) {
+                  printf("TBD: CUDA Multiscatter\n");
+                }
+                else if (rc2[k].kernel == MULTIGATHER) {
+                  printf("TBD: CUDA Multigather\n");
+                }
+                else if (rc2[k].kernel == GS) {
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
@@ -622,6 +629,34 @@ int main(int argc, char **argv)
 #endif
 
                 switch (rc2[k].kernel) {
+                    case MULTISCATTER:
+                      printf("TBD: OpenMP MultiScatter\n");
+                      
+                      if (rc2[k].random_seed >= 1) {
+                        multiscatter_smallbuf_random(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                      }
+                      else if (rc2[k].op == OP_COPY) {
+                        multiscatter_smallbuf(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                      }
+                      break;
+                    case MULTIGATHER:
+                      printf("TBD: OpenMP MultiGather\n");
+
+                      if (rc2[k].random_seed >= 1) {
+                        multigather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                      }
+                      else if (rc2[k].deltas_len <= 1) {
+                        if (rc2[k].ro_morton || rc2[k].ro_hilbert) {
+                          multigather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].ro_order);
+                        }
+                        else {
+                          multigather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        }
+                      }
+                      else {
+                        multigather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);
+                      }
+                      break;
                     case GS:
                         /*
                         if (rc2[k].op == OP_COPY) {
@@ -689,6 +724,14 @@ int main(int argc, char **argv)
 
                 //TODO: Rewrite serial kernel
                 switch (rc2[k].kernel) {
+                    case MULTISCATTER:
+                        printf("TBD: Serial MultiScatter\n");
+                        multiscatter_smallbuf_serial(source.host_ptr, target.host_trs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
+                    case MULTIGATHER:
+                        printf("TBD: Serial MultiGather\n");
+                        multigather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
                     case SCATTER:
                         scatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
