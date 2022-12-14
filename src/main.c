@@ -726,7 +726,7 @@ int main(int argc, char **argv)
                 switch (rc2[k].kernel) {
                     case MULTISCATTER:
                         printf("TBD: Serial MultiScatter\n");
-                        multiscatter_smallbuf_serial(source.host_ptr, target.host_trs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        multiscatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case MULTIGATHER:
                         printf("TBD: Serial MultiGather\n");
