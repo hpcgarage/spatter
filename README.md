@@ -26,7 +26,7 @@ MultiScatter:
     `A[j1[j2[:]]] = B[:]`
 
 MultiGather:
-    `A[:] = B[i2[i1[:]]]`
+    `A[:] = B[i1[i2[:]]]`
     
 ![Gather Comparison](.resources/sgexplain2.png?raw=true "Gather Comparison")
     
