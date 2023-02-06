@@ -1,5 +1,6 @@
 # 3.10 is specified since this is the first version with FindCUDAToolkit support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
+project(spatter C CXX CUDA)
 
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -32,7 +33,8 @@ ENDIF ()
 
 # Set CUDA compiler
 IF (USE_CUDA)
-    SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+    find_package(CUDAToolkit)
+    #SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
@@ -243,12 +245,12 @@ TARGET_LINK_LIBRARIES(${TRGT} LINK_PUBLIC argtable3_static)
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
 IF (USE_CUDA)
-    FIND_LIBRARY (
-        CUDART_LIBRARY cudart
-        HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
-    )
-    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
+    #FIND_LIBRARY (
+    #    CUDART_LIBRARY cudart
+    #    HINTS
+    #        /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
+    #)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC CUDA::cudart)
 ENDIF ()
 
 #Include PAPI libraries, if defined
