@@ -1,6 +1,6 @@
 # 3.10 is specified since this is the first version with FindCUDAToolkit support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
-project(spatter C CXX CUDA)
+project(spatter C CXX)
 
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -33,6 +33,7 @@ ENDIF ()
 
 # Set CUDA compiler
 IF (USE_CUDA)
+    enable_language(CUDA)
     find_package(CUDAToolkit)
     #SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
