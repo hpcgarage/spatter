@@ -137,8 +137,14 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
 
-    bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
-    actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    if (rc.kernel == GS) {
+        bytes_moved = sizeof(sgData_t) * (rc.pattern_scatter_len + rc.pattern_gather_len) * rc.generic_len;
+        actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    }
+    else {
+        bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
+        actual_bandwidth = bytes_moved / time / 1000. / 1000.;
+    }
     printf("%-7d %-12.4g %-12.6g", ii, time, actual_bandwidth);
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {
@@ -251,6 +257,8 @@ void emit_configs(struct run_config *rc, int nconfigs);
 uint64_t isqrt(uint64_t x);
 uint64_t icbrt(uint64_t x);
 
+size_t remap_pattern(const int nrc, spIdx_t *pattern, const spSize_t pattern_len);
+ 
 
 int main(int argc, char **argv)
 {
@@ -292,6 +300,14 @@ int main(int argc, char **argv)
     if (compress_flag) {
         for (int i = 0; i < nrc; i++) {
             compress_indices(rc[i].pattern, rc[i].pattern_len);
+            
+            if (rc[i].kernel == GS || rc[i].kernel == MULTISCATTER) {
+                compress_indices(rc[i].pattern_scatter, rc[i].pattern_scatter_len);
+            }
+       
+            if (rc[i].kernel == GS || rc[i].kernel == MULTIGATHER) {
+                compress_indices(rc[i].pattern_gather, rc[i].pattern_gather_len);
+            }
         }
     }
 
@@ -308,6 +324,7 @@ int main(int argc, char **argv)
         }
 #endif
     }
+
     // =======================================
     // Initialize PAPI Library
     // =======================================
@@ -353,10 +370,11 @@ int main(int argc, char **argv)
     // Compute Buffer Sizes
     // =======================================
 
-    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER) {
+    if (rc2[0].kernel != GATHER && rc2[0].kernel != SCATTER && rc2[0].kernel != GS && rc2[0].kernel != MULTISCATTER && rc2[0].kernel != MULTIGATHER) {
         printf("Error: Unsupported kernel\n");
         exit(1);
     }
+
     size_t max_source_size = 0;
     size_t max_target_size = 0;
     size_t max_pat_len = 0;
@@ -364,16 +382,13 @@ int main(int argc, char **argv)
     size_t max_ro_len = 0;
 
     for (int i = 0; i < nrc; i++) {
-        size_t max_pattern_val = rc2[i].pattern[0];
-        for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-            if (rc2[i].pattern[j] > max_pattern_val) {
-                max_pattern_val = rc2[i].pattern[j];
-            }
-        }
+        size_t max_pattern_val;
+        ssize_t pattern_delta;
 
-        // Post-Processing to make heap values fit
-        size_t boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
-    	//printf("Boundary: %zu, max_pattern_val: %zu, difference: %zu\n", boundary, max_pattern_val, max_pattern_val - boundary);
+        if (rc2[i].kernel == MULTISCATTER) {
+            size_t max_pattern_val_outer = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
+            size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
+
 
         if (max_pattern_val >= boundary) {
                 //printf("Inside of boundary if statement\n");
@@ -435,11 +450,11 @@ int main(int argc, char **argv)
                     max_pattern_val = rc2[i].pattern[j];
                 }
             }
-        }
 
+        }
         //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
 
-        size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*rc2[i].delta) * sizeof(sgData_t);
+        size_t cur_source_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*pattern_delta) * sizeof(sgData_t);
         //printf("max_pattern_val: %zu, source_size %zu\n", max_pattern_val, cur_source_size);
         //printf("\n");
 
@@ -447,7 +462,14 @@ int main(int argc, char **argv)
             max_source_size = cur_source_size;
         }
 
-        size_t cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
+        size_t cur_target_size;
+        if (rc2[i].kernel == GS) {
+            cur_target_size = ((max_pattern_val + 1) + (rc2[i].generic_len-1)*pattern_delta) * sizeof(sgData_t);
+        }
+        else {
+            cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
+        }
+        
         if (cur_target_size > max_target_size) {
             max_target_size = cur_target_size;
         }
@@ -456,9 +478,34 @@ int main(int argc, char **argv)
             max_ptrs = rc2[i].omp_threads;
         }
 
-        if (rc2[i].pattern_len > max_pat_len) {
-            max_pat_len = rc2[i].pattern_len;
+        if (rc2[i].kernel == MULTISCATTER) {
+            if (rc2[i].pattern_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_len;
+            }
+            if (rc2[i].pattern_scatter_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_scatter_len;
+            }
         }
+        else if (rc2[i].kernel == MULTIGATHER) {
+            if (rc2[i].pattern_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_len;
+            }
+            if (rc2[i].pattern_gather_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_gather_len;
+            }
+        }
+        else if (rc2[i].kernel == GS) {
+            assert(rc2[i].pattern_gather_len == rc2[i].pattern_scatter_len);
+            if (rc2[i].pattern_gather_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_gather_len;
+            }
+        }
+        else {
+            if (rc2[i].pattern_len > max_pat_len) {
+                max_pat_len = rc2[i].pattern_len;
+            }
+        }
+
 
         if (rc2[i].ro_morton == 1) {
             rc2[i].ro_order = z_order_1d(rc2[i].generic_len, rc2[i].ro_block);
@@ -525,6 +572,7 @@ int main(int argc, char **argv)
         }
         #endif
     }
+    target.host_ptr = target.host_ptrs[0];
     //    printf("-- here -- \n");
 
     // Populate buffers on host
@@ -546,13 +594,19 @@ int main(int argc, char **argv)
 
     #ifdef USE_CUDA
     sgIdx_t *pat_dev;
+    sgIdx_t *pat_gath_dev;
+    sgIdx_t *pat_scat_dev;
     uint32_t *order_dev;
     if (backend == CUDA) {
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_cuda(&source);
+        create_dev_buffers_cuda(&target);
         cudaMalloc((void**)&pat_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&pat_gath_dev, sizeof(sgIdx_t) * max_pat_len);
+        cudaMalloc((void**)&pat_scat_dev, sizeof(sgIdx_t) * max_pat_len);
         cudaMalloc((void**)&order_dev, sizeof(uint32_t) * max_ro_len);
         cudaMemcpy(source.dev_ptr_cuda, source.host_ptr, source.size, cudaMemcpyHostToDevice);
+        cudaMemcpy(target.dev_ptr_cuda, target.host_ptr, target.size, cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
     }
     int final_block_idx = -1;
@@ -607,14 +661,41 @@ int main(int argc, char **argv)
             float time_ms = 2;
             for (int i = -10; i < rc2[k].nruns; i++) {
 #define arr_len (1)
-                unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
-                unsigned long local_work_size = rc2[k].local_work_size;
-                unsigned long grid[arr_len]  = {global_work_size/local_work_size};
-                unsigned long block[arr_len] = {local_work_size};
-                if (rc2[k].random_seed == 0) {
-                    time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                if (rc2[k].kernel == MULTISCATTER) {
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};                  
+
+                  time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                }
+                else if (rc2[k].kernel == MULTIGATHER) {
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};                  
+
+                  time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                }
+                else if (rc2[k].kernel == GS) {
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+                    assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                    time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
-                    time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+                    if (rc2[k].random_seed == 0) {
+                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                    } else {
+                        time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                    }
                 }
 
                 if (i>=0) rc2[k].time_ms[i] = time_ms;
@@ -639,12 +720,40 @@ int main(int argc, char **argv)
 #endif
 
                 switch (rc2[k].kernel) {
-                    case SG:
+                    case MULTISCATTER:
+                      if (rc2[k].random_seed >= 1) {
+                        multiscatter_smallbuf_random(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                      }
+                      else if (rc2[k].op == OP_COPY) {
+                        multiscatter_smallbuf(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                      }
+                      break;
+                    case MULTIGATHER:
+                      if (rc2[k].random_seed >= 1) {
+                        multigather_smallbuf_random(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].random_seed);
+                      }
+                      else if (rc2[k].deltas_len <= 1) {
+                        if (rc2[k].ro_morton || rc2[k].ro_hilbert) {
+                          multigather_smallbuf_morton(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, rc2[k].ro_order);
+                        }
+                        else {
+                          multigather_smallbuf(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        }
+                      }
+                      else {
+                        multigather_smallbuf_multidelta(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].deltas_ps, rc2[k].generic_len, rc2[k].wrap, rc2[k].deltas_len);
+                      }
+                      break;
+                    case GS:
+                        /*
                         if (rc2[k].op == OP_COPY) {
                             //sg_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr,index_len);
                         } else {
                             //sg_accum_omp (target.host_ptr, ti.host_ptr, source.host_ptr, si.host_ptr, index_len);
                         }
+                        */
+                        assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                        sg_smallbuf(source.host_ptr, target.host_ptr, rc2[k].pattern_gather, rc2[k].pattern_scatter, rc2[k].pattern_gather_len, rc2[k].delta_gather, rc2[k].delta_scatter, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case SCATTER:
                         if (rc2[k].random_seed >= 1) {
@@ -699,11 +808,21 @@ int main(int argc, char **argv)
 #endif
 
                 switch (rc2[k].kernel) {
+                    case MULTISCATTER:
+                        multiscatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_scatter, rc2[k].pattern_scatter_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
+                    case MULTIGATHER:
+                        multigather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_gather, rc2[k].pattern_gather_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
                     case SCATTER:
                         scatter_smallbuf_serial(source.host_ptr, target.host_ptrs, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     case GATHER:
                         gather_smallbuf_serial(target.host_ptrs, source.host_ptr, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap);
+                        break;
+                    case GS:
+                        assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                        sg_smallbuf_serial(target.host_ptr, source.host_ptr, rc2[k].pattern_gather, rc2[k].pattern_scatter, rc2[k].pattern_gather_len, rc2[k].delta_gather, rc2[k].delta_scatter, rc2[k].generic_len, rc2[k].wrap);
                         break;
                     default:
                         printf("Error: Unable to determine kernel\n");
@@ -877,7 +996,7 @@ void emit_configs(struct run_config *rc, int nconfigs)
         case SCATTER:
             printf("\'kernel\':\'Scatter\', ");
             break;
-        case SG:
+        case GS:
             printf("\'kernel\':\'GS\', ");
             break;
         case INVALID_KERNEL:
@@ -890,6 +1009,26 @@ void emit_configs(struct run_config *rc, int nconfigs)
         for (spSize_t j = 0; j < rc[i].pattern_len; j++) {
             printf("%zu", rc[i].pattern[j]);
             if (j != rc[i].pattern_len-1) {
+                printf(",");
+            }
+        }
+        printf("], ");
+
+        // Pattern Gather
+        printf("\'pattern_gather\':[");
+        for (int j = 0; j < rc[i].pattern_gather_len; j++) {
+            printf("%zu", rc[i].pattern_gather[j]);
+            if (j != rc[i].pattern_gather_len-1) {
+                printf(",");
+            }
+        }
+        printf("], ");
+
+        // Pattern Scatter
+        printf("\'pattern_scatter\':[");
+        for (int j = 0; j < rc[i].pattern_scatter_len; j++) {
+            printf("%zu", rc[i].pattern_scatter[j]);
+            if (j != rc[i].pattern_scatter_len-1) {
                 printf(",");
             }
         }
@@ -911,6 +1050,41 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
         }
         printf(", ");
+
+        //Delta Gather
+        //TODO: multidelta
+        if (rc[i].deltas_gather_len == 1) {
+            printf("\'delta_gather\':%zd", rc[i].delta_gather);
+        } else {
+            printf("\'deltas_gather\':[");
+            for (int j = 0; j < rc[i].deltas_gather_len; j++) {
+                printf("%zu", rc[i].deltas_gather[j]);
+                if (j != rc[i].deltas_gather_len-1) {
+                    printf(",");
+                }
+            }
+            printf("]");
+
+        }
+        printf(", ");
+
+        //Delta Scatter
+        //TODO: multidelta
+        if (rc[i].deltas_scatter_len == 1) {
+            printf("\'delta_scatter\':%zd", rc[i].delta_scatter);
+        } else {
+            printf("\'deltas_scatter\':[");
+            for (int j = 0; j < rc[i].deltas_scatter_len; j++) {
+                printf("%zu", rc[i].deltas_scatter[j]);
+                if (j != rc[i].deltas_scatter_len-1) {
+                    printf(",");
+                }
+            }
+            printf("]");
+
+        }
+        printf(", ");
+
 
         // Len
         printf("\'length\':%zu, ", rc[i].generic_len);
@@ -1002,4 +1176,87 @@ uint64_t icbrt(uint64_t x) {
         }
     }
     return y;
+}
+
+// Remap large pattern with heap accesses to fit within Spatter 
+size_t remap_pattern(const int nrc, spIdx_t *pattern, const spSize_t pattern_len) {
+    size_t max_pattern_val = pattern[0];
+
+    for (size_t j = 0; j < pattern_len; j++) {
+        if (pattern[j] > max_pattern_val) {
+            max_pattern_val = pattern[j];
+        }
+    }
+
+    // Post-Processing to make heap values fit
+    size_t boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
+    //printf("Boundary: %zu, max_pattern_val: %zu, difference: %zu\n", boundary, max_pattern_val, max_pattern_val - boundary);
+
+    if (max_pattern_val >= boundary) {
+        //printf("Inside of boundary if statement\n");
+	int outside_boundary = 0;
+	for (size_t j = 0; j < pattern_len; j++) {
+	    if (pattern[j] >= boundary) {
+                outside_boundary++;
+            }
+	}
+
+	// printf("Configuration: %d, Number of indices outside of boundary: %d, Total pattern length: %d, Frequency of outside of boundary indices: %.2f\n", i, outside_boundary, rc2[i].pattern_len, (double)outside_boundary / (double)rc2[i].pattern_len ); 
+	    
+        // Initialize map to sentinel value of -1
+	size_t heap_map[outside_boundary][2];
+	for (size_t j = 0; j < outside_boundary; j++) {
+	    heap_map[j][0] = -1;
+	    heap_map[j][1] = -1;
+        }
+
+	int pos = 0;
+	for (size_t j = 0; j < pattern_len; j++) {
+	    if (pattern[j] >= boundary) {
+                // Search if exists in map
+		int found = 0;
+		for (size_t k = 0; k < pos; k++) {
+                    if (heap_map[k][0] == pattern[j]) {
+                        //printf("Already found %zu at position %zu\n", rc2[i].pattern[j], k);
+			found = 1;
+			break;
+		    }
+	    	}
+
+		// If not found, add to map
+		if (!found) {
+	            //printf("Inserting %zu, %zu into the heap map at position %zu\n", rc2[i].pattern[j], boundary - pos, pos);
+		    heap_map[pos][0] = pattern[j];
+		    heap_map[pos][1] = boundary - pos;
+		    pos++;
+		}
+	    }
+	}
+
+	for (size_t j = 0; j < pattern_len; j++) {
+            if (pattern[j] >= boundary) {
+                // Find entry in map
+	        int idx = -1;
+		for (size_t k = 0; k < pos; k++) {
+		    if (heap_map[k][0] == pattern[j]) {
+			//printf("Found at index: %d\n", k);
+			    
+		        // Map heap address to new address inside of boundary
+			pattern[j] = heap_map[k][1];
+			break;
+                    }
+		}
+            }
+        }
+
+	    
+        max_pattern_val = pattern[0];
+        for (size_t j = 0; j < pattern_len; j++) {
+            if (pattern[j] > max_pattern_val) {
+                max_pattern_val = pattern[j];
+            }
+        }
+    }
+
+    return max_pattern_val;
 }
