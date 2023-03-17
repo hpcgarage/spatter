@@ -102,8 +102,8 @@ ENDIF ()
 
 
 #Add configure-specified flags
-SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
 
 
 #Check if Spatter is compiled on MacOSX. If so, use POSIX_MEMALIGN to allocate memory
@@ -199,6 +199,10 @@ ENDIF ()
 
 # Include the location of stddef.h include_directories(/usr/include/linux/)
 
+# Include amalgamated argtable files
+FILE (GLOB EXTERNAL_C_FILES external/argtable3/*.c)
+FILE (GLOB EXTERNAL_H_FILES external/argtable3/*.h)
+
 # Glob for the source files and headers in the current directory and kernels
 FILE (GLOB C_FILES src/*.c)
 FILE (GLOB H_FILES include/*.h)
@@ -206,6 +210,8 @@ SET (
     SOURCE_FILES
     ${C_FILES}
     ${H_FILES}
+    ${EXTERNAL_C_FILES}
+    ${EXTERNAL_H_FILES}
     ${BACKEND_C_FILES_CL}
     ${BACKEND_H_FILES_CL}
     ${BACKEND_C_FILES_OMP}
@@ -220,8 +226,11 @@ SET (
 
 # Specify the executable and source files
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
+
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
-set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
+IF (NOT USE_CUDA)
+	set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
+ENDIF()
 
 # Print out debug info print_all_variables()
 
@@ -233,14 +242,6 @@ ENDIF()
 IF (USE_OPENCL)
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
-
-# Link argtable
-
-INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/external/argtable3/src")
-LINK_DIRECTORIES("${PROJECT_SOURCE_DIR}/external/argtable3")
-ADD_SUBDIRECTORY("${PROJECT_SOURCE_DIR}/external/argtable3")
-TARGET_LINK_LIBRARIES(${TRGT} LINK_PUBLIC argtable3_static)
-
 
 # Link math library for json
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
