@@ -390,7 +390,12 @@ int main(int argc, char **argv)
             size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
 
 
-        if (max_pattern_val >= boundary) {
+
+	// Post-Processing to make heap values fit
+	size_t boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
+    	//printf("Boundary: %zu, max_pattern_val: %zu, difference: %zu\n", boundary, max_pattern_val, max_pattern_val - boundary);
+        
+    	if (max_pattern_val >= boundary) {
                 //printf("Inside of boundary if statement\n");
             size_t outside_boundary = 0;
             for (size_t j = 0; j < rc2[i].pattern_len; j++) {
@@ -970,7 +975,7 @@ int main(int argc, char **argv)
 #ifdef USE_MPI 
   MPI_Finalize();
 #endif
-}
+} //end main
 
 void emit_configs(struct run_config *rc, int nconfigs)
 {

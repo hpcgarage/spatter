@@ -648,10 +648,10 @@ struct run_config parse_runs()
         rc->wrap = 1;
     }
 
-    if (rc.nruns <= 0)
+    if (rc->nruns <= 0)
     {
         error ("Number of runs not specified or not positive. Using default of 10 ", WARN);
-        rc.nruns = 10;
+        rc->nruns = 10;
 
     }
 
@@ -745,7 +745,7 @@ struct run_config parse_runs()
         rc->local_work_size = 1;
     }
 #endif
-    return rc;
+    return *rc;
 }
 
 ssize_t power(int base, int exp) {
