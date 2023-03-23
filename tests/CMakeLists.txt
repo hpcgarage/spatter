@@ -18,6 +18,7 @@ set( TESTAPPS #list apps
     )
 
 file(GLOB src
+    "${PROJECT_SOURCE_DIR}/external/argtable3/*.c"
     "${PROJECT_SOURCE_DIR}/src/*.c"
     "${PROJECT_SOURCE_DIR}/src/openmp/*.c"
     )
@@ -42,7 +43,6 @@ foreach( APP ${TESTAPPS} )
     )
     TARGET_LINK_LIBRARIES (${APP} PRIVATE ${CUDART_LIBRARY})
  ENDIF ()
- target_link_libraries("${APP}" PRIVATE argtable3_static)
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
 endforeach( APP ${TESTAPPS} )
 
