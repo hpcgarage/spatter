@@ -1,6 +1,6 @@
 # Spatter  
 
-Spatter is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
+This is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
 
 ![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build.yml/badge.svg)
 
@@ -10,6 +10,7 @@ For some time now, memory has been the bottleneck in modern computers. As CPUs g
 
 With this benchmark, we aim to characterize the performance of memory systems in a new way. We want to be able to make comparisons across architectures about how well data can be rearranged, and we want to be able to use benchmark results to predict the runtimes of sparse algorithms on these various architectures.
 
+<!---
 ### Kernels
 Spatter supports the following primitives:
 
@@ -19,18 +20,14 @@ Scatter:
 Gather:
     `A[:] = B[i[:]]`
 
-Concurrent Gather/Scatter:
+S+G:
     `A[j[:]] = B[i[:]]`
-
-MultiScatter:
-    `A[j1[j2[:]]] = B[:]`
-
-MultiGather:
-    `A[:] = B[i1[i2[:]]]`
     
 ![Gather Comparison](.resources/sgexplain2.png?raw=true "Gather Comparison")
     
-This diagram depicts a combined Gather/Scatter. Gather performs on the top half of this diagram and Scatter the second half.
+This diagram depicts the full Scatter+Gather. Gather performs on the top half of this diagram and Scatter the second half.
+
+-->
 
 ## Building
 CMake is required to build Spatter
@@ -47,20 +44,45 @@ git submodule init
 git submodule update
 ```
 
+<!--
+
+### Quick Start
+
+The only required argument to spatter is the amount of data to move. It will guess all other arguments such as kernel and device. However, this produces data for a single sparsity (default is 1) and doesn't do any tuning. To obtain more useful output, continue on to the next section.
+
+```
+./spatter -l 2048
+```
+
+### Run Your Own Platform Comparison
+
+You can quickly compare one of your platforms to some of the GPUs we have tested on. We will add much more flexibility to this in the future, but for now, we will assume you are using CUDA. 
+
+You must have R installed to generate the plot. 
+
+Steps:
+
+1. You will need the bandwidth of your GPU. If you don't know it, you can go to `tests/run_babel_stream.sh` and run it. The results will be in `tests/BabelStream-3.3/babelstream_DEVICENAME_cuda.txt`. Note the max copy bandwidth.
+
+2. Go to your build folder (`build_cuda`) and run `sparsity_test.sh`. This will take a while. (But it will be optimized soon!) 
+
+3. Go to the `quickstart` directory (sibling of your build directory) and run `./gather_comparison.sh ../build_cuda/sg_sparse_roofline_cuda_user_GATHER.ssv BANDWIDTH`, where `BANDWIDTH` is the bandwidth from step 1. 
+
+4. This will produce `gather_comparison.eps` in the `quickstart` directory. Your device will be called "USER", and will be colored orange.
+
+![Gather Comparison](.resources/gather_comparison_transparant.png?raw=true "Gather Comparison")
+
+-->
+
 ## Running Spatter
 Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).
 ```
 ./spatter -pUNIFORM:8:1 -l$((2**24))
 ```
 
-### Notebook for Getting Started
-
-You can quickly compare one of your platforms to some of the CPUs and GPUs we have tested on.
-
-In the `noteboooks/` directory, open up [GettingStarted.ipynb](notebooks/GettingStarted.ipynb). This notebook will guide you through running the standard testsuites found in `standard-suite/`, and it will plot the data for you.
 
 ### Arguments
-Spatter has a large number of arguments, broken up into two types. Backend configuration options are specied once for each invocation of Spatter, and benchmark configuration arguments can be supplied in bulk using a `.json` file. These arguments may be specified in any order, but it may be simpler if you list all of your backend arguments first. The only required argument to Spatter is `-p`, a benchmark configuration argument.
+Spatter has a large number of arguments, broken up into two types. Backend configuration options are specied once for each invocation of Spatter, and benchmark configuration arguments can be supplied in bulk using a `.json` file. These arguments may be specified in any order, but it may be simpler if you list all of your backend arguments first. The only reuired argument to Spatter is `-p`, a benchmark configuration argument.
 
 #### Backend Configuration
 Backend configuration arguments determine which language and device will be used. Spatter can be compiled with support for multiple backends, so it is possible to choose between backends and devices at runtime. Spatter will attempt intelliigently pick a backend for you, so you may not need to worry about these arguments at all! It is only necessary to specifiy which `--backend` you want if you have compiled with support for more than one, and it is only necessary to specify which `--device` you want if there would be ambiguity (for instance, if you have more than one GPU available). If you want to see what Spatter has chosen for you, you can run with `--verbose`.
@@ -76,14 +98,10 @@ Usage:
  --validate                   TODO
  -a, --aggregate              Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)
  -c, --compress               TODO
- -p, --pattern=<pattern>      Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
- -g, --pattern-gather=<pattern> Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
- -h, --pattern-scatter=<pattern> Valid with [kernel-name: GS, MultiScatter]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
- -k, --kernel-name=<kernel>   Specify the kernel you want to run. [Default: Gather, Options: Gather, Scatter, GS, MultiGather, MultiScatter]
+ -p, --pattern=<pattern>      Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
+ -k, --kernel-name=<kernel>   Specify the kernel you want to run. [Default: Gather]
  -o, --op=<s>                 TODO
  -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
- -x, --delta-gather=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
- -y, --delta-scatter=<delta[,delta,...]> Specify one or more deltas. [Default: 8] 
  -l, --count=<n>              Number of Gathers or Scatters to perform.
  -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
@@ -109,20 +127,10 @@ The second set of arguments are benchmark  configuration arguments, and these de
     -p, --pattern=<Built-in pattern>
     -p, --pattern=FILE=<config file>
         See the section on Patterns. 
-    -g, --pattern-gather=<Built-in pattern>
-    -g, --pattern-gather=FILE=<config file>
-        See the section on Patterns. (Used with kernel=GS and MultiGather)
-    -h, --pattern-scatter=<Built-in pattern>
-    -h, --pattern-scatter=FILE=<config file>
-        See the section on Patterns. (Used with kernel=GS and MultiScatter)
     -k, --kernel-name=<kernel>
         Specify the kernel you want to run [Default: Gather]
     -d, --delta=<delta[,delta,...]>
         Specify one or more deltas [Default: 8]
-    -x, --delta-gather=<delta[,delta,...]>
-        Specify one or more deltas [Default: 8] (Used with kernel=GS)
-    -y --delta-scatter=<delta[,delta,...]>
-        Specify one or more deltas [Default: 8] (Used with kernel=GS)
     -l, --count=<N>
         Number of Gathers or Scatters to do
     -w, --wrap=<N>
@@ -232,7 +240,7 @@ For your convienience, we also provide a python script to help you create config
 
 ## Publications and Citing Spatter
 
-Please see our paper on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
+Please see our latest paper submission on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
 
 Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating Gather and Scatter Performance on CPUs and GPUs. In The International Symposium on Memory Systems (pp. 209-222). September 2020.
 

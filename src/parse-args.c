@@ -50,15 +50,15 @@ int verbose;
 FILE *err_file;
 
 void safestrcopy(char *dest, const char *src);
-void parse_p(char*, struct run_config *, int mode);
+void parse_p(char*, struct run_config *);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(size_t *pat, size_t dim);
 void parse_backend();
 
 void** argtable;
-unsigned int number_of_arguments = 35;
+unsigned int number_of_arguments = 31;
 struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
-struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *delta_gather, *delta_scatter, *name, *papi, *op;
+struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *kernelName, *delta, *name, *papi, *op;
 struct arg_int *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
@@ -77,34 +77,31 @@ void initialize_argtable()
     malloc_argtable[5] = aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)");
     malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
     // Benchmark Configuration
-    malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[8] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
-    malloc_argtable[9] = pattern_scatter = arg_strn("h", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS, MultiScatter]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[10] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather, Options: Gather, Scatter, GS, MultiGather, MultiScatter]");
-    malloc_argtable[11] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
-    malloc_argtable[12] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[13] = delta_gather    = arg_strn("x", "delta gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[14] = delta_scatter   = arg_strn("y", "delta scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[15] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
-    malloc_argtable[16] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
-    malloc_argtable[17] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
-    malloc_argtable[18] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
-    malloc_argtable[19] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
-    malloc_argtable[20] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
-    malloc_argtable[21] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
-    malloc_argtable[22] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
-    malloc_argtable[23] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
-    malloc_argtable[24] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
-    malloc_argtable[25] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[26] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[27] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
+    malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 1, 1, "Specify either a a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[8] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather]");
+    malloc_argtable[9] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
+    malloc_argtable[10] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[11] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
+    malloc_argtable[12] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
+    malloc_argtable[13] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
+    malloc_argtable[14] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
+    malloc_argtable[15] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
+    malloc_argtable[16] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
+    malloc_argtable[17] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
+    malloc_argtable[18] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
+    malloc_argtable[19] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
+    // Backend Configuration
+    malloc_argtable[20] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[21] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[22] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[23] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
     // Other Configurations
-    malloc_argtable[28] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
-    malloc_argtable[29] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
-    malloc_argtable[30] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
-    malloc_argtable[31] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
-    malloc_argtable[32] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
-    malloc_argtable[33] = end             = arg_end(20);
+    malloc_argtable[24] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
+    malloc_argtable[25] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
+    malloc_argtable[26] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
+    malloc_argtable[27] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
+    malloc_argtable[28] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
+    malloc_argtable[29] = end             = arg_end(20);
 
     // Random has an option to provide an argument. Default its value to -1.
     random_arg->hdr.flag |= ARG_HASOPTVALUE;
@@ -113,8 +110,6 @@ void initialize_argtable()
     // Set default values
     kernelName->sval[0] = "Gather\0";
     delta->sval[0] = "8\0";
-    delta_gather->sval[0] = "8\0";
-    delta_scatter->sval[0] = "8\0";
     wrap->ival[0] = 1;
     runs->ival[0] = 10;
 
@@ -142,7 +137,7 @@ int get_num_configs(json_value* value)
 
 void parse_json_kernel(json_object_entry cur, char** argv, int i)
 {
-    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "GS") || !strcasecmp(cur.value->u.string.ptr, "MULTISCATTER") || !strcasecmp(cur.value->u.string.ptr, "MULTIGATHER"))
+    if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "SP"))
     {
         error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
         snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
@@ -188,8 +183,7 @@ void parse_json_array(json_object_entry cur, char** argv, int i)
 
 struct run_config *parse_json_config(json_value *value)
 {
-
-    struct run_config *rc = (struct run_config *)calloc(1,sizeof(struct run_config));
+    struct run_config *rc = (struct run_config *)malloc(sizeof(struct run_config));
 
     if (!value)
         error ("parse_json_config passed NULL pointer", ERROR);
@@ -280,15 +274,15 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     // Parse command-line arguments to in case of specified json file.
     int json = 0;
 
-    if (pattern->count > 0)
-    {
+   if (pattern->count > 0)
+   {
        if (strstr(pattern->sval[0], "FILE"))
        {
            safestrcopy(jsonfilename, strchr(pattern->sval[0], '=') + 1);
            printf("Reading patterns from %s.\n", jsonfilename);
            json = 1;
        }
-    }
+   }
 
     if (json)
     {
@@ -327,7 +321,6 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
 
         *rc = (struct run_config*)sp_calloc(sizeof(struct run_config), *nrc, ALIGN_CACHE);
 
-
         for (int i = 0; i < *nrc; i++){
             struct run_config *rctemp = parse_json_config(value->u.array.values[i]);
             rc[0][i] = *rctemp;
@@ -349,41 +342,32 @@ void parse_args(int argc, char **argv, int *nrc, struct run_config **rc)
     return;
 }
 
-
 struct run_config parse_runs()
 {
     int pattern_found = 0;
-    int pattern_scatter_found = 0;
-    int pattern_gather_found = 0;
 
-    struct run_config *rc = (struct run_config *)calloc(1, sizeof(struct run_config));
-    rc->delta = -1;
-    rc->delta_gather = -1;
-    rc->delta_scatter = -1;
-    rc->stride_kernel = -1;
-    rc->ro_block = 1;
-    rc->ro_order = NULL;
+    struct run_config rc = {0};
+    rc.delta = -1;
+    rc.stride_kernel = -1;
+    rc.ro_block = 1;
+    rc.ro_order = NULL;
 #ifdef USE_OPENMP
-    rc->omp_threads = omp_get_max_threads();
+    rc.omp_threads = omp_get_max_threads();
 #else
-    rc->omp_threads = 1;
+    rc.omp_threads = 1;
 #endif
-    rc->kernel = INVALID_KERNEL;
-    safestrcopy(rc->name,"NONE");
+    rc.kernel = INVALID_KERNEL;
+    safestrcopy(rc.name,"NONE");
 
    if (kernelName->count > 0)
    {
         copy_str_ignore_leading_space(kernel_name, kernelName->sval[0]);
-        if (!strcasecmp("MULTISCATTER", kernel_name))
-            rc->kernel = MULTISCATTER;
-        else if (!strcasecmp("MULTIGATHER", kernel_name))
-            rc->kernel = MULTIGATHER;
-        else if (!strcasecmp("GS", kernel_name))
-            rc->kernel=GS;
+        if (!strcasecmp("SG", kernel_name))
+            rc.kernel=SG;
         else if (!strcasecmp("SCATTER", kernel_name))
-            rc->kernel=SCATTER;
+            rc.kernel=SCATTER;
         else if (!strcasecmp("GATHER", kernel_name))
-            rc->kernel=GATHER;
+            rc.kernel=GATHER;
         else
         {
             char output[STRING_SIZE];
@@ -396,9 +380,9 @@ struct run_config parse_runs()
    {
         copy_str_ignore_leading_space(op_string, op->sval[0]);
         if (!strcasecmp("COPY", op_string))
-            rc->op = OP_COPY;
+            rc.op = OP_COPY;
         else if (!strcasecmp("ACCUM", op_string))
-            rc->op = OP_ACCUM;
+            rc.op = OP_ACCUM;
         else
             error("Unrecognzied op type", ERROR);
    }
@@ -408,62 +392,48 @@ struct run_config parse_runs()
         // Parsing the seed parameter
         // If no argument was passed, use the current time in seconds since the epoch as the random seed
         if (random_arg->ival[0] == -1)
-            rc->random_seed = time(NULL);
+            rc.random_seed = time(NULL);
         else
-            //sscanf(optarg, "%zu", rc->random_seed);
-            rc->random_seed = random_arg->ival[0];
+            //sscanf(optarg, "%zu", &rc.random_seed);
+            rc.random_seed = random_arg->ival[0];
    }
 
     if (omp_threads->count > 0)
-        rc->omp_threads = omp_threads->ival[0];
+        rc.omp_threads = omp_threads->ival[0];
 
     if (vector_len->count > 0)
     {
-        rc->vector_len = vector_len->ival[0];
-        if (rc->vector_len < 1)
+        rc.vector_len = vector_len->ival[0];
+        if (rc.vector_len < 1)
             error("Invalid vector len!", ERROR);
     }
 
     if (runs->count > 0)
-        rc->nruns = runs->ival[0];
+        rc.nruns = runs->ival[0];
 
     if (wrap->count > 0)
-        rc->wrap = wrap->ival[0];
+        rc.wrap = wrap->ival[0];
 
     if (count->count > 0)
-        rc->generic_len = count->ival[0];
+        rc.generic_len = count->ival[0];
 
     if (local_work_size->count > 0)
-        rc->local_work_size = local_work_size->ival[0];
+        rc.local_work_size = local_work_size->ival[0];
 
     if (shared_memory->count > 0)
-        rc->shmem = shared_memory->ival[0];
+        rc.shmem = shared_memory->ival[0];
 
     if (name->count > 0)
-        copy_str_ignore_leading_space(rc->name, name->sval[0]);
+        copy_str_ignore_leading_space(rc.name, name->sval[0]);
 
     if (pattern->count > 0)
     {
-        copy_str_ignore_leading_space(rc->generator, pattern->sval[0]);
-        //char* filePtr = strstr(rc->generator, "FILE");
+        copy_str_ignore_leading_space(rc.generator, pattern->sval[0]);
+        //char* filePtr = strstr(rc.generator, "FILE");
         //if (filePtr)
-        //    safestrcopy(rc->generator, filePtr);
-        parse_p(rc->generator, rc, 0);
+        //    safestrcopy(rc.generator, filePtr);
+        parse_p(rc.generator, &rc);
         pattern_found = 1;
-    }
-
-    if (pattern_gather->count > 0)
-    {
-        copy_str_ignore_leading_space(rc->generator, pattern_gather->sval[0]);
-        parse_p(rc->generator, rc, 1);
-        pattern_gather_found = 1;
-    }
-
-    if (pattern_scatter->count > 0)
-    {
-        copy_str_ignore_leading_space(rc->generator, pattern_scatter->sval[0]);
-        parse_p(rc->generator, rc, 2);
-        pattern_scatter_found = 1;
     }
 
     if (delta->count > 0)
@@ -491,258 +461,122 @@ struct run_config parse_runs()
                 error("Failed to parse pattern", ERROR);
         }
 
-        rc->deltas = mydeltas;
-        rc->deltas_ps = mydeltas_ps;
-        rc->deltas_len = read;
+        rc.deltas = mydeltas;
+        rc.deltas_ps = mydeltas_ps;
+        rc.deltas_len = read;
 
         // rotate
-        for (size_t i = 0; i < rc->deltas_len; i++)
-            rc->deltas_ps[i] = rc->deltas[((i-1)+rc->deltas_len)%rc->deltas_len];
+        for (size_t i = 0; i < rc.deltas_len; i++)
+            rc.deltas_ps[i] = rc.deltas[((i-1)+rc.deltas_len)%rc.deltas_len];
 
         // compute prefix-sum
-        for (size_t i = 1; i < rc->deltas_len; i++)
-            rc->deltas_ps[i] += rc->deltas_ps[i-1];
+        for (size_t i = 1; i < rc.deltas_len; i++)
+            rc.deltas_ps[i] += rc.deltas_ps[i-1];
 
         // compute max
-        size_t m = rc->deltas_ps[0];
-        for (size_t i = 1; i < rc->deltas_len; i++)
+        size_t m = rc.deltas_ps[0];
+        for (size_t i = 1; i < rc.deltas_len; i++)
         {
-            if (rc->deltas_ps[i] > m)
-                m = rc->deltas_ps[i];
+            if (rc.deltas_ps[i] > m)
+                m = rc.deltas_ps[i];
         }
-        rc->delta = m;
+        rc.delta = m;
     }
-
-   if (delta_gather->count > 0)
-    {
-        char delta_gather_temp[STRING_SIZE];
-        copy_str_ignore_leading_space(delta_gather_temp, delta_gather->sval[0]);
-        char *delim_gather = ",";
-        char *ptr_gather = strtok(delta_gather_temp, delim_gather);
-        if (!ptr_gather)
-            error("Pattern not found", ERROR);
-
-        spIdx_t *mydeltas_gather;
-        spIdx_t *mydeltas_gather_ps;
-
-        mydeltas_gather = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
-        mydeltas_gather_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
-
-        size_t read_gather = 0;
-        if (sscanf(ptr_gather, "%zu", &(mydeltas_gather[read_gather++])) < 1)
-            error("Failed to parse first pattern element in deltas", ERROR);
-
-        while ((ptr_gather = strtok(NULL, delim_gather)) && read_gather < MAX_PATTERN_LEN)
-        {
-            if (sscanf(ptr_gather, "%zu", &(mydeltas_gather[read_gather++])) < 1)
-                error("Failed to parse pattern", ERROR);
-        }
-
-        rc->deltas_gather = mydeltas_gather;
-        rc->deltas_gather_ps = mydeltas_gather_ps;
-        rc->deltas_gather_len = read_gather;
-
-        // rotate
-        for (size_t i = 0; i < rc->deltas_gather_len; i++)
-            rc->deltas_gather_ps[i] = rc->deltas_gather[((i-1)+rc->deltas_gather_len)%rc->deltas_gather_len];
-
-        // compute prefix-sum
-        for (size_t i = 1; i < rc->deltas_gather_len; i++)
-            rc->deltas_gather_ps[i] += rc->deltas_gather_ps[i-1];
-
-        // compute max
-        size_t m = rc->deltas_gather_ps[0];
-        for (size_t i = 1; i < rc->deltas_gather_len; i++)
-        {
-            if (rc->deltas_gather_ps[i] > m)
-                m = rc->deltas_gather_ps[i];
-        }
-        rc->delta_gather = m;
-    }
-
-    if (delta_scatter->count > 0)
-    {
-        char delta_scatter_temp[STRING_SIZE];
-        copy_str_ignore_leading_space(delta_scatter_temp, delta_scatter->sval[0]);
-        char *delim_scatter = ",";
-        char *ptr_scatter = strtok(delta_scatter_temp, delim_scatter);
-        if (!ptr_scatter)
-            error("Pattern not found", ERROR);
-
-        spIdx_t *mydeltas_scatter;
-        spIdx_t *mydeltas_scatter_ps;
-
-        mydeltas_scatter = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
-        mydeltas_scatter_ps = sp_malloc(sizeof(size_t), MAX_PATTERN_LEN, ALIGN_CACHE);
-
-        size_t read_scatter = 0;
-        if (sscanf(ptr_scatter, "%zu", &(mydeltas_scatter[read_scatter++])) < 1)
-            error("Failed to parse first pattern element in deltas", ERROR);
-
-        while ((ptr_scatter = strtok(NULL, delim_scatter)) && read_scatter < MAX_PATTERN_LEN)
-        {
-            if (sscanf(ptr_scatter, "%zu", &(mydeltas_scatter[read_scatter++])) < 1)
-                error("Failed to parse pattern", ERROR);
-        }
-
-        rc->deltas_scatter = mydeltas_scatter;
-        rc->deltas_scatter_ps = mydeltas_scatter_ps;
-        rc->deltas_scatter_len = read_scatter;
-
-        // rotate
-        for (size_t i = 0; i < rc->deltas_scatter_len; i++)
-            rc->deltas_scatter_ps[i] = rc->deltas_scatter[((i-1)+rc->deltas_scatter_len)%rc->deltas_scatter_len];
-
-        // compute prefix-sum
-        for (size_t i = 1; i < rc->deltas_scatter_len; i++)
-            rc->deltas_scatter_ps[i] += rc->deltas_scatter_ps[i-1];
-
-        // compute max
-        size_t m = rc->deltas_scatter_ps[0];
-        for (size_t i = 1; i < rc->deltas_scatter_len; i++)
-        {
-            if (rc->deltas_scatter_ps[i] > m)
-                m = rc->deltas_scatter_ps[i];
-        }
-        rc->delta_scatter = m;
-    }
-
 
     if (morton->count > 0)
-        rc->ro_morton = morton->ival[0];
+        rc.ro_morton = morton->ival[0];
 
     if (hilbert->count > 0)
-        rc->ro_hilbert = hilbert->ival[0];
+        rc.ro_hilbert = hilbert->ival[0];
 
     if (roblock->count > 0)
-        rc->ro_block = roblock->ival[0];
+        rc.ro_block = roblock->ival[0];
 
     if (stride->count > 0)
-        rc->stride_kernel = stride->ival[0];
+        rc.stride_kernel = stride->ival[0];
 
     // VALIDATE ARGUMENTS
-    if (rc->kernel != GS && !pattern_found)
+    if (!pattern_found)
         error ("Please specify a pattern", ERROR);
 
-    if ((rc->kernel == MULTISCATTER && !pattern_scatter_found) || (rc->kernel == MULTISCATTER && !pattern_found))
-        error ("Please specify an inner scatter pattern (scatter pattern -h) and an outer scatter pattern (pattern -p", ERROR);
-
-    if ((rc->kernel == MULTIGATHER && !pattern_gather_found) || (rc->kernel == MULTIGATHER && !pattern_found))
-        error ("Please specify an inner gather pattern (gather pattern -g) and an outer gather pattern (pattern -p", ERROR); 
-
-    if ((rc->kernel == GS && !pattern_scatter_found) || (rc->kernel == GS && !pattern_gather_found))
-        error ("Please specify a gather pattern and a scatter pattern for an GS kernel", ERROR);
-
-    if (rc->kernel == GS && (rc->pattern_gather_len != rc->pattern_scatter_len))
-        error ("Gather pattern and scatter pattern must have the same length", ERROR);
-
-    if (rc->vector_len == 0)
+    if (rc.vector_len == 0)
     {
         error ("Vector length not set. Default is 1", WARN);
-        rc->vector_len = 1;
+        rc.vector_len = 1;
     }
 
-    if (rc->wrap == 0)
+    if (rc.wrap == 0)
     {
         error ("length of smallbuf not specified. Default is 1 (slot of size pattern_len elements)", WARN);
-        rc->wrap = 1;
+        rc.wrap = 1;
     }
 
     if (rc.nruns <= 0)
     {
         error ("Number of runs not specified or not positive. Using default of 10 ", WARN);
         rc.nruns = 10;
-
     }
 
-    if (rc->generic_len == 0)
+    if (rc.generic_len == 0)
     {
         error ("Length not specified. Default is 1024 (gathers/scatters)", WARN);
-        rc->generic_len = 1024;
+        rc.generic_len = 1024;
     }
 
-    if (rc->kernel == INVALID_KERNEL)
+    if (rc.kernel == INVALID_KERNEL)
     {
         error("Kernel unspecified, guess GATHER", WARN);
-        rc->kernel = GATHER;
+        rc.kernel = GATHER;
         safestrcopy(kernel_name, "gather");
     }
 
-    if (rc->kernel == SCATTER)
-        sprintf(kernel_name, "%s%zu", "scatter", rc->vector_len);
-    else if (rc->kernel == GATHER)
-        sprintf(kernel_name, "%s%zu", "gather", rc->vector_len);
-    else if (rc->kernel == GS)
-        sprintf(kernel_name, "%s%zu", "sg", rc->vector_len);
-    else if (rc->kernel == MULTISCATTER)
-        sprintf(kernel_name, "%s%zu", "multiscatter", rc->vector_len);
-    else if (rc->kernel == MULTIGATHER)
-        sprintf(kernel_name, "%s%zu", "multigather", rc->vector_len);
+    if (rc.kernel == SCATTER)
+        sprintf(kernel_name, "%s%zu", "scatter", rc.vector_len);
+    else if (rc.kernel == GATHER)
+        sprintf(kernel_name, "%s%zu", "gather", rc.vector_len);
+    else if (rc.kernel == SG)
+        sprintf(kernel_name, "%s%zu", "sg", rc.vector_len);
 
-    if (pattern_found)
+    if (rc.delta <= -1)
     {
-        if (rc->delta <= -1)
-        {
-            error("delta not specified, default is 8\n", WARN);
-            rc->delta = 8;
-            rc->deltas_len = 1;
-        }
+        error("delta not specified, default is 8\n", WARN);
+        rc.delta = 8;
+        rc.deltas_len = 1;
     }
 
-    if (pattern_gather_found)
-    {
-        if (rc->delta_gather <= -1)
-        {
-            error("delta gather not specified, default is 8\n", WARN);
-            rc->delta_gather = 8;
-            rc->deltas_gather_len = 1;
-        }
-    }
-
-    if (pattern_scatter_found)
-    {
-        if (rc->delta_scatter <= -1)
-        {
-            error("delta scatter not specified, default is 8\n", WARN);
-            rc->delta_scatter = 8;
-            rc->deltas_scatter_len = 1;
-        }
-    }
-
-    if (rc->op != OP_COPY)
+    if (rc.op != OP_COPY)
         error("OP must be OP_COPY", WARN);
 
-    if (!strcasecmp(rc->name, "NONE"))
+    if (!strcasecmp(rc.name, "NONE"))
     {
-        if (rc->type != CUSTOM)
-            safestrcopy(rc->name, rc->generator);
+        if (rc.type != CUSTOM)
+            safestrcopy(rc.name, rc.generator);
         else
-            safestrcopy(rc->name, "CUSTOM");
+            safestrcopy(rc.name, "CUSTOM");
     }
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
-
     if (rc.omp_threads > (unsigned int)max_threads)
     {
         error ("Too many OpenMP threads requested, using the max instead", WARN);
-        rc->omp_threads = max_threads;
+        rc.omp_threads = max_threads;
     }
-    if (rc->omp_threads == 0)
+    if (rc.omp_threads == 0)
     {
         error ("Number of OpenMP threads not specified, using the max", WARN);
-        rc->omp_threads = max_threads;
+        rc.omp_threads = max_threads;
     }
 #else
-    if (rc->omp_threads > 1)
+    if (rc.omp_threads > 1)
         error ("Compiled without OpenMP support but requsted more than 1 thread, using 1 instead", WARN);
 #endif
 
 #if defined USE_CUDA || defined USE_OPENCL
-    if (rc->local_work_size == 0)
+    if (rc.local_work_size == 0)
     {
         error ("Local_work_size not set. Default is 1", WARN);
-        rc->local_work_size = 1;
+        rc.local_work_size = 1;
     }
 #endif
     return rc;
@@ -769,28 +603,8 @@ void static laplacian_branch(int depth, int order, int n, int **pos, int *pos_le
     return;
 }
 
-void static laplacian(int dim, int order, int n, struct run_config *rc, int mode)
+void static laplacian(int dim, int order, int n, struct run_config *rc)
 {
-    spIdx_t **pattern;
-    spSize_t *pattern_len;
-
-    if (mode == 0) { // Normal pattern
-        pattern = &rc->pattern;
-        pattern_len = &rc->pattern_len;
-    }
-    else if (mode == 1) { // Gather pattern (GS Kernel)
-        pattern = &rc->pattern_gather;
-        pattern_len = &rc->pattern_gather_len;
-    }
-    else if (mode == 2) { // Scatter pattern (GS Kernel)
-        pattern = &rc->pattern_scatter;
-        pattern_len = &rc->pattern_scatter_len;
-    }
-    else {
-        printf("laplacian: invalid mode %d\n", mode);
-        exit(1);
-    }
-
 
     if (dim < 1) {
         error("laplacian: dim must be positive", ERROR);
@@ -808,26 +622,25 @@ void static laplacian(int dim, int order, int n, struct run_config *rc, int mode
         laplacian_branch(i, order, n, &pos, &pos_len);
     }
 
-    *pattern_len = final_len;
+    rc->pattern_len = final_len;
 
-    *pattern = sp_calloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+    rc->pattern = sp_calloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
 
     int max = pos[pos_len-1];
 
     for (spSize_t i = 0; i < rc->pattern_len; i++) {
         rc->pattern[i] = 2;
-
     }
 
     //populate rc->pattern
     for(int i = 0; i < pos_len; i++) {
-        (*pattern)[i] = (-pos[pos_len - i - 1] + max);
+        rc->pattern[i] = (-pos[pos_len - i - 1] + max);
     }
 
-    (*pattern)[pos_len] = max;
+    rc->pattern[pos_len] = max;
 
     for(int i = 0; i < pos_len; i++) {
-        (*pattern)[pos_len+1+i] = pos[i] + max;
+        rc->pattern[pos_len+1+i] = pos[i] + max;
     }
 
     free(pos);
@@ -985,40 +798,8 @@ void parse_backend()
     return;
 }
 
-void parse_p(char* optarg, struct run_config *rc, int mode)
+void parse_p(char* optarg, struct run_config *rc)
 {
-    spIdx_t **pattern;
-    spSize_t *pattern_len;
-    ssize_t *delta;
-    size_t **deltas;
-    size_t *deltas_len;
-
-    if (mode == 0) { // Normal pattern
-        pattern     = &rc->pattern;
-        pattern_len = &rc->pattern_len;
-        delta       = &rc->delta;
-        deltas      = &rc->deltas_gather;
-        deltas_len  = &rc->deltas_len;
-    }
-    else if (mode == 1) { // Gather pattern (GS Kernel)
-        pattern     = &rc->pattern_gather;
-        pattern_len = &rc->pattern_gather_len;
-        delta       = &rc->delta_gather;
-        deltas      = &rc->deltas_gather;
-        deltas_len  = &rc->deltas_gather_len;
-    }
-    else if (mode == 2) { // Scatter pattern (GS Kernel)
-        pattern     = &rc->pattern_scatter;
-        pattern_len = &rc->pattern_scatter_len;
-        delta       = &rc->delta_scatter;
-        deltas      = &rc->deltas_scatter;
-        deltas_len  = &rc->deltas_scatter_len;
-    }
-    else {
-        printf("parse_p: invalid mode %d\n", mode);
-        exit(1);
-    }
-
     rc->type = INVALID_IDX;
     char *arg = 0;
     if ((arg=strchr(optarg, ':')))
@@ -1049,20 +830,14 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             if (sscanf(dim_char, "%zu", &dim) < 1)
                 error("XKP: Dimension not parsed", 1);
 
-            *pattern_len = 73;
-            
-            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+            rc->pattern_len = 73;
 
             // The default delta is 1
-            *delta = 1;
+            rc->delta = 1;
+            rc->deltas[0] = rc->delta;
+            rc->deltas_len = 1;
 
-            if (!(*deltas)) {
-                *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
-            }
-            *deltas[0] = *delta;
-            *deltas_len = 1;
-
-            xkp_pattern(*pattern, dim);
+            xkp_pattern(rc->pattern, dim);
         }
 
         // Parse Uniform Stride Arguments, which are
@@ -1075,10 +850,10 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             char *len = strtok(arg,":");
             if (!len)
                 error("UNIFORM: Index Length not found", 1);
-            if (sscanf(len, "%zu", &(*pattern_len)) < 1)
+            if (sscanf(len, "%zu", &(rc->pattern_len)) < 1)
                 error("UNIFORM: Length not parsed", 1);
 
-            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
 
             // Read the stride
             char *stride = strtok(NULL, ":");
@@ -1092,24 +867,24 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             for (spSize_t i = 0; i < rc->pattern_len; i++)
                 rc->pattern[i] = i*strideval;
 
-            char *delta2 = strtok(NULL, ":");
-            if (delta2)
+            char *delta = strtok(NULL, ":");
+            if (delta)
             {
-                if (!*deltas) {
-                    *deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
+                if (!rc->deltas) {
+                    rc->deltas = sp_malloc(sizeof(size_t), 1, ALIGN_CACHE);
                 }
-                *deltas_len = 1;
+                rc->deltas_len = 1;
 
-                if (!strcmp(delta2, "NR"))
+                if (!strcmp(delta, "NR"))
                 {
-                    *delta = strideval*(*pattern_len);
-                    (*deltas)[0] = *delta;
+                    rc->delta = strideval*rc->pattern_len;
+                    rc->deltas[0] = rc->delta;
                 }
                 else
                 {
-                    if (sscanf(delta2, "%zd", &(*delta)) < 1)
+                    if (sscanf(delta, "%zd", &(rc->delta)) < 1)
                         error("UNIFORM: delta not parsed", 1);
-                    (*deltas)[0] = *delta;
+                    rc->deltas[0] = rc->delta;
                 }
             }
 
@@ -1120,7 +895,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
         {
             int dim_val, order_val, problem_size_val;
 
-            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
             rc->type = LAPLACIAN;
 
             // Read the dimension
@@ -1144,14 +919,14 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             if (sscanf(problem_size, "%d", &problem_size_val) < 1)
                 error("LAPLACIAN: Problem size not parsed", 1);
 
-            *delta = 1;
-            if (!(*deltas)) {
-                *deltas = sp_malloc(sizeof(spIdx_t), *delta, ALIGN_CACHE);
+            rc->delta = 1;
+            if (!rc->deltas) {
+                rc->deltas = sp_malloc(sizeof(spIdx_t), rc->delta, ALIGN_CACHE);
             }
-            (*deltas)[0] = *delta;
-            *deltas_len = 1;
+            rc->deltas[0] = rc->delta;
+            rc->deltas_len = 1;
 
-            laplacian(dim_val, order_val, problem_size_val, rc, mode);
+            laplacian(dim_val, order_val, problem_size_val, rc);
         }
 
         // Mostly Stride 1 Mode
@@ -1175,8 +950,8 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             size_t ms1_deltas_len = 0;
 
             // Parse index length
-            sscanf(len, "%zu", &(*pattern_len));
-            *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
+            sscanf(len, "%zu", &(rc->pattern_len));
+            rc->pattern = sp_malloc(sizeof(spIdx_t), rc->pattern_len, ALIGN_CACHE);
 
             // Parse breaks
             char *ptr = strtok(breaks, ",");
@@ -1218,18 +993,17 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
 
             ms1_deltas_len = read;
 
-            (*pattern)[0] = -1;
+            rc->pattern[0] = -1;
             size_t last = -1;
             ssize_t j;
-
-            //TODO - rewrite serial kernel
             for (spSize_t i = 0; i < rc->pattern_len; i++)
+                //TODO: Rewrite serial kernel
             {
                 if ((j=setincludes(i, ms1_breaks, ms1_breaks_len))!=-1)
-                   (*pattern)[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
+                   rc->pattern[i] = last+ms1_deltas[ms1_deltas_len>1?j:0];
                 else
-                    (*pattern)[i] = last + 1;
-                last = (*pattern)[i];
+                    rc->pattern[i] = last + 1;
+                last = rc->pattern[i];
             }
 
             free(ms1_breaks);
@@ -1242,9 +1016,8 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
     // CUSTOM mode means that the user supplied a single index buffer on the command line
     else
     {
-        if (quiet_flag > 3) {
-            printf("Parse P Custom Pattern: %s\n", optarg);
-        }
+	if (quiet_flag < 3)
+        	printf("Parse P Custom Pattern: %s\n", optarg);
         rc->type = CUSTOM;
         char *delim = ",";
         char *ptr = strtok(optarg, delim);
@@ -1264,11 +1037,11 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
-        *pattern = mypat;
-        *pattern_len = read;
+        rc->pattern = mypat;
+        rc->pattern_len = read;
     }
 
-    if (*pattern_len == 0)
+    if (rc->pattern_len == 0)
         error("Pattern length of 0", ERROR);
 
     if (rc->type == INVALID_IDX)
