@@ -10,7 +10,8 @@ SET (TRGT spatter)
 # Use for debugging. TODO: Set this automatically
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Use ASAN when debugging
-    SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    #SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    #SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Set default values
@@ -91,7 +92,8 @@ ENDIF ()
 
  
 IF ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
-    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3 -g")
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU")
+    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DSPAT_C_NAME=GNU")
    #Use sanitize=address for debugging of access issues 
    #SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF ()

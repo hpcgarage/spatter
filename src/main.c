@@ -539,6 +539,7 @@ int main(int argc, char **argv)
             }
         }
     }
+    }//end for(i < nrc)
 
     source.size = max_source_size;
     source.len = source.size / sizeof(sgData_t);

@@ -1,0 +1,35 @@
+# Configure file for compiling using the serial backend only
+# Execute from the main directory using ./configure/configure_<my_platform>
+
+BACKEND=serial
+COMPILER=gnu
+#Release or Debug
+BLD_TYPE=Debug
+
+BUILD_DIR=build_${BACKEND}_${COMPILER}_${BLD_TYPE}
+
+#Create directory if needed - clean CMake cached files
+mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+rm -rf CMake*
+
+CC=gcc
+CXX=g++
+
+#if { "$BLD_TYPE" == "Debug" ]; then 
+#	FLAGS="-g"
+#else
+#	FLAGS="-O3"
+#fi
+
+#Make sure to use tabs rather than spaces for newline entries
+cmake -D CMAKE_BUILD_TYPE=Debug \
+	-D CMAKE_C_COMPILER=${CC} \
+	-D CMAKE_CXX_COMPILER=${CXX} \
+	-D USE_OPENCL=0 \
+	-D USE_OPENMP=0 \
+	-D USE_CUDA=0 \
+	-D USE_SERIAL=1 \
+	..
+
+#-D CMAKE_C_FLAGS=${FLAGS} \
+#-D CMAKE_CXX_FLAGS=${FLAGS} \
