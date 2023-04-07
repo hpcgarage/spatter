@@ -1,7 +1,8 @@
 # 3.10 is specified since this is the first version with FindCUDAToolkit support
 CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
-
+PROJECT (spatter C CXX)
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+include(CMakePrintHelpers)
 
 # Set target project name
 SET (TRGT spatter)
@@ -32,15 +33,10 @@ ENDIF ()
 
 # Set CUDA compiler
 IF (USE_CUDA)
-    SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-    SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
-ENDIF ()
-
-# Declare project languages
-IF (USE_CUDA)
-    PROJECT (${TRGT} C CXX CUDA)
-ELSE ()
-    PROJECT (${TRGT} C CXX)
+    enable_language(CUDA)
+    find_package(CUDAToolkit)
+    #SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+    #SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
 # Debug function to check all the variables in the CMakeFile
@@ -244,12 +240,8 @@ ENDIF ()
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
 IF (USE_CUDA)
-    FIND_LIBRARY (
-        CUDART_LIBRARY cudart
-        HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
-    )
-    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${CUDART_LIBRARY})
+    TARGET_LINK_LIBRARIES(${TRGT} LINK_PUBLIC CUDA::cudart)
+    #cmake_print_properties(TARGETS ${TRGT} PROPERTIES COMPILE_OPTIONS INTERFACE_COMPILE_OPTIONS)
 ENDIF ()
 
 #Include PAPI libraries, if defined
@@ -271,9 +263,8 @@ message (STATUS "compiler is ${CMAKE_C_COMPILER}")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
-
 # Build tests
-if ( USE_OPENMP OR USE_SERIAL )
+if ( USE_OPENMP OR USE_SERIAL OR USE_CUDA)
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )

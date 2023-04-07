@@ -22,27 +22,30 @@ file(GLOB src
     "${PROJECT_SOURCE_DIR}/src/*.c"
     "${PROJECT_SOURCE_DIR}/src/openmp/*.c"
     )
-set( src_files ${src} )
 
+set( src_files ${src} )
 
 #get full name of main.c
 get_filename_component(full_path_main_c "${CMAKE_CURRENT_SOURCE_DIR}/../src/main.c" ABSOLUTE)
 list(REMOVE_ITEM src_files "${full_path_main_c}")
 
+include(CMakePrintHelpers)
 foreach( APP ${TESTAPPS} )
- add_executable( "${APP}" "${APP}.c" ${src_files})
- target_link_libraries( "${APP}" PRIVATE m )
- IF (USE_OPENMP)
-     TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
- ENDIF()
- IF (USE_CUDA)
-    FIND_LIBRARY (
-        CUDART_LIBRARY cudart
-        HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
-    )
-    TARGET_LINK_LIBRARIES (${APP} PRIVATE ${CUDART_LIBRARY})
- ENDIF ()
- add_test( NAME "${APP}_test" COMMAND "${APP}" )
-endforeach( APP ${TESTAPPS} )
+    add_executable( "${APP}" "${APP}.c" ${src_files})
+    target_link_libraries( "${APP}" PRIVATE m )
+    IF (USE_OPENMP)
+        TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
+    ENDIF()
+    IF (USE_CUDA)
+        set (CMAKE_C_LINKER_WRAPPER_FLAG "-Xlinker" " ")
+        set (CMAKE_CXX_LINKER_WRAPPER_FLAG "-Xlinker" " ")
+        set (CMAKE_CUDA_LINKER_WRAPPER_FLAG "-Xlinker" " ")
+        target_link_options(${APP} PRIVATE CMAKE_CUDA_LINKER_WRAPPER_FLAG)
+        target_link_options(${APP} PRIVATE CMAKE_CXX_LINKER_WRAPPER_FLAG)
+        target_link_options(${APP} PRIVATE CMAKE_C_LINKER_WRAPPER_FLAG)
+        TARGET_LINK_LIBRARIES (${APP} PRIVATE -Xlinker CUDA::cudart)
+    ENDIF ()
+    add_test( NAME "${APP}_test" COMMAND "${APP}" )
+endforeach( APP ${TESTAPPS})
+
 
