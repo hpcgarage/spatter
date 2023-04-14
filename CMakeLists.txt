@@ -1,5 +1,5 @@
-# 3.10 is specified since this is the first version with FindCUDAToolkit support
-CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
+# 3.18 is specified to include FindCUDAToolkit support updates
+CMAKE_MINIMUM_REQUIRED (VERSION 3.18 FATAL_ERROR)
 PROJECT (spatter C CXX)
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CMakePrintHelpers)
@@ -31,12 +31,9 @@ IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
     )
 ENDIF ()
 
-# Set CUDA compiler
+# Enable CUDA language
 IF (USE_CUDA)
     enable_language(CUDA)
-    find_package(CUDAToolkit)
-    #SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-    #SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
 # Debug function to check all the variables in the CMakeFile
@@ -124,7 +121,6 @@ IF (USE_OPENCL)
         DESTINATION
         ${CMAKE_CURRENT_BINARY_DIR}/kernels/
     )
-
 ENDIF ()
 
 # Enable Serial backend
@@ -158,7 +154,7 @@ IF (USE_OPENMP)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ENDIF ()
 
-# Enable CUDA
+# Enable CUDA and CUDAToolkit
 IF (USE_CUDA)
     ADD_DEFINITIONS (-DUSE_CUDA)
     INCLUDE_DIRECTORIES (src/cuda)
@@ -175,6 +171,16 @@ IF (USE_CUDA)
     FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
     FILE (GLOB CUDA_C_FILES src/cuda/*.c)
     FILE (GLOB CUDA_H_FILES src/cuda/*.h)
+
+    #CUDA Toolkit (Runtime)
+    add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h src/cuda/cuda_kernels.h)
+    set_target_properties(cuda_comp
+        PROPERTIES
+                CUDA_RUNTIME_LIBRARY Shared
+    )
+    target_include_directories(cuda_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda")
+
+    #Make
 ENDIF ()
 
 IF (USE_PAPI) 
@@ -221,9 +227,7 @@ SET (
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
 
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
-IF (NOT USE_CUDA)
-	set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
-ENDIF()
+target_compile_features(${TRGT} PUBLIC c_std_11)
 
 # Print out debug info print_all_variables()
 
@@ -239,17 +243,17 @@ ENDIF ()
 # Link math library for json
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
+#Link CUDA Toolkit (Runtime)
 IF (USE_CUDA)
-    TARGET_LINK_LIBRARIES(${TRGT} LINK_PUBLIC CUDA::cudart)
-    #cmake_print_properties(TARGETS ${TRGT} PROPERTIES COMPILE_OPTIONS INTERFACE_COMPILE_OPTIONS)
+    target_link_libraries(${TRGT} PUBLIC cuda_comp)
 ENDIF ()
 
 #Include PAPI libraries, if defined
 IF (USE_PAPI)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${PAPI_LIBRARIES})
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${PAPI_LIBRARIES})
     # Explicitly link libdl because the Cray compiler refuses to link papi dynaimically...
     # (Static libraries carry no dependency info, and libpapi depends on libdl)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC dl)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC dl)
 ENDIF ()
 
 # Copy over the test scripts

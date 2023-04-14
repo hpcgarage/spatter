@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "sgbuf.h"
-#include "cuda-backend.h"
+extern "C" {
+    #include "cuda-backend.h"
+}
 
 #define cudaSilent(a) if(a!=cudaSuccess) exit(0);
 
-void create_dev_buffers_cuda(sgDataBuf* source)
+extern "C" void create_dev_buffers_cuda(sgDataBuf* source)
 {
     cudaError_t ret;
     ret = cudaMalloc((void **)&(source->dev_ptr_cuda), source->size);
@@ -16,7 +18,7 @@ void create_dev_buffers_cuda(sgDataBuf* source)
     }
 }
 
-int find_device_cuda(char *name) {
+extern "C" int find_device_cuda(char *name) {
     if (!name) {
         return -1;
     }
