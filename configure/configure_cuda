@@ -6,12 +6,11 @@
 
 BUILD_DIR=build_cuda
 
-echo "Please specify a CUDA architecture (Ex. Write '70' for 7.0)"
+echo "Please specify a CUDA architecture (Ex. Write '70' for 7.0, DEFAULT 7.0)"
 read cc
 if [ -z ${cc} ]
 then 
-    echo "Please specify a CUDA Architecture."
-    exit 1
+    cc="70"
 fi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
