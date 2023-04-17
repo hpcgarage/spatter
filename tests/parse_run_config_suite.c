@@ -7,6 +7,24 @@
 
 int k_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 {
+    int sg_argc_ = 4;
+    char **sg_argv_ = (char**)malloc(sizeof(char*) * sg_argc_);
+
+    int ret;
+    ret = asprintf(&sg_argv_[0], "./spatter");
+    if (ret == -1)
+        return EXIT_FAILURE;
+
+    ret = asprintf(&sg_argv_[1], "-g1,2,3,4");
+    if (ret == -1)
+        return EXIT_FAILURE;
+
+    ret = asprintf(&sg_argv_[2], "-h1,2,3,4");
+    if (ret == -1)
+        return EXIT_FAILURE;
+
+ 
+
     asprintf(&argv_[2], "-kGATHER");
     parse_args(argc_, argv_, nrc, &rc);
     free(argv_[2]);
@@ -47,23 +65,23 @@ int k_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
         return EXIT_FAILURE;
     }
 
-    asprintf(&argv_[2], "-kSG");
-    parse_args(argc_, argv_, nrc, &rc);
-    free(argv_[2]);
+    asprintf(&sg_argv_[3], "-kGS");
+    parse_args(sg_argc_, sg_argv_, nrc, &rc);
+    free(sg_argv_[3]);
 
     if (rc[0].kernel != 3)
     {
-        printf("Test failure on run_config suite: POSIX-style k with argument SG resulted in kernel %d.\n", rc[0].kernel);
+        printf("Test failure on run_config suite: POSIX-style k with argument GS resulted in kernel %d.\n", rc[0].kernel);
         return EXIT_FAILURE;
     }
 
-    asprintf(&argv_[2], "-k SG");
-    parse_args(argc_, argv_, nrc, &rc);
-    free(argv_[2]);
+    asprintf(&sg_argv_[3], "-k GS");
+    parse_args(sg_argc_, sg_argv_, nrc, &rc);
+    free(sg_argv_[3]);
 
     if (rc[0].kernel != 3)
     {
-        printf("Test failure on run_config suite: k with argument SG resulted in kernel %d.\n", rc[0].kernel);
+        printf("Test failure on run_config suite: k with argument GS resulted in kernel %d.\n", rc[0].kernel);
         return EXIT_FAILURE;
     }
 
@@ -87,13 +105,13 @@ int k_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
         return EXIT_FAILURE;
     }
 
-    asprintf(&argv_[2], "--kernel-name=SG");
-    parse_args(argc_, argv_, nrc, &rc);
-    free(argv_[2]);
+    asprintf(&sg_argv_[3], "--kernel-name=GS");
+    parse_args(sg_argc_, sg_argv_, nrc, &rc);
+    free(sg_argv_[3]);
 
     if (rc[0].kernel != 3)
     {
-        printf("Test failure on run_config suite: --kernel-name with argument SG resulted in kernel %d.\n", rc[0].kernel);
+        printf("Test failure on run_config suite: --kernel-name with argument GS resulted in kernel %d.\n", rc[0].kernel);
         return EXIT_FAILURE;
     }
 
@@ -253,7 +271,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 100)
     {
-        printf("Test failure on run_config suite: -R with argument 100 had incorrect value of %d.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 100 had incorrect value of %zu.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -263,7 +281,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 500)
     {
-        printf("Test failure on run_config suite: -R with argument 500 had incorrect value of %d.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 500 had incorrect value of %zu.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -273,7 +291,7 @@ int R_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
 
     if (rc[0].nruns != 1000)
     {
-        printf("Test failure on run_config suite: -R with argument 1000 had incorrect value of %d.\n", rc[0].nruns);
+        printf("Test failure on run_config suite: -R with argument 1000 had incorrect value of %zu.\n", rc[0].nruns);
         return EXIT_FAILURE;
     }
 
@@ -464,7 +482,7 @@ int other_tests(int argc_, char** argv_, int* nrc, struct run_config* rc)
     return EXIT_SUCCESS;
 }
 
-int main ()
+int main (int argc, char **argv)
 {
     int argc_ = 3;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);

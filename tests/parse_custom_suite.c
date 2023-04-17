@@ -7,7 +7,7 @@
 
 int custom_test(int indexLength, int* values, int argc, char** argv)
 {
-    int nrc = 0;
+    int nrc = 0; 
     struct run_config *rc = NULL;
 
     parse_args(argc, argv, &nrc, &rc);
@@ -26,7 +26,7 @@ int custom_test(int indexLength, int* values, int argc, char** argv)
 
     for (int i = 0; i < indexLength; i++)
     {
-        if ((unsigned long)values[i] != rc[0].pattern[i])
+        if (values[i] != rc[0].pattern[i])
         {
             printf("Test failure on Custom Pattern: input pattern does not match parsed pattern!\n");
             return EXIT_FAILURE;
@@ -38,7 +38,7 @@ int custom_test(int indexLength, int* values, int argc, char** argv)
 }
 
 
-int main ()
+int main (int argc, char **argv)
 {
     int argc_ = 2;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "parse-args.h"
-#include "unused.h"
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -12,12 +11,9 @@
 
 int omp_thread_test(int thread_count, int argc, char** argv)
 {
-#ifndef USE_OPENMP
-    UNUSED_VAR(thread_count);
-    UNUSED_VAR(argc);
-    UNUSED_VAR(argv);
+    #ifndef USE_OPENMP
     return EXIT_SUCCESS;
-#else
+    #else
 
     int nrc = 0;
     struct run_config *rc = NULL;
@@ -42,15 +38,21 @@ int omp_thread_test(int thread_count, int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    if (thread_count == 0 && rc[0].omp_threads != (unsigned int)omp_get_max_threads())
+    if (thread_count == 0 && rc[0].omp_threads != omp_get_max_threads())
     {
         printf("Test failure on OMP Threads: requested 0 threads and should have defaulted to OMP Max Thread Count, but instead allocated %ld threads.\n", rc[0].omp_threads);
         return EXIT_FAILURE;
     }
 
-    if (thread_count > 0 && thread_count != 0 && rc[0].omp_threads != (unsigned int)thread_count && thread_count < omp_get_max_threads())
+    if (thread_count > 0 && thread_count != 0 && rc[0].omp_threads != thread_count && thread_count < omp_get_max_threads())
     {
         printf("Test failure on OMP Threads: requested %d threads but got %ld threads instead.\n)", thread_count, rc[0].omp_threads);
+        return EXIT_FAILURE;
+    }
+
+    if (rc[0].omp_threads != omp_get_max_threads() && thread_count > omp_get_max_threads())
+    {
+        printf("Test failure on OMP Threads: requested %d threads exceeding OMP Max Thread Count, but allocated different amount than available!\n", thread_count);
         return EXIT_FAILURE;
     }
 
@@ -60,7 +62,7 @@ int omp_thread_test(int thread_count, int argc, char** argv)
 }
 
 
-int main ()
+int main (int argc, char **argv)
 {
     int argc_ = 3;
     char **argv_ = (char**)malloc(sizeof(char*) * argc_);
