@@ -9,21 +9,22 @@ COMPILER=gnu
 #Run the submodule update script
 ./configure/git_submodule_init.sh
 
-BUILD_DIR=build_${BACKEND}_${COMPILER}
+BUILD_DIR=build_${BACKEND}_mpi_${COMPILER}
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake*
 
-CC=gcc
-CXX=g++
-FLAGS="-O0"
+CC=mpicc
+CXX=mpicxx
+FLAGS="-O3"
 
 #Make sure to use tabs rather than spaces for newline entries
-cmake -D CMAKE_BUILD_TYPE=Debug \
+cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_C_COMPILER=${CC} \
 	-D CMAKE_CXX_COMPILER=${CXX} \
 	-D CMAKE_C_FLAGS=${FLAGS} \
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=1 \
 	-D USE_CUDA=0 \
+        -D USE_MPI=1 \
 	..
