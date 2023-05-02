@@ -16,10 +16,10 @@ rm -rf CMake*
 
 CC=gcc
 CXX=g++
-FLAGS="-O0"
+FLAGS="-O3"
 
 #Make sure to use tabs rather than spaces for newline entries
-cmake -D CMAKE_BUILD_TYPE=Debug \
+cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_C_COMPILER=${CC} \
 	-D CMAKE_CXX_COMPILER=${CXX} \
 	-D CMAKE_C_FLAGS=${FLAGS} \
