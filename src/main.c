@@ -389,73 +389,31 @@ int main(int argc, char **argv)
             size_t max_pattern_val_outer = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
             size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
 
+            assert(rc2[i].pattern_len > max_pattern_val_inner);
 
+            max_pattern_val = max_pattern_val_outer >= max_pattern_val_inner ? max_pattern_val_outer : max_pattern_val_inner;
+            pattern_delta = rc2[i].delta >= rc2[i].delta_scatter ? rc2[i].delta : rc2[i].delta_scatter;
+        }
+        else if (rc2[i].kernel == MULTIGATHER) {
+            size_t max_pattern_val_outer = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
+            size_t max_pattern_val_inner = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
 
-	// Post-Processing to make heap values fit
-	size_t boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
-    	//printf("Boundary: %zu, max_pattern_val: %zu, difference: %zu\n", boundary, max_pattern_val, max_pattern_val - boundary);
+            assert(rc2[i].pattern_len > max_pattern_val_inner);
+
+            max_pattern_val = max_pattern_val_outer >= max_pattern_val_inner ? max_pattern_val_outer : max_pattern_val_inner;
+            pattern_delta = rc2[i].delta >= rc2[i].delta_gather ? rc2[i].delta : rc2[i].delta_gather;
+        }
+        else if (rc2[i].kernel == GS) {
+            size_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len);
+            size_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len);
+            max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
         
-    	if (max_pattern_val >= boundary) {
-                //printf("Inside of boundary if statement\n");
-            size_t outside_boundary = 0;
-            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-                if (rc2[i].pattern[j] >= boundary) {
-                    outside_boundary++;
-                }
-            }
-
-            // printf("Configuration: %d, Number of indices outside of boundary: %d, Total pattern length: %d, Frequency of outside of boundary indices: %.2f\n", i, outside_boundary, rc2[i].pattern_len, (double)outside_boundary / (double)rc2[i].pattern_len ); 
+            pattern_delta = rc2[i].delta_gather >= rc2[i].delta_scatter ? rc2[i].delta_gather : rc2[i].delta_scatter;
+        }
+        else {
+            max_pattern_val = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len);
             
-            // Initialize map to sentinel value of -1
-            size_t heap_map[outside_boundary][2];
-            for (size_t j = 0; j < outside_boundary; j++) {
-                heap_map[j][0] = -1;
-                heap_map[j][1] = -1;
-            }
-
-            size_t pos = 0;
-            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-                if (rc2[i].pattern[j] >= boundary) {
-                    // Search if exists in map
-                    int found = 0;
-                    for (size_t k = 0; k < pos; k++) {
-                        if (heap_map[k][0] == rc2[i].pattern[j]) {
-                            //printf("Already found %zu at position %zu\n", rc2[i].pattern[j], k);
-                            found = 1;
-                            break;
-                        }
-                    }
-
-                    // If not found, add to map
-                    if (!found) {
-                    //printf("Inserting %zu, %zu into the heap map at position %zu\n", rc2[i].pattern[j], boundary - pos, pos);
-                    heap_map[pos][0] = rc2[i].pattern[j];
-                        heap_map[pos][1] = boundary - pos;
-                    pos++;
-                    }
-                }
-            }
-
-            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-                if (rc2[i].pattern[j] >= boundary) {
-                    // Find entry in map
-                    for (size_t k = 0; k < pos; k++) {
-                        if (heap_map[k][0] == rc2[i].pattern[j]) {
-                            // Map heap address to new address inside of boundary
-                            rc2[i].pattern[j] = heap_map[k][1];
-                            break;
-                        }
-                    }
-                }
-            }
-
-            max_pattern_val = rc2[i].pattern[0];
-            for (size_t j = 0; j < rc2[i].pattern_len; j++) {
-                if (rc2[i].pattern[j] > max_pattern_val) {
-                    max_pattern_val = rc2[i].pattern[j];
-                }
-            }
-
+            pattern_delta = rc2[i].delta;
         }
         //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
 
@@ -845,9 +803,6 @@ int main(int argc, char **argv)
         }
         #endif // USE_SERIAL
     }
-
-    }
-    // end nrc loop
 
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
