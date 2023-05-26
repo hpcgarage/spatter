@@ -6,6 +6,9 @@
 
 BUILD_DIR=build_cuda
 
+cc=$1
+echo "Building for compute capability ${cc}"
+
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
 
@@ -13,7 +16,7 @@ rm -rf CMake*
 cmake -D CMAKE_BUILD_TYPE=Release \
 	-D CMAKE_CXX_COMPILER=nvcc \
 	-D CMAKE_CXX_FLAGS="-O3 " \
-	-D USE_CUDA=1 -D CUDA_FLAGS="-arch sm_70"\
+	-D USE_CUDA=1 -D CMAKE_CUDA_ARCHITECTURES=${cc}\
 	-D USE_OPENCL=0 \
 	-D USE_OPENMP=0 \
 	..    

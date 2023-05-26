@@ -33,7 +33,9 @@ enum sg_kernel
     INVALID_KERNEL=0,
     SCATTER,
     GATHER,
-    SG,
+    GS,
+    MULTISCATTER,
+    MULTIGATHER
 };
 
 enum sg_op
@@ -68,16 +70,30 @@ struct run_config
 {
     // keep arrays at top so they are aligned
     spIdx_t *pattern;
+    spIdx_t *pattern_gather;
+    spIdx_t *pattern_scatter;
     size_t *deltas;
     size_t *deltas_ps;
+    size_t *deltas_gather;
+    size_t *deltas_gather_ps;
+    size_t *deltas_scatter;
+    size_t *deltas_scatter_ps;
     spSize_t pattern_len;
+    spSize_t pattern_gather_len;
+    spSize_t pattern_scatter_len;
     ssize_t delta;
     size_t deltas_len;
+    ssize_t delta_gather;
+    size_t deltas_gather_len;
+    ssize_t delta_scatter;
+    size_t deltas_scatter_len;
     enum sg_kernel kernel;
     enum idx_type type;
+    enum idx_type type_gather;
+    enum idx_type type_scatter;
     spSize_t generic_len;
     size_t wrap;
-    int nruns;
+    size_t nruns;
     char pattern_file[STRING_SIZE];
     char generator[STRING_SIZE];
     char name[STRING_SIZE];
@@ -117,7 +133,7 @@ struct backend_config
  *  @param argv Value passed to main
  */
 void parse_args(int argc, char **argv, int *nrc, struct run_config **rc);
-struct run_config parse_runs();
+struct run_config *parse_runs(int arrr, char **argv);
 void error (char* what, int code);
 void print_run_config(struct run_config rc);
 #endif

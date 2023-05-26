@@ -1,5 +1,20 @@
-Patrick Lavin <plavin3@gatech.edu>
-	gather kernels
+## Authors
+
+Patrick Lavin
+	General code development, key gather/scatter kernels, maintainer
 	
 Jeffrey Young
-	ocl_backend.*
+	OpenCL backend and general updates
+
+Jered Dominguez-Trujillo
+	Support for combined gather/scatter kernel
+
+Agustin Vaca Valverde
+	Unit testing and scripts
+
+Vincent Huang
+	Scripting and OneAPI backend support
+
+James Wood
+	OneAPI backend support
+
