@@ -242,3 +242,18 @@ Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating G
 
 ### Slides
 * [SC19 Georgia Tech Booth Talk (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_booth_talk_sc19.pdf)
+
+## Supported Platforms 
+
+### Linux and Mac 
+
+#### Dependencies: 
+
+* CMake 3.18+ 
+* A supported C/C++ 11 compiler 
+  * GCC 
+  * Clang 
+* If using CUDA, CUDA 10.0+ 
+* If using OpenMP, OpenMP 3.0+
+  * Note: Issues have been reported in Mac systems with OpenMP. If you encounter issues finding OpenMP, please use Spatter in a Linux container. 
+* Spatter can also run serially
