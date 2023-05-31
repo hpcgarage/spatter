@@ -96,6 +96,12 @@ INSTANTIATE(8);
 INSTANTIATE(16);
 INSTANTIATE(32);
 INSTANTIATE(64);
+INSTANTIATE(128);
+INSTANTIATE(256);
+INSTANTIATE(512);
+INSTANTIATE(1024);
+INSTANTIATE(2048);
+INSTANTIATE(4096);
 
 extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
     if (!grid || !block || dim == 0 || dim > 3) {
@@ -149,6 +155,18 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
             scatter_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
             scatter_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 128)
+            scatter_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 256)
+            scatter_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 512)
+            scatter_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 1024)
+            scatter_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 2048)
+            scatter_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 4096)
+            scatter_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -173,6 +191,18 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
             gather_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
             gather_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 128)
+            gather_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 256)
+            gather_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 512)
+            gather_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 1024)
+            gather_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 2048)
+            gather_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 4096)
+            gather_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -197,6 +227,18 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
             sg_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else if (vector_len == 64)
             sg_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 128)
+            sg_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 256)
+            sg_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 512)
+            sg_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 1024)
+            sg_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 2048)
+            sg_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
+        else if (vector_len == 4096)
+            sg_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -517,6 +559,8 @@ INSTANTIATE2(128);
 INSTANTIATE2(256);
 INSTANTIATE2(512);
 INSTANTIATE2(1024);
+INSTANTIATE2(2048);
+INSTANTIATE2(4096);
 
 extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
@@ -570,7 +614,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block_morton<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev, validate);
             }else if (pat_len == 1024) {
                 gather_block_morton<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev, validate);
-            } else {
+            }else if (pat_len == 2048) {
+                gather_block_morton<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev, validate);
+            }else if (pat_len == 4096) {
+                gather_block_morton<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev, validate);
+            }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
             }
 
@@ -593,7 +641,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block_stride<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride, validate);
             }else if (pat_len == 1024) {
                 gather_block_stride<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride, validate);
-            } else {
+            }else if (pat_len == 2048) {
+                gather_block_stride<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride, validate);
+            }else if (pat_len == 4096) {
+                gather_block_stride<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride, validate);
+            }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
             }
 
@@ -616,7 +668,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
             }else if (pat_len == 1024) {
                 gather_block<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
-            } else {
+            }else if (pat_len == 2048) {
+                gather_block<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
+            }else if (pat_len == 4096) {
+                gather_block<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
+            }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
             }
         }
@@ -638,7 +694,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             scatter_block<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
         }else if (pat_len == 1024) {
             scatter_block<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
-        } else {
+        }else if (pat_len == 2048) {
+            scatter_block<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
+        }else if (pat_len ==4096) {
+            scatter_block<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
+        }else {
             printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
         }
 
@@ -698,7 +758,11 @@ extern "C" float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
             gather_block_random<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
         }else if (pat_len == 1024) {
             gather_block_random<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
-        } else {
+        }else if (pat_len == 2048) {
+            gather_block_random<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len ==4096) {
+            gather_block_random<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else {
             printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
         }
     } else if (kernel == SCATTER) {
@@ -718,7 +782,11 @@ extern "C" float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
             scatter_block_random<512><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
         }else if (pat_len == 1024) {
             scatter_block_random<1024><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
-        } else {
+        }else if (pat_len == 2048) {
+            scatter_block_random<2048><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else if (pat_len ==4096) {
+            scatter_block_random<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, seed, n);
+        }else {
             printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
         }
 
@@ -763,11 +831,17 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
         gather_new<16><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
     }else if (pat_len == 64) {
         gather_new<64><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
-    }else if (pat_len ==256) {
+    }else if (pat_len == 256) {
         gather_new<256><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
     }else if (pat_len == 512) {
         gather_new<512><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
-    } else {
+    }else if (pat_len == 1024) {
+        gather_new<1024><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len == 2048) {
+        gather_new<2048><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else if (pat_len == 4096) {
+        gather_new<4096><<<grid_dim,block_dim>>>(source, pat_dev, (long)delta, 0, wpt);
+    }else {
         printf("ERROR NOT SUPPORTED\n");
     }
     cudaEventRecord(stop);
@@ -931,6 +1005,8 @@ INSTANTIATE3(128);
 INSTANTIATE3(256);
 INSTANTIATE3(512);
 INSTANTIATE3(1024);
+INSTANTIATE3(2048);
+INSTANTIATE3(4096);
 
 extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
         double *source,
@@ -981,7 +1057,11 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
         sg_block<512><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
     }else if (pat_len == 1024) {
         sg_block<1024><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
-    } else {
+    }else if (pat_len == 2048) {
+        sg_block<2048><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else if (pat_len == 4096) {
+        sg_block<4096><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
+    }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
 
@@ -1055,6 +1135,8 @@ INSTANTIATE4(128);
 INSTANTIATE4(256);
 INSTANTIATE4(512);
 INSTANTIATE4(1024);
+INSTANTIATE4(2048);
+INSTANTIATE4(4096);
 
 extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* block,
         double *source,
@@ -1104,7 +1186,11 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
         multiscatter_block<512><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
     }else if (pat_len == 1024) {
         multiscatter_block<1024><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
-    } else {
+    }else if (pat_len == 2048) {
+        multiscatter_block<2048><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
+    }else if (pat_len == 4096) {
+        multiscatter_block<4096><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
+    }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
 
@@ -1177,6 +1263,8 @@ INSTANTIATE5(128);
 INSTANTIATE5(256);
 INSTANTIATE5(512);
 INSTANTIATE5(1024);
+INSTANTIATE5(2048);
+INSTANTIATE5(4096);
 
 extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* block,
         double *source,
@@ -1226,7 +1314,11 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
         multigather_block<512><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
     }else if (pat_len == 1024) {
         multigather_block<1024><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
-    } else {
+    }else if (pat_len == 2048) {
+        multigather_block<2048><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
+    }else if (pat_len == 4096) {
+        multigather_block<4096><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
+    }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
 
