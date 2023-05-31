@@ -145,7 +145,7 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
         bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     }
-    printf("%-7d %-12.4g %-12.6g", ii, time, actual_bandwidth);
+    printf("%-7d %-12.4g %-12f", ii, time, actual_bandwidth);
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {
         printf(" %-12lld", rc.papi_ctr[idx][i]);
