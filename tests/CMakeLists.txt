@@ -19,13 +19,21 @@ set( TESTAPPS #list apps
         standard_laplacian_suite
         concurrent
         multilevel
-        standard_suite
     )
+
+IF(USE_CUDA)
+    set(TESTAPPS  ${TESTAPPS} standard_suite_gpu)
+ELSE()
+    set(TESTAPPS  ${TESTAPPS} standard_suite_cpu)
+ENDIF()
 
 file(GLOB src
     "${PROJECT_SOURCE_DIR}/external/argtable3/*.c"
     "${PROJECT_SOURCE_DIR}/src/*.c"
     "${PROJECT_SOURCE_DIR}/src/openmp/*.c"
+    "${PROJECT_SOURCE_DIR}/src/cuda/*.c"
+    "${PROJECT_SOURCE_DIR}/src/cuda/*.cu"
+    "${PROJECT_SOURCE_DIR}/src/cuda/*.h"
     )
 set( src_files ${src} )
 
@@ -40,14 +48,5 @@ foreach( APP ${TESTAPPS} )
  IF (USE_OPENMP)
      TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
  ENDIF()
- IF (USE_CUDA)
-    FIND_LIBRARY (
-        CUDART_LIBRARY cudart
-        HINTS
-            /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
-    )
-    TARGET_LINK_LIBRARIES (${APP} PRIVATE ${CUDART_LIBRARY})
- ENDIF ()
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
 endforeach( APP ${TESTAPPS} )
-
