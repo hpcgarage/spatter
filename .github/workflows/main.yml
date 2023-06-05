@@ -21,7 +21,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build-OMP
       run: 
-        sudo apt-get install libomp-dev
         ./configure/configure_omp_gnu && make -C build_omp_gnu
     - name: Test-OMP
       run: make test -C build_omp_gnu
