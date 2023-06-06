@@ -49,5 +49,6 @@ foreach( APP ${TESTAPPS} )
     TARGET_LINK_LIBRARIES (${APP} PRIVATE ${CUDART_LIBRARY})
  ENDIF ()
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
+ set_tests_properties("${APP}_test" PROPERTIES FIXTURES_REQUIRED "test_${APP}_fixture")
 endforeach( APP ${TESTAPPS} )
 
