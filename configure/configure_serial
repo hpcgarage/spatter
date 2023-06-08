@@ -10,8 +10,8 @@ CC=gcc
 CXX=g++
 
 #Specify a Release or Debug build
-BLD_TYPE=Release
-#BLD_TYPE=Debug
+#BLD_TYPE=Release
+BLD_TYPE=Debug
 
 
 #Create a build directory that details which version of spatter is being built and run
@@ -23,7 +23,7 @@ create_build_directory()
 	then 
 		BUILD_DIR=build_${BACKEND}_${COMPILER}
 	else
-		BUILD_DIR=build_${BACKEND}_${COMPILER}_${BLD_TYPE}
+		BUILD_DIR=build_${BACKEND}_${COMPILER}_debug
 	fi
 	#Create directory if needed - clean CMake cached files
 	mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
