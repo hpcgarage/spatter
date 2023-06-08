@@ -10,8 +10,8 @@ CC=gcc
 CXX=g++
 
 #Specify a Release or Debug build
-#BLD_TYPE=Release
-BLD_TYPE=Debug
+BLD_TYPE=Release
+#BLD_TYPE=Debug
 
 
 #Create a build directory that details which version of spatter is being built and run
