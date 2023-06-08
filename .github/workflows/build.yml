@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build-Serial
-      run: ./configure/configure_serial_gnu && make -C build_serial_gnu
+      run: ./configure/configure_serial && make -C build_serial_gnu
     - name: Test-Serial
       run: make test -C build_serial_gnu
   build-and-run-omp:
@@ -21,6 +21,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build-OMP
       run: 
-        ./configure/configure_omp_gnu && make -C build_omp_gnu
+        ./configure/configure_omp && make -C build_omp_gnu
     - name: Test-OMP
       run: make test -C build_omp_gnu
