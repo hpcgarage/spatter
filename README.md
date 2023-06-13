@@ -84,6 +84,8 @@ Usage:
  -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
  -x, --delta-gather=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
  -y, --delta-scatter=<delta[,delta,...]> Specify one or more deltas. [Default: 8] 
+ -e, --boundary=<n>           Specify the boundary to mod pattern indices with to limit data array size.
+ -j, --pattern-size=<n>       Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.
  -l, --count=<n>              Number of Gathers or Scatters to perform.
  -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]

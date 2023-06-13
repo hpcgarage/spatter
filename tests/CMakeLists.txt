@@ -14,6 +14,7 @@ set( TESTAPPS #list apps
         parse_random_suite
         parse_concurrent
         parse_multilevel
+        parse_size
         standard_uniform_suite
         standard_ms1_suite
         standard_laplacian_suite
