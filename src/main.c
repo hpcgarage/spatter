@@ -134,6 +134,9 @@ int compare (const void * a, const void * b)
 /** Time reported in seconds, sizes reported in bytes, bandwidth reported in mib/s"
  */
 double report_time(int ii, double time,  struct run_config rc, int idx){
+    if (time == 0.0) {
+        error("Time is zero", ERROR);
+    }
     size_t bytes_moved = 0;
     double actual_bandwidth = 0;
 
