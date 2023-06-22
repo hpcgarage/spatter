@@ -92,8 +92,8 @@ ENDIF ()
 
 
 #Add configure-specified flags
-SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include -I${CMAKE_CURRENT_SOURCE_DIR}/external/argtable3")
 
 
 #Check if Spatter is compiled on MacOSX. If so, use POSIX_MEMALIGN to allocate memory
@@ -121,6 +121,9 @@ IF (USE_OPENCL)
         DESTINATION
         ${CMAKE_CURRENT_BINARY_DIR}/kernels/
     )
+
+    MESSAGE ("Using OpenCL backend")
+
 ENDIF ()
 
 # Enable Serial backend
@@ -152,6 +155,7 @@ IF (USE_OPENMP)
     ENDIF ()
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    MESSAGE ("Using OpenMP backend")
 ENDIF ()
 
 # Enable CUDA and CUDAToolkit
@@ -162,7 +166,7 @@ IF (USE_CUDA)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
     SET (
         CMAKE_CUDA_FLAGS
-        "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
     )
     IF (USE_OPENMP)
         SET (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
@@ -180,7 +184,8 @@ IF (USE_CUDA)
     )
     target_include_directories(cuda_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda")
 
-    #Make
+    MESSAGE ("Using CUDA backend")
+
 ENDIF ()
 
 IF (USE_PAPI) 
@@ -204,7 +209,7 @@ FILE (GLOB EXTERNAL_H_FILES external/argtable3/*.h)
 
 # Glob for the source files and headers in the current directory and kernels
 FILE (GLOB C_FILES src/*.c)
-FILE (GLOB H_FILES include/*.h)
+FILE (GLOB H_FILES src/include/*.h)
 SET (
     SOURCE_FILES
     ${C_FILES}
