@@ -84,6 +84,8 @@ Usage:
  -d, --delta=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
  -x, --delta-gather=<delta[,delta,...]> Specify one or more deltas. [Default: 8]
  -y, --delta-scatter=<delta[,delta,...]> Specify one or more deltas. [Default: 8] 
+ -e, --boundary=<n>           Specify the boundary to mod pattern indices with to limit data array size.
+ -j, --pattern-size=<n>       Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.
  -l, --count=<n>              Number of Gathers or Scatters to perform.
  -w, --wrap=<n>               Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
@@ -242,3 +244,18 @@ Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating G
 
 ### Slides
 * [SC19 Georgia Tech Booth Talk (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_booth_talk_sc19.pdf)
+
+## Supported Platforms 
+
+### Linux and Mac 
+
+#### Dependencies: 
+
+* CMake 3.18+ 
+* A supported C/C++ 11 compiler 
+  * GCC 
+  * Clang 
+* If using CUDA, CUDA 10.0+ 
+* If using OpenMP, OpenMP 3.0+
+  * Note: Issues have been reported in Mac systems with OpenMP. If you encounter issues finding OpenMP, please use Spatter in a Linux container. 
+* Spatter can also run serially

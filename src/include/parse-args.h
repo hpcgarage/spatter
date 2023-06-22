@@ -78,6 +78,8 @@ struct run_config
     size_t *deltas_gather_ps;
     size_t *deltas_scatter;
     size_t *deltas_scatter_ps;
+    spIdx_t boundary;
+    spSize_t pattern_size;
     spSize_t pattern_len;
     spSize_t pattern_gather_len;
     spSize_t pattern_scatter_len;
