@@ -14,6 +14,7 @@ set( TESTAPPS #list apps
         parse_random_suite
         parse_concurrent
         parse_multilevel
+        parse_size
         standard_uniform_suite
         standard_ms1_suite
         standard_laplacian_suite
@@ -43,10 +44,18 @@ get_filename_component(full_path_main_c "${CMAKE_CURRENT_SOURCE_DIR}/../src/main
 list(REMOVE_ITEM src_files "${full_path_main_c}")
 
 foreach( APP ${TESTAPPS} )
- add_executable( "${APP}" "${APP}.c" ${src_files})
+ add_executable( "${APP}" EXCLUDE_FROM_ALL "${APP}.c" ${src_files})
+ add_test("${APP}_build"
+  "${CMAKE_COMMAND}"
+  --build "${CMAKE_BINARY_DIR}"
+  --config "$<CONFIG>"
+  --target ${APP}
+)
+set_tests_properties("${APP}_build" PROPERTIES FIXTURES_SETUP "test_${APP}_fixture")
  target_link_libraries( "${APP}" PRIVATE m )
  IF (USE_OPENMP)
      TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
  ENDIF()
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
+ set_tests_properties("${APP}_test" PROPERTIES FIXTURES_REQUIRED "test_${APP}_fixture")
 endforeach( APP ${TESTAPPS} )
