@@ -13,34 +13,62 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-# Set default values
-SET (USE_CUDA 0 CACHE BOOL "If set, builds with CUDA support")
-SET (USE_OPENCL 0 CACHE BOOL "If set, builds with OpenCL support")
-SET (USE_OPENMP 0 CACHE BOOL "If set, builds with OpenMP support")
-SET (USE_SERIAL 0 CACHE BOOL "If set, builds with Serial support")
-SET (USE_PAPI 0 CACHE BOOL "If set, builds with PAPI support")
-SET (USE_MPI 0 CACHE BOOL "If set, builds with MPI support")
+#Make backend and compiler variables case insensitive
+string( TOLOWER "${BACKEND}" BACKEND )
+string( TOLOWER "${COMPILER}" COMPILER )
+
+#Set backend permitted values
+set(spatterBackends serial openmp cuda)
+
+#Check for backend variable set in user cmake call
+if(NOT BACKEND IN_LIST spatterBackends)
+    message(FATAL_ERROR "backend must be one of ${spatterBackends}")
+endif()
+
+#Set compiler permitted values
+set(spatterCompilers cray gnu clang intel xl nvcc)
+
+#Check for compiler variable set in user cmake call
+if(NOT COMPILER IN_LIST spatterCompilers)
+    message(FATAL_ERROR "compiler must be one of ${compilerBackends}")
+endif()
 
 ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
 
 # Check for support for at least one backend
-IF (NOT (USE_CUDA OR USE_OPENCL OR USE_OPENMP OR USE_SERIAL))
+IF ("${BACKEND}" STREQUAL "")
     MESSAGE (
         FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DUSE_CUDA=1 -DUSE_OPENCL=1 -DUSE_SERIAL=1 or -DUSE_OPENMP=1 to cmake."
+            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
     )
 ENDIF ()
 
+# Check for support for at least one compiler
+IF ("${COMPILER}" STREQUAL "")
+    MESSAGE (
+        FATAL_ERROR
+            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."
+    )
+ENDIF ()
+
+
+# Set backend specific flags
+IF ("${BACKEND}" STREQUAL "cuda")
+    SET(CMAKE_CXX_COMPILER "${COMPILER}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -03")
+    #TODO: How will user specify CUDA arch
+    SET(CMAKE_CUDA_ARCHITECTURES "70")
+ENDIF ()
+
 # Set CUDA compiler
-IF (USE_CUDA)
+IF ("${BACKEND}" STREQUAL "cuda")
     enable_language(CUDA)
     find_package(CUDAToolkit)
-    #SET (CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
 ENDIF ()
 
 # Declare project languages
-IF (USE_CUDA)
+IF ("${BACKEND}" STREQUAL "cuda")
     PROJECT (${TRGT} C CXX CUDA)
 ELSE ()
     PROJECT (${TRGT} C CXX)
@@ -59,6 +87,7 @@ MACRO (print_all_variables)
         STATUS "print_all_variables------------------------------------------}"
     )
 ENDMACRO ()
+
 
 
 # Check that appropriate compiler versions are used
@@ -112,7 +141,7 @@ IF (APPLE)
 ENDIF ()
 
 # Enable OpenCL
-IF (USE_OPENCL)
+IF ("${BACKEND}" STREQUAL "opencl")
     ADD_DEFINITIONS (-DUSE_OPENCL)
     # Point the compiler to the include and library directories
     INCLUDE_DIRECTORIES ($ENV{OCL_INCL} src/opencl)
@@ -135,7 +164,7 @@ IF (USE_OPENCL)
 ENDIF ()
 
 # Enable Serial backend
-IF (USE_SERIAL)
+IF ("${BACKEND}" STREQUAL "serial")
     ADD_DEFINITIONS (-DUSE_SERIAL)
     INCLUDE_DIRECTORIES (src/serial)
     # Pull the serial files and kernels into the build
@@ -144,12 +173,8 @@ IF (USE_SERIAL)
     MESSAGE ("Using serial backend")
 ENDIF ()
 
-IF (USE_MPI)
-    ADD_DEFINITIONS (-DUSE_MPI)
-ENDIF()
-
 # Enable OpenMP
-IF (USE_OPENMP)
+IF ("${BACKEND}" STREQUAL "openmp")
     FIND_PACKAGE (OpenMP REQUIRED)
     if(OpenMP_FOUND)
 	# enable pragma regions in the code for OpenMP
@@ -167,7 +192,7 @@ IF (USE_OPENMP)
 ENDIF ()
 
 # Enable CUDA
-IF (USE_CUDA)
+IF ("${BACKEND}" STREQUAL "cuda")
     ADD_DEFINITIONS (-DUSE_CUDA)
     INCLUDE_DIRECTORIES (src/cuda)
     SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
@@ -176,7 +201,7 @@ IF (USE_CUDA)
         CMAKE_CUDA_FLAGS
         "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
     )
-    IF (USE_OPENMP)
+    IF ("${BACKEND}" STREQUAL "openmp")
         SET (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
     ENDIF ()
 
@@ -230,30 +255,25 @@ SET (
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
 
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
-IF (NOT USE_CUDA)
+IF (NOT "${BACKEND}" STREQUAL "cuda")
 	set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
 ENDIF()
 
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
-IF (USE_OPENMP)
+IF ("${BACKEND}" STREQUAL "openmp")
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenMP::OpenMP_CXX)
 ENDIF()
 
-IF (USE_OPENCL)
+IF ("${BACKEND}" STREQUAL "opencl")
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC OpenCL)
 ENDIF ()
 
 # Link math library for json
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
-IF (USE_CUDA)
-    #FIND_LIBRARY (
-    #    CUDART_LIBRARY cudart
-    #    HINTS
-    #        /usr/local/cuda/targets/x86_64-linux/lib/ /usr/local/cuda/lib64/
-    #)
+IF ("${BACKEND}" STREQUAL "cuda")
     TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC CUDA::cudart)
 ENDIF ()
 
@@ -278,7 +298,7 @@ SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\
 
 
 # Build tests
-if ( USE_OPENMP OR USE_SERIAL )
+if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" )
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )
@@ -289,7 +309,7 @@ endif()
 
 # Validation flag
 SET (VALIDATE_DATA 0 CACHE BOOL "Performs additional validation")
-IF (USE_OPENMP OR USE_CUDA)
+IF ("${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "cuda")
     IF (VALIDATE_DATA)
         ADD_DEFINITIONS(-DVALIDATE)
     ENDIF ()
