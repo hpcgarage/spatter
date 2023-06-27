@@ -53,6 +53,17 @@ ENDIF ()
 
 
 # Set backend specific flags
+#SERIAL
+IF ("${BACKEND}" STREQUAL "serial")
+    SET(CC gcc)
+    SET(CXX g++)
+    #SET(CMAKE_C_COMPILER "${CC}")
+    #SET(CMAKE_CXX_COMPILER ${CXX})
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -03")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -03")
+ENDIF ()
+
+#CUDA
 IF ("${BACKEND}" STREQUAL "cuda")
     SET(CMAKE_CXX_COMPILER "${COMPILER}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -03")
