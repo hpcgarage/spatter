@@ -1,6 +1,6 @@
-# 3.10 is specified since this is the first version with FindCUDAToolkit support
-CMAKE_MINIMUM_REQUIRED (VERSION 3.10 FATAL_ERROR)
-project(spatter C CXX)
+# 3.18 is specified to include FindCUDAToolkit support updates
+CMAKE_MINIMUM_REQUIRED (VERSION 3.18 FATAL_ERROR)
+PROJECT (spatter C CXX)
 
 SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -43,46 +43,9 @@ IF ("${BACKEND}" STREQUAL "")
     )
 ENDIF ()
 
-# Check for support for at least one compiler
-IF ("${COMPILER}" STREQUAL "")
-    MESSAGE (
-        FATAL_ERROR
-            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."
-    )
-ENDIF ()
-
-
-# Set backend specific flags
-#SERIAL
-IF ("${BACKEND}" STREQUAL "serial")
-    SET(CC gcc)
-    SET(CXX g++)
-    #SET(CMAKE_C_COMPILER "${CC}")
-    #SET(CMAKE_CXX_COMPILER ${CXX})
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -03")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -03")
-ENDIF ()
-
-#CUDA
-IF ("${BACKEND}" STREQUAL "cuda")
-    SET(CMAKE_CXX_COMPILER "${COMPILER}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -03")
-    #TODO: How will user specify CUDA arch
-    SET(CMAKE_CUDA_ARCHITECTURES "70")
-ENDIF ()
-
-# Set CUDA compiler
-IF ("${BACKEND}" STREQUAL "cuda")
+# Enable CUDA language
+IF (USE_CUDA)
     enable_language(CUDA)
-    find_package(CUDAToolkit)
-    SET (CMAKE_CUDA_COMPILER_ENV_VAR "CUDAC")
-ENDIF ()
-
-# Declare project languages
-IF ("${BACKEND}" STREQUAL "cuda")
-    PROJECT (${TRGT} C CXX CUDA)
-ELSE ()
-    PROJECT (${TRGT} C CXX)
 ENDIF ()
 
 # Debug function to check all the variables in the CMakeFile
@@ -171,7 +134,9 @@ IF ("${BACKEND}" STREQUAL "opencl")
         DESTINATION
         ${CMAKE_CURRENT_BINARY_DIR}/kernels/
     )
+
     MESSAGE ("Using OpenCL backend")
+
 ENDIF ()
 
 # Enable Serial backend
@@ -219,7 +184,17 @@ IF ("${BACKEND}" STREQUAL "cuda")
     FILE (GLOB CUDA_CU_FILES src/cuda/*.cu)
     FILE (GLOB CUDA_C_FILES src/cuda/*.c)
     FILE (GLOB CUDA_H_FILES src/cuda/*.h)
+
+    #CUDA Toolkit (Runtime)
+    add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h src/cuda/cuda_kernels.h)
+    set_target_properties(cuda_comp
+        PROPERTIES
+                CUDA_RUNTIME_LIBRARY Shared
+    )
+    target_include_directories(cuda_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda")
+
     MESSAGE ("Using CUDA backend")
+
 ENDIF ()
 
 IF (USE_PAPI) 
@@ -266,9 +241,7 @@ SET (
 ADD_EXECUTABLE (${TRGT} ${SOURCE_FILES})
 
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
-IF (NOT "${BACKEND}" STREQUAL "cuda")
-	set_property(TARGET ${TRGT} PROPERTY C_STANDARD 11)
-ENDIF()
+target_compile_features(${TRGT} PUBLIC c_std_11)
 
 # Print out debug info print_all_variables()
 
@@ -285,15 +258,15 @@ ENDIF ()
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
 IF ("${BACKEND}" STREQUAL "cuda")
-    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC CUDA::cudart)
+    TARGET_LINK_LIBRARIES (${TRGT} PUBLIC CUDA::cudart)
 ENDIF ()
 
 #Include PAPI libraries, if defined
 IF (USE_PAPI)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC ${PAPI_LIBRARIES})
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC ${PAPI_LIBRARIES})
     # Explicitly link libdl because the Cray compiler refuses to link papi dynaimically...
     # (Static libraries carry no dependency info, and libpapi depends on libdl)
-    TARGET_LINK_LIBRARIES (spatter LINK_PUBLIC dl)
+    TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC dl)
 ENDIF ()
 
 # Copy over the test scripts
@@ -306,7 +279,6 @@ message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
 message (STATUS "compiler is ${CMAKE_C_COMPILER}")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
-
 
 # Build tests
 if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" )

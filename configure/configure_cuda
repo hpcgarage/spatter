@@ -1,13 +1,17 @@
-# Configure file for compiling with OpenCL
-# Execute from the main directory using ./configure/configure_ocl
+# Configure file for compiling with CUDA
+# Execute from the main directory using ./configure/configure_cuda
 
 #Run the submodule update script
 ./configure/git_submodule_init.sh
 
 BUILD_DIR=build_cuda
 
-cc=$1
-echo "Building for compute capability ${cc}"
+echo "Please specify a CUDA architecture (Ex. Write '70' for 7.0, DEFAULT 7.0)"
+read cc
+if [ -z ${cc} ]
+then 
+    cc="70"
+fi
 
 mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
 rm -rf CMake* 
