@@ -13,6 +13,22 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+# Check for support for at least one backend
+IF ("${BACKEND}" STREQUAL "")
+    MESSAGE (
+        FATAL_ERROR
+            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
+    )
+ENDIF ()
+
+# Check for support for at least one compiler	# Enable CUDA language
+IF ("${COMPILER}" STREQUAL "")
+    MESSAGE (	
+        FATAL_ERROR	
+            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."	
+    )	
+ENDIF ()
+
 #Make backend and compiler variables case insensitive
 string( TOLOWER "${BACKEND}" BACKEND )
 string( TOLOWER "${COMPILER}" COMPILER )
@@ -33,18 +49,27 @@ if(NOT COMPILER IN_LIST spatterCompilers)
     message(FATAL_ERROR "compiler must be one of ${compilerBackends}")
 endif()
 
-ADD_DEFINITIONS (-DSG_DATA_TYPE=double)
+ADD_DEFINITIONS (-DSG_DATA_TYPE=double)	
 
-# Check for support for at least one backend
-IF ("${BACKEND}" STREQUAL "")
-    MESSAGE (
-        FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
-    )
-ENDIF ()
+# Set backend specific flags	
+    #SERIAL	
+    IF ("${BACKEND}" STREQUAL "serial")	
+        SET(CMAKE_C_COMPILER gcc)
+        SET(CMAKE_CXX_COMPILER g++)
+    ENDIF ()	
+
+    #CUDA	
+    IF ("${BACKEND}" STREQUAL "cuda")	
+        SET(CMAKE_CXX_COMPILER "nvcc")	
+        #TODO: How will user specify CUDA arch	
+        SET(CMAKE_CUDA_ARCHITECTURES "70")	
+    ENDIF ()
+
+    #OPENMP
+    #TODO
 
 # Enable CUDA language
-IF (USE_CUDA)
+IF ("${BACKEND}" STREQUAL "cuda")
     enable_language(CUDA)
 ENDIF ()
 
@@ -258,7 +283,7 @@ ENDIF ()
 TARGET_LINK_LIBRARIES (${TRGT} LINK_PUBLIC m)
 
 IF ("${BACKEND}" STREQUAL "cuda")
-    TARGET_LINK_LIBRARIES (${TRGT} PUBLIC CUDA::cudart)
+    TARGET_LINK_LIBRARIES (${TRGT} PUBLIC cuda_comp)
 ENDIF ()
 
 #Include PAPI libraries, if defined
@@ -281,7 +306,7 @@ SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
 # Build tests
-if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" )
+if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" OR "${BACKEND}" STREQUAL "cuda")
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )
