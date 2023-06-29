@@ -7,6 +7,10 @@ SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set target project name
 SET (TRGT spatter)
 
+# Create gz_read executable
+add_executable(gz_read standard-suite/binary-traces/gz_read.c)
+target_link_libraries(gz_read z)
+
 # Use for debugging. TODO: Set this automatically
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Use ASAN when debugging

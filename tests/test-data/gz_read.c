@@ -33,36 +33,13 @@ int gz_buf_read(gzFile fp, uint64_t * buf, uint64_t ** pbuf, int * edx) {
 ///* EXAMPLE USE
 int main( int argc, char ** argv) {
   if (argc <= 1) {
-    printf("Usage: ./gz_read -f <file> -q\n");
+    printf("Usage: ./gz_read <file>\n");
     exit(1);
   }
 
-  int quiet = 0;
   char fname[256];
-  fname[0] = 0;
-
-  int c;
-  opterr = 0;
-
-  while ((c = getopt (argc, argv, "f:q")) != -1) {
-    switch (c) {
-      case 'f':
-        strncpy(fname, optarg, 256);
-      case 'q':
-        quiet = 1;
-        break;
-      case '?':
-        fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-        return 1;
-      default:
-        abort ();
-    }
-  }
-
-  if (fname[0] == 0) {
-    printf("-f is required\n");
-    return 1;
-  }
+  
+  strncpy(fname, argv[1], 256);
   
   int izret = 0;
   uint64_t * pzbuff = NULL;
@@ -77,9 +54,8 @@ int main( int argc, char ** argv) {
   
   
   while ( gz_buf_read(zfp, zbuff, &pzbuff, &izret) ) {
-
-    if (quiet == 0)    
-      printf("%d\n", (*pzbuff));
+    
+    printf("%d\n", (*pzbuff));
     
     pzbuff++;
   }

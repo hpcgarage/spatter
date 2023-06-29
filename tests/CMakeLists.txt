@@ -3,6 +3,9 @@ set( CMAKE_INCLUDE_CURRENT_DIR ON )
 get_filename_component(full_path_json_test_data "${CMAKE_CURRENT_SOURCE_DIR}/test-data/amg.json" ABSOLUTE)
 add_definitions(-DJSON_SRC="${full_path_json_test_data}")
 
+get_filename_component(full_path_binary_test_folder "${CMAKE_CURRENT_SOURCE_DIR}/test-data/binary-traces" ABSOLUTE)
+add_definitions(-DBINARY_TRACE_DIR="${full_path_binary_test_folder}")
+
 set( TESTAPPS #list apps
         parse_uniform_stride_1
         parse_uniform_stride_suite
@@ -20,6 +23,7 @@ set( TESTAPPS #list apps
         standard_laplacian_suite
         concurrent
         multilevel
+        binary-trace
     )
 
 IF(USE_CUDA)
