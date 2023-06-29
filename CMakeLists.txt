@@ -1,5 +1,5 @@
 # 3.18 is specified to include FindCUDAToolkit support updates
-cmake_minimum_required() (VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.18 FATAL_ERROR)
 project (spatter C CXX)
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -8,13 +8,13 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (TRGT spatter)
 
 # Use for debugging. TODO: Set this automatically
-if(CMAKE_BUILD_TYPE strequal "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Use ASAN when debugging
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-endif(CMAKE_BUILD_TYPE strequal "Debug")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Check for support for at least one backend
-if ("${BACKEND}" strequal "")
+if ("${BACKEND}" STREQUAL "")
     message (
         fatal_error
             "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
@@ -22,12 +22,12 @@ if ("${BACKEND}" strequal "")
 endif ()
 
 # Check for support for at least one compiler	# Enable CUDA language
-if ("${COMPILER}" strequal "")
+if ("${COMPILER}" STREQUAL "")
     message (	
         fatal_error	
             "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."	
     )	
-endif() ()
+endif()
 
 #Make backend and compiler variables case insensitive
 string( TOLOWER "${BACKEND}" BACKEND )
@@ -53,13 +53,13 @@ add_definitions (-DSG_DATA_TYPE=double)
 
 # Set backend specific flags	
     #SERIAL	
-    if ("${BACKEND}" strequal "serial")	
+    if ("${BACKEND}" STREQUAL "serial")	
         #gnu
-        if ("${COMPILER}" strequal "gnu")
+        if ("${COMPILER}" STREQUAL "gnu")
             set(CMAKE_C_COMPILER gcc)
             set(CMAKE_CXX_COMPILER g++)
         #cray
-        elseif ("${COMPILER}" strequal "cray")
+        elseif ("${COMPILER}" STREQUAL "cray")
             set(CMAKE_C_COMPILER cc)
             set(CMAKE_CXX_COMPILER CC)
         else()
@@ -67,10 +67,11 @@ add_definitions (-DSG_DATA_TYPE=double)
                 fatal_error	
                     "Only gnu and cray are supported for SERIAL backend"	
             )
+        endif()
     endif ()
 
     #CUDA	
-    if ("${BACKEND}" strequal "cuda")	
+    if ("${BACKEND}" STREQUAL "cuda")	
         set(CMAKE_CXX_COMPILER nvcc)	
         #TODO: How will user specify CUDA arch	
         set(CMAKE_CUDA_ARCHITECTURES "70")
@@ -80,7 +81,7 @@ add_definitions (-DSG_DATA_TYPE=double)
     #TODO
 
 # Enable CUDA language
-if ("${BACKEND}" strequal "cuda")
+if ("${BACKEND}" STREQUAL "cuda")
     enable_language(CUDA)
 endif ()
 
@@ -107,13 +108,13 @@ endif ()
 
 
 #Add specific flags for the CodeXL compiler
-if ("${CMAKE_C_COMPILER_ID}" strequal "XL")
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 	set(IBMXL_COMPILE_FLAGS "-qenablevmx -qtune=pwr9")
 	set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IBMXL_COMPILE_FLAGS}")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=IBM")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" strequal "Cray") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
     set (OPTIMIZATIONS "-O3 -h vector3 -h cache3 -h scalar3")
     #set (OPTIMIZATIONS "-G0 -O0")
     #set (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
@@ -123,19 +124,19 @@ if ("${CMAKE_C_COMPILER_ID}" strequal "Cray")
     set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray -D__CRAYC__")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" strequal "Intel") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
     set (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -xHost -qopenmp")
     set (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -xHost -qopenmp")
 endif ()
 
  
-if ("${CMAKE_C_COMPILER_ID}" strequal "GNU") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3 -g")
    #Use sanitize=address for debugging of access issues 
    #set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" strequal "Clang") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
 endif ()
 
@@ -151,7 +152,7 @@ if (APPLE)
 endif ()
 
 # Enable OpenCL
-if ("${BACKEND}" strequal "opencl")
+if ("${BACKEND}" STREQUAL "opencl")
     add_definitions (-DUSE_OPENCL)
     # Point the compiler to the include and library directories
     include_directories ($ENV{OCL_INCL} src/opencl)
@@ -176,7 +177,7 @@ if ("${BACKEND}" strequal "opencl")
 endif ()
 
 # Enable Serial backend
-if ("${BACKEND}" strequal "serial")
+if ("${BACKEND}" STREQUAL "serial")
     add_definitions (-DUSE_SERIAL)
     include_directories (src/serial)
     # Pull the serial files and kernels into the build
@@ -186,7 +187,7 @@ if ("${BACKEND}" strequal "serial")
 endif ()
 
 # Enable OpenMP
-if ("${BACKEND}" strequal "openmp")
+if ("${BACKEND}" STREQUAL "openmp")
     find_package (OpenMP REQUIRED)
     if(OpenMP_FOUND)
 	# enable pragma regions in the code for OpenMP
@@ -204,7 +205,7 @@ if ("${BACKEND}" strequal "openmp")
 endif ()
 
 # Enable CUDA
-if ("${BACKEND}" strequal "cuda")
+if ("${BACKEND}" STREQUAL "cuda")
     add_definitions (-DUSE_CUDA)
     include_directories (src/cuda)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
@@ -213,7 +214,7 @@ if ("${BACKEND}" strequal "cuda")
         CMAKE_CUDA_FLAGS
         "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
     )
-    if ("${BACKEND}" strequal "openmp")
+    if ("${BACKEND}" STREQUAL "openmp")
         set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
     endif ()
 
@@ -282,18 +283,18 @@ target_compile_features(${TRGT} PUBLIC c_std_11)
 # Print out debug info print_all_variables()
 
 # Link with the appropriate libraries
-if ("${BACKEND}" strequal "openmp")
+if ("${BACKEND}" STREQUAL "openmp")
     target_link_libraries (${TRGT} LINK_PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-if ("${BACKEND}" strequal "opencl")
+if ("${BACKEND}" STREQUAL "opencl")
     target_link_libraries (${TRGT} LINK_PUBLIC OpenCL)
 endif ()
 
 # Link math library for json
 target_link_libraries (${TRGT} LINK_PUBLIC m)
 
-if ("${BACKEND}" strequal "cuda")
+if ("${BACKEND}" STREQUAL "cuda")
     target_link_libraries (${TRGT} PUBLIC cuda_comp)
 endif ()
 
@@ -317,7 +318,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
 # Build tests
-if ( "${BACKEND}" strequal "openmp" OR "${BACKEND}" strequal "serial" OR "${BACKEND}" strequal "cuda")
+if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" OR "${BACKEND}" STREQUAL "cuda")
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )
@@ -328,7 +329,7 @@ endif()
 
 # Validation flag
 set (VALIDATE_DATA 0 CACHE BOOL "Performs additional validation")
-if ("${BACKEND}" strequal "openmp" OR "${BACKEND}" strequal "cuda")
+if ("${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "cuda")
     if (VALIDATE_DATA)
         add_definitions(-DVALIDATE)
     endif ()
