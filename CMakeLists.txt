@@ -16,7 +16,7 @@ endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 # Check for support for at least one backend
 if ("${BACKEND}" STREQUAL "")
     message (
-        fatal_error
+        FATAL_ERROR
             "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
     )
 endif ()
@@ -24,7 +24,7 @@ endif ()
 # Check for support for at least one compiler	# Enable CUDA language
 if ("${COMPILER}" STREQUAL "")
     message (	
-        fatal_error	
+        FATAL_ERROR	
             "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."	
     )	
 endif()
@@ -64,7 +64,7 @@ add_definitions (-DSG_DATA_TYPE=double)
             set(CMAKE_CXX_COMPILER CC)
         else()
             message (	
-                fatal_error	
+                FATAL_ERROR
                     "Only gnu and cray are supported for SERIAL backend"	
             )
         endif()
