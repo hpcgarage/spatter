@@ -72,13 +72,20 @@ add_definitions (-DSG_DATA_TYPE=double)
 
     #CUDA	
     if ("${BACKEND}" STREQUAL "cuda")	
-        set(CMAKE_CXX_COMPILER nvcc)	
-        #TODO: How will user specify CUDA arch	
-        set(CMAKE_CUDA_ARCHITECTURES "70")
+        if ("${COMPILER}" STREQUAL "nvcc")
+            set(CMAKE_CXX_COMPILER nvcc)
+            #TODO: How will user specify CUDA arch	
+            set(CMAKE_CUDA_ARCHITECTURES "70")
+        else()
+            message (	
+                FATAL_ERROR
+                    "Only nvcc is supported for CUDA backend"
+            )
+        endif()
     endif ()
 
     #OPENMP
-    #TODO
+    
 
 # Enable CUDA language
 if ("${BACKEND}" STREQUAL "cuda")
