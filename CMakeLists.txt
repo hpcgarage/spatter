@@ -42,7 +42,7 @@ if(NOT BACKEND IN_LIST SPATTERBACKENDS)
 endif()
 
 #Set compiler permitted values
-set(SPATTERCOMPILERS cray gnu clang intel xl nvcc)
+set(SPATTERCOMPILERS cray gnu clang armclang intel xl nvcc)
 
 #Check for compiler variable set in user cmake call
 if(NOT COMPILER IN_LIST SPATTERCOMPILERS)
@@ -85,7 +85,65 @@ add_definitions (-DSG_DATA_TYPE=double)
     endif ()
 
     #OPENMP
-    
+    if ("${BACKEND}" STREQUAL "openmp")	
+        #gnu
+        if ("${COMPILER}" STREQUAL "gnu")
+            set(CMAKE_C_COMPILER gcc)
+            set(CMAKE_CXX_COMPILER g++)
+
+        #cray
+        elseif ("${COMPILER}" STREQUAL "cray")
+            set(CMAKE_C_COMPILER cc)
+            set(CMAKE_CXX_COMPILER CC)
+            if (USE_SVE)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -homp -hlist=m")
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static -homp -hlist=m")
+                set(CXX_STD 11)
+                set(CMAKE_SYSTEM_NAME "Generic")
+                set(CMAKE_PROCESSOR_NAME "arm")
+            endif()
+
+        #clang
+        elseif ("${COMPILER}" STREQUAL "clang")
+            set(CMAKE_C_COMPILER clang)
+            set(CMAKE_CXX_COMPILER clang++)
+
+        #armclang (wombat)
+        elseif ("${COMPILER}" STREQUAL "armclang")
+            set(CMAKE_CXX_COMPILER armclang)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=thunderx2t99 -mtune=thunderx2t99 -fopenmp")
+            set(USE_OMP_SIMD 1)
+
+        #xl
+        elseif ("${COMPILER}" STREQUAL "xl")
+            set(CMAKE_C_COMPILER xlc_r)
+            set(CMAKE_CXX_COMPILER xlc++_r)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qenablevmx")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qenablevmx")
+
+        #intel
+        elseif ("${COMPILER}" STREQUAL "intel")
+            if (USE_MPI)
+                set(CMAKE_C_COMPILER mpicc)
+                set(CMAKE_CXX_COMPILER mpicxx)
+                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=skylake-avx512")
+            elseif (USE_PAPI)
+                set(CMAKE_C_COMPILER icc)
+                set(CMAKE_CXX_COMPILER icpc)
+                #TODO
+            else()
+                set(CMAKE_C_COMPILER icc)
+                set(CMAKE_CXX_COMPILER icpc)
+                #TODO
+            endif()
+
+        else()
+            message (	
+                FATAL_ERROR
+                    "Only gnu, cray, clang, armclang, intel, and xl are supported for OpenMP backend"	
+            )
+        endif()
+    endif ()
 
 # Enable CUDA language
 if ("${BACKEND}" STREQUAL "cuda")
@@ -192,6 +250,10 @@ if ("${BACKEND}" STREQUAL "serial")
     file (GLOB BACKEND_H_FILES_SERIAL src/serial/*.h)
     message ("Using serial backend")
 endif ()
+
+IF (USE_MPI)
+    ADD_DEFINITIONS (-DUSE_MPI)
+ENDIF()
 
 # Enable OpenMP
 if ("${BACKEND}" STREQUAL "openmp")

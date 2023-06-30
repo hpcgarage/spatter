@@ -21,6 +21,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build-OMP
       run: 
-        ./configure/configure_omp_gnu && make -C build_omp_gnu
+        cmake -DBACKEND=openmp -DCOMPILER=gnu -B build_omp_gnu -S . && make -C build_omp_gnu
     - name: Test-OMP
       run: make test -C build_omp_gnu
