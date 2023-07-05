@@ -21,7 +21,7 @@ if ("${BACKEND}" STREQUAL "")
     )
 endif ()
 
-# Check for support for at least one compiler	# Enable CUDA language
+# Check for support for at least one compiler
 if ("${COMPILER}" STREQUAL "")
     message (	
         FATAL_ERROR	
@@ -43,6 +43,9 @@ endif()
 
 #Set compiler permitted values
 set(SPATTERCOMPILERS cray gnu clang armclang intel xl nvcc)
+
+#Set intel platform permitted values
+set(INTELPLATFORMS skylake avx_crossplatform non_avx)
 
 #Check for compiler variable set in user cmake call
 if(NOT COMPILER IN_LIST SPATTERCOMPILERS)
@@ -101,6 +104,12 @@ add_definitions (-DSG_DATA_TYPE=double)
                 set(CXX_STD 11)
                 set(CMAKE_SYSTEM_NAME "Generic")
                 set(CMAKE_PROCESSOR_NAME "arm")
+            elseif (USE_PAPI)
+                set(PAPI_DIR "/opt/cray/pe/papi/default/")
+            else()
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -hlist=m")
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -hlist=m")
+                set(CXX_STD 11)
             endif()
 
         #clang
@@ -118,25 +127,54 @@ add_definitions (-DSG_DATA_TYPE=double)
         elseif ("${COMPILER}" STREQUAL "xl")
             set(CMAKE_C_COMPILER xlc_r)
             set(CMAKE_CXX_COMPILER xlc++_r)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qenablevmx")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qenablevmx")
 
         #intel
         elseif ("${COMPILER}" STREQUAL "intel")
+
+            #Check for intel platform variable set in user cmake call
+            if (NOT DEFINED INTEL_PLATFORM)
+                message("No intel platform defined.")
+            else()
+                #Set platform
+                ####
+                string( TOLOWER "${INTEL_PLATFORM}" INTEL_PLATFORM )
+
+                #skylake
+                if("${INTEL_PLATFORM}" STREQUAL "skylake")
+                    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=skylake-avx512")
+
+                #cross-platform with AVX
+                elseif("${INTEL_PLATFORM}" STREQUAL "avx_crossplatform")
+                    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -xCOMMON-AVX512")
+                
+                #Non-AVX platforms
+                elseif("${INTEL_PLATFORM}" STREQUAL "non_avx")
+                    #No specified flags
+                else()
+                    message("Platform was not recognized, no options passed.")
+                endif()
+            endif()
+
+            #Set compiler based on options
             if (USE_MPI)
                 set(CMAKE_C_COMPILER mpicc)
                 set(CMAKE_CXX_COMPILER mpicxx)
-                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=skylake-avx512")
             elseif (USE_PAPI)
-                set(CMAKE_C_COMPILER icc)
-                set(CMAKE_CXX_COMPILER icpc)
-                #TODO
+                set(CMAKE_C_COMPILER icx)
+                set(CMAKE_CXX_COMPILER icpx)
+                set(PAPI_DIR "/opt/papi/")
             else()
-                set(CMAKE_C_COMPILER icc)
-                set(CMAKE_CXX_COMPILER icpc)
-                #TODO
+                set(CMAKE_C_COMPILER icx)
+                set(CMAKE_CXX_COMPILER icpx)
             endif()
 
+            #Check disable cpu dispatch flag
+            if (DISABLE_CPU_DISPATCH)
+                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -std=c99 -diag-disable=15009")
+            endif()
+            if (VEC_REPORT)
+                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -qopt-report-phase=vec,loop -qopt-report=2")
+            endif()
         else()
             message (	
                 FATAL_ERROR
