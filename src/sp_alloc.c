@@ -1,4 +1,6 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <string.h> //memset
 #include <stdlib.h> //exit
 #include <stdio.h>
