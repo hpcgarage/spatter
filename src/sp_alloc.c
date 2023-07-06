@@ -1,9 +1,11 @@
+#define _GNU_SOURCE
 #include <string.h> //memset
 #include <stdlib.h> //exit
 #include <stdio.h>
 #include "sp_alloc.h"
 #include "parse-args.h" //error
 #include <stdio.h>
+
 
 long long total_mem_used = 0;
 

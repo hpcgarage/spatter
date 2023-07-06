@@ -131,6 +131,8 @@ add_definitions (-DSG_DATA_TYPE=double)
         #intel
         elseif ("${COMPILER}" STREQUAL "intel")
 
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+
             #Check for intel platform variable set in user cmake call
             if (NOT DEFINED INTEL_PLATFORM)
                 message("No intel platform defined.")
@@ -156,21 +158,12 @@ add_definitions (-DSG_DATA_TYPE=double)
             endif()
 
             #Set compiler based on options
-            if (USE_MPI)
-                set(CMAKE_C_COMPILER mpicc)
-                set(CMAKE_CXX_COMPILER mpicxx)
-            elseif (USE_PAPI)
-                set(CMAKE_C_COMPILER icx)
-                set(CMAKE_CXX_COMPILER icpx)
-                set(PAPI_DIR "/opt/papi/")
-            else()
-                set(CMAKE_C_COMPILER icx)
-                set(CMAKE_CXX_COMPILER icpx)
-            endif()
+            set(CMAKE_C_COMPILER icx)
+            set(CMAKE_CXX_COMPILER icpx)
 
             #Check disable cpu dispatch flag
             if (DISABLE_CPU_DISPATCH)
-                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -std=c99 -diag-disable=15009")
+                set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -diag-disable=15009")
             endif()
             if (VEC_REPORT)
                 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -qopt-report-phase=vec,loop -qopt-report=2")
@@ -291,6 +284,7 @@ endif ()
 
 IF (USE_MPI)
     ADD_DEFINITIONS (-DUSE_MPI)
+    #TODO: USE FIND_MPI
 ENDIF()
 
 # Enable OpenMP
