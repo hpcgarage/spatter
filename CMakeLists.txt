@@ -282,9 +282,11 @@ if ("${BACKEND}" STREQUAL "serial")
     message ("Using serial backend")
 endif ()
 
+#Enable MPI
 IF (USE_MPI)
     ADD_DEFINITIONS (-DUSE_MPI)
-    #TODO: USE FIND_MPI
+    find_package(MPI REQUIRED)
+    message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
 ENDIF()
 
 # Enable OpenMP
@@ -406,6 +408,11 @@ if (USE_PAPI)
     # (Static libraries carry no dependency info, and libpapi depends on libdl)
     target_link_libraries (${TRGT} LINK_PUBLIC dl)
 endif ()
+
+#Link MPI libraries
+if (USE_MPI)
+    target_link_libraries(${TRGT} PUBLIC MPI::MPI_CXX)
+endif()
 
 # Copy over the test scripts
 file (GLOB TEST_SCRIPTS tests/*.sh)
