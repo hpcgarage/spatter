@@ -43,13 +43,13 @@ make
 ```
 For example, to do a debug build with the serial backend and the GNU compiler:
 ```
-cmake -D CMAKE_BUILD_TYPE=Debug -DBACKEND=serial -DCOMPILER=gnu -B build_serial_gnu 
+cmake -D CMAKE_BUILD_TYPE=Debug -DBACKEND=serial -DCOMPILER=gnu -B build_serial_gnu -S .
 cd build_serial_gnu
 make
 ```
 To do an MPI build with GNU, note that `Release` build is the default choice when not specified:
 ```
-cmake -DBACKEND=openmp -DCOMPILER=gnu -DUSE_MPI=1 -B build_openmp_gnu_mpi
+cmake -DBACKEND=openmp -DCOMPILER=gnu -DUSE_MPI=1 -B build_openmp_gnu_mpi -S .
 ```
 
 For a complete list of build options, see [Build.md](Build.md)
