@@ -77,8 +77,13 @@ add_definitions (-DSG_DATA_TYPE=double)
     if ("${BACKEND}" STREQUAL "cuda")	
         if ("${COMPILER}" STREQUAL "nvcc")
             set(CMAKE_CXX_COMPILER nvcc)
-            #TODO: How will user specify CUDA arch	
-            set(CMAKE_CUDA_ARCHITECTURES "70")
+            if (DEFINED CUDA_ARCH)
+                set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
+            else ()
+                message("No CUDA architecture specified, default set to 7.0")
+                set(CMAKE_CUDA_ARCHITECTURES "70")
+            endif ()
+            
         else()
             message (	
                 FATAL_ERROR

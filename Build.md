@@ -6,8 +6,11 @@
 * cray
 
 # Cuda 
-### Supported Compilers
+### Supported Compilers and optional arguments
 * nvcc
+    * `-DCUDA_ARCH=<ARCH>`
+        * Default is 7.0
+        * For example to set it to 7.0, enter `-DCUDA_ARCH=70`
 
 ## Openmp
 ### Supported Compilers and optional arguments
