@@ -74,22 +74,17 @@ add_definitions (-DSG_DATA_TYPE=double)
     endif ()
 
     #CUDA	
-    if ("${BACKEND}" STREQUAL "cuda")	
-        if ("${COMPILER}" STREQUAL "nvcc")
-            set(CMAKE_CXX_COMPILER nvcc)
-            if (DEFINED CUDA_ARCH)
-                set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
-            else ()
-                message("No CUDA architecture specified, default set to 7.0")
-                set(CMAKE_CUDA_ARCHITECTURES "70")
-            endif ()
-            
-        else()
-            message (	
-                FATAL_ERROR
-                    "Only nvcc is supported for CUDA backend"
-            )
+    if ("${BACKEND}" STREQUAL "cuda")
+        if (USE_MPI)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
         endif()
+        if (DEFINED CUDA_ARCH)
+            set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
+        else ()
+            message("No CUDA architecture specified, default set to 7.0")
+            set(CMAKE_CUDA_ARCHITECTURES "70")
+        endif ()
     endif ()
 
     #OPENMP
