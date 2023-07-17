@@ -73,7 +73,7 @@ void wrap_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t stride, size
 void ms1_indices(sgIdx_t *idx, size_t len, size_t worksets, size_t run, size_t gap);
 //TODO: Remove trace_indices. No longer used.
 //size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr);
-void compress_indices( sgIdx_t *idx, size_t len);
+void compress_indices( ssize_t *idx, size_t len);
 #ifdef USE_OPENCL
 //TODO: why is it a void*? 
 cl_mem clCreateBufferSafe(cl_context context, cl_mem_flags flags, size_t size, void *host_ptr);

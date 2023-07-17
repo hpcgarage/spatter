@@ -69,16 +69,16 @@ enum state
 struct run_config
 {
     // keep arrays at top so they are aligned
-    spIdx_t *pattern;
-    spIdx_t *pattern_gather;
-    spIdx_t *pattern_scatter;
+    ssize_t *pattern;
+    ssize_t *pattern_gather;
+    ssize_t *pattern_scatter;
     size_t *deltas;
     size_t *deltas_ps;
     size_t *deltas_gather;
     size_t *deltas_gather_ps;
     size_t *deltas_scatter;
     size_t *deltas_scatter_ps;
-    spIdx_t boundary;
+    ssize_t boundary;
     spSize_t pattern_size;
     spSize_t pattern_len;
     spSize_t pattern_gather_len;
