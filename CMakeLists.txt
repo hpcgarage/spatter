@@ -1,17 +1,5 @@
 # 3.18 is specified to include FindCUDAToolkit support updates
 cmake_minimum_required (VERSION 3.18 FATAL_ERROR)
-project (spatter C CXX)
-
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Set target project name
-set (TRGT spatter)
-
-# Use for debugging. TODO: Set this automatically
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # Use ASAN when debugging
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Check for support for at least one backend
 if ("${BACKEND}" STREQUAL "")
@@ -75,10 +63,20 @@ add_definitions (-DSG_DATA_TYPE=double)
 
     #CUDA	
     if ("${BACKEND}" STREQUAL "cuda")
+        if ("${COMPILER}" STRQEUAL "nvcc")
+	    set(CMAKE_CUDA_COMPILER nvcc)
+        else()
+	    message (
+                FATAL_ERROR
+		    "Only nvcc is supported for CUDA backend"
+                )
+	endif()
+ 
         if (USE_MPI)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
         endif()
+	
         if (DEFINED CUDA_ARCH)
             set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
         else ()
@@ -171,6 +169,19 @@ add_definitions (-DSG_DATA_TYPE=double)
             )
         endif()
     endif ()
+
+project (spatter C CXX)
+
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Set target project name
+set (TRGT spatter)
+
+# Use for debugging. TODO: Set this automatically
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Use ASAN when debugging
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Enable CUDA language
 if ("${BACKEND}" STREQUAL "cuda")
@@ -279,11 +290,11 @@ if ("${BACKEND}" STREQUAL "serial")
 endif ()
 
 #Enable MPI
-IF (USE_MPI)
-    ADD_DEFINITIONS (-DUSE_MPI)
+if (USE_MPI)
+    add_definitions (-DUSE_MPI)
     find_package(MPI REQUIRED)
     message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
-ENDIF()
+endif()
 
 # Enable OpenMP
 if ("${BACKEND}" STREQUAL "openmp")
@@ -305,6 +316,7 @@ endif ()
 
 # Enable CUDA
 if ("${BACKEND}" STREQUAL "cuda")
+    find_package(CUDAToolkit REQUIRED)
     add_definitions (-DUSE_CUDA)
     include_directories (src/cuda)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
@@ -395,6 +407,7 @@ target_link_libraries (${TRGT} LINK_PUBLIC m)
 
 if ("${BACKEND}" STREQUAL "cuda")
     target_link_libraries (${TRGT} PUBLIC cuda_comp)
+    target_link_libraries (${TRGT} PUBLIC CUDA::cudart)
 endif ()
 
 #Include PAPI libraries, if defined
