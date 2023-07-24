@@ -1,10 +1,11 @@
 #include "serial-kernels.h"
+#include <stdlib.h>
 
 void multigather_smallbuf_serial(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -26,8 +27,8 @@ void multigather_smallbuf_serial(
 void multiscatter_smallbuf_serial(
       sgData_t* restrict target,
       sgData_t** restrict source,
-      sgIdx_t* const restrict outer_pat,
-      sgIdx_t* const restrict inner_pat,
+      ssize_t* const restrict outer_pat,
+      ssize_t* const restrict inner_pat,
       size_t pat_len,
       size_t delta,
       size_t n,
@@ -48,7 +49,7 @@ void multiscatter_smallbuf_serial(
 void gather_smallbuf_serial(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -73,7 +74,7 @@ void gather_smallbuf_serial(
 void scatter_smallbuf_serial(
         sgData_t* restrict target,
         sgData_t** const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -96,8 +97,8 @@ void scatter_smallbuf_serial(
 void sg_smallbuf_serial(
         sgData_t* restrict gather,
         sgData_t* restrict scatter,
-        sgIdx_t* const restrict gather_pat,
-        sgIdx_t* const restrict scatter_pat,
+        ssize_t* const restrict gather_pat,
+        ssize_t* const restrict scatter_pat,
         size_t pat_len,
         size_t delta_gather,
         size_t delta_scatter,

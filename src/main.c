@@ -1062,7 +1062,7 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
         // Aggregate
         if (aggregate_flag) {
-            printf("\'agg\':%d, ", rc[i].nruns);
+            printf("\'agg\':%lu, ", rc[i].nruns);
         }
 
         // Wrap

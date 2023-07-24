@@ -1,4 +1,6 @@
-#define _GNU_SOURCE //needed for string.h to include strcasestr
+#ifndef _GNU_SOURCE
+    #define _GNU_SOURCE //needed for string.h to include strcasestr
+#endif
 #include <stdio.h>
 #include <string.h>
 #include "sgbuf.h"

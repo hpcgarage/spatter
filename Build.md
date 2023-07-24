@@ -28,3 +28,4 @@
         * avx_crossplatform
         * non_avx
     * `-DUSE_MPI=1`
+    * `-DUSE_PAPI=1`
