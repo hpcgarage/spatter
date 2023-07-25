@@ -63,14 +63,14 @@ add_definitions (-DSG_DATA_TYPE=double)
 
     #CUDA	
     if ("${BACKEND}" STREQUAL "cuda")
-        if ("${COMPILER}" STRQEUAL "nvcc")
-	    set(CMAKE_CUDA_COMPILER nvcc)
+        if ("${COMPILER}" STREQUAL "nvcc")
+            set(CMAKE_CUDA_COMPILER nvcc)
         else()
-	    message (
+            message (
                 FATAL_ERROR
-		    "Only nvcc is supported for CUDA backend"
-                )
-	endif()
+                    "Only nvcc is supported for CUDA backend"
+            )
+        endif()
  
         if (USE_MPI)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
