@@ -262,7 +262,7 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 //assume block size >= index buffer size
 //assume index buffer size divides block size
 template<int V>
-__global__ void scatter_block(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, char validate)
+__global__ void scatter_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate)
 {
     __shared__ int idx_shared[V];
 
@@ -295,7 +295,7 @@ __global__ void scatter_block(double *src, sgIdx_t* idx, int idx_len, size_t del
 //assume block size >= index buffer size
 //assume index buffer size divides block size
 template<int V>
-__global__ void scatter_block_random(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n)
+__global__ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, size_t seed, size_t n)
 {
     __shared__ int idx_shared[V];
 
@@ -330,7 +330,7 @@ __global__ void scatter_block_random(double *src, sgIdx_t* idx, int idx_len, siz
 //assume block size >= index buffer size
 //assume index buffer size divides block size
 template<int V>
-__global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, char validate)
+__global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate)
 {
     __shared__ int idx_shared[V];
 
@@ -373,7 +373,7 @@ __global__ void gather_block(double *src, sgIdx_t* idx, int idx_len, size_t delt
 }
 
 template<int V>
-__global__ void gather_block_morton(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, uint32_t *order, char validate)
+__global__ void gather_block_morton(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate)
 {
     __shared__ int idx_shared[V];
 
@@ -416,7 +416,7 @@ __global__ void gather_block_morton(double *src, sgIdx_t* idx, int idx_len, size
 }
 
 template<int V>
-__global__ void gather_block_stride(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, int stride, char validate)
+__global__ void gather_block_stride(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, int stride, char validate)
 {
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
@@ -452,7 +452,7 @@ __global__ void gather_block_stride(double *src, sgIdx_t* idx, int idx_len, size
 }
 
 template<int V>
-__global__ void gather_block_random(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n)
+__global__ void gather_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, size_t seed, size_t n)
 {
 
     __shared__ int idx_shared[V];
@@ -539,12 +539,12 @@ __global__ void gather_new(double* source,
 
 #define INSTANTIATE2(V)\
 template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
-template __global__ void gather_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, char validate);\
-template __global__ void gather_block_morton<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, uint32_t *order, char validate);\
-template __global__ void gather_block_stride<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, int stride, char validate);\
-template __global__ void scatter_block<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, char validate); \
-template __global__ void gather_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n); \
-template __global__ void scatter_block_random<V>(double *src, sgIdx_t* idx, int idx_len, size_t delta, int wpb, size_t seed, size_t n);
+template __global__ void gather_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate);\
+template __global__ void gather_block_morton<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate);\
+template __global__ void gather_block_stride<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, int stride, char validate);\
+template __global__ void scatter_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate); \
+template __global__ void gather_block_random<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, size_t seed, size_t n); \
+template __global__ void scatter_block_random<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, size_t seed, size_t n);
 
 //INSTANTIATE2(1);
 //INSTANTIATE2(2);
@@ -565,8 +565,8 @@ INSTANTIATE2(4096);
 extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
-        sgIdx_t* pat_dev,
-        sgIdx_t* pat,
+        ssize_t* pat_dev,
+        ssize_t* pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -721,8 +721,8 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
 extern "C" float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
-        sgIdx_t* pat_dev,
-        sgIdx_t* pat,
+        ssize_t* pat_dev,
+        ssize_t* pat,
         size_t pat_len,
         size_t delta,
         size_t n,

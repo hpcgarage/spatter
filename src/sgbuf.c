@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -202,7 +203,7 @@ size_t trace_indices( sgIdx_t *idx, size_t len, struct trace tr) {
 }
 #endif
 
-void compress_indices( sgIdx_t *idx, size_t len) {
+void compress_indices( ssize_t *idx, size_t len) {
     // Pageinate the positive zero-based indicies in idx[].
     long *pages = NULL, npages = 0;
     long  page,pidx;

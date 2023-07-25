@@ -35,17 +35,24 @@ This diagram depicts a combined Gather/Scatter. Gather performs on the top half 
 ## Building
 CMake is required to build Spatter
 
-To build with CMake from the main source directory:
+To build with CMake from the main source directory, use the following command structure:
 ```
-./configure/configure_omp_gnu
-cd build_omp_gnu
+cmake -DCMAKE_BUILD_TYPE=<BUILD_TYPE> -DBACKEND=<BACKEND> -DCOMPILER=<COMPILER> -D<OPTIONAL> -B build_<BACKEND>_<COMPILER>_<OPTIONAL> -S .
+cd build_<BACKEND>_<COMPILER>_<OPTIONAL>
 make
 ```
-or use one of the other configure scripts to compile with different backends. You might also need to initialize `git submodule` before building using:
+For example, to do a debug build with the serial backend and the GNU compiler:
 ```
-git submodule init
-git submodule update
+cmake -D CMAKE_BUILD_TYPE=Debug -DBACKEND=serial -DCOMPILER=gnu -B build_serial_gnu -S .
+cd build_serial_gnu
+make
 ```
+To do an MPI build with GNU, note that `Release` build is the default choice when not specified:
+```
+cmake -DBACKEND=openmp -DCOMPILER=gnu -DUSE_MPI=1 -B build_openmp_gnu_mpi -S .
+```
+
+For a complete list of build options, see [Build.md](Build.md)
 
 ## Running Spatter
 Spatter is highly configurable, but a basic run is rather simple. You must at least specify a pattern with `-p` and you should probably speficy a length with `-l`. Spatter will print out the time it took to perform the number of gathers you requested with `-l` and it will print out a bandwwidth. As a sanity check, the following run should give you a number close to your STREAM bandwith, although we note that this is a one-sided operation - it only performs gathers (reads).

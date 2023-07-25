@@ -260,7 +260,7 @@ void emit_configs(struct run_config *rc, int nconfigs);
 uint64_t isqrt(uint64_t x);
 uint64_t icbrt(uint64_t x);
 
-spIdx_t remap_pattern(const int nrc, spIdx_t *pattern, const spSize_t pattern_len, spIdx_t boundary);
+spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary);
  
 
 int main(int argc, char **argv)
@@ -1062,7 +1062,7 @@ void emit_configs(struct run_config *rc, int nconfigs)
 
         // Aggregate
         if (aggregate_flag) {
-            printf("\'agg\':%d, ", rc[i].nruns);
+            printf("\'agg\':%lu, ", rc[i].nruns);
         }
 
         // Wrap
@@ -1146,7 +1146,7 @@ uint64_t icbrt(uint64_t x) {
 }
 
 // Remap large pattern with heap accesses to fit within Spatter 
-spIdx_t remap_pattern(const int nrc, spIdx_t *pattern, const spSize_t pattern_len, spIdx_t boundary) {
+spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary) {
     if (boundary == -1)
         boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;  
   
