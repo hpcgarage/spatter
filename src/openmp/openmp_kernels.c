@@ -301,6 +301,7 @@ void gather_smallbuf(
         size_t delta,
         size_t n,
         size_t target_len) {
+
 #ifdef __GNUC__
     #pragma omp parallel
 #else
@@ -311,19 +312,21 @@ void gather_smallbuf(
 
 #ifdef __CRAYC__
     #pragma concurrent
-#endif
-#ifdef __INTEL_COMPILER
+#elif defined __INTEL_COMPILER
     #pragma ivdep
 #endif
+
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *sl = source + delta * i;
            sgData_t *tl = target[t] + pat_len*(i%target_len);
+
 #ifdef __CRAYC__
     #pragma concurrent
-#endif
-#if defined __CRAYC__ || defined __INTEL_COMPILER
+#elif defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
+#elif defined __GNUC__
+    #pragma omp simd   // or: #pragma GCC ivdep
 #endif
            for (size_t j = 0; j < pat_len; j++) {
                tl[j] = sl[pat[j]];
