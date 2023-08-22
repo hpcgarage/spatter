@@ -18,7 +18,7 @@ jobs:
   build-and-run-omp:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2 
     - name: Build-OMP
       run: 
         cmake -DBACKEND=openmp -DCOMPILER=gnu -B build_omp_gnu -S . && make -C build_omp_gnu
@@ -27,7 +27,7 @@ jobs:
   build-cuda:
     runs-on: ubuntu-20.04
     steps:
-    - uses: Jimver/cuda-toolkit@v0.2.11
+    - uses: actions/checkout@v2
     - name: Build-CUDA
       run: 
         cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda -S . && make -C build_cuda
