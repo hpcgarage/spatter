@@ -25,10 +25,11 @@ jobs:
     - name: Test-OMP
       run: make test -C build_omp_gnu
   build-cuda:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v2
-    - uses: Jimver/cuda-toolkit@v0.2.11
-    - name: Build-CUDA
+    - name: Request SLURM Job
+      run: salloc -p rg-gpu --nodes=1 --ntasks-per-node=1 --nodelist quorra1 --time=01:00:00
+    - name: Build CUDA
       run: 
-        cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda -S . && make -C build_cuda
+        module load cuda && cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S . && make -C build_cuda_workflow
