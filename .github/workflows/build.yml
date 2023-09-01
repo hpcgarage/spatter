@@ -29,7 +29,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Request SLURM Job
-      run: ssh rg-ci-workflow1 && salloc -p rg-gpu --nodes=1 --ntasks-per-node=1 --nodelist quorra1 --time=01:00:00
+      run: salloc -p rg-gpu --nodes=1 --ntasks-per-node=1 --nodelist quorra1 --time=01:00:00 -G 1
     - name: Build CUDA
       run: 
         module load cuda && cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S . && make -C build_cuda_workflow
