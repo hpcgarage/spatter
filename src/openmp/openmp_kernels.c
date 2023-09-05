@@ -1,5 +1,6 @@
 #include "pcg_basic.h"
 #include "openmp_kernels.h"
+#include <stdlib.h>
 
 #include <stdio.h>
 #define SIMD 8
@@ -11,8 +12,8 @@
 void multigather_smallbuf(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -51,8 +52,8 @@ void multigather_smallbuf(
 void multigather_smallbuf_morton(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -92,8 +93,8 @@ void multigather_smallbuf_morton(
 void multiscatter_smallbuf(
         sgData_t* restrict target,
         sgData_t** const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -132,8 +133,8 @@ void multiscatter_smallbuf(
 void multigather_smallbuf_random(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -173,8 +174,8 @@ void multigather_smallbuf_random(
 void multiscatter_smallbuf_random(
         sgData_t* restrict target,
         sgData_t** const restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -214,8 +215,8 @@ void multiscatter_smallbuf_random(
 void multigather_smallbuf_multidelta(
         sgData_t** restrict target,
         sgData_t* restrict source,
-        sgIdx_t* const restrict outer_pat,
-        sgIdx_t* const restrict inner_pat,
+        ssize_t* const restrict outer_pat,
+        ssize_t* const restrict inner_pat,
         size_t pat_len,
         size_t *delta,
         size_t n,
@@ -254,8 +255,8 @@ void multigather_smallbuf_multidelta(
 void sg_smallbuf(
         sgData_t* restrict gather,
         sgData_t* restrict scatter,
-        sgIdx_t* const restrict gather_pat,
-        sgIdx_t* const restrict scatter_pat,
+        ssize_t* const restrict gather_pat,
+        ssize_t* const restrict scatter_pat,
         size_t pat_len,
         size_t delta_gather,
         size_t delta_scatter,
@@ -295,11 +296,12 @@ void sg_smallbuf(
 void gather_smallbuf(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
         size_t target_len) {
+
 #ifdef __GNUC__
     #pragma omp parallel
 #else
@@ -310,19 +312,21 @@ void gather_smallbuf(
 
 #ifdef __CRAYC__
     #pragma concurrent
-#endif
-#ifdef __INTEL_COMPILER
+#elif defined __INTEL_COMPILER
     #pragma ivdep
 #endif
+
 #pragma omp for
         for (size_t i = 0; i < n; i++) {
            sgData_t *sl = source + delta * i;
            sgData_t *tl = target[t] + pat_len*(i%target_len);
+
 #ifdef __CRAYC__
     #pragma concurrent
-#endif
-#if defined __CRAYC__ || defined __INTEL_COMPILER
+#elif defined __CRAYC__ || defined __INTEL_COMPILER
     #pragma vector always,unaligned
+#elif defined __GNUC__
+    #pragma omp simd   // or: #pragma GCC ivdep
 #endif
            for (size_t j = 0; j < pat_len; j++) {
                tl[j] = sl[pat[j]];
@@ -334,7 +338,7 @@ void gather_smallbuf(
 void gather_smallbuf_morton(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -373,7 +377,7 @@ void gather_smallbuf_morton(
 void gather_smallbuf_rdm(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -412,7 +416,7 @@ void gather_smallbuf_rdm(
 void scatter_smallbuf(
         sgData_t* restrict target,
         sgData_t** const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -451,7 +455,7 @@ void scatter_smallbuf(
 void gather_smallbuf_random(
         sgData_t** restrict target,
         sgData_t* const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -491,7 +495,7 @@ void gather_smallbuf_random(
 void scatter_smallbuf_random(
         sgData_t* restrict target,
         sgData_t** const restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t delta,
         size_t n,
@@ -531,7 +535,7 @@ void scatter_smallbuf_random(
 void gather_smallbuf_multidelta(
         sgData_t** restrict target,
         sgData_t* restrict source,
-        sgIdx_t* const restrict pat,
+        ssize_t* const restrict pat,
         size_t pat_len,
         size_t *delta,
         size_t n,

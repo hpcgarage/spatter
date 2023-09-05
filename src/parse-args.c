@@ -52,7 +52,7 @@ FILE *err_file;
 void safestrcopy(char *dest, const char *src);
 void parse_p(char*, struct run_config *, int mode);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
-void xkp_pattern(size_t *pat, size_t dim);
+void xkp_pattern(ssize_t *pat, ptrdiff_t dim);
 void parse_backend(int argc, char **argv);
 
 void** argtable;
@@ -779,7 +779,7 @@ void static laplacian_branch(int depth, int order, int n, int **pos, int *pos_le
 
 void static laplacian(int dim, int order, int n, struct run_config *rc, int mode)
 {
-    spIdx_t **pattern;
+    ssize_t **pattern;
     spSize_t *pattern_len;
 
     if (mode == 0) { // Normal pattern
@@ -994,7 +994,7 @@ void parse_backend(int argc, char **argv)
 
 void parse_p(char* optarg, struct run_config *rc, int mode)
 {
-    spIdx_t **pattern;
+    ssize_t **pattern;
     spSize_t *pattern_len;
     ssize_t *delta;
     size_t **deltas;
@@ -1226,7 +1226,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             ms1_deltas_len = read;
 
             (*pattern)[0] = -1;
-            size_t last = -1;
+            ssize_t last = -1;
             ssize_t j;
             for (int i = 0; i < *pattern_len; i++)
             {
@@ -1257,7 +1257,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
         if (!ptr)
             error("Pattern not found", 1);
 
-        spIdx_t *mypat;
+        ssize_t *mypat;
 
         size_t psize;
         if (rc->pattern_size > 0)
@@ -1361,14 +1361,14 @@ void safestrcopy(char *dest, const char *src)
     strncat(dest, src, STRING_SIZE-1);
 }
 
-int compare_ssizet(const void *a, const void *b)
+int compare_ptrdiff_t(const void *a, const void *b)
 {
-    if (*(ssize_t*)a > *(ssize_t*)b) return 1;
-    else if (*(ssize_t*)a < *(ssize_t*)b) return -1;
+    if (*(ptrdiff_t*)a > *(ptrdiff_t*)b) return 1;
+    else if (*(ptrdiff_t*)a < *(ptrdiff_t*)b) return -1;
     else return 0;
 }
 
-void copy4(ssize_t *dest, ssize_t *a, int *off)
+void copy4(ptrdiff_t *dest, ptrdiff_t *a, int *off)
 {
     for (int i = 0; i < 4; i++) {
         dest[i + *off] = a[i];
@@ -1376,7 +1376,7 @@ void copy4(ssize_t *dest, ssize_t *a, int *off)
     *off += 4;
 }
 
-void add4(ssize_t *dest, ssize_t *a, ssize_t *b, int *off)
+void add4(ptrdiff_t *dest, ptrdiff_t *a, ptrdiff_t *b, int *off)
 {
     for (int i = 0; i < 4; i++) {
         dest[i + *off] = a[i] + b[i];
@@ -1384,19 +1384,19 @@ void add4(ssize_t *dest, ssize_t *a, ssize_t *b, int *off)
     *off += 4;
 }
 
-void xkp_pattern(size_t *pat_, size_t dim)
+void xkp_pattern(ssize_t *pat_, ptrdiff_t dim)
 {
-    ssize_t pat[73];
+    ptrdiff_t pat[73];
     for (int i = 0; i < 73; i++) {
         pat[i] = i;
     }
 
-    ssize_t Xp[4];
-    ssize_t Xn[4];
-    ssize_t Yp[4];
-    ssize_t Yn[4];
-    ssize_t Zp[4];
-    ssize_t Zn[4];
+    ptrdiff_t Xp[4];
+    ptrdiff_t Xn[4];
+    ptrdiff_t Yp[4];
+    ptrdiff_t Yn[4];
+    ptrdiff_t Zp[4];
+    ptrdiff_t Zn[4];
 
     Xp[0] =  1; Xp[1] =  2; Xp[2] =  3; Xp[3] =  4;
     Xn[0] = -1; Xn[1] = -2; Xn[2] = -3; Xn[3] = -4;
@@ -1429,9 +1429,9 @@ void xkp_pattern(size_t *pat_, size_t dim)
     add4(pat, Yn, Zp, &idx);
     add4(pat, Yn, Zn, &idx);
 
-    qsort(pat, 73, sizeof(ssize_t), compare_ssizet);
+    qsort(pat, 73, sizeof(ptrdiff_t), compare_ptrdiff_t);
 
-    ssize_t min = pat[0];
+    ptrdiff_t min = pat[0];
     for (int i = 1; i < 73; i++) {
         if (pat[i] < min) {
             min = pat[i];
