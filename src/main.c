@@ -1161,6 +1161,5 @@ spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_le
         }
     }
 
-    printf("Pattern Length: %zu Max Pattern Value: %zu\n\n", pattern_len, max_pattern_val);
     return max_pattern_val;
 }
