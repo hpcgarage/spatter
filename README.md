@@ -98,7 +98,7 @@ Usage:
  -R, --runs=<n>               Number of times to repeat execution of the kernel. [Default: 10]
  -t, --omp-threads=<n>        Number of OpenMP threads. [Default: OMP_MAX_THREADS]
  -v, --vector-len=<n>         TODO
- -z, --local-work-size=<n>    Numer of Gathers or Scatters performed by each thread on a GPU.
+ -z, --local-work-size=<n>    Number of Gathers or Scatters performed by each thread on a GPU. [Default: 1024]
  -m, --shared-memory=<n>      Amount of dummy shared memory to allocate on GPUs (used for occupancy control).
  -n, --name=<name>            Specify and name this configuration in the output.
  -s, --random=[<n>]           Sets the seed, or uses a random one if no seed is specified.

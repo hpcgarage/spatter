@@ -749,8 +749,8 @@ struct run_config *parse_runs(int argc, char **argv)
 #if defined USE_CUDA || defined USE_OPENCL
     if (rc->local_work_size == 0)
     {
-        error ("Local_work_size not set. Default is 1", WARN);
-        rc->local_work_size = 1;
+        error ("Local_work_size not set. Default is 1024", WARN);
+        rc->local_work_size = 1024;
     }
 #endif
     return rc;
