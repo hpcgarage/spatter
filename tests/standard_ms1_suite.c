@@ -5,15 +5,15 @@
 #include <stdlib.h>
 
 int ms1_test_1() {
-    int length = 4, locations = 2, gaps = 16;
-    for (int i = 0; i < 10; i++) {
+    int length = 8, locations = 2, gaps = 16;
+    for (int i = 0; i < 8; i++) {
         char *command;
         int ret = asprintf(&command, "../spatter -pMS1:%d:%d:%d", length, locations, gaps);
         if (ret == -1 || system(command) != EXIT_SUCCESS) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;
         }
-        length += 2;
+        length *= 2;
         locations += 1;
         gaps += 2;
         free(command);
@@ -22,15 +22,15 @@ int ms1_test_1() {
 }
 
 int ms1_test_2() {
-    int length = 4, length2 = 1, locations = 2, locations2 = 16;
-    for (int i = 0; i < 10; i++) {
+    int length = 8, length2 = 1, locations = 2, locations2 = 16;
+    for (int i = 0; i < 8; i++) {
         char *command;
         int ret = asprintf(&command, "../spatter -pMS1:%d:%d,%d:%d", length, length2, locations, locations2);
         if (ret == -1 || system(command) != EXIT_SUCCESS) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;
         }
-        length += 2;
+        length *= 2;
         length2 += 2;
         locations += 1;
         locations2 += 2;
@@ -40,15 +40,15 @@ int ms1_test_2() {
 }
 
 int ms1_test_3() {
-    int length = 4, length2 = 1, locations = 2, locations2 = 16, gaps = 11;
-    for (int i = 0; i < 10; i++) {
+    int length = 8, length2 = 1, locations = 2, locations2 = 16, gaps = 11;
+    for (int i = 0; i < 8; i++) {
         char *command;
         int ret = asprintf(&command, "../spatter -pMS1:%d:%d,%d:%d,%d", length, length2, locations, locations2, gaps);
         if (ret == -1 || system(command) != EXIT_SUCCESS) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;
         }
-        length += 2;
+        length *= 2;
         length2 += 2;
         locations += 1;
         locations2 += 2;

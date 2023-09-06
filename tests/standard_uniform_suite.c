@@ -5,15 +5,15 @@
 #include <stdlib.h>
 
 int uniform_test_length_gap() {
-    int length = 4, gap = 2;
-    for (int i = 0; i < 10; i++) {
+    int length = 8, gap = 2;
+    for (int i = 0; i < 8; i++) {
         char *command;
         int ret = asprintf(&command, "../spatter -pUNIFORM:%d:%d", length, gap);
         if (ret == -1 || system(command) != EXIT_SUCCESS) {
             printf("Test failure on %s", command);
             return EXIT_FAILURE;
         }
-        length += 2;
+        length *= 2;
         gap += 2;
         free(command);
     }
