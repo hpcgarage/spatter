@@ -13,8 +13,7 @@ cd $SLURM_SUBMIT_DIR                            # Change to working directory
 echo "Current working directory is $(pwd)"
 
 ##Add commands here to build and execute
-module load cuda
-cd ../../
+cd $GITHUB_WORKSPACE
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
 make -C build_cuda_workflow
 cd build_cuda_workflow
