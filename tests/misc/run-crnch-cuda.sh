@@ -14,6 +14,7 @@ echo "Current working directory is $(pwd)"
 
 ##Add commands here to build and execute
 cd $GITHUB_WORKSPACE
+module load cuda
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
 make -C build_cuda_workflow
 cd build_cuda_workflow
