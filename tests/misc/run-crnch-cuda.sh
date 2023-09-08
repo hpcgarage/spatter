@@ -9,8 +9,6 @@
 #SBATCH -G 1					                 # Request a GPU on that node
 #SBATCH -W                                       # Do not exit until the submitted job terminates.
 
-cd $SLURM_SUBMIT_DIR                            # Change to working directory
-echo "Current working directory is $(pwd)"
 source /tools/misc/.read_profile
 
 ##Add commands here to build and execute
