@@ -9,11 +9,11 @@
 #SBATCH -G 1					                 # Request a GPU on that node
 #SBATCH -W                                       # Do not exit until the submitted job terminates.
 
-echo "Current working directory is $(~/pwd)"
+echo "Current working directory is $(pwd)"
 
 ##Add commands here to build and execute
 cd $GITHUB_WORKSPACE
-source /tools/misc/.read_profile 
+source ~/../../tools/misc/.read_profile 
 module load cuda
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
 make -C build_cuda_workflow
