@@ -21,6 +21,17 @@ endif()
 string( TOLOWER "${BACKEND}" BACKEND )
 string( TOLOWER "${COMPILER}" COMPILER )
 
+
+# Create gz_read executable
+add_executable(gz_read standard-suite/binary-traces/gz_read.c)
+target_link_libraries(gz_read z)
+
+# Use for debugging. TODO: Set this automatically
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Use ASAN when debugging
+    SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 #Set backend permitted values
 set(SPATTERBACKENDS serial openmp cuda)
 
@@ -455,5 +466,5 @@ endif ()
 
 # Note - This file can be reformatted with cmake-format CMakeLists.txt -i
 # --command-case=upper --keyword-case=upper --dangle-parens --tab-size=4
-# --separate-ctrl-name-with-space --separate-fn-name-with-space If you do NOT
+# --separate-ctrl-name-with-space --separate-fn-name-with-space If you do not
 # have cmake-format installed, install it with pip install --user cmake_format
