@@ -29,4 +29,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run batch file
-      run: cd tests/misc && chmod +x run-crnch-cuda.sh && ./run-crnch-cuda.sh
+      run: cd tests/misc && chmod +x run-crnch-cuda.sh && bash run-crnch-cuda.sh
