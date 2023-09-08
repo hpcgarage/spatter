@@ -11,9 +11,9 @@
 
 cd $SLURM_SUBMIT_DIR                            # Change to working directory
 echo "Current working directory is $(pwd)"
+source /tools/misc/.read_profile
 
 ##Add commands here to build and execute
-source /tools/misc/.read_profile
 cd $GITHUB_WORKSPACE
 module load cuda
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
