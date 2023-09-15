@@ -262,7 +262,7 @@ Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating G
 * A supported C/C++ 11 compiler 
   * GCC 
   * Clang 
-* If using CUDA, CUDA 10.0+ 
+* If using CUDA, CUDA 11.0+ 
 * If using OpenMP, OpenMP 3.0+
   * Note: Issues have been reported in Mac systems with OpenMP. If you encounter issues finding OpenMP, please use Spatter in a Linux container. 
 * Spatter can also run serially
