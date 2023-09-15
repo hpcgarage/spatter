@@ -17,15 +17,14 @@ set( TESTAPPS #list apps
         parse_size
         standard_uniform_suite
         standard_ms1_suite
-        standard_laplacian_suite
         concurrent
         multilevel
     )
 
-IF(USE_CUDA)
+IF("${BACKEND}" STREQUAL "cuda")
     set(TESTAPPS  ${TESTAPPS} standard_suite_gpu)
 ELSE()
-    set(TESTAPPS  ${TESTAPPS} standard_suite_cpu)
+    set(TESTAPPS  ${TESTAPPS} standard_suite_cpu standard_laplacian_suite)
 ENDIF()
 
 file(GLOB src
@@ -53,7 +52,7 @@ foreach( APP ${TESTAPPS} )
 )
 set_tests_properties("${APP}_build" PROPERTIES FIXTURES_SETUP "test_${APP}_fixture")
  target_link_libraries( "${APP}" PRIVATE m )
- IF (USE_OPENMP)
+ IF ("${BACKEND}" STREQUAL "openmp")
      TARGET_LINK_LIBRARIES (${APP} PRIVATE OpenMP::OpenMP_CXX)
  ENDIF()
  add_test( NAME "${APP}_test" COMMAND "${APP}" )
