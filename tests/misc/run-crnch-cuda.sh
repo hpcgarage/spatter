@@ -12,7 +12,7 @@
 ##Add commands here to build and execute
 cd $GITHUB_WORKSPACE
 echo $(pwd)
-echo $(LOGNAME)
+echo $(logname)
 . /tools/misc/.read_profile
 module load cuda
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
