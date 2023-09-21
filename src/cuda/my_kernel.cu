@@ -582,11 +582,6 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         char validate)
 {
 
-    if (pat_len > 1024) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -739,11 +734,6 @@ extern "C" float cuda_block_random_wrapper(uint dim, uint* grid, uint* block,
         size_t wrap,
         int wpt, size_t seed)
 {
-    if (pat_len > 1024) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -828,11 +818,6 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
         size_t wrap,
         int wpt)
 {
-    if (pat_len > 1024) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -1040,11 +1025,6 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
         double *final_gather_data,
         char validate)
 {
-    if (rc->pattern_gather_len > 1024 || rc->pattern_scatter_len > 1024 ) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -1175,11 +1155,6 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
         double *final_gather_data,
         char validate)
 {
-    if (rc->pattern_len > 1024 || rc->pattern_scatter_len > 1024) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -1308,11 +1283,6 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
         double *final_gather_data,
         char validate)
 {
-    if (rc->pattern_len > 1024 || rc->pattern_gather_len > 1024) {
-        printf("ERROR: Currently, a pattern length greater than 1024 is not supported\n");
-        exit(1);
-    }
-
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
