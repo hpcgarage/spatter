@@ -29,4 +29,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run batch file
-      run: cd tests/misc && chmod +x batch.batch && batch batch.batch
+      run: cd tests/misc && chmod +x batch.batch && sbatch batch.batch
