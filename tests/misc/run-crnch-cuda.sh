@@ -14,6 +14,7 @@
 cd $GITHUB_WORKSPACE
 echo $(pwd)
 echo $(logname)
+hostname
 module load cuda
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
 make -C build_cuda_workflow
