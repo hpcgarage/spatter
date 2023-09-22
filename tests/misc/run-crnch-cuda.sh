@@ -5,9 +5,9 @@
 #SBATCH --mem-per-cpu=4G                         # Memory per core
 #SBATCH -t 00:30:00                              # Duration of the job (Ex: 30 mins)
 #SBATCH -p rg-gpu                                # Partition Name
-#SBATCH -o spatter-cuda-test.out                 # Combined output and error messages file
-#SBATCH --nodelist quorra1			             # Specify a specific node
-#SBATCH -G 1					                 # Request a GPU on that node
+#SBATCH -o /tools/ci-reports/spatter-cuda-test-%j.out   # Combined output and error messages file
+#SBATCH --nodelist quorra1			     # Specify a specific node
+#SBATCH -G 1					     # Request a GPU on that node
 #SBATCH -W                                       # Do not exit until the submitted job terminates.
 
 ##Add commands here to build and execute
