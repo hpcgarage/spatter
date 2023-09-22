@@ -9,3 +9,4 @@ modulefiles/
 src/python/env
 .vscode/
 *.pyc
+spatter-cuda-test.out
