@@ -581,6 +581,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         double *final_gather_data,
         char validate)
 {
+
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
@@ -620,6 +621,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block_morton<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, order_dev, validate);
             }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+                exit(1);
             }
 
         } else if (stride >= 0) {
@@ -647,6 +649,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block_stride<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, stride, validate);
             }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+                exit(1);
             }
 
         } else {
@@ -674,6 +677,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 gather_block<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
             }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
+                exit(1);
             }
         }
         cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost);
@@ -700,6 +704,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             scatter_block<4096><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
         }else {
             printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
+            exit(1);
         }
 
     }
