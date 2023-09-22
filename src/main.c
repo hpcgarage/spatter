@@ -632,7 +632,7 @@ int main(int argc, char **argv)
                   if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
                       error("Pattern length cannot exceed local_work_size", ERROR);
                   }
-                  if (rc2[k].pattern_scatter_len > 1024) {
+                  if (rc2[k].local_work_size > 1024) {
                       error("Pattern length cannot exceed 1024 on GPU", ERROR);
                   }
                     /*
@@ -651,7 +651,7 @@ int main(int argc, char **argv)
                   if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
                       error("Pattern length cannot exceed local_work_size", ERROR);
                   }
-                  if (rc2[k].pattern_gather_len > 1024) {
+                  if (rc2[k].local_work_size > 1024) {
                       error("Pattern length cannot exceed 1024 on GPU", ERROR);
                   }
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
@@ -665,7 +665,7 @@ int main(int argc, char **argv)
                     if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
                         error("Pattern length cannot exceed local_work_size", ERROR);
                     }
-                    if (rc2[k].pattern_gather_len > 1024) {
+                    if (rc2[k].local_work_size > 1024) {
                         error("Pattern length cannot exceed 1024 on GPU", ERROR);
                     }
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
@@ -679,7 +679,7 @@ int main(int argc, char **argv)
                     if (rc2[k].pattern_len > rc2[k].local_work_size) {
                         error("Pattern length cannot exceed local_work_size", ERROR);
                     }
-                    if (rc2[k].pattern_len > 1024) {
+                    if (rc2[k].local_work_size > 1024) {
                         error("Pattern length cannot exceed 1024 on GPU", ERROR);
                     }
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
