@@ -5,16 +5,16 @@ cmake_minimum_required (VERSION 3.18 FATAL_ERROR)
 if ("${BACKEND}" STREQUAL "")
     message (
         FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
+            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, sycl or cuda to cmake."
     )
 endif ()
 
 # Check for support for at least one compiler
 if ("${COMPILER}" STREQUAL "")
-    message (	
-        FATAL_ERROR	
-            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."	
-    )	
+    message (
+        FATAL_ERROR
+            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."
+    )
 endif()
 
 #Make backend and compiler variables case insensitive
@@ -33,7 +33,7 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 #Set backend permitted values
-set(SPATTERBACKENDS serial openmp cuda)
+set(SPATTERBACKENDS serial openmp cuda sycl)
 
 #Check for backend variable set in user cmake call
 if(NOT BACKEND IN_LIST SPATTERBACKENDS)
@@ -51,11 +51,11 @@ if(NOT COMPILER IN_LIST SPATTERCOMPILERS)
     message(FATAL_ERROR "compiler must be one of ${compilerBackends}")
 endif()
 
-add_definitions (-DSG_DATA_TYPE=double)	
+add_definitions (-DSG_DATA_TYPE=double)
 
-# Set backend specific flags	
-    #SERIAL	
-    if ("${BACKEND}" STREQUAL "serial")	
+# Set backend specific flags
+    #SERIAL
+    if ("${BACKEND}" STREQUAL "serial")
         #gnu
         if ("${COMPILER}" STREQUAL "gnu")
             set(CMAKE_C_COMPILER gcc)
@@ -65,14 +65,14 @@ add_definitions (-DSG_DATA_TYPE=double)
             set(CMAKE_C_COMPILER cc)
             set(CMAKE_CXX_COMPILER CC)
         else()
-            message (	
+            message (
                 FATAL_ERROR
-                    "Only gnu and cray are supported for SERIAL backend"	
+                    "Only gnu and cray are supported for SERIAL backend"
             )
         endif()
     endif ()
 
-    #CUDA	
+    #CUDA
     if ("${BACKEND}" STREQUAL "cuda")
         if ("${COMPILER}" STREQUAL "nvcc")
             set(CMAKE_CUDA_COMPILER nvcc)
@@ -82,12 +82,12 @@ add_definitions (-DSG_DATA_TYPE=double)
                     "Only nvcc is supported for CUDA backend"
             )
         endif()
- 
+
         if (USE_MPI)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
         endif()
-	
+
         if (DEFINED CUDA_ARCH)
             set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
         else ()
@@ -96,8 +96,19 @@ add_definitions (-DSG_DATA_TYPE=double)
         endif ()
     endif ()
 
+    #SYCL
+    if ("${BACKEND}" STREQUAL "sycl")
+        if (USE_MPI)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+        endif()
+
+        message("No SYCL architecture specified, default set to PVC")
+	set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
+    endif ()
+
     #OPENMP
-    if ("${BACKEND}" STREQUAL "openmp")	
+    if ("${BACKEND}" STREQUAL "openmp")
         #gnu
         if ("${COMPILER}" STREQUAL "gnu")
             set(CMAKE_C_COMPILER gcc)
@@ -150,10 +161,14 @@ add_definitions (-DSG_DATA_TYPE=double)
                 if("${INTEL_PLATFORM}" STREQUAL "skylake")
                     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=skylake-avx512")
 
+                #sapphirerapids
+                if("${INTEL_PLATFORM}" STREQUAL "sapphirerapids")
+                    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=sapphirerapids")
+
                 #cross-platform with AVX
                 elseif("${INTEL_PLATFORM}" STREQUAL "avx_crossplatform")
                     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -xCOMMON-AVX512")
-                
+
                 #Non-AVX platforms
                 elseif("${INTEL_PLATFORM}" STREQUAL "non_avx")
                     #No specified flags
@@ -174,9 +189,9 @@ add_definitions (-DSG_DATA_TYPE=double)
                 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -qopt-report-phase=vec,loop -qopt-report=2")
             endif()
         else()
-            message (	
+            message (
                 FATAL_ERROR
-                    "Only gnu, cray, clang, armclang, intel, and xl are supported for OpenMP backend"	
+                    "Only gnu, cray, clang, armclang, intel, and xl are supported for OpenMP backend"
             )
         endif()
     endif ()
@@ -228,7 +243,7 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=IBM")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     set (OPTIMIZATIONS "-O3 -h vector3 -h cache3 -h scalar3")
     #set (OPTIMIZATIONS "-G0 -O0")
     #set (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
@@ -238,19 +253,19 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray -D__CRAYC__")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
     set (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -xHost -qopenmp")
     set (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -xHost -qopenmp")
 endif ()
 
- 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3 -g")
-   #Use sanitize=address for debugging of access issues 
+   #Use sanitize=address for debugging of access issues
    #set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
 endif ()
 
@@ -356,7 +371,27 @@ if ("${BACKEND}" STREQUAL "cuda")
 
 endif ()
 
-if (USE_PAPI) 
+# Enable SYCL
+if ("${BACKEND}" STREQUAL "sycl")
+    add_definitions (-DUSE_SYCL)
+    include_directories (src/sycl)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fsycl -qmkl -sycl-std=2020 -fsycl-device-code-split=per_kernel ")
+
+    # Pull the SYCL-specific files and kernels into the build
+    file (GLOB BACKEND_CPP_FILES_SYCL src/sycl/*.cpp)
+    file (GLOB BACKEND_HPP_FILES_SYCL src/sycl/*.h)
+
+    #SYCL Toolkit (Runtime)
+    add_library(sycl_comp SHARED src/sycl/my_kernel.cpp src/sycl/sycl-backend.cpp src/sycl/sycl-backend.h src/sycl/sycl_kernels.h)
+    set_target_properties(sycl_comp)
+    target_include_directories(sycl_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/sycl")
+
+    message ("Using SYCL backend")
+
+endif ()
+
+if (USE_PAPI)
     set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
     include_directories (src/papi)
     add_definitions (-DUSE_PAPI)
@@ -388,6 +423,8 @@ set (
     ${BACKEND_H_FILES_CL}
     ${BACKEND_C_FILES_OMP}
     ${BACKEND_H_FILES_OMP}
+    ${BACKEND_CPP_FILES_SYCL}
+    ${BACKEND_HPP_FILES_SYCL}
     ${BACKEND_C_FILES_SERIAL}
     ${BACKEND_H_FILES_SERIAL}
     ${CUDA_CU_FILES}
@@ -400,7 +437,11 @@ set (
 add_executable (${TRGT} ${SOURCE_FILES})
 
 #Prefer C11 standard to allow for loop initialization and aligned_alloc
-target_compile_features(${TRGT} PUBLIC c_std_11)
+if ("${BACKEND}" STREQUAL "sycl")
+  target_compile_features(${TRGT} PUBLIC c_std_17)
+else ()
+  target_compile_features(${TRGT} PUBLIC c_std_11)
+endif ()
 
 # Print out debug info print_all_variables()
 
@@ -411,6 +452,10 @@ endif()
 
 if ("${BACKEND}" STREQUAL "opencl")
     target_link_libraries (${TRGT} LINK_PUBLIC OpenCL)
+endif ()
+
+if ("${BACKEND}" STREQUAL "sycl")
+    target_link_libraries (${TRGT} LINK_PUBLIC CXX)
 endif ()
 
 # Link math library for json
@@ -438,7 +483,7 @@ endif()
 file (GLOB TEST_SCRIPTS tests/*.sh)
 file (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-# Add a command to put some important info in environment variables 
+# Add a command to put some important info in environment variables
 # to be output by spatter
 message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
 message (STATUS "compiler is ${CMAKE_C_COMPILER}")
@@ -446,7 +491,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C=\"${CMAKE_C_COMPILER}\"")
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSPAT_C_VER=\"${CMAKE_C_COMPILER_VERSION}\"")
 
 # Build tests
-if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" OR "${BACKEND}" STREQUAL "cuda")
+if ( "${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "serial" OR "${BACKEND}" STREQUAL "cuda" OR "${BACKEND}" STREQUAL "sycl" )
     mark_as_advanced( BUILD_TESTS )
     set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
     if( BUILD_TESTS )
@@ -457,7 +502,7 @@ endif()
 
 # Validation flag
 set (VALIDATE_DATA 0 CACHE BOOL "Performs additional validation")
-if ("${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "cuda")
+if ("${BACKEND}" STREQUAL "openmp" OR "${BACKEND}" STREQUAL "cuda" OR "${BACKEND}" STREQUAL "sycl" )
     if (VALIDATE_DATA)
         add_definitions(-DVALIDATE)
     endif ()
