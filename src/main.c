@@ -27,6 +27,10 @@
     #include <cuda.h>
     #include "cuda/cuda-backend.h"
 #endif
+#if defined ( USE_SYCL )
+    #include <sycl/sycl.hpp>
+    #include "sycl/sycl-backend.h"
+#endif
 #if defined( USE_SERIAL )
 	#include "serial/serial-kernels.h"
 #endif
@@ -96,6 +100,7 @@ void print_system_info(){
     if(backend == OPENMP) printf("OPENMP\n");
     if(backend == OPENCL) printf("OPENCL\n");
     if(backend == CUDA) printf("CUDA\n");
+    if(backend == SYCL) printf("SYCL\n");
 
 
     printf("Aggregate Results? %s\n", aggregate_flag ? "YES" : "NO");
@@ -261,7 +266,7 @@ uint64_t isqrt(uint64_t x);
 uint64_t icbrt(uint64_t x);
 
 spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary);
- 
+
 
 int main(int argc, char **argv)
 {
@@ -285,6 +290,11 @@ int main(int argc, char **argv)
     cl_uint work_dim = 1;
     #endif
 
+    // SYCL Specific
+    #ifdef USE_SYCL
+    sycl::queue* que = new sycl::queue(sycl::gpu_selector_v, sycl::property_list{sycl::property::queue::in_order{}});
+    #endif
+
     // =======================================
     // Parse Command Line Arguments
     // =======================================
@@ -303,11 +313,11 @@ int main(int argc, char **argv)
     if (compress_flag) {
         for (int i = 0; i < nrc; i++) {
             compress_indices(rc[i].pattern, rc[i].pattern_len);
-            
+
             if (rc[i].kernel == GS || rc[i].kernel == MULTISCATTER) {
                 compress_indices(rc[i].pattern_scatter, rc[i].pattern_scatter_len);
             }
-       
+
             if (rc[i].kernel == GS || rc[i].kernel == MULTIGATHER) {
                 compress_indices(rc[i].pattern_gather, rc[i].pattern_gather_len);
             }
@@ -410,12 +420,12 @@ int main(int argc, char **argv)
             spIdx_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len, rc2[i].boundary);
             spIdx_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len, rc2[i].boundary);
             max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
-        
+
             pattern_delta = rc2[i].delta_gather >= rc2[i].delta_scatter ? rc2[i].delta_gather : rc2[i].delta_scatter;
         }
         else {
             max_pattern_val = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len, rc2[i].boundary);
-            
+
             pattern_delta = rc2[i].delta;
         }
         //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
@@ -435,7 +445,7 @@ int main(int argc, char **argv)
         else {
             cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
         }
-        
+
         if (cur_target_size > max_target_size) {
             max_target_size = cur_target_size;
         }
@@ -580,6 +590,28 @@ int main(int argc, char **argv)
     double final_gather_data = -1;
     #endif
 
+    #ifdef USE_SYCL
+    sgIdx_t *pat_dev;
+    sgIdx_t *pat_gath_dev;
+    sgIdx_t *pat_scat_dev;
+    uint32_t *order_dev;
+    if (backend == SYCL) {
+        //TODO: Rewrite to not take index buffers
+        create_dev_buffers_sycl(&source, que);
+        create_dev_buffers_sycl(&target, que);
+	pat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
+	pat_gath_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
+	pat_scat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
+	order_dev = sycl::malloc_device<uint32_t>(max_ro_len, *q);
+        que->memcpy(source.dev_ptr_cuda, source.host_ptr, source.size);
+        que->memcpy(target.dev_ptr_cuda, target.host_ptr, target.size);
+	que->wait();
+    }
+    int final_block_idx = -1;
+    int final_thread_idx = -1;
+    double final_gather_data = -1;
+    #endif
+
 
     // =======================================
     // Execute Benchmark
@@ -643,7 +675,7 @@ int main(int argc, char **argv)
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
-                  unsigned long block[arr_len] = {local_work_size};                  
+                  unsigned long block[arr_len] = {local_work_size};
 
                   time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
@@ -657,7 +689,7 @@ int main(int argc, char **argv)
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
-                  unsigned long block[arr_len] = {local_work_size};                  
+                  unsigned long block[arr_len] = {local_work_size};
 
                   time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
@@ -701,6 +733,88 @@ int main(int argc, char **argv)
         }
 
         #endif // USE_CUDA
+
+        // Time SYCL Kernel
+        #ifdef USE_SYCL
+        int wpt = 1;
+        if (backend == SYCL) {
+            float time_ms = 2;
+            for (int i = -10; i < (int) rc2[k].nruns; i++) {
+#define arr_len (1)
+                if (rc2[k].kernel == MULTISCATTER) {
+                  if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
+                      error("Pattern length cannot exceed local_work_size", ERROR);
+                  }
+                  if (rc2[k].local_work_size > 1024) {
+                      error("Pattern length cannot exceed 1024 on GPU", ERROR);
+                  }
+                    /*
+                  if (rc2[k].pattern_scatter_len > local_work_size) {
+                      error("Pattern length cannot exceed local_work_size", ERROR);
+                  }
+                  */
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};
+
+                  time_ms = sycl_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag, que);
+                }
+                else if (rc2[k].kernel == MULTIGATHER) {
+                  if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
+                      error("Pattern length cannot exceed local_work_size", ERROR);
+                  }
+                  if (rc2[k].local_work_size > 1024) {
+                      error("Pattern length cannot exceed 1024 on GPU", ERROR);
+                  }
+                  unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                  unsigned long local_work_size = rc2[k].local_work_size;
+                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
+                  unsigned long block[arr_len] = {local_work_size};
+
+                  time_ms = sycl_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag, que);
+                }
+                else if (rc2[k].kernel == GS) {
+                    if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
+                        error("Pattern length cannot exceed local_work_size", ERROR);
+                    }
+                    if (rc2[k].local_work_size > 1024) {
+                        error("Pattern length cannot exceed 1024 on GPU", ERROR);
+                    }
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+                    assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
+                    time_ms = sycl_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag, que);
+                } else {
+                    if (rc2[k].pattern_len > rc2[k].local_work_size) {
+                        error("Pattern length cannot exceed local_work_size", ERROR);
+                    }
+                    if (rc2[k].local_work_size > 1024) {
+                        error("Pattern length cannot exceed 1024 on GPU", ERROR);
+                    }
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                    unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    unsigned long block[arr_len] = {local_work_size};
+
+                    if (rc2[k].random_seed == 0) {
+                        time_ms = sycl_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag, que);
+                    } else {
+                        time_ms = sycl_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed, que);
+                    }
+                }
+
+                if (i>=0) rc2[k].time_ms[i] = time_ms;
+            }
+
+
+        }
+        #endif // USE_SYCL
+
+
 
         // Time OpenMP Kernel
         #ifdef USE_OPENMP
@@ -845,6 +959,10 @@ int main(int argc, char **argv)
 #ifdef USE_CUDA
     cudaMemcpy(source.host_ptr, source.dev_ptr_cuda, source.size, cudaMemcpyDeviceToHost);
 #endif
+#ifdef USE_SYCL
+    que->memcpy(source.host_ptr, source.dev_ptr_sycl, source.size).wait();
+#endif
+
     int good = 0;
     int bad  = 0;
     for (size_t i = 0; i < source.len; i++) {
@@ -864,13 +982,13 @@ int main(int argc, char **argv)
     if(validate_flag) {
         // Validate that the last item written to buffer is actually there
         // Supported kernels for this last write validation are:
-        // 
+        //
         // OPENMP:
         // scatter_smallbuf
         // gather_smallbuf
         // gather_smallbuf_morton
         //
-        // CUDA:
+        // CUDA/SYCL:
         // scatter_block
         // gather_block
         // gather_block_morton
@@ -893,7 +1011,7 @@ int main(int argc, char **argv)
                         sgData_t *target_data_ptr = target.host_ptrs[t] + rc_final->pattern_len * ((rc_final->generic_len - 1) % rc_final->wrap);
                         //check that all data in the pattern is written
                         char matches_pattern = 1;
-                        for (int d = 0; d < rc_final->pattern_len; d++) { 
+                        for (int d = 0; d < rc_final->pattern_len; d++) {
                             if (source_data_ptr[rc_final->pattern[d]] != target_data_ptr[d]) {
                                 matches_pattern = 0;
                                 break;
@@ -911,8 +1029,8 @@ int main(int argc, char **argv)
             }
         #endif
 
-        #ifdef USE_CUDA
-                if (backend == CUDA) {
+        #if defined(USE_CUDA) || defined(USE_SYCL)
+                if (backend == CUDA || backend == SYCL) {
                     char is_written_data_missing = 1;
                     struct run_config *rc_final = rc2 + (nrc - 1);
                     size_t V = rc_final->pattern_len;
@@ -962,8 +1080,8 @@ int main(int argc, char **argv)
 
   free(rc);
   //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
- 
-#ifdef USE_MPI 
+
+#ifdef USE_MPI
   MPI_Finalize();
 #endif
 } //end main
@@ -1174,15 +1292,15 @@ uint64_t icbrt(uint64_t x) {
     return y;
 }
 
-// Remap large pattern with heap accesses to fit within Spatter 
+// Remap large pattern with heap accesses to fit within Spatter
 spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary) {
     if (boundary == -1)
-        boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;  
-  
+        boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
+
     for (size_t j = 0; j < pattern_len; ++j) {
         pattern[j] = pattern[j] % boundary;
     }
-    
+
     spIdx_t max_pattern_val = pattern[0];
     for (size_t j = 0; j < pattern_len; j++) {
         if (pattern[j] > max_pattern_val) {

@@ -23,7 +23,7 @@ typedef struct sgDataBuf_t{
     #ifdef USE_OPENCL
     cl_mem dev_ptr_opencl;     /**< Points to data on the OpenCL device */ 
     #endif
-    #ifdef USE_CUDA
+    #if defined(USE_CUDA) || defined(USE_SYCL)
     sgData_t *dev_ptr_cuda;
     #endif    
     size_t len;         /**< The length of the buffers (in blocks) */
@@ -35,8 +35,8 @@ typedef struct sgDataBuf_t{
 typedef struct sgIndexBuf_t{
     sgIdx_t *host_ptr;    /**< Points to an index buffer on the host (CPU) */
 
-    #ifdef USE_CUDA
-    sgIdx_t *dev_ptr_cuda;/**< Points to an index buffer on the CUDA device */
+    #if defined(USE_CUDA) || defined(USE_SYCL)
+    sgIdx_t *dev_ptr_cuda;/**< Points to an index buffer on the CUDA, SYCL device */
     #endif
 
     #ifdef USE_OPENCL

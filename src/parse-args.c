@@ -78,7 +78,7 @@ void initialize_argtable()
     malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
     // Benchmark Configuration
     malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[8] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
+    malloc_argtable[8] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
     malloc_argtable[9] = pattern_scatter = arg_strn("h", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS, MultiScatter]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
     malloc_argtable[10] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather, Options: Gather, Scatter, GS, MultiGather, MultiScatter]");
     malloc_argtable[11] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
@@ -96,10 +96,10 @@ void initialize_argtable()
     malloc_argtable[23] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
     malloc_argtable[24] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
     malloc_argtable[25] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
-    malloc_argtable[26] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[26] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, SYCL or Serial.");
     malloc_argtable[27] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
     malloc_argtable[28] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[29] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
+    malloc_argtable[29] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");
     // Other Configurations
     malloc_argtable[30] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
     malloc_argtable[31] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
@@ -638,7 +638,7 @@ struct run_config *parse_runs(int argc, char **argv)
         error ("Please specify an inner scatter pattern (scatter pattern -h) and an outer scatter pattern (pattern -p", ERROR);
 
     if ((rc->kernel == MULTIGATHER && !pattern_gather_found) || (rc->kernel == MULTIGATHER && !pattern_found))
-        error ("Please specify an inner gather pattern (gather pattern -g) and an outer gather pattern (pattern -p", ERROR); 
+        error ("Please specify an inner gather pattern (gather pattern -g) and an outer gather pattern (pattern -p", ERROR);
 
     if ((rc->kernel == GS && !pattern_scatter_found) || (rc->kernel == GS && !pattern_gather_found))
         error ("Please specify a gather pattern and a scatter pattern for an GS kernel", ERROR);
@@ -746,7 +746,7 @@ struct run_config *parse_runs(int argc, char **argv)
         error ("Compiled without OpenMP support but requsted more than 1 thread, using 1 instead", WARN);
 #endif
 
-#if defined USE_CUDA || defined USE_OPENCL
+#if defined USE_CUDA || defined USE_OPENCL || defined USE_SYCL
     if (rc->local_work_size == 0)
     {
         error ("Local_work_size not set. Default is 1024", WARN);
@@ -858,6 +858,8 @@ void parse_backend(int argc, char **argv)
             backend = OPENMP;
         else if(!strcasecmp("CUDA", backend_arg->sval[0]))
             backend = CUDA;
+        else if(!strcasecmp("SYCL", backend_arg->sval[0]))
+            backend = SYCL;
         else if(!strcasecmp("SERIAL", backend_arg->sval[0]))
             backend = SERIAL;
         else
@@ -914,6 +916,11 @@ void parse_backend(int argc, char **argv)
             backend = CUDA;
             error ("No backend specified, guessing CUDA", WARN);
         }
+        else if (sg_sycl_support())
+        {
+            backend = SYCL;
+            error ("No backend specified, guessing SYCL", WARN);
+        }
         else if (sg_opencl_support())
         {
             backend = OPENCL;
@@ -948,6 +955,11 @@ void parse_backend(int argc, char **argv)
     {
         if (!sg_cuda_support())
             error("You did not compile with support for CUDA", ERROR);
+    }
+    else if (backend == SYCL)
+    {
+        if (!sg_sycl_support())
+            error("You did not compile with support for SYCL", ERROR);
     }
     else if (backend == SERIAL)
     {
@@ -1057,7 +1069,7 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
                 error("XKP: Dimension not parsed", 1);
 
             *pattern_len = 73;
-            
+
             *pattern = sp_malloc(sizeof(spIdx_t), *pattern_len, ALIGN_CACHE);
 
             // The default delta is 1
