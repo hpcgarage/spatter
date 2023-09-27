@@ -104,7 +104,7 @@ add_definitions (-DSG_DATA_TYPE=double)
         endif()
 
         message("No SYCL architecture specified, default set to PVC")
-	set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
+	#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
     endif ()
 
     #OPENMP
@@ -162,7 +162,7 @@ add_definitions (-DSG_DATA_TYPE=double)
                     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=skylake-avx512")
 
                 #sapphirerapids
-                if("${INTEL_PLATFORM}" STREQUAL "sapphirerapids")
+                elseif("${INTEL_PLATFORM}" STREQUAL "sapphirerapids")
                     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -march=sapphirerapids")
 
                 #cross-platform with AVX
@@ -378,13 +378,15 @@ if ("${BACKEND}" STREQUAL "sycl")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fsycl -qmkl -sycl-std=2020 -fsycl-device-code-split=per_kernel ")
 
+    set_source_files_properties( "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c" PROPERTIES LANGUAGE CXX )
+
     # Pull the SYCL-specific files and kernels into the build
     file (GLOB BACKEND_CPP_FILES_SYCL src/sycl/*.cpp)
-    file (GLOB BACKEND_HPP_FILES_SYCL src/sycl/*.h)
+    file (GLOB BACKEND_HPP_FILES_SYCL src/sycl/*.hpp)
 
     #SYCL Toolkit (Runtime)
-    add_library(sycl_comp SHARED src/sycl/my_kernel.cpp src/sycl/sycl-backend.cpp src/sycl/sycl-backend.h src/sycl/sycl_kernels.h)
-    set_target_properties(sycl_comp)
+    add_library(sycl_comp SHARED src/sycl/sycl-backend.cpp src/sycl/sycl-backend.hpp src/sycl/sycl_kernels.hpp src/sycl/my_kernel.cpp)
+    set_target_properties(sycl_comp PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
     target_include_directories(sycl_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/sycl")
 
     message ("Using SYCL backend")
@@ -455,7 +457,7 @@ if ("${BACKEND}" STREQUAL "opencl")
 endif ()
 
 if ("${BACKEND}" STREQUAL "sycl")
-    target_link_libraries (${TRGT} LINK_PUBLIC CXX)
+    target_link_libraries (${TRGT} PUBLIC sycl_comp)
 endif ()
 
 # Link math library for json

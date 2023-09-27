@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sycl_kernels.h"
+#include "sycl_kernels.hpp"
 #include "../include/parse-args.h"
 
 #include <oneapi/mkl/rng/device.hpp>
@@ -7,18 +7,16 @@
 #define typedef uint unsigned long
 
 //__device__ int dummy = 0;
-dpct::global_memory<int, 0> final_block_idx_dev(-1);
-dpct::global_memory<int, 0> final_thread_idx_dev(-1);
-dpct::global_memory<double, 0> final_gather_data_dev(-1);
+sycl::ext::oneapi::experimental::device_global<int> final_block_idx_dev;
+sycl::ext::oneapi::experimental::device_global<int> final_thread_idx_dev;
+sycl::ext::oneapi::experimental::device_global<int> final_gather_data_dev;
 
 template <int v>
-__attribute__((always_inline)) void scatter_t(double *target, double *source, long *ti, long *si,
-               const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void scatter_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
 {
     auto space = (char *)dpct_local;
 
-    int gid = v * (item.get_group(2) * item.get_local_range(2) +
-                   item.get_local_id(2));
+    int gid = v * item.get_global_id(2);
 
     double buf[v];
     long idx[v];
@@ -37,14 +35,11 @@ __attribute__((always_inline)) void scatter_t(double *target, double *source, lo
 }
 
 template <int v>
-__attribute__((always_inline))
-void gather_t(double *target, double *source, long *ti, long *si,
-              const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void gather_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
 {
     auto space = (char *)dpct_local;
 
-    int gid = v * (item.get_group(2) * item.get_local_range(2) +
-                   item.get_local_id(2));
+    int gid = v * item.get_global_id(2);
     double buf[v];
 
     for(int i = 0; i < v; i++){
@@ -60,14 +55,11 @@ void gather_t(double *target, double *source, long *ti, long *si,
 //__global__ void gather_new(double *target,
 
 template <int v>
-__attribute__((always_inline))
-void sg_t(double *target, double *source, long *ti, long *si,
-          const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void sg_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
 {
     auto space = (char *)dpct_local;
 
-    int gid = v * (item.get_group(2) * item.get_local_range(2) +
-                   item.get_local_id(2));
+    int gid = v * item.get_global_id(2);
     long sidx[v];
     long tidx[v];
 
@@ -84,8 +76,8 @@ void sg_t(double *target, double *source, long *ti, long *si,
 }
 #define INSTANTIATE(V)\
 template __attribute__((always_inline)) void scatter_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);\
-template __attribute__((always_inline)) void gather_t<V>(double* target, double* source, long* ti, long*s si, const sycl::nd_item<3> &item, uint8_t *dpct_local); \
-template __attribute__((always_inline)) void sg_t<V>(double* target, double* source, long* ti, long*s si, const sycl::nd_item<3> &item, uint8_t *dpct_local);
+template __attribute__((always_inline)) void gather_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);\
+template __attribute__((always_inline)) void sg_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);
 INSTANTIATE(1);
 INSTANTIATE(2);
 INSTANTIATE(4);
@@ -120,7 +112,7 @@ int translate_args(unsigned int dim, unsigned int *grid,
     return 0;
 }
 
-float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
+extern "C" float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
 		      uint dim, uint *grid, uint *block,
 		      double *target, double *source, long *ti,
 		      long *si, unsigned int shmem, sycl::queue* q) {
@@ -166,7 +158,7 @@ float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
             exit(1);
-        }	    
+        }
     }
     else if(kernel == GATHER)
     {
@@ -238,7 +230,7 @@ float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
             exit(1);
-        }	
+        }
     }
     else
     {
@@ -258,9 +250,12 @@ float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
 //assume block size >= index buffer size
 //assume index buffer size divides block size
 template<int V>
-void scatter_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate,
-                   const sycl::nd_item<3> &item, int *idx_shared)
+__attribute__((always_inline))
+void scatter_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate, const sycl::nd_item<3> &item)
 {
+    sycl::group work_grp = item.get_group();
+    using tile_t = int[V];
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -296,7 +291,7 @@ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delt
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -306,7 +301,7 @@ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delt
     unsigned long long sequence = item.get_group(2); // all thread blocks can use same sequence
     unsigned long long offset = gatherid;
 
-    oneapi::mkl::rng::device::philox4x32x10<> engine(seed, item.get_id(0));
+    oneapi::mkl::rng::device::philox4x32x10<> engine(seed, item.get_local_id(2));
     oneapi::mkl::rng::device::uniform<> distr;
     int random_gatherid = oneapi::mkl::rng::device::generate(distr, engine);
 
@@ -333,7 +328,7 @@ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int w
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -379,7 +374,7 @@ void gather_block_morton(double *src, ssize_t* idx, size_t idx_len, size_t delta
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -462,7 +457,7 @@ void gather_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delta
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -472,7 +467,7 @@ void gather_block_random(double *src, ssize_t* idx, size_t idx_len, size_t delta
     unsigned long long sequence = item.get_group(2); // all thread blocks can use same sequence
     unsigned long long offset = gatherid;
 
-    oneapi::mkl::rng::device::philox4x32x10<> engine(seed, item.get_id(0));
+    oneapi::mkl::rng::device::philox4x32x10<> engine(seed, item.get_local_id(2));
     oneapi::mkl::rng::device::uniform<> distr;
     int random_gatherid = oneapi::mkl::rng::device::generate(distr, engine);
 
@@ -500,7 +495,7 @@ void gather_new(double *source, sgIdx_t *idx, size_t delta, int dummy, int wpt, 
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_shared = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     //int bid  = item.get_group(2);
@@ -571,7 +566,7 @@ INSTANTIATE2(1024);
 INSTANTIATE2(2048);
 INSTANTIATE2(4096);
 
-float sycl_block_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
         ssize_t* pat_dev,
@@ -711,13 +706,13 @@ float sycl_block_wrapper(uint dim, uint* grid, uint* block,
             exit(1);
         }
 
-    }	
+    }
 
     q->wait();
     auto stop = std::chrono::steady_clock::now();
 
-    q->memcpy(final_block_idx, final_block_idx_dev.get_ptr(), sizeof(int)).wait();
-    q->memcpy(final_thread_idx, final_thread_idx_dev.get_ptr(), sizeof(int)).wait();
+    q->memcpy(final_block_idx, final_block_idx_dev, sizeof(int)).wait();
+    q->memcpy(final_thread_idx, final_thread_idx_dev, sizeof(int)).wait();
 
     float time_ms = 0;
     time_ms = std::chrono::duration<float, std::milli>(stop - start).count();
@@ -726,7 +721,7 @@ float sycl_block_wrapper(uint dim, uint* grid, uint* block,
 
 }
 
-float sycl_block_random_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_block_random_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
         ssize_t* pat_dev,
@@ -768,7 +763,7 @@ float sycl_block_random_wrapper(uint dim, uint* grid, uint* block,
             q->parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_block_random<4096>(source, pat_dev, pat_len, delta, wpt, seed, n, item); });
         }else {
             printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
-        }	
+        }
     } else if (kernel == SCATTER) {
         if (pat_len == 8) {
             q->parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_block_random<8>(source, pat_dev, pat_len, delta, wpt, seed, n, item); });
@@ -805,7 +800,7 @@ float sycl_block_random_wrapper(uint dim, uint* grid, uint* block,
 
 }
 
-float sycl_new_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_new_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -821,7 +816,7 @@ float sycl_new_wrapper(uint dim, uint* grid, uint* block,
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
     q->memcpy(pat_dev, pat, sizeof(sgIdx_t) * pat_len).wait();
 
-    q.wait();
+    q->wait();
     auto start = std::chrono::steady_clock::now();
 
     // KERNEL
@@ -956,8 +951,8 @@ void sg_block(double *source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_sc
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx_gath = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
-    tile& idx_scat = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_gath = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_scat = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -994,7 +989,7 @@ void sg_block(double *source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_sc
 }
 
 #define INSTANTIATE3(V)\
-template __attribute__((always_inline)) void sg_block<V>(double* source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_scat, spSize_t pat_len, size_t delta_gather, size_t delta_scatter, int wpt, char validate, const sycl::nd_item<3> &item, int *idx_gath, int *idx_scat);
+template __attribute__((always_inline)) void sg_block<V>(double* source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_scat, spSize_t pat_len, size_t delta_gather, size_t delta_scatter, int wpt, char validate, const sycl::nd_item<3> &item);
 
 //INSTANTIATE3(1);
 //INSTANTIATE3(2);
@@ -1012,7 +1007,7 @@ INSTANTIATE3(1024);
 INSTANTIATE3(2048);
 INSTANTIATE3(4096);
 
-float sycl_block_sg_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_block_sg_wrapper(uint dim, uint* grid, uint* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -1068,8 +1063,8 @@ float sycl_block_sg_wrapper(uint dim, uint* grid, uint* block,
     q->wait();
     auto stop = std::chrono::steady_clock::now();
 
-    q->memcpy(final_block_idx, final_block_idx_dev.get_ptr(), sizeof(int)).wait();
-    q->memcpy(final_thread_idx, final_thread_idx_dev.get_ptr(), sizeof(int)).wait();
+    q->memcpy(final_block_idx, final_block_idx_dev, sizeof(int)).wait();
+    q->memcpy(final_thread_idx, final_thread_idx_dev, sizeof(int)).wait();
 
     float time_ms = 0;
     time_ms = std::chrono::duration<float, std::milli>(stop - start).count();
@@ -1083,8 +1078,8 @@ void multiscatter_block(double *source, double* target, sgIdx_t* outer_pat, sgId
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
-    tile& idx_scat = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_scat = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -1118,7 +1113,7 @@ void multiscatter_block(double *source, double* target, sgIdx_t* outer_pat, sgId
 }
 
 #define INSTANTIATE4(V)\
-template __attribute__((always_inline)) void multiscatter_block<V>(double* source, double* target, sgIdx_t* outer_pat, sgIdx_t* inner_pat, spSize_t pat_len, size_t delta, int wpt, char validate, const sycl::nd_item<3> &item, int *idx, int *idx_scat);
+template __attribute__((always_inline)) void multiscatter_block<V>(double* source, double* target, sgIdx_t* outer_pat, sgIdx_t* inner_pat, spSize_t pat_len, size_t delta, int wpt, char validate, const sycl::nd_item<3> &item);
 
 //INSTANTIATE4(1);
 //INSTANTIATE4(2);
@@ -1136,7 +1131,7 @@ INSTANTIATE4(1024);
 INSTANTIATE4(2048);
 INSTANTIATE4(4096);
 
-float sycl_block_multiscatter_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_block_multiscatter_wrapper(uint dim, uint* grid, uint* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -1191,8 +1186,8 @@ float sycl_block_multiscatter_wrapper(uint dim, uint* grid, uint* block,
     q->wait();
     auto stop = std::chrono::steady_clock::now();
 
-    q->memcpy(final_block_idx, final_block_idx_dev.get_ptr(), sizeof(int)).wait();
-    q->memcpy(final_thread_idx, final_thread_idx_dev.get_ptr(), sizeof(int)).wait();
+    q->memcpy(final_block_idx, final_block_idx_dev, sizeof(int)).wait();
+    q->memcpy(final_thread_idx, final_thread_idx_dev, sizeof(int)).wait();
 
     float time_ms = 0;
     time_ms = std::chrono::duration<float, std::milli>(stop - start).count();
@@ -1205,8 +1200,8 @@ void multigather_block(double *source, double* target, sgIdx_t* outer_pat, sgIdx
 {
     sycl::group work_grp = item.get_group();
     using tile_t = int[V];
-    tile& idx = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
-    tile& idx_gath = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
+    tile_t& idx_gath = *sycl::ext::oneapi::group_local_memory_for_overwrite<tile_t>(work_grp);
 
     int tid = item.get_local_id(2);
     int bid = item.get_group(2);
@@ -1258,7 +1253,7 @@ INSTANTIATE5(1024);
 INSTANTIATE5(2048);
 INSTANTIATE5(4096);
 
-float sycl_block_multigather_wrapper(uint dim, uint* grid, uint* block,
+extern "C" float sycl_block_multigather_wrapper(uint dim, uint* grid, uint* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -1324,8 +1319,8 @@ float sycl_block_multigather_wrapper(uint dim, uint* grid, uint* block,
     q->wait();
     auto stop = std::chrono::steady_clock::now();
 
-    q->memcpy(final_block_idx, final_block_idx_dev.get_ptr(), sizeof(int)).wait();
-    q->memcpy(final_thread_idx, final_thread_idx_dev.get_ptr(), sizeof(int)).wait();
+    q->memcpy(final_block_idx, final_block_idx_dev, sizeof(int)).wait();
+    q->memcpy(final_thread_idx, final_thread_idx_dev, sizeof(int)).wait();
 
     float time_ms = 0;
     time_ms = std::chrono::duration<float, std::milli>(stop - start).count();

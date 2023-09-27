@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <math.h>
 //#include "ocl-kernel-gen.h"
+extern "C" {
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
@@ -14,6 +15,7 @@
 #include "morton.h"
 #include "hilbert3d.h"
 #include "unused.h"
+}
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
@@ -29,10 +31,12 @@
 #endif
 #if defined ( USE_SYCL )
     #include <sycl/sycl.hpp>
-    #include "sycl/sycl-backend.h"
+    extern "C" {
+    #include "sycl/sycl-backend.hpp"
+    }
 #endif
 #if defined( USE_SERIAL )
-	#include "serial/serial-kernels.h"
+    #include "serial/serial-kernels.h"
 #endif
 
 #if defined( USE_PAPI )
@@ -599,18 +603,18 @@ int main(int argc, char **argv)
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_sycl(&source, que);
         create_dev_buffers_sycl(&target, que);
-	pat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
-	pat_gath_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
-	pat_scat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *q);
-	order_dev = sycl::malloc_device<uint32_t>(max_ro_len, *q);
+        pat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *que);
+        pat_gath_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *que);
+        pat_scat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *que);
+        order_dev = sycl::malloc_device<uint32_t>(max_ro_len, *que);
         que->memcpy(source.dev_ptr_cuda, source.host_ptr, source.size);
         que->memcpy(target.dev_ptr_cuda, target.host_ptr, target.size);
-	que->wait();
+        que->wait();
     }
     int final_block_idx = -1;
     int final_thread_idx = -1;
     double final_gather_data = -1;
-    #endif
+    #endif // USE_SYCL
 
 
     // =======================================
@@ -960,7 +964,7 @@ int main(int argc, char **argv)
     cudaMemcpy(source.host_ptr, source.dev_ptr_cuda, source.size, cudaMemcpyDeviceToHost);
 #endif
 #ifdef USE_SYCL
-    que->memcpy(source.host_ptr, source.dev_ptr_sycl, source.size).wait();
+    que->memcpy(source.host_ptr, source.dev_ptr_cuda, source.size).wait();
 #endif
 
     int good = 0;

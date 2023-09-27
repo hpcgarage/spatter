@@ -25,7 +25,7 @@ set( TESTAPPS #list apps
         binary-trace
     )
 
-IF("${BACKEND}" STREQUAL "cuda")
+IF("${BACKEND}" STREQUAL "cuda" OR "${BACKEND}" STREQUAL "sycl")
     set(TESTAPPS  ${TESTAPPS} standard_suite_gpu)
 ELSE()
     set(TESTAPPS  ${TESTAPPS} standard_suite_cpu standard_laplacian_suite)
@@ -38,6 +38,8 @@ file(GLOB src
     "${PROJECT_SOURCE_DIR}/src/cuda/*.c"
     "${PROJECT_SOURCE_DIR}/src/cuda/*.cu"
     "${PROJECT_SOURCE_DIR}/src/cuda/*.h"
+    "${PROJECT_SOURCE_DIR}/src/sycl/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/sycl/*.hpp"
     )
 set( src_files ${src} )
 

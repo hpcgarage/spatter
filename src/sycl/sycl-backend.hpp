@@ -1,19 +1,21 @@
-#ifndef SYCL_BACKEND_H
-#define SYCL_BACKEND_H
+#ifndef SYCL_BACKEND_HPP
+#define SYCL_BACKEND_HPP
 #include <sycl/sycl.hpp>
 #include <stdint.h>
+extern "C" {
 #include "../include/parse-args.h"
 #include "sgbuf.h"
+}
 
-void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
+extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
-float sycl_sg_wrapper(enum sg_kernel kernel,
+extern float sycl_sg_wrapper(enum sg_kernel kernel,
 		      size_t vector_len,
 		      long unsigned dim, long unsigned* grid, long unsigned* block,
 		      double* target, double *source,
 		      long* ti, long* si, unsigned int shmem, sycl::queue* q);
 
-float sycl_block_multiscatter_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_block_multiscatter_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -24,7 +26,7 @@ float sycl_block_multiscatter_wrapper(long unsigned dim, long unsigned* grid, lo
         int *final_thread_idx,
         double *final_gather_data,
         char validate, sycl::queue* q);
-float sycl_block_multigather_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_block_multigather_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -35,7 +37,7 @@ float sycl_block_multigather_wrapper(long unsigned dim, long unsigned* grid, lon
         int *final_thread_idx,
         double *final_gather_data,
         char validate, sycl::queue* q);
-float sycl_block_sg_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_block_sg_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         double *source,
         double *target,
         struct run_config* rc,
@@ -46,7 +48,7 @@ float sycl_block_sg_wrapper(long unsigned dim, long unsigned* grid, long unsigne
         int *final_thread_idx,
         double *final_gather_data,
         char validate, sycl::queue* q);
-float sycl_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -59,7 +61,7 @@ float sycl_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* 
         int *final_thread_idx,
         double *final_gather_data,
         char validate, sycl::queue* q);
-float sycl_block_random_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_block_random_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -68,7 +70,7 @@ float sycl_block_random_wrapper(long unsigned dim, long unsigned* grid, long uns
         size_t delta,
         size_t n,
         size_t wrap, int wpt, size_t seed, sycl::queue* q);
-float sycl_new_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
+extern float sycl_new_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
         sgIdx_t* pat_dev,
@@ -78,6 +80,6 @@ float sycl_new_wrapper(long unsigned dim, long unsigned* grid, long unsigned* bl
         size_t n,
         size_t wrap, int wpt, sycl::queue* q);
 
-void create_dev_buffers_sycl(sgDataBuf *source);
+extern void create_dev_buffers_sycl(sgDataBuf *source, sycl::queue* que);
 
 #endif
