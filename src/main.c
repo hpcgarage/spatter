@@ -595,10 +595,10 @@ int main(int argc, char **argv)
     #endif
 
     #ifdef USE_SYCL
-    sgIdx_t *pat_dev;
-    sgIdx_t *pat_gath_dev;
-    sgIdx_t *pat_scat_dev;
-    uint32_t *order_dev;
+    sgIdx_t *pat_dev{nullptr};
+    sgIdx_t *pat_gath_dev{nullptr};
+    sgIdx_t *pat_scat_dev{nullptr};
+    uint32_t *order_dev{nullptr};
     if (backend == SYCL) {
         //TODO: Rewrite to not take index buffers
         create_dev_buffers_sycl(&source, que);

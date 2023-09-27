@@ -80,6 +80,13 @@ extern float sycl_new_wrapper(long unsigned dim, long unsigned* grid, long unsig
         size_t n,
         size_t wrap, int wpt, sycl::queue* q);
 
-extern void create_dev_buffers_sycl(sgDataBuf *source, sycl::queue* que);
+void create_dev_buffers_sycl(sgDataBuf *source, sycl::queue* que)
+{
+    (void*)source->dev_ptr_cuda = (void*)sycl::malloc_device(source->size, *que);
+    if (source->dev_ptr_cuda == nullptr) {
+        printf("Could not allocate gpu memory (%zu bytes)\n", source->size);
+        exit(1);
+    }
+}
 
 #endif

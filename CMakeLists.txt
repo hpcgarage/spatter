@@ -104,7 +104,7 @@ add_definitions (-DSG_DATA_TYPE=double)
         endif()
 
         message("No SYCL architecture specified, default set to PVC")
-	#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
+	set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
     endif ()
 
     #OPENMP
@@ -385,7 +385,7 @@ if ("${BACKEND}" STREQUAL "sycl")
     file (GLOB BACKEND_HPP_FILES_SYCL src/sycl/*.hpp)
 
     #SYCL Toolkit (Runtime)
-    add_library(sycl_comp SHARED src/sycl/sycl-backend.cpp src/sycl/sycl-backend.hpp src/sycl/sycl_kernels.hpp src/sycl/my_kernel.cpp)
+    add_library(sycl_comp SHARED src/sycl/my_kernel.cpp src/sycl/sycl-backend.hpp src/sycl/sycl_kernels.hpp)
     set_target_properties(sycl_comp PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
     target_include_directories(sycl_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/sycl")
 
