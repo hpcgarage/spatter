@@ -45,7 +45,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-const char* SPATTER_VERSION="0.4";
+const char* SPATTER_VERSION="1.0";
 
 //SGBench specific enums
 extern enum sg_backend backend;
