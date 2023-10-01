@@ -6,7 +6,12 @@
 #include <assert.h>
 #include <math.h>
 //#include "ocl-kernel-gen.h"
+#if defined ( USE_SYCL )
+#ifdef __cplusplus
 extern "C" {
+#endif
+#endif // USE_SYCL
+
 #include "parse-args.h"
 #include "sgtype.h"
 #include "sgbuf.h"
@@ -15,7 +20,12 @@ extern "C" {
 #include "morton.h"
 #include "hilbert3d.h"
 #include "unused.h"
+
+#if defined ( USE_SYCL )
+#ifdef __cplusplus
 }
+#endif
+#endif // USE_SYCL
 
 #if defined( USE_OPENCL )
 	#include "../opencl/ocl-backend.h"
