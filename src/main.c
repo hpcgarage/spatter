@@ -63,7 +63,7 @@ extern "C" {
 #define xstr(s) str(s)
 #define str(s) #s
 
-const char* SPATTER_VERSION="0.4";
+const char* SPATTER_VERSION="1.0";
 
 //SGBench specific enums
 extern enum sg_backend backend;
@@ -132,7 +132,7 @@ void print_system_info(){
 
 void print_header(){
     //printf("kernel op time source_size target_size idx_len bytes_moved actual_bandwidth omp_threads vector_len block_dim shmem\n");
-    printf("%-7s %-12s %-12s", "config", "time(s)","bw(MB/s)");
+    printf("%-7s %-12s %-12s %-12s", "config", "bytes", "time(s)","bw(MB/s)");
 
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {
@@ -167,7 +167,7 @@ double report_time(int ii, double time,  struct run_config rc, int idx){
         bytes_moved = sizeof(sgData_t) * rc.pattern_len * rc.generic_len;
         actual_bandwidth = bytes_moved / time / 1000. / 1000.;
     }
-    printf("%-7d %-12.4g %-12f", ii, time, actual_bandwidth);
+    printf("%-7d %-12zu %-12.4g %-12f", ii, bytes_moved, time, actual_bandwidth);
 #ifdef USE_PAPI
     for (int i = 0; i < papi_nevents; i++) {
         printf(" %-12lld", rc.papi_ctr[idx][i]);
