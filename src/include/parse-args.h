@@ -10,7 +10,7 @@
 #define ERROR 1
 
 
-#define STRING_SIZE 64000000
+#define STRING_SIZE 256
 #define MAX_PATTERN_LEN 16777216
 
 #include <sgtype.h>
@@ -97,7 +97,7 @@ struct run_config
     size_t wrap;
     size_t nruns;
     char pattern_file[STRING_SIZE];
-    char generator[STRING_SIZE];
+    char *generator;
     char name[STRING_SIZE];
     size_t random_seed;
     size_t omp_threads;
