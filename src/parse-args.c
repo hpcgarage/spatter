@@ -14,7 +14,8 @@
 #include "argtable3.h"
 
 #ifdef USE_CUDA
-#include "../src/cuda/cuda-backend.cu"
+#include "../src/cuda/cuda-backend.h"
+#include <cuda_runtime_api.h>
 #endif
 
 #ifdef USE_OPENMP

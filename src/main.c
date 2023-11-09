@@ -25,6 +25,7 @@
 #endif
 #if defined ( USE_CUDA )
     #include <cuda.h>
+    #include <cuda_runtime.h>
     #include "cuda/cuda-backend.h"
 #endif
 #if defined( USE_SERIAL )
@@ -261,7 +262,7 @@ uint64_t isqrt(uint64_t x);
 uint64_t icbrt(uint64_t x);
 
 spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary);
- 
+
 
 int main(int argc, char **argv)
 {
@@ -303,11 +304,11 @@ int main(int argc, char **argv)
     if (compress_flag) {
         for (int i = 0; i < nrc; i++) {
             compress_indices(rc[i].pattern, rc[i].pattern_len);
-            
+
             if (rc[i].kernel == GS || rc[i].kernel == MULTISCATTER) {
                 compress_indices(rc[i].pattern_scatter, rc[i].pattern_scatter_len);
             }
-       
+
             if (rc[i].kernel == GS || rc[i].kernel == MULTIGATHER) {
                 compress_indices(rc[i].pattern_gather, rc[i].pattern_gather_len);
             }
@@ -410,12 +411,12 @@ int main(int argc, char **argv)
             spIdx_t max_pattern_val_gather = remap_pattern(nrc, rc2[i].pattern_gather, rc2[i].pattern_gather_len, rc2[i].boundary);
             spIdx_t max_pattern_val_scatter = remap_pattern(nrc, rc2[i].pattern_scatter, rc2[i].pattern_scatter_len, rc2[i].boundary);
             max_pattern_val = max_pattern_val_gather >= max_pattern_val_scatter ? max_pattern_val_gather : max_pattern_val_scatter;
-        
+
             pattern_delta = rc2[i].delta_gather >= rc2[i].delta_scatter ? rc2[i].delta_gather : rc2[i].delta_scatter;
         }
         else {
             max_pattern_val = remap_pattern(nrc, rc2[i].pattern, rc2[i].pattern_len, rc2[i].boundary);
-            
+
             pattern_delta = rc2[i].delta;
         }
         //printf("count: %zu, delta: %zu, %zu\n", rc2[i].generic_len, rc2[i].delta, rc2[i].generic_len*rc2[i].delta);
@@ -435,7 +436,7 @@ int main(int argc, char **argv)
         else {
             cur_target_size = rc2[i].pattern_len * sizeof(sgData_t) * rc2[i].wrap;
         }
-        
+
         if (cur_target_size > max_target_size) {
             max_target_size = cur_target_size;
         }
@@ -594,7 +595,6 @@ int main(int argc, char **argv)
         print_header();
     }
     */
-    //PATRICK
     if (quiet_flag < 1) {
         print_system_info();
     }
@@ -610,24 +610,18 @@ int main(int argc, char **argv)
     // Print config info
 
     for (int k = 0; k < nrc; k++) {
+
 #ifdef USE_MPI
-	MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-        // Time OpenCL Kernel
-        #ifdef USE_OPENCL
-        if (backend == OPENCL) {
-
-        }
-        #endif // USE_OPENCL
-
         // Time CUDA Kernel
-        #ifdef USE_CUDA
+#ifdef USE_CUDA
+#define arr_len 1
         int wpt = 1;
         if (backend == CUDA) {
             float time_ms = 2;
             for (int i = -10; i < (int) rc2[k].nruns; i++) {
-#define arr_len (1)
                 if (rc2[k].kernel == MULTISCATTER) {
                   if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
                       error("Pattern length cannot exceed local_work_size", ERROR);
@@ -642,10 +636,10 @@ int main(int argc, char **argv)
                   */
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
-                  unsigned long grid[arr_len] = {global_work_size/local_work_size};
-                  unsigned long block[arr_len] = {local_work_size};                  
+                  unsigned long grid_size = global_work_size / local_work_size;
+                  unsigned long block_size = local_work_size;
 
-                  time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  time_ms = cuda_block_multiscatter_wrapper(grid_size, block_size, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == MULTIGATHER) {
                   if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
@@ -657,7 +651,7 @@ int main(int argc, char **argv)
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
-                  unsigned long block[arr_len] = {local_work_size};                  
+                  unsigned long block[arr_len] = {local_work_size};
 
                   time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
@@ -694,16 +688,17 @@ int main(int argc, char **argv)
                     }
                 }
 
+                // i may start at a value less than 0 to allow for a cache warm
                 if (i>=0) rc2[k].time_ms[i] = time_ms;
             }
 
 
         }
 
-        #endif // USE_CUDA
+#endif // USE_CUDA
 
         // Time OpenMP Kernel
-        #ifdef USE_OPENMP
+#ifdef USE_OPENMP
         if (backend == OPENMP) {
             omp_set_num_threads(rc2[k].omp_threads);
 
@@ -790,10 +785,10 @@ int main(int argc, char **argv)
 
             //report_time2(rc2, nrc);
         }
-        #endif // USE_OPENMP
+#endif // USE_OPENMP
 
         // Time Serial Kernel
-        #ifdef USE_SERIAL
+#ifdef USE_SERIAL
         if (backend == SERIAL) {
 
             for (int i = -1; i < (int) rc2[k].nruns; i++) {
@@ -833,7 +828,7 @@ int main(int argc, char **argv)
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
             }
         }
-        #endif // USE_SERIAL
+#endif // USE_SERIAL
     }
 
 #ifdef USE_MPI
@@ -860,11 +855,11 @@ int main(int argc, char **argv)
     // =======================================
     // Validation
     // =======================================
-    #ifdef VALIDATE
+#ifdef VALIDATE
     if(validate_flag) {
         // Validate that the last item written to buffer is actually there
         // Supported kernels for this last write validation are:
-        // 
+        //
         // OPENMP:
         // scatter_smallbuf
         // gather_smallbuf
@@ -893,7 +888,7 @@ int main(int argc, char **argv)
                         sgData_t *target_data_ptr = target.host_ptrs[t] + rc_final->pattern_len * ((rc_final->generic_len - 1) % rc_final->wrap);
                         //check that all data in the pattern is written
                         char matches_pattern = 1;
-                        for (int d = 0; d < rc_final->pattern_len; d++) { 
+                        for (int d = 0; d < rc_final->pattern_len; d++) {
                             if (source_data_ptr[rc_final->pattern[d]] != target_data_ptr[d]) {
                                 matches_pattern = 0;
                                 break;
@@ -933,7 +928,7 @@ int main(int argc, char **argv)
                 }
         #endif
     }
-    #endif
+#endif
 
     // Free Memory
     free(source.host_ptr);
@@ -962,8 +957,8 @@ int main(int argc, char **argv)
 
   free(rc);
   //printf("Mem used: %lld MiB\n", get_mem_used()/1024/1024);
- 
-#ifdef USE_MPI 
+
+#ifdef USE_MPI
   MPI_Finalize();
 #endif
 } //end main
@@ -1174,15 +1169,15 @@ uint64_t icbrt(uint64_t x) {
     return y;
 }
 
-// Remap large pattern with heap accesses to fit within Spatter 
+// Remap large pattern with heap accesses to fit within Spatter
 spIdx_t remap_pattern(const int nrc, ssize_t *pattern, const spSize_t pattern_len, ssize_t boundary) {
     if (boundary == -1)
-        boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;  
-  
+        boundary = (((SP_MAX_ALLOC - 1) / sizeof(sgData_t)) / nrc) / 2;
+
     for (size_t j = 0; j < pattern_len; ++j) {
         pattern[j] = pattern[j] % boundary;
     }
-    
+
     spIdx_t max_pattern_val = pattern[0];
     for (size_t j = 0; j < pattern_len; j++) {
         if (pattern[j] > max_pattern_val) {

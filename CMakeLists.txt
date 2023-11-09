@@ -345,7 +345,8 @@ if ("${BACKEND}" STREQUAL "cuda")
     file (GLOB CUDA_H_FILES src/cuda/*.h)
 
     #CUDA Toolkit (Runtime)
-    add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h src/cuda/cuda_kernels.h)
+    add_library(cuda_comp SHARED src/cuda/cuda-backend.cu)
+    #add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h)
     set_target_properties(cuda_comp
         PROPERTIES
                 CUDA_RUNTIME_LIBRARY Shared
