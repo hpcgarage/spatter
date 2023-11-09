@@ -78,17 +78,5 @@ extern float cuda_block_random_wrapper(long unsigned dim, long unsigned* grid, l
         size_t delta,
         size_t n,
         size_t wrap, int wpt, size_t seed);
-extern float cuda_new_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
-        enum sg_kernel kernel,
-        double *source,
-        sgIdx_t* pat_dev,
-        sgIdx_t* pat,
-        size_t pat_len,
-        size_t delta,
-        size_t n,
-        size_t wrap, int wpt);
 
-void create_dev_buffers_cuda(sgDataBuf *source);
-
-int find_device_cuda(char *name);
 #endif
