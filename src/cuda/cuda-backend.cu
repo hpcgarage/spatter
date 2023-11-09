@@ -12,7 +12,18 @@
 
 #include <curand_kernel.h>
 
+/////////////
+// GLOBALS //
+/////////////
+
 #define typedef uint unsigned long
+__device__ int final_block_idx_dev = -1;
+__device__ int final_thread_idx_dev = -1;
+__device__ double final_gather_data_dev = -1;
+
+/////////////
+// UTILITY //
+/////////////
 
 // See: https://stackoverflow.com/a/14038590
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -51,11 +62,28 @@ int find_device_cuda(char *name) {
     return -1;
 }
 
+extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
+    if (!grid || !block || dim == 0 || dim > 3) {
+        return 1;
+    }
+    if (dim == 1) {
+        *grid_dim  = dim3(grid[0]);
+        *block_dim = dim3(block[0]);
+    }else if (dim == 2) {
+        *grid_dim  = dim3(grid[0],  grid[1]);
+        *block_dim = dim3(block[0], block[1]);
+    }else if (dim == 3) {
+        *grid_dim  = dim3(grid[0],  grid[1],  grid[2]);
+        *block_dim = dim3(block[0], block[1], block[2]);
+    }
+    return 0;
 
-//__device__ int dummy = 0;
-__device__ int final_block_idx_dev = -1;
-__device__ int final_thread_idx_dev = -1;
-__device__ double final_gather_data_dev = -1;
+}
+
+
+/////////////
+// KERNELS //
+/////////////
 
 template<int v>
 __global__ void scatter_t(double* target,
@@ -128,23 +156,9 @@ __global__ void sg_t(double* target,
 
 }
 
-extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
-    if (!grid || !block || dim == 0 || dim > 3) {
-        return 1;
-    }
-    if (dim == 1) {
-        *grid_dim  = dim3(grid[0]);
-        *block_dim = dim3(block[0]);
-    }else if (dim == 2) {
-        *grid_dim  = dim3(grid[0],  grid[1]);
-        *block_dim = dim3(block[0], block[1]);
-    }else if (dim == 3) {
-        *grid_dim  = dim3(grid[0],  grid[1],  grid[2]);
-        *block_dim = dim3(block[0], block[1], block[2]);
-    }
-    return 0;
-
-}
+//////////////
+// WRAPPERS //
+//////////////
 
 extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
                                 size_t vector_len,
@@ -377,14 +391,14 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
     int gatherid = tid / V;
 
     double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
-    
+
     #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = src_loc[idx_shared[tid%V]];
         return;
     }
     #endif
-    
+
     double x;
 
     //for (int i = 0; i < wpb; i++) {
@@ -511,57 +525,6 @@ __global__ void gather_block_random(double *src, ssize_t* idx, size_t idx_len, s
 
 }
 
-//todo -- add WRAP
-template<int V>
-__global__ void gather_new(double* source,
-                        sgIdx_t* idx, size_t delta, int dummy, int wpt)
-{
-    __shared__ int idx_shared[V];
-
-    int tid  = threadIdx.x;
-    //int bid  = blockIdx.x;
-    //int nblk = blockDim.x;
-
-    if (tid < V) {
-        idx_shared[tid] = idx[tid];
-    }
-
-    int gid = (blockIdx.x * blockDim.x + threadIdx.x);
-    double *sl = source + wpt*gid*delta;
-
-    double buf[V];
-
-    for (int j = 0; j < wpt; j++) {
-        for (int i = 0; i < V; i++) {
-            buf[i] = sl[idx_shared[i]];
-            //source[i+gid*delta] = 8;
-            //sl[i] = sl[idx[i]];
-        }
-        sl = sl + delta;
-    }
-
-    if (dummy) {
-        sl[idx_shared[0]] = buf[dummy];
-    }
-
-    /*
-    for (int i = 0; i < V; i++) {
-        if (buf[i] == 199402) {
-            printf("oop\n");
-        }
-    }
-    */
-
-        //printf("idx[1]: %d\n", idx[1]);
-        /*
-        for (int i = 0; i < V; i++) {
-            printf("idx %d is %zu", i, idx[i]);
-        }
-        printf("\n");
-        */
-
-}
-
 extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
@@ -587,7 +550,9 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
 
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
     gpuErrchk( cudaMemcpy(pat_dev, pat, sizeof(sgIdx_t)*pat_len, cudaMemcpyHostToDevice) );
-    gpuErrchk( cudaMemcpy(order_dev, order, sizeof(uint32_t)*n, cudaMemcpyHostToDevice) );
+    if (morton) {
+        gpuErrchk( cudaMemcpy(order_dev, order, sizeof(uint32_t)*n, cudaMemcpyHostToDevice) );
+    }
 
     gpuErrchk( cudaEventCreate(&start) );
     gpuErrchk( cudaEventCreate(&stop) );
@@ -837,14 +802,14 @@ __global__ void sg_block(double *source, double* target, sgIdx_t* pat_gath, sgId
 
     double *source_loc = source + (bid*ngatherperblock+gatherid)*delta_gather;
     double *target_loc = target + (bid*nscatterperblock+scatterid)*delta_scatter;
-    
+
     #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = source_loc[idx_gath[tid%V]];
         return;
     }
     #endif
-    
+
     target_loc[idx_scat[tid%V]] = source_loc[idx_gath[tid%V]];
 }
 
@@ -877,7 +842,7 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
 
     gpuErrchk( cudaDeviceSynchronize() );
     gpuErrchk( cudaEventRecord(start) );
-   
+
     // KERNEL
     if (pat_len == 8) {
         sg_block<8><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
@@ -922,7 +887,7 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
 
     float time_ms = 0;
     gpuErrchk( cudaEventElapsedTime(&time_ms, start, stop) );
-    return time_ms; 
+    return time_ms;
 }
 
 
@@ -1055,14 +1020,14 @@ __global__ void multigather_block(double *source, double* target, sgIdx_t* outer
     int gatherid = tid / V;
 
     double *source_loc = source + (bid*ngatherperblock+gatherid)*delta;
-    
+
     #ifdef VALIDATE
     if (validate) {
         final_gather_data_dev = source_loc[idx[idx_gath[tid%V]]];
         return;
     }
     #endif
-    
+
     target[tid%V] = source_loc[idx[idx_gath[tid%V]]];
 }
 
@@ -1094,7 +1059,7 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
 
     gpuErrchk( cudaDeviceSynchronize() );
     gpuErrchk( cudaEventRecord(start) );
-   
+
     // KERNEL
     if (pat_len == 8) {
         multigather_block<8><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
@@ -1124,18 +1089,18 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
 
     gpuErrchk( cudaEventRecord(stop) );
     gpuErrchk( cudaEventSynchronize(stop) );
-    
+
     cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) 
-        printf("Error: %s\n", cudaGetErrorString(err));        
-     
+    if (err != cudaSuccess)
+        printf("Error: %s\n", cudaGetErrorString(err));
+
     gpuErrchk( cudaMemcpyFromSymbol(final_block_idx, final_block_idx_dev, sizeof(int), 0, cudaMemcpyDeviceToHost) );
     gpuErrchk( cudaMemcpyFromSymbol(final_thread_idx, final_thread_idx_dev, sizeof(int), 0, cudaMemcpyDeviceToHost) );
 
 
     float time_ms = 0;
     gpuErrchk( cudaEventElapsedTime(&time_ms, start, stop) );
-    return time_ms; 
+    return time_ms;
 }
 
 
@@ -1143,7 +1108,6 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
 template __global__ void scatter_t<V>(double* target, double* source, long* ti, long* si);\
 template __global__ void gather_t<V>(double* target, double* source, long* ti, long* si); \
 template __global__ void sg_t<V>(double* target, double* source, long* ti, long* si);\
-template __global__ void gather_new<V>(double* source, sgIdx_t* idx, size_t delta, int dummy, int wpt); \
 template __global__ void gather_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate);\
 template __global__ void gather_block_morton<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate);\
 template __global__ void gather_block_stride<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, int stride, char validate);\
