@@ -17,12 +17,6 @@ extern int find_device_cuda(char *name);
 
 extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
-extern float cuda_sg_wrapper(enum sg_kernel kernel,
-                       size_t vector_len,
-                       long unsigned dim, long unsigned* grid, long unsigned* block,
-                       double* target, double *source,
-                       long* ti, long* si, unsigned int shmem);
-
 extern float cuda_block_multiscatter_wrapper(long unsigned grid, long unsigned block,
         double *source,
         double *target,

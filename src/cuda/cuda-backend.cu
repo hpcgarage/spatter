@@ -85,218 +85,11 @@ extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int
 // KERNELS //
 /////////////
 
-template<int v>
-__global__ void scatter_t(double* target,
-                        double* source,
-                        long* ti,
-                        long* si)
-{
-    extern __shared__ char space[];
-
-    int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-
-    double buf[v];
-    long idx[v];
-
-    for(int i = 0; i < v; i++){
-        buf[i] = source[gid+i];
-    }
-
-    for(int i = 0; i < v; i++){
-       idx[i] = ti[gid+i];
-    }
-
-    for(int i = 0; i < v; i++){
-        target[idx[i]] = buf[i];
-    }
-}
-
-template<int v>
-__global__ void gather_t(double* target,
-                        double* source,
-                        long* ti,
-                        long* si)
-{
-    extern __shared__ char space[];
-
-    int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-    double buf[v];
-
-    for(int i = 0; i < v; i++){
-        buf[i] = source[si[gid+i]];
-    }
-
-    for(int i = 0; i < v; i++){
-        target[gid+i] = buf[i];
-    }
-
-}
-
-template<int v>
-__global__ void sg_t(double* target,
-                    double* source,
-                    long* ti,
-                    long* si)
-{
-    extern __shared__ char space[];
-
-    int gid = v*(blockIdx.x * blockDim.x + threadIdx.x);
-    long sidx[v];
-    long tidx[v];
-
-    for(int i = 0; i < v; i++){
-        sidx[i] = si[gid+i];
-    }
-    for(int i = 0; i < v; i++){
-        tidx[i] = ti[gid+i];
-    }
-    for(int i = 0; i < v; i++){
-        target[tidx[i]] = source[sidx[i]];
-    }
-
-}
 
 //////////////
 // WRAPPERS //
 //////////////
 
-extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
-                                size_t vector_len,
-                                uint dim, uint* grid, uint* block,
-                                double* target, double *source,
-                                long* ti, long* si,
-                                unsigned int shmem){
-    dim3 grid_dim, block_dim;
-    cudaEvent_t start, stop;
-
-    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
-
-    gpuErrchk( cudaEventCreate(&start) );
-    gpuErrchk( cudaEventCreate(&stop) );
-    gpuErrchk( cudaDeviceSynchronize() );
-    gpuErrchk( cudaEventRecord(start) );
-
-    if(kernel == SCATTER)
-    {
-        if (vector_len == 1)
-            scatter_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2)
-            scatter_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4)
-            scatter_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 5)
-            scatter_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 8)
-            scatter_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 16)
-            scatter_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 32)
-            scatter_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 64)
-            scatter_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 128)
-            scatter_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 256)
-            scatter_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 512)
-            scatter_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 1024)
-            scatter_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2048)
-            scatter_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4096)
-            scatter_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else
-        {
-            printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
-            exit(1);
-        }
-    }
-    else if(kernel == GATHER)
-    {
-        if (vector_len == 1)
-            gather_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2)
-            gather_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4)
-            gather_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 5)
-            gather_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 8)
-            gather_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 16)
-            gather_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 32)
-            gather_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 64)
-            gather_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 128)
-            gather_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 256)
-            gather_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 512)
-            gather_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 1024)
-            gather_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2048)
-            gather_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4096)
-            gather_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else
-        {
-            printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
-            exit(1);
-        }
-    }
-    else if(kernel == GS)
-    {
-        if (vector_len == 1)
-            sg_t<1><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2)
-            sg_t<2><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4)
-            sg_t<4><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 5)
-            sg_t<5><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 8)
-            sg_t<8><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 16)
-            sg_t<16><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 32)
-            sg_t<32><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 64)
-            sg_t<64><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 128)
-            sg_t<128><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 256)
-            sg_t<256><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 512)
-            sg_t<512><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 1024)
-            sg_t<1024><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 2048)
-            sg_t<2048><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else if (vector_len == 4096)
-            sg_t<4096><<<grid_dim,block_dim,shmem>>>(target, source, ti, si);
-        else
-        {
-            printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
-            exit(1);
-        }
-    }
-    else
-    {
-        printf("ERROR UNRECOGNIZED KERNEL\n");
-        exit(1);
-    }
-    gpuErrchk( cudaEventRecord(stop) );
-    gpuErrchk( cudaEventSynchronize(stop) );
-
-    float time_ms = 0;
-    gpuErrchk( cudaEventElapsedTime(&time_ms, start, stop) );
-    return time_ms;
-
-}
 
 //assume block size >= index buffer size
 //assume index buffer size divides block size
@@ -410,6 +203,79 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
     if (x==0.5) src[0] = x;
 
 }
+
+// Multiple blocks per GSOP
+__global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t delta, char validate)
+{
+    extern __shared__ int idx_shared[];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    int blocks_per_gsop = blockDim.x/idx_len + (blockDim.x%idx_len==0?0:1); // Guaranteed to be > 1
+    int gatherid = blockDim.x/blocks_per_gsop; // which gather we are working on
+    int gatheroffset = bid % blocks_per_gsop; // which portion of the gather we are working on
+
+    int last = (gatheroffset == blocks_per_gsop-1) && (idx_len%blockDim.x!=0); // only need to treat last gather special if it isn't the same size as others
+    //printf("%d %d\n", gatheroffset == blocks_per_gsop-1, blockDim.x%idx_len==0);
+
+    //printf("%d %d %d %lu\n", gatheroffset, blocks_per_gsop, blockDim.x, idx_len);
+    if (last) {
+        printf("LAST 1\n");
+        // Last block needs to copy idx_len - (blockDim.x*(blocks_per_gsop-1))
+        if ( tid < (idx_len - (blockDim.x*(blocks_per_gsop-1))) ) {
+            idx_shared[tid] = idx[(blockDim.x)*(blocks_per_gsop-1)+tid];
+        }
+    } else {
+        idx_shared[tid] = idx[gatheroffset*blockDim.x + tid];
+    }
+
+    double *src_loc = src + delta*gatherid + idx_len*gatheroffset;
+    double x;
+    // Only do the read if...
+    if (last) {
+        printf("LAST 2\n");
+        if ( tid < (idx_len - (blockDim.x*(blocks_per_gsop-1))) ) {
+            idx_shared[tid] = idx[(blockDim.x)*(blocks_per_gsop-1)+tid];
+            x = src_loc[idx_shared[tid]];
+        }
+    } else {
+        x = src_loc[idx_shared[tid]];
+    }
+    if (x==0.5) src[0] = x; // dummy computation
+
+}
+
+// 1 or multiple GSOPs per block
+/*
+__global__ void gather_small(double *src, ssize_t* idx, size_t idx_len, size_t delta, char validate)
+{
+    __shared__ int idx_shared[];
+
+    int tid  = threadIdx.x;
+    int bid  = blockIdx.x;
+
+    int gsop_per_block = idx_len/blockDim.x;
+
+    // Load the idx buffer from gloabl to shared memory
+    // The size of the block may be larger than the pattern,
+    // so we need to make sure we don't copy too much.
+    if (tid < idx_len) {
+        idx_shared[tid] = idx[tid];
+    }
+
+    // If the pattern is much smaller than the thread block size,
+    // we will pack more than one gather into a thread block
+    int ngatherperblock = blockDim.x / idx_len;
+    int gatherid = tid / idx_len;
+
+    double *src_loc = src + (bid*ngatherperblock+gatherid)*delta;
+    double x;
+    x = src_loc[idx_shared[tid%V]];
+    if (x==0.5) src[0] = x; // dummy computation
+
+}
+*/
 
 template<int V>
 __global__ void gather_block_morton(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate)
@@ -617,7 +483,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 exit(1);
             }
 
-        } else {
+        } else if (pat_len/block[0] <= 1) {
             if (pat_len == 8) {
                 gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
             }else if (pat_len == 16) {
@@ -644,6 +510,9 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
                 exit(1);
             }
+        } else {
+            printf("CALLING GATHER BIG\n");
+            gather_big<<<grid_dim, block_dim, pat_len>>>(source, pat_dev, pat_len, delta, wpt);
         }
         gpuErrchk( cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost) );
     } else if (kernel == SCATTER) {
@@ -1105,9 +974,6 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
 
 
 #define INSTANTIATE(V)\
-template __global__ void scatter_t<V>(double* target, double* source, long* ti, long* si);\
-template __global__ void gather_t<V>(double* target, double* source, long* ti, long* si); \
-template __global__ void sg_t<V>(double* target, double* source, long* ti, long* si);\
 template __global__ void gather_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate);\
 template __global__ void gather_block_morton<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate);\
 template __global__ void gather_block_stride<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, int stride, char validate);\

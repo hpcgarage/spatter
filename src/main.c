@@ -670,12 +670,14 @@ int main(int argc, char **argv)
                     assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                     time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
+                    /* TODO: REMOVE THIS RESTRICTION
                     if (rc2[k].pattern_len > rc2[k].local_work_size) {
                         error("Pattern length cannot exceed local_work_size", ERROR);
                     }
                     if (rc2[k].local_work_size > 1024) {
                         error("Pattern length cannot exceed 1024 on GPU", ERROR);
                     }
+                    */
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
@@ -989,6 +991,12 @@ void emit_configs(struct run_config *rc, int nconfigs)
             break;
         case GS:
             printf("\'kernel\':\'GS\', ");
+            break;
+        case MULTIGATHER:
+            printf("\'kernel\':\'MULTIGATHER\', ");
+            break;
+        case MULTISCATTER:
+            printf("\'kernel\':\'MULTISCATTER\', ");
             break;
         case INVALID_KERNEL:
             error ("Invalid kernel sent to emit_configs", ERROR);
