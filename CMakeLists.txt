@@ -1,26 +1,51 @@
 # 3.18 is specified to include FindCUDAToolkit support updates
 cmake_minimum_required (VERSION 3.18 FATAL_ERROR)
 
-# Check for support for at least one backend
-if ("${BACKEND}" STREQUAL "")
-    message (
-        FATAL_ERROR
-            "You must build with support for at least one backend. Pass at least one of -DBACKEND=serial, openmp, or cuda to cmake."
-    )
-endif ()
+option(BACKEND "Which backend to use")
+option(COMPILER "Which compiler to use. Sensible defaults are used if not specified.")
+option(JIT "Whether to use JIT compilation for backends that support it (Only CUDA currently. HIP soon.)" ON)
+
+# Permitted backend values
+set(SPATTER_BACKENDS "serial" "openmp" "cuda")
+
+# Permitted compiler values
+set(SPATTER_COMPILERS "cray" "gnu" "clang" "armclang" "intel" "xl" "nvcc")
+
+set(SPATTER_CPU_BACKENDS "serial" "openmp")
+set(SPATTER_CPU_COMPILERS "cray" "gnu" "clang" "armclang" "intel" "xl")
+
+# Check to ensure a backend is specified
+if (NOT BACKEND)
+    message(WARNING "No backend specified. Using serial CPU backend.")
+    set(BACKEND "serial")
+endif()
+
+# Check for valid backend
+if(NOT "${BACKEND}" IN_LIST SPATTER_BACKENDS)
+    message(FATAL_ERROR "Backend must be one of ${SPATTER_BACKENDS}")
+endif()
+
+# Check to ensure a compiler is specified
+if (NOT COMPILER)
+    if (COMPILER IN_LIST SPATTER_CPU_BACKENDS)
+        message(WARNING "No compiler specified. Using gcc.")
+        set(COMPILER "gnu")
+    else()
+
+    endif()
+endif()
 
 # Check for support for at least one compiler
 if ("${COMPILER}" STREQUAL "")
-    message (	
-        FATAL_ERROR	
-            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."	
-    )	
+    message (
+        FATAL_ERROR
+            "You must build with support for at least one compiler. Pass at least one of -DCOMPILER=cray, gnu, intel, xl, or nvidia to cmake."
+    )
 endif()
 
 #Make backend and compiler variables case insensitive
 string( TOLOWER "${BACKEND}" BACKEND )
 string( TOLOWER "${COMPILER}" COMPILER )
-
 
 # Create gz_read executable
 add_executable(gz_read standard-suite/binary-traces/gz_read.c)
@@ -32,30 +57,22 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-#Set backend permitted values
-set(SPATTERBACKENDS serial openmp cuda)
-
 #Check for backend variable set in user cmake call
 if(NOT BACKEND IN_LIST SPATTERBACKENDS)
     message(FATAL_ERROR "backend must be one of ${SPATTERBACKENDS}")
 endif()
 
-#Set compiler permitted values
-set(SPATTERCOMPILERS cray gnu clang armclang intel xl nvcc)
-
-#Set intel platform permitted values
-set(INTELPLATFORMS skylake avx_crossplatform non_avx)
 
 #Check for compiler variable set in user cmake call
 if(NOT COMPILER IN_LIST SPATTERCOMPILERS)
-    message(FATAL_ERROR "compiler must be one of ${compilerBackends}")
+    message(FATAL_ERROR "compiler must be one of ${SPATTERCOMPILERS}")
 endif()
 
-add_definitions (-DSG_DATA_TYPE=double)	
+add_definitions (-DSG_DATA_TYPE=double)
 
-# Set backend specific flags	
-    #SERIAL	
-    if ("${BACKEND}" STREQUAL "serial")	
+# Set backend specific flags
+    #SERIAL
+    if ("${BACKEND}" STREQUAL "serial")
         #gnu
         if ("${COMPILER}" STREQUAL "gnu")
             set(CMAKE_C_COMPILER gcc)
@@ -65,15 +82,15 @@ add_definitions (-DSG_DATA_TYPE=double)
             set(CMAKE_C_COMPILER cc)
             set(CMAKE_CXX_COMPILER CC)
         else()
-            message (	
+            message (
                 FATAL_ERROR
-                    "Only gnu and cray are supported for SERIAL backend"	
+                    "Only gnu and cray are supported for SERIAL backend"
             )
         endif()
     endif ()
 
-    #CUDA	
-    if ("${BACKEND}" STREQUAL "cuda")
+    #CUDA
+    if ("${BACKEND}" STREQUAL "cuda" OR "${BACKEND}" STREQUAL "cuda_jit" )
         if ("${COMPILER}" STREQUAL "nvcc")
             set(CMAKE_CUDA_COMPILER nvcc)
         else()
@@ -82,12 +99,12 @@ add_definitions (-DSG_DATA_TYPE=double)
                     "Only nvcc is supported for CUDA backend"
             )
         endif()
- 
+
         if (USE_MPI)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
         endif()
-	
+
         if (DEFINED CUDA_ARCH)
             set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
         else ()
@@ -97,7 +114,7 @@ add_definitions (-DSG_DATA_TYPE=double)
     endif ()
 
     #OPENMP
-    if ("${BACKEND}" STREQUAL "openmp")	
+    if ("${BACKEND}" STREQUAL "openmp")
         #gnu
         if ("${COMPILER}" STREQUAL "gnu")
             set(CMAKE_C_COMPILER gcc)
@@ -153,7 +170,7 @@ add_definitions (-DSG_DATA_TYPE=double)
                 #cross-platform with AVX
                 elseif("${INTEL_PLATFORM}" STREQUAL "avx_crossplatform")
                     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -xCOMMON-AVX512")
-                
+
                 #Non-AVX platforms
                 elseif("${INTEL_PLATFORM}" STREQUAL "non_avx")
                     #No specified flags
@@ -174,9 +191,9 @@ add_definitions (-DSG_DATA_TYPE=double)
                 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -qopt-report-phase=vec,loop -qopt-report=2")
             endif()
         else()
-            message (	
+            message (
                 FATAL_ERROR
-                    "Only gnu, cray, clang, armclang, intel, and xl are supported for OpenMP backend"	
+                    "Only gnu, cray, clang, armclang, intel, and xl are supported for OpenMP backend"
             )
         endif()
     endif ()
@@ -195,7 +212,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # Enable CUDA language
-if ("${BACKEND}" STREQUAL "cuda")
+if ("${BACKEND}" STREQUAL "cuda" OR "${BACKEND}" STREQUAL "cuda_jit" )
     enable_language(CUDA)
 endif ()
 
@@ -228,7 +245,7 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=IBM")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     set (OPTIMIZATIONS "-O3 -h vector3 -h cache3 -h scalar3")
     #set (OPTIMIZATIONS "-G0 -O0")
     #set (ALLWARNINGS "-Wall -Wextra -ansi -pedantic")
@@ -238,19 +255,19 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
     set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Cray -D__CRAYC__")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
     set (OpenMP_C_FLAGS "${OpenMP_C_FLAGS} -xHost -qopenmp")
     set (OpenMP_C_FLAGS "${OpenMP_CXX_FLAGS} -xHost -qopenmp")
 endif ()
 
- 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") 
+
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=GNU -O3 -g")
-   #Use sanitize=address for debugging of access issues 
+   #Use sanitize=address for debugging of access issues
    #set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
 endif ()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") 
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -DSPAT_C_NAME=Clang")
 endif ()
 
@@ -336,9 +353,6 @@ if ("${BACKEND}" STREQUAL "cuda")
         CMAKE_CUDA_FLAGS
         "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
     )
-    if ("${BACKEND}" STREQUAL "openmp")
-        set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
-    endif ()
 
     file (GLOB CUDA_CU_FILES src/cuda/*.cu)
     file (GLOB CUDA_C_FILES src/cuda/*.c)
@@ -357,7 +371,35 @@ if ("${BACKEND}" STREQUAL "cuda")
 
 endif ()
 
-if (USE_PAPI) 
+if ("${BACKEND}" STREQUAL "cuda_jit")
+    find_package(CUDAToolkit REQUIRED)
+    add_definitions (-DUSE_CUDA_JIT)
+    include_directories (src/cuda_jit)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
+    set (
+        CMAKE_CUDA_FLAGS
+        "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+    )
+
+    file (GLOB CUDA_CU_FILES src/cuda_jit/*.cu)
+    file (GLOB CUDA_C_FILES src/cuda_jit/*.c)
+    file (GLOB CUDA_H_FILES src/cuda_jit/*.h)
+
+    #CUDA Toolkit (Runtime)
+    add_library(cuda_comp SHARED src/cuda_jit/cuda-jit-backend.cu)
+    #add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h)
+    set_target_properties(cuda_comp
+        PROPERTIES
+                CUDA_RUNTIME_LIBRARY Shared
+    )
+    target_include_directories(cuda_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda_jit")
+
+
+    message ("Using CUDA_JIT backend")
+endif ()
+
+if (USE_PAPI)
     set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
     include_directories (src/papi)
     add_definitions (-DUSE_PAPI)
@@ -422,6 +464,11 @@ if ("${BACKEND}" STREQUAL "cuda")
     target_link_libraries (${TRGT} PUBLIC CUDA::cudart)
 endif ()
 
+if ("${BACKEND}" STREQUAL "cuda_jit")
+    target_link_libraries (${TRGT} PUBLIC cuda_comp)
+    target_link_libraries (${TRGT} PUBLIC CUDA::cudart)
+endif ()
+
 #Include PAPI libraries, if defined
 if (USE_PAPI)
     target_link_libraries (${TRGT} LINK_PUBLIC ${PAPI_LIBRARIES})
@@ -439,7 +486,7 @@ endif()
 file (GLOB TEST_SCRIPTS tests/*.sh)
 file (COPY ${TEST_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-# Add a command to put some important info in environment variables 
+# Add a command to put some important info in environment variables
 # to be output by spatter
 message (STATUS "compiler version is ${CMAKE_C_COMPILER_VERSION}")
 message (STATUS "compiler is ${CMAKE_C_COMPILER}")

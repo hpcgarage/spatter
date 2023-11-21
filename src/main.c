@@ -28,6 +28,11 @@
     #include <cuda_runtime.h>
     #include "cuda/cuda-backend.h"
 #endif
+#if defined ( USE_CUDA_JIT )
+    #include <cuda.h>
+    #include <cuda_runtime.h>
+    #include "cuda_jit/cuda-backend-jit.h"
+#endif
 #if defined( USE_SERIAL )
 	#include "serial/serial-kernels.h"
 #endif
@@ -615,6 +620,29 @@ int main(int argc, char **argv)
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+#ifdef USE_CUDA_JIT
+        int n_gsops = rc[k].generic_len;
+        rc2[k].time_ms = cuda_jit_wrapper(rc2[k]);
+        time_ms = cuda_jit_wrapper(rc2[k])
+            /*
+        switch (rc2[k].kernel) {
+            case GATHER:
+                break;
+            case SCATTER:
+                break;
+            case GS:
+                break;
+            case MULTIGATHER:
+                break;
+            case MULTISCATTER:
+                break;
+            default:
+                error("Unsupported kernel for CUDA backend", ERROR);
+        }
+        */
+
+#endif
+
         // Time CUDA Kernel
 #ifdef USE_CUDA
 #define arr_len 1
@@ -622,6 +650,24 @@ int main(int argc, char **argv)
         if (backend == CUDA) {
             float time_ms = 2;
             for (int i = -10; i < (int) rc2[k].nruns; i++) {
+                /*
+                int n_gsops = rc[k].generic_len;
+                switch (rc2[k].kernel) {
+                    case GATHER:
+                        break;
+                    case SCATTER:
+                        break;
+                    case GS:
+                        break;
+                    case MULTIGATHER:
+                        break;
+                    case MULTISCATTER:
+                        break;
+                    default:
+                        error("Unsupported kernel for CUDA backend", ERROR);
+                }
+                */
+
                 if (rc2[k].kernel == MULTISCATTER) {
                   if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
                       error("Pattern length cannot exceed local_work_size", ERROR);
@@ -670,17 +716,16 @@ int main(int argc, char **argv)
                     assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                     time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
-                    /* TODO: REMOVE THIS RESTRICTION
-                    if (rc2[k].pattern_len > rc2[k].local_work_size) {
-                        error("Pattern length cannot exceed local_work_size", ERROR);
-                    }
-                    if (rc2[k].local_work_size > 1024) {
-                        error("Pattern length cannot exceed 1024 on GPU", ERROR);
-                    }
-                    */
-                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                    // If a GSOP can't fit in a thread block, we need to grow the
+                    // grid size and launch extra thread blocks to do the work
                     unsigned long local_work_size = rc2[k].local_work_size;
-                    unsigned long grid[arr_len]  = {global_work_size/local_work_size};
+                    int factor = 1;
+                    if (rc2[k].pattern_len > local_work_size) {
+                        factor = rc2[k].pattern_len / local_work_size + (rc2[k].pattern_len % local_work_size != 0);
+                    }
+                    unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
+                    //unsigned long local_work_size = rc2[k].local_work_size;
+                    unsigned long grid[arr_len]  = {factor*global_work_size/local_work_size};
                     unsigned long block[arr_len] = {local_work_size};
 
                     if (rc2[k].random_seed == 0) {

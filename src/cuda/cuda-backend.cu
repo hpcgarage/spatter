@@ -161,10 +161,11 @@ __global__ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, 
 //V2 = 8
 //assume block size >= index buffer size
 //assume index buffer size divides block size
-template<int V>
-__global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate)
+#define V 1024
+__global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate, const int VV)
 {
-    __shared__ int idx_shared[V];
+    __shared__ ssize_t idx_shared[1024];
+    //extern __shared__ ssize_t idx_shared[];
 
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
@@ -176,9 +177,9 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
     }
     #endif
 
-    if (tid < V) {
+    //if (tid < V) {
         idx_shared[tid] = idx[tid];
-    }
+    //}
 
     int ngatherperblock = blockDim.x / V;
     int gatherid = tid / V;
@@ -203,11 +204,12 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
     if (x==0.5) src[0] = x;
 
 }
+#undef V
 
 // Multiple blocks per GSOP
-__global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t delta, char validate)
+__global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t delta)
 {
-    extern __shared__ int idx_shared[];
+    extern __shared__ ssize_t idx_shared[];
 
     int tid  = threadIdx.x;
     int bid  = blockIdx.x;
@@ -221,7 +223,7 @@ __global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t del
 
     //printf("%d %d %d %lu\n", gatheroffset, blocks_per_gsop, blockDim.x, idx_len);
     if (last) {
-        printf("LAST 1\n");
+        //printf("LAST 1\n");
         // Last block needs to copy idx_len - (blockDim.x*(blocks_per_gsop-1))
         if ( tid < (idx_len - (blockDim.x*(blocks_per_gsop-1))) ) {
             idx_shared[tid] = idx[(blockDim.x)*(blocks_per_gsop-1)+tid];
@@ -234,7 +236,7 @@ __global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t del
     double x;
     // Only do the read if...
     if (last) {
-        printf("LAST 2\n");
+        //printf("LAST 2\n");
         if ( tid < (idx_len - (blockDim.x*(blocks_per_gsop-1))) ) {
             idx_shared[tid] = idx[(blockDim.x)*(blocks_per_gsop-1)+tid];
             x = src_loc[idx_shared[tid]];
@@ -484,6 +486,8 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             }
 
         } else if (pat_len/block[0] <= 1) {
+            gather_block<<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate, pat_len);
+            /*
             if (pat_len == 8) {
                 gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
             }else if (pat_len == 16) {
@@ -510,9 +514,10 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
                 exit(1);
             }
+            */
         } else {
             printf("CALLING GATHER BIG\n");
-            gather_big<<<grid_dim, block_dim, pat_len>>>(source, pat_dev, pat_len, delta, wpt);
+            gather_big<<<grid_dim, block_dim,block[0]*sizeof(ssize_t)>>>(source, pat_dev, pat_len, delta);
         }
         gpuErrchk( cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost) );
     } else if (kernel == SCATTER) {
@@ -974,7 +979,6 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
 
 
 #define INSTANTIATE(V)\
-template __global__ void gather_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate);\
 template __global__ void gather_block_morton<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, uint32_t *order, char validate);\
 template __global__ void gather_block_stride<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, int stride, char validate);\
 template __global__ void scatter_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate); \
@@ -998,3 +1002,5 @@ INSTANTIATE(512);
 INSTANTIATE(1024);
 INSTANTIATE(2048);
 INSTANTIATE(4096);
+
+//template __global__ void gather_block<V>(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate);
