@@ -1,0 +1,53 @@
+# Spatter/src/Spatter/CMakeLists.txt
+
+configure_file(Spatter_config.hpp.cmakein Spatter_config.hpp)
+
+set(SPATTER_INCLUDE_FILES
+    Benchmark.hh
+    Configuration.hh
+    Input.hh
+    Report.hh
+    SpatterTypes.hh
+    Timer.hh)
+
+add_library(Spatter INTERFACE)
+
+set_target_properties(Spatter PROPERTIES
+    INTERFACE_COMPILE_FEATURES cxx_std_20
+    COMPILE_DEFINITIONS "${COMMON_COMPILE_DEFINITIONS}"
+    COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS}"
+    OUTPUT_NAME "Spatter"
+    )
+
+target_include_directories(Spatter
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_link_libraries(Spatter
+    INTERFACE
+    ${COMMON_LINK_LIBRARIES}
+    )
+
+target_compile_options(Spatter
+    INTERFACE ${WARNING_FLAGS}
+    )
+
+install(TARGETS Spatter
+    EXPORT Spatter_Targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+install(EXPORT Spatter_Targets
+    FILE Spatter_Targets.cmake
+    NAMESPACE Spatter::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Spatter
+)
+
+install(FILES ${SPATTER_INCLUDE_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Spatter_config.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+

@@ -1,6 +1,0 @@
-Version of argtable included: v3.2.2, Oct. 2, 2022; GH Commit: f25c624 
-
-Spatter has switched from using argtable3 as a submodule and statically linked 
-library to using it in amalgamated mode, as suggested by the developers. 
-If you should run into issues with this part of Spatter, please file a issue
-on the main project site.

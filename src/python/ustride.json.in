@@ -1,4 +1,0 @@
-[
-    {'pattern':["UNIFORM:8:{}:NR".format(2**i) for i in range(0,4)], 'count':2**24, 'wrap':1},
-    {'pattern':["UNIFORM:8:{}:NR".format(2**i) for i in range(4,8)], 'count':2**20, 'wrap':1}
-]
