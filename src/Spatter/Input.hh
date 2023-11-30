@@ -5,6 +5,8 @@
 #ifndef SPATTER_INPUT_HH
 #define SPATTER_INPUT_HH
 
+#include <algorithm>
+#include <cctype>
 #include <getopt.h>
 #include <iomanip>
 #include <iostream>
@@ -14,10 +16,11 @@
 #include <vector>
 
 #include "Spatter/Configuration.hh"
+#include "Spatter/JSONParser.hh"
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:k:hn:p:v:";
+static char *shortargs = (char *)"b:f:hk:n:p:v:";
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -28,10 +31,12 @@ void help(char *progname) {
   std::cout << "Usage: " << progname << "\n";
   std::cout << std::left << std::setw(10) << "-b" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-k" << std::setw(40)
-            << "Kernel (default gather)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-f" << std::setw(40)
+            << "Input File" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-h" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-k" << std::setw(40)
+            << "Kernel (default gather)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-n" << std::setw(40)
             << "Set Number of Runs" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-p" << std::setw(40)
@@ -42,7 +47,8 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-b backend] [-k kernel] [-h help] [-n nruns] [-p pattern] [-v "
+            << "[-b backend] [-f input file] [-h help] [-k kernel] [-n nruns] "
+               "[-p pattern] [-v "
                "verbosity]"
             << std::endl;
 }
@@ -82,6 +88,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     switch (c) {
     case 'b':
       backend = optarg;
+      std::transform(backend.begin(), backend.end(), backend.begin(),
+          [](unsigned char c) { return std::tolower(c); });
+
       if ((backend.compare("serial") != 0) &&
           (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0)) {
         std::cerr << "Valid Backends are: serial, openmp, cuda" << std::endl;
@@ -106,6 +115,22 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
       }
       break;
+
+    case 'f': {
+      json = 1;
+      Spatter::JSONParser json_file = Spatter::JSONParser(optarg);
+
+      for (size_t i = 0; i < json_file.size(); ++i) {
+        std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
+        cl.configs.push_back(std::move(c));
+      }
+      break;
+    }
+
+    case 'h':
+      help(argv[0]);
+      return -1;
+
     case 'k':
       kernel = optarg;
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0)) {
@@ -113,10 +138,6 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         return -1;
       }
       break;
-
-    case 'h':
-      help(argv[0]);
-      return -1;
 
     case 'n':
       try {

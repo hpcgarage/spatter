@@ -11,10 +11,13 @@
 #include <cuda_runtime_api.h>
 #endif
 
+#include <algorithm>
+#include <cctype>
 #include <experimental/iterator>
-#include <functional>
+#include <iostream>
 #include <ostream>
 #include <sstream>
+#include <string>
 
 #include "Spatter/SpatterTypes.hh"
 #include "Spatter/Timer.hh"
@@ -23,9 +26,12 @@ namespace Spatter {
 
 class ConfigurationBase {
 public:
-  ConfigurationBase(const std::string kernel, const std::vector<size_t> pattern,
+  ConfigurationBase(std::string k, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : kernel(kernel), pattern(pattern), nruns(nruns), verbosity(verbosity) {}
+      : kernel(k), pattern(pattern), nruns(nruns), verbosity(verbosity) {
+    std::transform(kernel.begin(), kernel.end(), kernel.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+  }
 
   ~ConfigurationBase() = default;
 

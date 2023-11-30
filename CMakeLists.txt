@@ -14,6 +14,7 @@ include(BuildType)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
+include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/CUDASupport)
 

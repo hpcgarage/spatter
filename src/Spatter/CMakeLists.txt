@@ -12,6 +12,7 @@ set(SPATTER_INCLUDE_FILES
     ${CUDA_INCLUDE_FILES}
     Configuration.hh
     Input.hh
+    JSONParser.hh
     SpatterTypes.hh
     Timer.hh)
 
