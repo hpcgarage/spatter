@@ -176,12 +176,13 @@ void parse_json_array(json_object_entry cur, char** argv, int i, int allocated_s
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
 
-        
-        char buffer[STRING_SIZE];
+        //char buffer[STRING_SIZE];
         //int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
-        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+        //int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
 
-        if (1 + added + index < allocated_size) {
+        //printf("Index: %d\tInteger: %d\tAllocated Size: %d\n", index, cur.value->u.array.values[j]->u.integer, allocated_size);
+
+        if (1 + index < allocated_size) {
             index += snprintf(&argv[i][index], allocated_size-index, "%zd", cur.value->u.array.values[j]->u.integer);
               if (j != cur.value->u.array.length-1)
                 index += snprintf(&argv[i][index], allocated_size-index, ",");
@@ -233,7 +234,7 @@ struct run_config *parse_json_config(json_value *value)
         else if (cur.value->type == json_array)
         {
             int allocated_size = 10 * cur.value->u.array.length;
-            argv[i] = (char *)sp_malloc(1, allocated_size, ALIGN_CACHE);
+            argv[i] = (char *)sp_malloc(sizeof(char), allocated_size, ALIGN_CACHE);
             parse_json_array(cur, argv, i, allocated_size);
             //printf("Pattern Length: %d\n", cur.value->u.array.length);
         }
@@ -470,7 +471,7 @@ struct run_config *parse_runs(int argc, char **argv)
 
     if (pattern->count > 0)
     {
-        rc->generator = (char *)sp_malloc(1, strlen(pattern->sval[0]), ALIGN_CACHE);
+        rc->generator = (char *)sp_malloc(sizeof(char), strlen(pattern->sval[0]) + 1, ALIGN_CACHE);
  
         copy_str_ignore_leading_space2(rc->generator, pattern->sval[0], strlen(pattern->sval[0]));
         //char* filePtr = strstr(rc->generator, "FILE");
@@ -1276,22 +1277,38 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             printf("Parse P Custom Pattern: %s\n", optarg);
         }
         rc->type = CUSTOM;
+
+        char *copy_optarg = sp_malloc(sizeof(char), strlen(optarg) + 1, ALIGN_CACHE);
+        strcpy(copy_optarg, optarg);
+
         char *delim = ",";
-        char *ptr = strtok(optarg, delim);
-        size_t read = 0;
+        char *ptr = strtok(copy_optarg, delim);
         if (!ptr)
             error("Pattern not found", 1);
 
+        size_t sz = 0;
+        while (ptr != NULL) {
+          sz++;
+          ptr = strtok(NULL, delim);
+        }
+        free(copy_optarg);
+
         ssize_t *mypat;
 
-        size_t psize;
+        size_t psize = 0;
         if (rc->pattern_size > 0)
             psize = rc->pattern_size;
         else
-            psize = MAX_PATTERN_LEN;
+            psize = MAX_PATTERN_LEN; 
+
+        if (psize > sz)
+          psize = sz;
 
         mypat = sp_malloc(sizeof(spIdx_t), psize, ALIGN_CACHE);
 
+        ptr = strtok(optarg, delim);
+
+        size_t read = 0;
         if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
             error("Failed to parse first pattern element in custom mode", 1);
 
@@ -1300,6 +1317,9 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
+
+        assert(psize == read);
+
         *pattern = mypat;
         *pattern_len = read;
     }
