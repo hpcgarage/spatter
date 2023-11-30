@@ -1,0 +1,17 @@
+option(USE_CUDA "Enable support for CUDA")
+
+if (USE_CUDA)
+    include(CheckLanguage)
+    check_language(CUDA)
+    if (CMAKE_CUDA_COMPILER)
+        enable_language(CUDA)
+        set(CMAKE_CUDA_STANDARD 17)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+        find_package(CUDAToolkit)
+        set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} CUDA::cudart CUDA::cuda_driver)
+        add_definitions(-DUSE_CUDA)
+    else()
+        message(STATUS "No CUDA compiler found")
+    endif()
+endif()

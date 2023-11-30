@@ -17,7 +17,7 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"k:hn:p:v:";
+static char *shortargs = (char *)"b:k:hn:p:v:";
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -26,6 +26,8 @@ struct ClArgs {
 void help(char *progname) {
   std::cout << "Spatter\n";
   std::cout << "Usage: " << progname << "\n";
+  std::cout << std::left << std::setw(10) << "-b" << std::setw(40)
+            << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-h" << std::setw(40)
@@ -40,7 +42,8 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-k kernel] [-h help] [-n nruns] [-p pattern] [-v verbosity]"
+            << "[-b backend] [-k kernel] [-h help] [-n nruns] [-p pattern] [-v "
+               "verbosity]"
             << std::endl;
 }
 
@@ -68,6 +71,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::vector<size_t> pattern;
   std::vector<size_t> generator;
 
+  std::string backend = "serial";
   std::string kernel = "gather";
   std::string type = "";
   unsigned long nruns = 10;
@@ -76,6 +80,32 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
   while ((c = getopt(argc, argv, shortargs)) != -1) {
     switch (c) {
+    case 'b':
+      backend = optarg;
+      if ((backend.compare("serial") != 0) &&
+          (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0)) {
+        std::cerr << "Valid Backends are: serial, openmp, cuda" << std::endl;
+        return -1;
+      }
+      if (backend.compare("openmp") == 0) {
+        std::cout << "Checking if OpenMP Backend is Enabled" << std::endl;
+#ifdef USE_OPENMP
+        std::cout << "SUCCESS - OpenMP Backend Enabled" << std::endl;
+#else
+        std::cerr << "FAIL - OpenMP Backend is not Enabled" << std::endl;
+        return -1;
+#endif
+      }
+      if (backend.compare("cuda") == 0) {
+        std::cout << "Checking if CUDA Backend is Enabled" << std::endl;
+#ifdef USE_CUDA
+        std::cout << "SUCCESS - CUDA Backend Enabled" << std::endl;
+#else
+        std::cerr << "FAIL - CUDA Backend is not Enabled" << std::endl;
+        return -1;
+#endif
+      }
+      break;
     case 'k':
       kernel = optarg;
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0)) {
@@ -160,9 +190,25 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 
   if (!json) {
-    std::unique_ptr<Spatter::ConfigurationBase> c =
-        std::make_unique<Spatter::Configuration<Spatter::Serial>>(
-            kernel, pattern, nruns, verbosity);
+    std::unique_ptr<Spatter::ConfigurationBase> c;
+    if (backend.compare("serial") == 0)
+      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(
+          kernel, pattern, nruns, verbosity);
+#ifdef USE_OPENMP
+    else if (backend.compare("openmp") == 0)
+      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(
+          kernel, pattern, nruns, verbosity);
+#endif
+#ifdef USE_CUDA
+    else if (backend.compare("cuda") == 0)
+      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(
+          kernel, pattern, nruns, verbosity);
+#endif
+    else {
+      std::cerr << "Invalid Backend " << backend << std::endl;
+      return -1;
+    }
+
     cl.configs.push_back(std::move(c));
   }
 
