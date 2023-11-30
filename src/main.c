@@ -28,11 +28,6 @@
     #include <cuda_runtime.h>
     #include "cuda/cuda-backend.h"
 #endif
-#if defined ( USE_CUDA_JIT )
-    #include <cuda.h>
-    #include <cuda_runtime.h>
-    #include "cuda_jit/cuda-backend-jit.h"
-#endif
 #if defined( USE_SERIAL )
 	#include "serial/serial-kernels.h"
 #endif
@@ -620,10 +615,11 @@ int main(int argc, char **argv)
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#ifdef USE_CUDA_JIT
+        /*
         int n_gsops = rc[k].generic_len;
         rc2[k].time_ms = cuda_jit_wrapper(rc2[k]);
         time_ms = cuda_jit_wrapper(rc2[k])
+        */
             /*
         switch (rc2[k].kernel) {
             case GATHER:
@@ -640,8 +636,6 @@ int main(int argc, char **argv)
                 error("Unsupported kernel for CUDA backend", ERROR);
         }
         */
-
-#endif
 
         // Time CUDA Kernel
 #ifdef USE_CUDA
@@ -667,6 +661,8 @@ int main(int argc, char **argv)
                         error("Unsupported kernel for CUDA backend", ERROR);
                 }
                 */
+                time_ms = cuda_execute(rc2[k]);
+                printf("time_ms: %f\n", time_ms);
 
                 if (rc2[k].kernel == MULTISCATTER) {
                   if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
@@ -685,7 +681,8 @@ int main(int argc, char **argv)
                   unsigned long grid_size = global_work_size / local_work_size;
                   unsigned long block_size = local_work_size;
 
-                  time_ms = cuda_block_multiscatter_wrapper(grid_size, block_size, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  printf("PATRICK skipping\n");
+                  //time_ms = cuda_block_multiscatter_wrapper(grid_size, block_size, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == MULTIGATHER) {
                   if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
@@ -699,7 +696,8 @@ int main(int argc, char **argv)
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
                   unsigned long block[arr_len] = {local_work_size};
 
-                  time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  printf("PATRICK skipping\n");
+                  //time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == GS) {
                     if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
@@ -714,7 +712,8 @@ int main(int argc, char **argv)
                     unsigned long block[arr_len] = {local_work_size};
 
                     assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
-                    time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  printf("PATRICK skipping\n");
+                    //time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
                     // If a GSOP can't fit in a thread block, we need to grow the
                     // grid size and launch extra thread blocks to do the work
@@ -729,9 +728,11 @@ int main(int argc, char **argv)
                     unsigned long block[arr_len] = {local_work_size};
 
                     if (rc2[k].random_seed == 0) {
-                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  printf("PATRICK skipping\n");
+                        //time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                     } else {
-                        time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
+                  printf("PATRICK skipping\n");
+                        //time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                     }
                 }
 

@@ -314,6 +314,10 @@ endif ()
 if ("${BACKEND}" STREQUAL "cuda")
     find_package(CUDAToolkit REQUIRED)
     add_definitions (-DUSE_CUDA)
+    if (JIT)
+        add_definitions (-DUSE_CUDA_JIT)
+        file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/kernels.cu DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    endif ()
     include_directories (src/cuda)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
@@ -327,7 +331,7 @@ if ("${BACKEND}" STREQUAL "cuda")
     file (GLOB CUDA_H_FILES src/cuda/*.h)
 
     #CUDA Toolkit (Runtime)
-    add_library(cuda_comp SHARED src/cuda/cuda-backend.cu)
+    add_library(cuda_comp SHARED src/cuda/cuda-backend.cu src/cuda/kernels.cu)
     #add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h)
     set_target_properties(cuda_comp
         PROPERTIES
@@ -337,34 +341,6 @@ if ("${BACKEND}" STREQUAL "cuda")
 
     message ("Using CUDA backend")
 
-endif ()
-
-if ("${BACKEND}" STREQUAL "cuda_jit")
-    find_package(CUDAToolkit REQUIRED)
-    add_definitions (-DUSE_CUDA_JIT)
-    include_directories (src/cuda_jit)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/cuda/include")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/cuda/include")
-    set (
-        CMAKE_CUDA_FLAGS
-        "${CMAKE_CUDA_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/src/include"
-    )
-
-    file (GLOB CUDA_CU_FILES src/cuda_jit/*.cu)
-    file (GLOB CUDA_C_FILES src/cuda_jit/*.c)
-    file (GLOB CUDA_H_FILES src/cuda_jit/*.h)
-
-    #CUDA Toolkit (Runtime)
-    add_library(cuda_comp SHARED src/cuda_jit/cuda-jit-backend.cu)
-    #add_library(cuda_comp SHARED src/cuda/my_kernel.cu src/cuda/cuda-backend.cu src/cuda/cuda-backend.h)
-    set_target_properties(cuda_comp
-        PROPERTIES
-                CUDA_RUNTIME_LIBRARY Shared
-    )
-    target_include_directories(cuda_comp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda_jit")
-
-
-    message ("Using CUDA_JIT backend")
 endif ()
 
 if (USE_PAPI)
@@ -430,11 +406,9 @@ target_link_libraries (${TRGT} LINK_PUBLIC m)
 if ("${BACKEND}" STREQUAL "cuda")
     target_link_libraries (${TRGT} PUBLIC cuda_comp)
     target_link_libraries (${TRGT} PUBLIC CUDA::cudart)
-endif ()
-
-if ("${BACKEND}" STREQUAL "cuda_jit")
-    target_link_libraries (${TRGT} PUBLIC cuda_comp)
-    target_link_libraries (${TRGT} PUBLIC CUDA::cudart)
+    if (JIT)
+        target_link_libraries(${TRGT} PUBLIC CUDA::nvrtc)
+    endif ()
 endif ()
 
 #Include PAPI libraries, if defined

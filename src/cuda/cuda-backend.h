@@ -1,20 +1,24 @@
 #ifndef CUDA_BACKEND_H
 #define CUDA_BACKEND_H
-#include <stdint.h>
 #include "../include/parse-args.h"
 #include "sgbuf.h"
 
-#pragma once
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-extern void create_dev_buffers_cuda(sgDataBuf* source);
-extern int find_device_cuda(char *name);
+
+void create_dev_buffers_cuda(sgDataBuf* source);
+
+int find_device_cuda(char *name);
+
+float cuda_execute(struct run_config);
+
 #ifdef __cplusplus
 }
 #endif
 
+/*
 extern void my_kernel_wrapper(unsigned int dim, unsigned int* grid, unsigned int* block);
 
 extern float cuda_block_multiscatter_wrapper(long unsigned grid, long unsigned block,
@@ -72,5 +76,5 @@ extern float cuda_block_random_wrapper(long unsigned dim, long unsigned* grid, l
         size_t delta,
         size_t n,
         size_t wrap, int wpt, size_t seed);
-
+*/
 #endif

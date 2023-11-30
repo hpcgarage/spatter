@@ -12,6 +12,13 @@
 
 #include <curand_kernel.h>
 
+#ifdef USE_CUDA_JIT
+#include "jitify.hpp"
+#else
+#include "kernels.cu"
+#endif
+
+
 /////////////
 // GLOBALS //
 /////////////
@@ -60,6 +67,42 @@ int find_device_cuda(char *name) {
         }
     }
     return -1;
+}
+
+#ifdef USE_CUDA_JIT
+float cuda_execute_jit(struct run_config rc) {
+    static jitify::JitCache kernel_cache;
+    jitify::Program program = kernel_cache.program("kernels.cu");
+    // ...set up data etc.
+    int len = 10;
+    double *data = (double*)malloc(sizeof(double) * len);
+    dim3 grid(1);
+    dim3 block(1);
+    program.kernel("gather")
+           .instantiate(len, jitify::reflection::type_of(*data))
+           .configure(grid, block)
+           .launch(data);
+    return 100.0;
+}
+#else
+#define len 10
+float cuda_execute_normal(struct run_config rc) {
+    double *data = (double*)malloc(sizeof(double) * len);
+    dim3 grid(1);
+    dim3 block(1);
+    gather<1024><<<grid,block>>>(data);
+    return 200.0;
+}
+#undef len
+#endif
+
+float cuda_execute(struct run_config rc)
+{
+#ifdef USE_CUDA_JIT
+    return cuda_execute_jit(rc);
+#else
+    return cuda_execute_normal(rc);
+#endif
 }
 
 extern "C" int translate_args(unsigned int dim, unsigned int* grid, unsigned int* block, dim3 *grid_dim, dim3 *block_dim){
@@ -161,6 +204,7 @@ __global__ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, 
 //V2 = 8
 //assume block size >= index buffer size
 //assume index buffer size divides block size
+/*
 #define V 1024
 __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate, const int VV)
 {
@@ -205,6 +249,7 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
 
 }
 #undef V
+*/
 
 // Multiple blocks per GSOP
 __global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t delta)
