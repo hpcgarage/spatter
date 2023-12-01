@@ -50,6 +50,7 @@ int verbose;
 FILE *err_file;
 
 void safestrcopy(char *dest, const char *src);
+void safestrcopy2(char *dest, const char *src, size_t num);
 void parse_p(char*, struct run_config *, int mode);
 ssize_t setincludes(size_t key, size_t* set, size_t set_len);
 void xkp_pattern(ssize_t *pat, ptrdiff_t dim);
@@ -125,6 +126,14 @@ void initialize_argtable()
 }
 
 
+void copy_str_ignore_leading_space2(char* dest, const char* source, size_t num)
+{
+  if (source[0] == ' ')
+    safestrcopy2(dest, &source[1], num);
+  else
+    safestrcopy2(dest, source, num);
+}
+
 void copy_str_ignore_leading_space(char* dest, const char* source)
 {
     if (source[0] == ' ')
@@ -147,42 +156,39 @@ void parse_json_kernel(json_object_entry cur, char** argv, int i)
     if (!strcasecmp(cur.value->u.string.ptr, "SCATTER") || !strcasecmp(cur.value->u.string.ptr, "GATHER") || !strcasecmp(cur.value->u.string.ptr, "GS") || !strcasecmp(cur.value->u.string.ptr, "MULTISCATTER") || !strcasecmp(cur.value->u.string.ptr, "MULTIGATHER"))
     {
         error("Ambiguous Kernel Type: Assuming kernel-name option.", WARN);
-        snprintf(argv[i+1], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
+        snprintf(argv[i], STRING_SIZE, "--kernel-name=%s", cur.value->u.string.ptr);
     }
     else
     {
         error("Ambigous Kernel Type: Assuming kernel-file option.", WARN);
-        snprintf(argv[i+1], STRING_SIZE, "--kernel-file=%s", cur.value->u.string.ptr);
+        snprintf(argv[i], STRING_SIZE, "--kernel-file=%s", cur.value->u.string.ptr);
     }
 }
 
-void parse_json_array(json_object_entry cur, char** argv, int i)
+void parse_json_array(json_object_entry cur, char** argv, int i, int allocated_size)
 {
     int index = 0;
-    index += snprintf(argv[i+1], STRING_SIZE, "--%s=", cur.name);
-    printf("argv[%d]: %s\n", i+1, argv[i+1]);
+    index += snprintf(argv[i], STRING_SIZE, "--%s=", cur.name);
+    printf("argv[%d]: %s\n", i+1, argv[i]);
 
     for (int j = 0; j < cur.value->u.array.length; j++) {
         if (cur.value->u.array.values[j]->type != json_integer) {
             error ("Encountered non-integer json type while parsing array", ERROR);
         }
 
-        char buffer[STRING_SIZE];
-        int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
-        int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+        //char buffer[STRING_SIZE];
+        //int check = snprintf(buffer, STRING_SIZE, "%zd", cur.value->u.array.values[j]->u.integer);
+        //int added = snprintf(buffer, STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
 
-        if (check == added) {
-            index += snprintf(&argv[i+1][index], STRING_SIZE-index, "%zd", cur.value->u.array.values[j]->u.integer);
+        //printf("Index: %d\tInteger: %d\tAllocated Size: %d\n", index, cur.value->u.array.values[j]->u.integer, allocated_size);
 
-            if (index >= STRING_SIZE-1) {
-                break;
-            } else if (j != cur.value->u.array.length-1 && index < STRING_SIZE-1) {
-                index += snprintf(&argv[i+1][index], STRING_SIZE-index, ",");
-            }
-
+        if (1 + index < allocated_size) {
+            index += snprintf(&argv[i][index], allocated_size-index, "%zd", cur.value->u.array.values[j]->u.integer);
+              if (j != cur.value->u.array.length-1)
+                index += snprintf(&argv[i][index], allocated_size-index, ",");
         } else {
             index--;
-            argv[i+1][index] = '\0';
+            argv[i][index] = '\0';
             break;
         }
     }
@@ -200,33 +206,37 @@ struct run_config *parse_json_config(json_value *value)
         error ("parse_json_config should only be passed json_objects", ERROR);
 
     int argc = value->u.object.length + 1;
-    char **argv = (char **)sp_malloc(sizeof(char*), argc*2, ALIGN_CACHE);
+    char **argv = (char **)sp_malloc(sizeof(char*), argc, ALIGN_CACHE);
 
-    for (int i = 0; i < argc; i++)
-        argv[i] = (char *)sp_malloc(1, STRING_SIZE*2, ALIGN_CACHE);
-
-    for (int i = 0; i < argc-1; i++)
+    argv[0] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
+    
+    for (int i = 1; i < argc; i++)
     {
-        json_object_entry cur = value->u.object.values[i];
+        json_object_entry cur = value->u.object.values[i - 1];
 
         if (cur.value->type == json_string)
         {
+	    argv[i] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
             if (!strcasecmp(cur.name, "kernel"))
             {
                 parse_json_kernel(cur, argv, i);
             }
             else
             {
-                snprintf(argv[i+1], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
+                snprintf(argv[i], STRING_SIZE, "--%s=%s", cur.name, cur.value->u.string.ptr);
             }
         }
         else if (cur.value->type == json_integer)
         {
-            snprintf(argv[i+1], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
+            argv[i] = (char *)sp_malloc(1, STRING_SIZE, ALIGN_CACHE);
+            snprintf(argv[i], STRING_SIZE, "--%s=%zd", cur.name, cur.value->u.integer);
         }
         else if (cur.value->type == json_array)
         {
-            parse_json_array(cur, argv, i);
+            int allocated_size = 10 * cur.value->u.array.length;
+            argv[i] = (char *)sp_malloc(sizeof(char), allocated_size, ALIGN_CACHE);
+            parse_json_array(cur, argv, i, allocated_size);
+            //printf("Pattern Length: %d\n", cur.value->u.array.length);
         }
         else
         {
@@ -234,8 +244,15 @@ struct run_config *parse_json_config(json_value *value)
         }
     }
 
-    //yeah its hacky - parse_args ignores the first arg
-    safestrcopy(argv[0], argv[1]);
+/*
+    for (int i = 0; i < argc - 1; i++) {
+      printf("argv[%d]: ", i);
+      for(int j = 0; argv[i][j] != '\0' && j < 5000; j++){
+        printf("%c", argv[i][j]);
+      }
+      printf("\n");
+    }
+*/
 
     int nerrors = arg_parse(argc, argv, argtable);
 
@@ -248,7 +265,7 @@ struct run_config *parse_json_config(json_value *value)
 
     rc = parse_runs(argc, argv);
 
-    for (int i = 0; i < argc; i++)
+    for (int i = 0; i < argc - 1; i++)
         free(argv[i]);
 
     free(argv);
@@ -454,26 +471,33 @@ struct run_config *parse_runs(int argc, char **argv)
 
     if (pattern->count > 0)
     {
-        copy_str_ignore_leading_space(rc->generator, pattern->sval[0]);
+        rc->generator = (char *)sp_malloc(sizeof(char), strlen(pattern->sval[0]) + 1, ALIGN_CACHE);
+ 
+        copy_str_ignore_leading_space2(rc->generator, pattern->sval[0], strlen(pattern->sval[0]));
         //char* filePtr = strstr(rc->generator, "FILE");
         //if (filePtr)
         //    safestrcopy(rc->generator, filePtr);
         parse_p(rc->generator, rc, 0);
         pattern_found = 1;
+        free(rc->generator);
     }
 
     if (pattern_gather->count > 0)
     {
-        copy_str_ignore_leading_space(rc->generator, pattern_gather->sval[0]);
+        rc->generator = (char *)sp_malloc(1, strlen(pattern_gather->sval[0]), ALIGN_CACHE);
+        copy_str_ignore_leading_space2(rc->generator, pattern_gather->sval[0], strlen(pattern_gather->sval[0]));
         parse_p(rc->generator, rc, 1);
         pattern_gather_found = 1;
+        free(rc->generator);
     }
 
     if (pattern_scatter->count > 0)
     {
-        copy_str_ignore_leading_space(rc->generator, pattern_scatter->sval[0]);
+        rc->generator = (char *)sp_malloc(1, strlen(pattern_scatter->sval[0]), ALIGN_CACHE);
+        copy_str_ignore_leading_space2(rc->generator, pattern_scatter->sval[0], strlen(pattern_scatter->sval[0]));
         parse_p(rc->generator, rc, 2);
         pattern_scatter_found = 1;
+        free(rc->generator);
     }
 
     if (delta->count > 0)
@@ -728,6 +752,8 @@ struct run_config *parse_runs(int argc, char **argv)
         else
             safestrcopy(rc->name, "CUSTOM");
     }
+
+
 
 #ifdef USE_OPENMP
     int max_threads = omp_get_max_threads();
@@ -1251,22 +1277,38 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             printf("Parse P Custom Pattern: %s\n", optarg);
         }
         rc->type = CUSTOM;
+
+        char *copy_optarg = sp_malloc(sizeof(char), strlen(optarg) + 1, ALIGN_CACHE);
+        strcpy(copy_optarg, optarg);
+
         char *delim = ",";
-        char *ptr = strtok(optarg, delim);
-        size_t read = 0;
+        char *ptr = strtok(copy_optarg, delim);
         if (!ptr)
             error("Pattern not found", 1);
 
+        size_t sz = 0;
+        while (ptr != NULL) {
+          sz++;
+          ptr = strtok(NULL, delim);
+        }
+        free(copy_optarg);
+
         ssize_t *mypat;
 
-        size_t psize;
+        size_t psize = 0;
         if (rc->pattern_size > 0)
             psize = rc->pattern_size;
         else
-            psize = MAX_PATTERN_LEN;
+            psize = MAX_PATTERN_LEN; 
+
+        if (psize > sz)
+          psize = sz;
 
         mypat = sp_malloc(sizeof(spIdx_t), psize, ALIGN_CACHE);
 
+        ptr = strtok(optarg, delim);
+
+        size_t read = 0;
         if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
             error("Failed to parse first pattern element in custom mode", 1);
 
@@ -1275,6 +1317,9 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
             if (sscanf(ptr, "%zu", &(mypat[read++])) < 1)
                 error("Failed to parse pattern", 1);
         }
+
+        assert(psize == read);
+
         *pattern = mypat;
         *pattern_len = read;
     }
@@ -1353,6 +1398,11 @@ void error(char *what, int code)
 
     if(code)
         exit(code);
+}
+
+void safestrcopy2(char *dest, const char *src, size_t num) {
+  dest[0] = '\0';
+  strncat(dest, src, num);
 }
 
 void safestrcopy(char *dest, const char *src)
