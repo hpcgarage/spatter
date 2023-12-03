@@ -17,10 +17,8 @@ sycl_device_global<int> final_thread_idx_dev;
 sycl_device_global<double> final_gather_data_dev;
 
 template <int v>
-__attribute__((always_inline)) void scatter_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void scatter_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item)
 {
-    auto space = (char *)dpct_local;
-
     int gid = v * item.get_global_id(2);
 
     double buf[v];
@@ -40,10 +38,8 @@ __attribute__((always_inline)) void scatter_t(double *target, double *source, lo
 }
 
 template <int v>
-__attribute__((always_inline)) void gather_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void gather_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item)
 {
-    auto space = (char *)dpct_local;
-
     int gid = v * item.get_global_id(2);
     double buf[v];
 
@@ -60,10 +56,8 @@ __attribute__((always_inline)) void gather_t(double *target, double *source, lon
 //__global__ void gather_new(double *target,
 
 template <int v>
-__attribute__((always_inline)) void sg_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
+__attribute__((always_inline)) void sg_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item)
 {
-    auto space = (char *)dpct_local;
-
     int gid = v * item.get_global_id(2);
     long sidx[v];
     long tidx[v];
@@ -80,9 +74,9 @@ __attribute__((always_inline)) void sg_t(double *target, double *source, long *t
 
 }
 #define INSTANTIATE(V)\
-template __attribute__((always_inline)) void scatter_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);\
-template __attribute__((always_inline)) void gather_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);\
-template __attribute__((always_inline)) void sg_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item, uint8_t *dpct_local);
+template __attribute__((always_inline)) void scatter_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item);\
+template __attribute__((always_inline)) void gather_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item);\
+template __attribute__((always_inline)) void sg_t<V>(double* target, double* source, long* ti, long* si, const sycl::nd_item<3> &item);
 INSTANTIATE(1);
 INSTANTIATE(2);
 INSTANTIATE(4);
@@ -132,33 +126,33 @@ extern "C" float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
     if(kernel == SCATTER)
     {
         if (vector_len == 1)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<1>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<1>(target, source, ti, si, item); }); });
         else if (vector_len == 2)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<2>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<2>(target, source, ti, si, item); }); });
         else if (vector_len == 4)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<4>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<4>(target, source, ti, si, item); }); });
         else if (vector_len == 5)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<5>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<5>(target, source, ti, si, item); }); });
         else if (vector_len == 8)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<8>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<8>(target, source, ti, si, item); }); });
         else if (vector_len == 16)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<16>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<16>(target, source, ti, si, item); }); });
         else if (vector_len == 32)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<32>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<32>(target, source, ti, si, item); }); });
         else if (vector_len == 64)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<64>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<64>(target, source, ti, si, item); }); });
         else if (vector_len == 128)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<128>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<128>(target, source, ti, si, item); }); });
         else if (vector_len == 256)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<256>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<256>(target, source, ti, si, item); }); });
         else if (vector_len == 512)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<512>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<512>(target, source, ti, si, item); }); });
         else if (vector_len == 1024)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<1024>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<1024>(target, source, ti, si, item); }); });
         else if (vector_len == 2048)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<2048>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<2048>(target, source, ti, si, item); }); });
         else if (vector_len == 4096)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<4096>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { scatter_t<4096>(target, source, ti, si, item); }); });
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -168,33 +162,33 @@ extern "C" float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
     else if(kernel == GATHER)
     {
         if (vector_len == 1)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<1>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<1>(target, source, ti, si, item); }); });
         else if (vector_len == 2)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<2>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<2>(target, source, ti, si, item); }); });
         else if (vector_len == 4)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<4>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<4>(target, source, ti, si, item); }); });
         else if (vector_len == 5)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<5>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<5>(target, source, ti, si, item); }); });
         else if (vector_len == 8)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<8>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<8>(target, source, ti, si, item); }); });
         else if (vector_len == 16)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<16>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<16>(target, source, ti, si, item); }); });
         else if (vector_len == 32)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<32>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<32>(target, source, ti, si, item); }); });
         else if (vector_len == 64)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<64>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<64>(target, source, ti, si, item); }); });
         else if (vector_len == 128)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<128>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<128>(target, source, ti, si, item); }); });
         else if (vector_len == 256)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<256>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<256>(target, source, ti, si, item); }); });
         else if (vector_len == 512)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<512>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<512>(target, source, ti, si, item); }); });
         else if (vector_len == 1024)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<1024>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<1024>(target, source, ti, si, item); }); });
         else if (vector_len == 2048)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<2048>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<2048>(target, source, ti, si, item); }); });
         else if (vector_len == 4096)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<4096>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { gather_t<4096>(target, source, ti, si, item); }); });
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");
@@ -204,33 +198,33 @@ extern "C" float sycl_sg_wrapper(enum sg_kernel kernel, size_t vector_len,
     else if(kernel == GS)
     {
         if (vector_len == 1)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<1>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<1>(target, source, ti, si, item); }); });
         else if (vector_len == 2)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<2>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<2>(target, source, ti, si, item); }); });
         else if (vector_len == 4)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<4>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<4>(target, source, ti, si, item); }); });
         else if (vector_len == 5)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<5>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<5>(target, source, ti, si, item); }); });
         else if (vector_len == 8)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<8>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<8>(target, source, ti, si, item); }); });
         else if (vector_len == 16)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<16>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<16>(target, source, ti, si, item); }); });
         else if (vector_len == 32)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<32>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<32>(target, source, ti, si, item); }); });
         else if (vector_len == 64)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<64>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<64>(target, source, ti, si, item); }); });
         else if (vector_len == 128)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<128>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<128>(target, source, ti, si, item); }); });
         else if (vector_len == 256)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<256>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<256>(target, source, ti, si, item); }); });
         else if (vector_len == 512)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<512>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<512>(target, source, ti, si, item); }); });
         else if (vector_len == 1024)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<1024>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<1024>(target, source, ti, si, item); }); });
         else if (vector_len == 2048)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<2048>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<2048>(target, source, ti, si, item); }); });
         else if (vector_len == 4096)
-            q->submit([&](sycl::handler &cgh) { sycl::local_accessor<uint8_t, 1> local_mem(sycl::range<1>(shmem), cgh); cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<4096>(target, source, ti, si, item, local_mem.get_pointer()); }); });
+            q->submit([&](sycl::handler &cgh) { cgh.parallel_for(sycl::nd_range<3>(grid_dim * block_dim, block_dim), [=](sycl::nd_item<3> item) { sg_t<4096>(target, source, ti, si, item); }); });
         else
         {
             printf("ERROR: UNSUPPORTED VECTOR LENGTH\n");

@@ -103,8 +103,8 @@ add_definitions (-DSG_DATA_TYPE=double)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
         endif()
 
-        message("No SYCL architecture specified, default set to PVC")
-	set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
+        #message("No SYCL architecture specified, default set to PVC")
+	#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
     endif ()
 
     #OPENMP
