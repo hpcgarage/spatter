@@ -7,9 +7,14 @@
 #define typedef uint unsigned long
 
 //__device__ int dummy = 0;
-sycl::ext::oneapi::experimental::device_global<int> final_block_idx_dev;
-sycl::ext::oneapi::experimental::device_global<int> final_thread_idx_dev;
-sycl::ext::oneapi::experimental::device_global<int> final_gather_data_dev;
+template <class T>
+using sycl_device_global = sycl::ext::oneapi::experimental::device_global<
+    T,
+    decltype(sycl::ext::oneapi::experimental::properties(
+        sycl::ext::oneapi::experimental::device_image_scope))>;
+sycl_device_global<int> final_block_idx_dev;
+sycl_device_global<int> final_thread_idx_dev;
+sycl_device_global<double> final_gather_data_dev;
 
 template <int v>
 __attribute__((always_inline)) void scatter_t(double *target, double *source, long *ti, long *si, const sycl::nd_item<3> &item, uint8_t *dpct_local)
@@ -589,7 +594,10 @@ extern "C" float sycl_block_wrapper(uint dim, uint* grid, uint* block,
 
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
     q->memcpy(pat_dev, pat, sizeof(sgIdx_t) * pat_len).wait();
-    q->memcpy(order_dev, order, sizeof(uint32_t) * n).wait();
+    // In some cases, the pointers to memcpy were NULL:
+    // See disc: https://github.com/hpcgarage/spatter/pull/161
+    if (order_dev != nullptr)
+      q->memcpy(order_dev, order, sizeof(uint32_t) * n).wait();
 
     q->wait();
     auto start = std::chrono::steady_clock::now();

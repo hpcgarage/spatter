@@ -617,6 +617,9 @@ int main(int argc, char **argv)
         pat_gath_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *que);
         pat_scat_dev = sycl::malloc_device<sgIdx_t>(max_pat_len, *que);
         order_dev = sycl::malloc_device<uint32_t>(max_ro_len, *que);
+
+        // dont need wait explicity for the next two memcpy'ies since the queue is in-order and
+        // queue->wait() syncs both the ops.
         que->memcpy(source.dev_ptr_cuda, source.host_ptr, source.size);
         que->memcpy(target.dev_ptr_cuda, target.host_ptr, target.size);
         que->wait();
