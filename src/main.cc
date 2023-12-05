@@ -1,7 +1,15 @@
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 #include "Spatter/Configuration.hh"
 #include "Spatter/Input.hh"
 
 int main(int argc, char **argv) {
+
+#ifdef USE_MPI
+  MPI_Init(&argc, &argv);
+#endif
 
   const unsigned long warmup_runs = 10;
   bool timed = 0;
@@ -25,4 +33,8 @@ int main(int argc, char **argv) {
     }
     config->report();
   }
+
+#ifdef USE_MPI
+  MPI_Finalize();
+#endif
 }

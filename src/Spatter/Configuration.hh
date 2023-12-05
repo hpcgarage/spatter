@@ -5,6 +5,10 @@
 #ifndef SPATTER_CONFIGURATION_HH
 #define SPATTER_CONFIGURATION_HH
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 #ifdef USE_CUDA
 #include "CudaBackend.hh"
 #include <cuda.h>
@@ -97,6 +101,10 @@ public:
     if (verbosity >= 3)
       std::cout << "Spatter Gather Serial Running" << std::endl;
 
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     if (timed)
       timer.start();
 
@@ -110,6 +118,10 @@ public:
   void scatter(bool timed) {
     if (verbosity >= 3)
       std::cout << "Spatter Scatter Serial Running" << std::endl;
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     if (timed)
       timer.start();
@@ -187,6 +199,10 @@ public:
     if (verbosity >= 3)
       std::cout << "Spatter Gather OpenMP Running" << std::endl;
 
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     if (timed)
       timer.start();
 
@@ -200,6 +216,10 @@ public:
   void scatter(bool timed) {
     if (verbosity >= 3)
       std::cout << "Spatter Scatter OpenMP Running" << std::endl;
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     if (timed)
       timer.start();
@@ -320,16 +340,15 @@ public:
 
     cudaDeviceSynchronize();
 
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     if (timed)
       cudaEventRecord(start);
 
     int pattern_length = static_cast<int>(pattern.size());
     cuda_gather_wrapper(dev_pattern, dev_sparse, dev_dense, pattern_length);
-
-    /*
-        for (size_t i = 0; i < pattern.size(); ++i)
-          dense[i] = sparse[pattern[i]];
-    */
 
     if (timed) {
       cudaEventRecord(stop);
@@ -348,16 +367,16 @@ public:
 
     cudaDeviceSynchronize();
 
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     if (timed)
       cudaEventRecord(start);
 
     int pattern_length = static_cast<int>(pattern.size());
     cuda_scatter_wrapper(dev_pattern, dev_sparse, dev_dense, pattern_length);
 
-    /*
-        for (size_t i = 0; i < pattern.size(); ++i)
-          sparse[pattern[i]] = dense[i];
-    */
     if (timed) {
       cudaEventRecord(stop);
       cudaEventSynchronize(stop);
