@@ -21,6 +21,13 @@
 
 namespace Spatter {
 static char *shortargs = (char *)"b:f:hk:n:p:v:";
+const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
+    {"file", required_argument, nullptr, 'f'},
+    {"help", no_argument, nullptr, 'h'},
+    {"kernel", required_argument, nullptr, 'k'},
+    {"nruns", required_argument, nullptr, 'n'},
+    {"pattern", required_argument, nullptr, 'p'},
+    {"verbosity", required_argument, nullptr, 'v'}};
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -85,7 +92,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   bool json = 0;
   std::string json_fname = "";
 
-  while ((c = getopt(argc, argv, shortargs)) != -1) {
+  while ((c = getopt_long(argc, argv, shortargs, longargs, nullptr)) != -1) {
     switch (c) {
     case 'b':
       backend = optarg;

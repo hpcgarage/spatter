@@ -74,6 +74,11 @@ public:
   }
 
   virtual void setup() {
+    if (pattern.size() == 0) {
+      std::cerr << "Pattern needs to have length of at least 1" << std::endl;
+      exit(1);
+    }
+
     dense.resize(pattern.size());
 
     for (size_t i = 0; i < pattern.size(); ++i)
