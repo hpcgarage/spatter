@@ -24,15 +24,19 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  if (cl.configs.size() != 1)
+  if (cl.configs.size() != 1) {
     std::cerr << "Test failure on Uniform Stride: Expected number of runs to "
                  "be 1, actually was "
               << cl.configs.size() << std::endl;
+    return EXIT_FAILURE;
+  }
 
-  if (cl.configs[0] == NULL)
+  if (cl.configs[0] == NULL) {
     std::cerr << "Test failure on Uniform Stride: Failed to create or allocate "
                  "a ConfigurationBase object"
               << std::endl;
+    return EXIT_FAILURE;
+  }
 
   std::vector<size_t> validate = {0, 1, 2, 3, 4, 5, 6, 7};
 

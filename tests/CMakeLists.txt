@@ -1,12 +1,14 @@
 # Spatter/test/CMakelists.txt
+get_filename_component(full_path_json_test_data "${CMAKE_CURRENT_SOURCE_DIR}/test-data/amg.json" ABSOLUTE)
+add_definitions(-DJSON_SRC="${full_path_json_test_data}")
 
 set(SPATTER_TESTS
       parse_uniform_stride_1
       parse_uniform_stride_suite
 #      parse_ms1_suite
-#      parse_custom_suite
+      parse_custom_suite
 #      parse_omp_threads_suite
-#      parse_json_suite
+      parse_json_suite
 #      parse_run_cnofig_suite
 #      parse_random_suite
 #      parse_concurrent
