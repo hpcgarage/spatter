@@ -83,6 +83,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   unsigned long nruns = 10;
   unsigned long verbosity = 3;
   bool json = 0;
+  std::string json_fname = "";
 
   while ((c = getopt(argc, argv, shortargs)) != -1) {
     switch (c) {
@@ -118,12 +119,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'f': {
       json = 1;
-      Spatter::JSONParser json_file = Spatter::JSONParser(optarg);
-
-      for (size_t i = 0; i < json_file.size(); ++i) {
-        std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
-        cl.configs.push_back(std::move(c));
-      }
+      json_fname = optarg;
       break;
     }
 
@@ -133,6 +129,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'k':
       kernel = optarg;
+      std::transform(backend.begin(), backend.end(), backend.begin(),
+          [](unsigned char c) { return std::tolower(c); });
+
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0)) {
         std::cerr << "Valid Kernels are: gather, scatter" << std::endl;
         return -1;
@@ -231,6 +230,14 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     }
 
     cl.configs.push_back(std::move(c));
+  } else {
+    Spatter::JSONParser json_file =
+        Spatter::JSONParser(json_fname, backend, kernel, nruns, verbosity);
+
+    for (size_t i = 0; i < json_file.size(); ++i) {
+      std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
+      cl.configs.push_back(std::move(c));
+    }
   }
 
   return 0;
