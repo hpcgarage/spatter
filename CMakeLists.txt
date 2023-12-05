@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
+include(pkgs/OpenMPSupport)
 include(pkgs/CUDASupport)
 
 add_subdirectory(src)

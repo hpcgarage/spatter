@@ -9,6 +9,10 @@
 #include "mpi.h"
 #endif
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #ifdef USE_CUDA
 #include "CudaBackend.hh"
 #include <cuda.h>
@@ -130,9 +134,6 @@ public:
   };
 
   void gather(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Gather Serial Running" << std::endl;
-
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -150,9 +151,6 @@ public:
   }
 
   void scatter(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Scatter Serial Running" << std::endl;
-
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -188,12 +186,11 @@ template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, nruns, verbosity){setup()};
+      : ConfigurationBase(kernel, pattern, nruns, verbosity) {
+    setup();
+  };
 
   void gather(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Gather OpenMP Running" << std::endl;
-
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -201,6 +198,7 @@ public:
     if (timed)
       timer.start();
 
+#pragma omp parallel for simd
     for (size_t i = 0; i < pattern.size(); ++i)
       dense[i] = sparse[pattern[i]];
 
@@ -211,9 +209,6 @@ public:
   }
 
   void scatter(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Scatter OpenMP Running" << std::endl;
-
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -221,6 +216,7 @@ public:
     if (timed)
       timer.start();
 
+#pragma omp parallel for simd
     for (size_t i = 0; i < pattern.size(); ++i)
       sparse[pattern[i]] = dense[i];
 
@@ -300,9 +296,6 @@ public:
   }
 
   void gather(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Gather CUDA Running" << std::endl;
-
     cudaDeviceSynchronize();
 
 #ifdef USE_MPI
@@ -327,9 +320,6 @@ public:
   }
 
   void scatter(bool timed) {
-    if (verbosity >= 3)
-      std::cout << "Spatter Scatter CUDA Running" << std::endl;
-
     cudaDeviceSynchronize();
 
 #ifdef USE_MPI
