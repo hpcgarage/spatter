@@ -32,21 +32,65 @@ class ConfigurationBase {
 public:
   ConfigurationBase(std::string k, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : kernel(k), pattern(pattern), nruns(nruns), verbosity(verbosity) {
+      : kernel(k), pattern(pattern), nruns(nruns), verbosity(verbosity),
+        time_seconds(0) {
     std::transform(kernel.begin(), kernel.end(), kernel.begin(),
         [](unsigned char c) { return std::tolower(c); });
   }
 
   ~ConfigurationBase() = default;
 
-  virtual int run(bool timed) = 0;
+  virtual int run(bool timed) {
+    if (kernel.compare("gather") == 0)
+      gather(timed);
+    else if (kernel.compare("scatter") == 0)
+      scatter(timed);
+    else {
+      std::cerr << "Invalid Kernel Type" << std::endl;
+      return -1;
+    }
+
+    return 0;
+  }
+
   virtual void gather(bool timed) = 0;
   virtual void scatter(bool timed) = 0;
 
-  virtual void report() = 0;
+  virtual void report() {
+    std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
+              << std::endl;
+    std::cout << pattern.size() * sizeof(size_t) << " Bytes Moved per Run"
+              << std::endl;
+    std::cout << nruns << " Runs took " << std::fixed << time_seconds
+              << " Seconds" << std::endl;
+    std::cout << "Average Bandwidth: "
+              << (double)(nruns * pattern.size() * sizeof(size_t)) /
+            time_seconds / 1000000.
+              << " MB/s" << std::endl;
+  }
 
-private:
-  virtual void setup() = 0;
+  virtual void setup() {
+    dense.resize(pattern.size());
+
+    for (size_t i = 0; i < pattern.size(); ++i)
+      dense[i] = rand();
+
+    size_t max_pattern_val = 0;
+    for (size_t i = 0; i < pattern.size(); ++i)
+      if (pattern[i] > max_pattern_val)
+        max_pattern_val = pattern[i];
+
+    sparse.resize(max_pattern_val + 1);
+
+    for (size_t i = 0; i < max_pattern_val + 1; ++i)
+      sparse[i] = rand();
+
+    if (verbosity >= 3)
+      std::cout << "Pattern Array Size: " << pattern.size()
+                << "\tDense Array Size: " << dense.size()
+                << "\tSparse Array Size: " << sparse.size()
+                << "\tMax Pattern Val: " << max_pattern_val << std::endl;
+  }
 
 public:
   std::string kernel;
@@ -58,6 +102,7 @@ public:
   const unsigned long verbosity;
 
   Spatter::Timer timer;
+  double time_seconds;
 };
 
 std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config) {
@@ -84,19 +129,6 @@ public:
     setup();
   };
 
-  int run(bool timed) {
-    if (kernel.compare("gather") == 0)
-      gather(timed);
-    else if (kernel.compare("scatter") == 0)
-      scatter(timed);
-    else {
-      std::cerr << "Invalid Kernel Type" << std::endl;
-      return -1;
-    }
-
-    return 0;
-  }
-
   void gather(bool timed) {
     if (verbosity >= 3)
       std::cout << "Spatter Gather Serial Running" << std::endl;
@@ -111,8 +143,10 @@ public:
     for (size_t i = 0; i < pattern.size(); ++i)
       dense[i] = sparse[pattern[i]];
 
-    if (timed)
+    if (timed) {
       timer.stop();
+      time_seconds = timer.seconds();
+    }
   }
 
   void scatter(bool timed) {
@@ -129,49 +163,23 @@ public:
     for (size_t i = 0; i < pattern.size(); ++i)
       sparse[pattern[i]] = dense[i];
 
-    if (timed)
+    if (timed) {
       timer.stop();
+      time_seconds = timer.seconds();
+    }
   }
 
   void report() {
     std::cout << "Spatter Serial Report" << std::endl;
-    std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
-              << std::endl;
-    std::cout << pattern.size() * sizeof(size_t) << " Bytes Moved per Run"
-              << std::endl;
-    std::cout << nruns << " Runs took " << std::fixed << timer.seconds()
-              << " Seconds" << std::endl;
-    std::cout << "Average Bandwidth: "
-              << (double)(nruns * pattern.size() * sizeof(size_t)) /
-            timer.seconds() / 1000000.
-              << " MB/s" << std::endl;
+
+    ConfigurationBase::report();
   }
 
-private:
   void setup() {
     if (verbosity >= 3)
       std::cout << "Spatter Serial Setup" << std::endl;
 
-    dense.resize(pattern.size());
-
-    for (size_t i = 0; i < pattern.size(); ++i)
-      dense[i] = rand();
-
-    size_t max_pattern_val = 0;
-    for (size_t i = 0; i < pattern.size(); ++i)
-      if (pattern[i] > max_pattern_val)
-        max_pattern_val = pattern[i];
-
-    sparse.resize(max_pattern_val + 1);
-
-    for (size_t i = 0; i < max_pattern_val + 1; ++i)
-      sparse[i] = rand();
-
-    if (verbosity >= 3)
-      std::cout << "Pattern Array Size: " << pattern.size()
-                << "\tDense Array Size: " << dense.size()
-                << "\tSparse Array Size: " << sparse.size()
-                << "\tMax Pattern Val: " << max_pattern_val << std::endl;
+    ConfigurationBase::setup();
   }
 };
 
@@ -181,19 +189,6 @@ public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
       : ConfigurationBase(kernel, pattern, nruns, verbosity){setup()};
-
-  int run(bool timed) {
-    if (kernel.compare("gather") == 0)
-      gather(timed);
-    else if (kernel.compare("scatter") == 0)
-      scatter(timed);
-    else {
-      std::cerr << "Invalid Kernel Type" << std::endl;
-      return -1;
-    }
-
-    return 0;
-  }
 
   void gather(bool timed) {
     if (verbosity >= 3)
@@ -209,8 +204,10 @@ public:
     for (size_t i = 0; i < pattern.size(); ++i)
       dense[i] = sparse[pattern[i]];
 
-    if (timed)
+    if (timed) {
       timer.stop();
+      time_seconds = timer.seconds();
+    }
   }
 
   void scatter(bool timed) {
@@ -227,48 +224,23 @@ public:
     for (size_t i = 0; i < pattern.size(); ++i)
       sparse[pattern[i]] = dense[i];
 
-    if (timed)
+    if (timed) {
       timer.stop();
+      time_seconds = timer.seconds();
+    }
   }
 
   void report() {
     std::cout << "Spatter OpenMP Report" << std::endl;
-    std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
-              << std::endl;
-    std::cout << pattern.size() * sizeof(size_t) << " Bytes Moved per Run"
-              << std::endl;
-    std::cout << nruns << " Runs took " << std::fixed << timer.seconds()
-              << " Seconds" << std::endl;
-    std::cout << "Average Bandwidth: "
-              << (double)(nruns * pattern.size() * sizeof(size_t)) /
-            timer.seconds() / 1000000.
-              << " MB/s" << std::endl;
+
+    ConfigurationBase::report();
   }
 
-private:
   void setup() {
     if (verbosity >= 3)
       std::cout << "Spatter OpenMP Setup" << std::endl;
 
-    dense.resize(pattern.size());
-    for (size_t i = 0; i < pattern.size(); ++i)
-      dense[i] = rand();
-
-    size_t max_pattern_val = 0;
-    for (size_t i = 0; i < pattern.size(); ++i)
-      if (pattern[i] > max_pattern_val)
-        max_pattern_val = pattern[i];
-
-    sparse.resize(max_pattern_val + 1);
-
-    for (size_t i = 0; i < max_pattern_val + 1; ++i)
-      sparse[i] = rand();
-
-    if (verbosity >= 3)
-      std::cout << "Pattern Array Size: " << pattern.size()
-                << "\tDense Array Size: " << dense.size()
-                << "\tSparse Array Size: " << sparse.size()
-                << "\tMax Pattern Val: " << max_pattern_val << std::endl;
+    ConfigurationBase::setup();
   }
 };
 #endif
@@ -294,14 +266,7 @@ public:
   }
 
   int run(bool timed) {
-    if (kernel.compare("gather") == 0)
-      gather(timed);
-    else if (kernel.compare("scatter") == 0)
-      scatter(timed);
-    else {
-      std::cerr << "Invalid Kernel Type" << std::endl;
-      return -1;
-    }
+    ConfigurationBase::run(timed);
 
     if (verbosity >= 3)
       std::cout << "Copying Vectors back to CPU" << std::endl;
@@ -390,19 +355,10 @@ public:
 
   void report() {
     std::cout << "Spatter CUDA Report" << std::endl;
-    std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
-              << std::endl;
-    std::cout << pattern.size() * sizeof(size_t) << " Bytes Moved per Run"
-              << std::endl;
-    std::cout << nruns << " Runs took " << std::fixed << time_seconds
-              << " Seconds" << std::endl;
-    std::cout << "Average Bandwidth: "
-              << (double)(nruns * pattern.size() * sizeof(size_t)) /
-            time_seconds / 1000000.
-              << " MB/s" << std::endl;
+
+    ConfigurationBase::report();
   }
 
-private:
   void setup() {
     if (verbosity >= 1) {
       std::cout << "Spatter CUDA Setup" << std::endl;
@@ -427,20 +383,7 @@ private:
                 << std::endl;
     }
 
-    dense.resize(pattern.size());
-
-    for (size_t i = 0; i < pattern.size(); ++i)
-      dense[i] = rand();
-
-    size_t max_pattern_val = 0;
-    for (size_t i = 0; i < pattern.size(); ++i)
-      if (pattern[i] > max_pattern_val)
-        max_pattern_val = pattern[i];
-
-    sparse.resize(max_pattern_val + 1);
-
-    for (size_t i = 0; i < max_pattern_val + 1; ++i)
-      sparse[i] = rand();
+    ConfigurationBase::setup();
 
     if (verbosity >= 3)
       std::cout << "Creating CUDA Events" << std::endl;
@@ -472,12 +415,6 @@ private:
 
     cudaDeviceSynchronize();
 
-    if (verbosity >= 3)
-      std::cout << "Pattern Array Size: " << pattern.size()
-                << "\tDense Array Size: " << dense.size()
-                << "\tSparse Array Size: " << sparse.size()
-                << "\tMax Pattern Val: " << max_pattern_val << std::endl;
-
     if (verbosity >= 3) {
       std::cout << "Pattern: ";
       for (size_t val : pattern)
@@ -499,7 +436,6 @@ public:
   double *dev_sparse;
   double *dev_dense;
 
-  double time_seconds;
   cudaEvent_t start;
   cudaEvent_t stop;
 };
