@@ -70,7 +70,7 @@ int json_test(size_t run_count, std::string kernel,
       return EXIT_FAILURE;
     }
 
-    for (size_t j = 0; j < pattern_lengths[i]; j++) {
+    for (size_t j = 0; j < pattern_lengths[i]; ++j) {
       if (patterns[i][j] != cl.configs[i]->pattern[j]) {
         std::cerr << "Test failure on JSON Parse: pattern mismatch at index "
                   << i << ", got value " << cl.configs[i]->pattern[j]
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   int argc_ = 2;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./spatter");
+  asprintf(&argv_[0], "./src/spatter-driver");
   asprintf(&argv_[1], "-f%s", JSON_SRC);
 
   std::cout << argv_[0] << " " << argv_[1] << std::endl;
