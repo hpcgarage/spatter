@@ -14,8 +14,8 @@ set(SPATTER_TESTS
 #      parse_concurrent
 #      parse_multilevel
 #      parse_size
-#      standard_uniform_suite
-#      standard_ms1_suite
+      standard_uniform_suite
+      standard_ms1_suite
 #      concurrent
 #      multilevel
 #      binary-trace
