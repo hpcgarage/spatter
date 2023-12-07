@@ -13,6 +13,7 @@ set(SPATTER_INCLUDE_FILES
     Configuration.hh
     Input.hh
     JSONParser.hh
+    PatternParser.hh
     SpatterTypes.hh
     Timer.hh)
 

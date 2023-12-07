@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Spatter/Configuration.hh"
+#include "Spatter/PatternParser.hh"
 
 using json = nlohmann::json;
 
@@ -66,23 +67,65 @@ public:
     assert(data_[index].contains("nruns"));
     assert(data_[index].contains("verbosity"));
 
+    std::vector<size_t> pattern;
+    std::string type;
+    std::vector<std::vector<size_t>> generator;
+
+    if (data_[index]["pattern"].type() == json::value_t::string) {
+      std::string pattern_string =
+          data_[index]["pattern"].template get<std::string>();
+      pattern_string.erase(
+          std::remove(pattern_string.begin(), pattern_string.end(), '\"'),
+          pattern_string.end());
+
+      std::stringstream pattern_stream;
+      pattern_stream << pattern_string;
+
+      if (pattern_parser(pattern_stream, pattern, type, generator) != 0)
+        exit(1);
+
+      if (!type.empty())
+        if (generate_pattern(type, generator, pattern) != 0)
+          exit(1);
+
+      if (type.empty()) {
+        for (std::string line; std::getline(pattern_stream, line, ',');) {
+          try {
+            size_t val = std::stoul(line);
+
+            if (line[0] == '-') {
+              std::cerr << "Parsing Error: Found Negative Index in Pattern"
+                        << std::endl;
+              exit(1);
+            } else
+              pattern.push_back(val);
+          } catch (const std::invalid_argument &ia) {
+            std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
+            exit(1);
+          }
+        }
+      }
+    } else {
+      pattern = data_[index]["pattern"].template get<std::vector<size_t>>();
+    }
+
     std::unique_ptr<Spatter::ConfigurationBase> c;
 
     if (backend_.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(
-          data_[index]["kernel"], data_[index]["pattern"],
-          data_[index]["nruns"], data_[index]["verbosity"]);
+          data_[index]["kernel"], pattern, data_[index]["nruns"],
+          data_[index]["verbosity"]);
 #ifdef USE_OPENMP
     else if (backend_.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(
-          data_[index]["kernel"], data_[index]["pattern"],
-          data_[index]["nruns"], data_[index]["verbosity"]);
+          data_[index]["kernel"], pattern, data_[index]["nruns"],
+          data_[index]["verbosity"]);
 #endif
 #ifdef USE_CUDA
     else if (backend_.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(
-          data_[index]["kernel"], data_[index]["pattern"],
-          data_[index]["nruns"], data_[index]["verbosity"]);
+          data_[index]["kernel"], pattern, data_[index]["nruns"],
+          data_[index]["verbosity"]);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend_ << std::endl;
