@@ -35,9 +35,10 @@ namespace Spatter {
 class ConfigurationBase {
 public:
   ConfigurationBase(std::string k, const std::vector<size_t> pattern,
-      const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : kernel(k), pattern(pattern), nruns(nruns), verbosity(verbosity),
-        time_seconds(0) {
+      const int nthreads, const unsigned long nruns = 10,
+      const unsigned long verbosity = 3)
+      : kernel(k), pattern(pattern), omp_threads(nthreads), nruns(nruns),
+        verbosity(verbosity), time_seconds(0) {
     std::transform(kernel.begin(), kernel.end(), kernel.begin(),
         [](unsigned char c) { return std::tolower(c); });
   }
@@ -107,6 +108,7 @@ public:
   std::vector<double> sparse;
   std::vector<double> dense;
 
+  const int omp_threads;
   const unsigned long nruns;
   const unsigned long verbosity;
 
@@ -134,7 +136,7 @@ template <> class Configuration<Spatter::Serial> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, nruns, verbosity) {
+      : ConfigurationBase(kernel, pattern, 1, nruns, verbosity) {
     setup();
   };
 
@@ -190,10 +192,16 @@ public:
 template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
-      const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, nruns, verbosity) {
+      const int nthreads, const unsigned long nruns = 10,
+      const unsigned long verbosity = 3)
+      : ConfigurationBase(kernel, pattern, nthreads, nruns, verbosity) {
     setup();
   };
+
+  int run(bool timed) {
+    omp_set_num_threads(omp_threads);
+    return ConfigurationBase::run(timed);
+  }
 
   void gather(bool timed) {
 #ifdef USE_MPI
@@ -251,7 +259,7 @@ template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, nruns, verbosity) {
+      : ConfigurationBase(kernel, pattern, 1, nruns, verbosity) {
     setup();
   };
 

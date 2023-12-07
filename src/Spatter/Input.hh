@@ -15,19 +15,24 @@
 #include <string>
 #include <vector>
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #include "Spatter/Configuration.hh"
 #include "Spatter/JSONParser.hh"
 #include "Spatter/PatternParser.hh"
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:f:hk:n:p:v:";
+static char *shortargs = (char *)"b:f:hk:n:p:t:v:";
 const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
     {"file", required_argument, nullptr, 'f'},
     {"help", no_argument, nullptr, 'h'},
     {"kernel", required_argument, nullptr, 'k'},
     {"nruns", required_argument, nullptr, 'n'},
     {"pattern", required_argument, nullptr, 'p'},
+    {"omp-threads", required_argument, nullptr, 't'},
     {"verbosity", required_argument, nullptr, 'v'}};
 
 struct ClArgs {
@@ -37,26 +42,31 @@ struct ClArgs {
 void help(char *progname) {
   std::cout << "Spatter\n";
   std::cout << "Usage: " << progname << "\n";
-  std::cout << std::left << std::setw(10) << "-b" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-f" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-h" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-k" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-n" << std::setw(40)
-            << "Set Number of Runs" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-p" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-n (--nruns)" << std::setw(40)
+            << "Set Number of Runs (default 10)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-p (--pattern)" << std::setw(40)
             << "Set Pattern" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-v" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-t (--omp-threads)"
+            << std::setw(40)
+            << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
+               "openmp or OMP_MAX_THREADS if USE_OPENMP)"
+            << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level" << std::left << "\n";
 }
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
             << "[-b backend] [-f input file] [-h help] [-k kernel] [-n nruns] "
-               "[-p pattern] [-v "
+               "[-p pattern] [-t nthreads] [-v "
                "verbosity]"
             << std::endl;
 }
@@ -71,6 +81,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::string kernel = "gather";
   std::string type = "";
   unsigned long nruns = 10;
+
+#ifdef USE_OPENMP
+  int nthreads = omp_get_max_threads();
+#else
+  int nthreads = 1;
+#endif
+
   unsigned long verbosity = 3;
   bool json = 0;
   std::string json_fname = "";
@@ -165,6 +182,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
+    case 't':
+      try {
+        nthreads = std::stoi(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Number of Threads" << std::endl;
+        return -1;
+      }
+      break;
+
     case 'v':
       try {
         verbosity = std::stoul(optarg);
@@ -180,6 +206,44 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     }
   }
 
+#ifdef USE_OPENMP
+  int max_threads = omp_get_max_threads();
+  if (backend.compare("openmp") != 0) {
+    std::cerr << "Parsing Warning: Requested threads without specifying the "
+                 "backend to be OpenMP. Backend requested was "
+              << backend << ". Using 1 OpenMP thread instead" << std::endl;
+    nthreads = 1;
+  } else {
+    if (nthreads > max_threads) {
+      std::cerr << "Parsing Warning: Too many OpenMP threads requested. Using "
+                   "OMP_MAX_THREADS instead"
+                << std::endl;
+      nthreads = max_threads;
+    }
+
+    if (nthreads == 0) {
+      std::cerr << "Parsing Warning: 0 OpenMP threads requested. Using "
+                   "OMP_MAX_THREADS instead"
+                << std::endl;
+      nthreads = max_threads;
+    }
+
+    if (nthreads < 0) {
+      std::cerr << "Parsing Warning: Negative OpenMP threads requested. Using "
+                   "OMP_MAX_THREADS instead"
+                << std::endl;
+      nthreads = max_threads;
+    }
+  }
+#else
+  if (nthreads != 1) {
+    std::cerr << "Compiled without OpenMP support, but requested something "
+                 "other than 1 OpenMP thread. Using 1 thread instead"
+              << std::endl;
+    nthreads = 1;
+  }
+#endif
+
   if (!json) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
@@ -188,7 +252,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(
-          kernel, pattern, nruns, verbosity);
+          kernel, pattern, nthreads, nruns, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)

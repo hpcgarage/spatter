@@ -7,7 +7,7 @@ set(SPATTER_TESTS
       parse_uniform_stride_suite
       parse_ms1_suite
       parse_custom_suite
-#      parse_omp_threads_suite
+      parse_omp_threads_suite
       parse_json_suite
 #      parse_run_config_suite
 #      parse_random_suite
