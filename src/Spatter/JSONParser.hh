@@ -92,28 +92,6 @@ public:
 
       if (pattern_parser(pattern_stream, pattern, type, generator) != 0)
         exit(1);
-
-      if (!type.empty())
-        if (generate_pattern(type, generator, pattern) != 0)
-          exit(1);
-
-      if (type.empty()) {
-        for (std::string line; std::getline(pattern_stream, line, ',');) {
-          try {
-            size_t val = std::stoul(line);
-
-            if (line[0] == '-') {
-              std::cerr << "Parsing Error: Found Negative Index in Pattern"
-                        << std::endl;
-              exit(1);
-            } else
-              pattern.push_back(val);
-          } catch (const std::invalid_argument &ia) {
-            std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
-            exit(1);
-          }
-        }
-      }
     } else {
       pattern = data_[index]["pattern"].template get<std::vector<size_t>>();
     }

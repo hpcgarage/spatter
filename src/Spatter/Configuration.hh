@@ -35,9 +35,11 @@ namespace Spatter {
 class ConfigurationBase {
 public:
   ConfigurationBase(std::string k, const std::vector<size_t> pattern,
-      const int nthreads, const unsigned long nruns = 10,
-      const unsigned long verbosity = 3)
-      : kernel(k), pattern(pattern), omp_threads(nthreads), nruns(nruns),
+      const std::vector<size_t> pattern_gather,
+      const std::vector<size_t> pattern_scatter, const int nthreads,
+      const unsigned long nruns = 10, const unsigned long verbosity = 3)
+      : kernel(k), pattern(pattern), pattern_gather(pattern_gather),
+        pattern_scatter(pattern_scatter), omp_threads(nthreads), nruns(nruns),
         verbosity(verbosity), time_seconds(0) {
     std::transform(kernel.begin(), kernel.end(), kernel.begin(),
         [](unsigned char c) { return std::tolower(c); });
@@ -50,6 +52,12 @@ public:
       gather(timed);
     else if (kernel.compare("scatter") == 0)
       scatter(timed);
+    else if (kernel.compare("sg") == 0)
+      scatter_gather(timed);
+    else if (kernel.compare("multigather") == 0)
+      multi_gather(timed);
+    else if (kernel.compare("multiscatter") == 0)
+      multi_scatter(timed);
     else {
       std::cerr << "Invalid Kernel Type" << std::endl;
       return -1;
@@ -60,6 +68,9 @@ public:
 
   virtual void gather(bool timed) = 0;
   virtual void scatter(bool timed) = 0;
+  virtual void scatter_gather(bool timed) = 0;
+  virtual void multi_gather(bool timed) = 0;
+  virtual void multi_scatter(bool timed) = 0;
 
   virtual void report() {
     std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
@@ -105,7 +116,13 @@ public:
 public:
   std::string kernel;
   const std::vector<size_t> pattern;
+  const std::vector<size_t> pattern_gather;
+  const std::vector<size_t> pattern_scatter;
+
   std::vector<double> sparse;
+  std::vector<double> sparse_gather;
+  std::vector<double> sparse_scatter;
+
   std::vector<double> dense;
 
   const int omp_threads;
@@ -135,12 +152,17 @@ template <typename Backend> class Configuration : public ConfigurationBase {};
 template <> class Configuration<Spatter::Serial> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
-      const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, 1, nruns, verbosity) {
+      const std::vector<size_t> pattern_gather,
+      const std::vector<size_t> pattern_scatter, const unsigned long nruns = 10,
+      const unsigned long verbosity = 3)
+      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter, 1,
+            nruns, verbosity) {
     setup();
   };
 
   void gather(bool timed) {
+    size_t pattern_length = pattern.size();
+
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -148,7 +170,7 @@ public:
     if (timed)
       timer.start();
 
-    for (size_t i = 0; i < pattern.size(); ++i)
+    for (size_t i = 0; i < pattern_length; ++i)
       dense[i] = sparse[pattern[i]];
 
     if (timed) {
@@ -158,6 +180,8 @@ public:
   }
 
   void scatter(bool timed) {
+    size_t pattern_length = pattern.size();
+
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -165,8 +189,66 @@ public:
     if (timed)
       timer.start();
 
-    for (size_t i = 0; i < pattern.size(); ++i)
+    for (size_t i = 0; i < pattern_length; ++i)
       sparse[pattern[i]] = dense[i];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void scatter_gather(bool timed) {
+    assert(pattern_scatter.size() == pattern_gather.size());
+    size_t pattern_length = pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    for (size_t i = 0; i < pattern_length; ++i)
+      sparse_scatter[pattern_scatter[i]] = sparse_gather[pattern_gather[i]];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_gather(bool timed) {
+    size_t pattern_length = pattern_gather.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    for (size_t i = 0; i < pattern_length; ++i)
+      dense[i] = sparse[pattern[pattern_gather[i]]];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_scatter(bool timed) {
+    size_t pattern_length = pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    for (size_t i = 0; i < pattern_length; ++i)
+      sparse[pattern[pattern_scatter[i]]] = dense[i];
 
     if (timed) {
       timer.stop();
@@ -192,9 +274,11 @@ public:
 template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
-      const int nthreads, const unsigned long nruns = 10,
-      const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, nthreads, nruns, verbosity) {
+      const std::vector<size_t> pattern_gather,
+      std::vector<size_t> pattern_scatter, const int nthreads,
+      const unsigned long nruns = 10, const unsigned long verbosity = 3)
+      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter,
+            nthreads, nruns, verbosity) {
     setup();
   };
 
@@ -204,6 +288,8 @@ public:
   }
 
   void gather(bool timed) {
+    size_t pattern_length = pattern.size();
+
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -212,7 +298,7 @@ public:
       timer.start();
 
 #pragma omp parallel for simd
-    for (size_t i = 0; i < pattern.size(); ++i)
+    for (size_t i = 0; i < pattern_length; ++i)
       dense[i] = sparse[pattern[i]];
 
     if (timed) {
@@ -222,6 +308,8 @@ public:
   }
 
   void scatter(bool timed) {
+    size_t pattern_length = pattern.size();
+
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -230,8 +318,69 @@ public:
       timer.start();
 
 #pragma omp parallel for simd
-    for (size_t i = 0; i < pattern.size(); ++i)
+    for (size_t i = 0; i < pattern_length; ++i)
       sparse[pattern[i]] = dense[i];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void scatter_gather(bool timed) {
+    assert(pattern_scatter.size() == pattern_gather.size());
+    size_t pattern_length = pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+#pragma omp parallel for simd
+    for (size_t i = 0; i < pattern_length; ++i)
+      sparse_scatter[pattern_scatter[i]] = sparse_gather[pattern_gather[i]];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_gather(bool timed) {
+    size_t pattern_length = pattern_gather.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+#pragma omp parallel for simd
+    for (size_t i = 0; i < pattern_length; ++i)
+      dense[i] = sparse[pattern[pattern_gather[i]]];
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_scatter(bool timed) {
+    size_t pattern_length = pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+#pragma omp parallel for simd
+    for (size_t i = 0; i < pattern_length; ++i)
+      sparse[pattern[pattern_scatter[i]]] = dense[i];
 
     if (timed) {
       timer.stop();
@@ -258,8 +407,11 @@ public:
 template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
-      const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, 1, nruns, verbosity) {
+      const std::vector<size_t> pattern_gather,
+      const std::vector<size_t> pattern_scatter, const unsigned long nruns = 10,
+      const unsigned long verbosity = 3)
+      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter, 1,
+            nruns, verbosity) {
     setup();
   };
 
@@ -309,6 +461,7 @@ public:
   }
 
   void gather(bool timed) {
+    int pattern_length = static_cast<int>(pattern.size());
     cudaDeviceSynchronize();
 
 #ifdef USE_MPI
@@ -318,7 +471,6 @@ public:
     if (timed)
       cudaEventRecord(start);
 
-    int pattern_length = static_cast<int>(pattern.size());
     cuda_gather_wrapper(dev_pattern, dev_sparse, dev_dense, pattern_length);
 
     if (timed) {
@@ -333,6 +485,7 @@ public:
   }
 
   void scatter(bool timed) {
+    int pattern_length = static_cast<int>(pattern.size());
     cudaDeviceSynchronize();
 
 #ifdef USE_MPI
@@ -342,7 +495,6 @@ public:
     if (timed)
       cudaEventRecord(start);
 
-    int pattern_length = static_cast<int>(pattern.size());
     cuda_scatter_wrapper(dev_pattern, dev_sparse, dev_dense, pattern_length);
 
     if (timed) {
@@ -354,6 +506,79 @@ public:
     float time_ms = 0;
     cudaEventElapsedTime(&time_ms, start, stop);
     time_seconds += ((double)time_ms / 1000.0);
+  }
+
+  void scatter_gather(bool timed) {
+    assert(pattern_scatter.size() == pattern_gather.size());
+    int pattern_length = static_cast<int> pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    cuda_scatter_gather_wrapper(dev_pattern_scatter, dev_sparse_scatter,
+        dev_pattern_gather, dev_sparse_gather, pattern_length);
+
+    /*
+        for (size_t i = 0; i < pattern_length; ++i)
+          sparse_scatter[pattern_scatter[i]] = sparse_gather[pattern_gather[i]];
+    */
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_gather(bool timed) {
+    int pattern_length = static_cast<int> pattern_gather.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    cuda_multi_gather_wrapper(
+        dev_pattern, dev_pattern_gather, dev_sparse, dev_dense, pattern_length);
+
+    /*
+        for (size_t i = 0; i < pattern_length; ++i)
+          dense[i] = sparse[pattern[pattern_gather[i]]];
+    */
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
+  }
+
+  void multi_scatter(bool timed) {
+    int pattern_length = static_cast<int> pattern_scatter.size();
+
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (timed)
+      timer.start();
+
+    cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter, dev_sparse,
+        dev_dense, pattern_length);
+
+    /*
+        for (size_t i = 0; i < pattern_length; ++i)
+          sparse[pattern[pattern_scatter[i]]] = dense[i];
+    */
+
+    if (timed) {
+      timer.stop();
+      time_seconds = timer.seconds();
+    }
   }
 
   void report() {
@@ -436,7 +661,13 @@ public:
 
 public:
   size_t *dev_pattern;
+  size_t *dev_pattern_gather;
+  size_t *dev_pattern_scatter;
+
   double *dev_sparse;
+  double *dev_sparse_gather;
+  double *dev_sparse_scatter;
+
   double *dev_dense;
 
   cudaEvent_t start;

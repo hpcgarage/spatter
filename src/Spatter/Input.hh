@@ -25,13 +25,15 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:f:hk:n:p:t:v:";
+static char *shortargs = (char *)"b:f:g:hk:n:p:s:t:v:";
 const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
     {"file", required_argument, nullptr, 'f'},
+    {"pattern-gather", required_argument, nullptr, 'g'},
     {"help", no_argument, nullptr, 'h'},
     {"kernel", required_argument, nullptr, 'k'},
     {"nruns", required_argument, nullptr, 'n'},
     {"pattern", required_argument, nullptr, 'p'},
+    {"pattern-scatter", required_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
     {"verbosity", required_argument, nullptr, 'v'}};
 
@@ -46,6 +48,10 @@ void help(char *progname) {
             << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
+  std::cout
+      << std::left << std::setw(10) << "-g (--pattern-gather)" << std::setw(40)
+      << "Set Inner Gather Pattern (Valid with kernel-name: sg, multigather)"
+      << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
@@ -54,6 +60,10 @@ void help(char *progname) {
             << "Set Number of Runs (default 10)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-p (--pattern)" << std::setw(40)
             << "Set Pattern" << std::left << "\n";
+  std::cout
+      << std::left << std::setw(10) << "-s (--pattern-scatter)" << std::setw(4)
+      << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
+      << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-t (--omp-threads)"
             << std::setw(40)
             << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
@@ -65,8 +75,9 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-b backend] [-f input file] [-h help] [-k kernel] [-n nruns] "
-               "[-p pattern] [-t nthreads] [-v "
+            << "[-b backend] [-f input file] [-g inner gather pattern] [-h "
+               "help] [-k kernel] [-n nruns] "
+               "[-p pattern] [-s inner scatter pattern] [-t nthreads] [-v "
                "verbosity]"
             << std::endl;
 }
@@ -74,12 +85,24 @@ void usage(char *progname) {
 int parse_input(const int argc, char **argv, ClArgs &cl) {
   int c;
   std::stringstream pattern_string;
+  std::stringstream pattern_gather_string;
+  std::stringstream pattern_scatter_string;
+
   std::vector<size_t> pattern;
+  std::vector<size_t> pattern_gather;
+  std::vector<size_t> pattern_scatter;
+
   std::vector<std::vector<size_t>> generator;
+  std::vector<std::vector<size_t>> generator_gather;
+  std::vector<std::vector<size_t>> generator_scatter;
 
   std::string backend = "serial";
   std::string kernel = "gather";
+
   std::string type = "";
+  std::string type_gather = "";
+  std::string type_scatter = "";
+
   unsigned long nruns = 10;
 
 #ifdef USE_OPENMP
@@ -124,11 +147,17 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
-    case 'f': {
+    case 'f':
       json = 1;
       json_fname = optarg;
       break;
-    }
+
+    case 'g':
+      pattern_gather_string << optarg;
+      if (pattern_parser(pattern_gather_string, pattern_gather, type_gather,
+              generator_gather) != 0)
+        return -1;
+      break;
 
     case 'h':
       help(argv[0]);
@@ -139,8 +168,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       std::transform(backend.begin(), backend.end(), backend.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
-      if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0)) {
-        std::cerr << "Valid Kernels are: gather, scatter" << std::endl;
+      if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
+          (kernel.compare("sg") != 0) && (kernel.compare("multigather") != 0) &&
+          (kernel.compare("multiscatter") != 0)) {
+        std::cerr << "Valid Kernels are: gather, scatter, sg, multigather, "
+                     "multiscatter"
+                  << std::endl;
         return -1;
       }
       break;
@@ -158,28 +191,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       pattern_string << optarg;
       if (pattern_parser(pattern_string, pattern, type, generator) != 0)
         return -1;
+      break;
 
-      if (!type.empty())
-        if (generate_pattern(type, generator, pattern) != 0)
-          return -1;
-
-      if (type.empty()) {
-        for (std::string line; std::getline(pattern_string, line, ',');) {
-          try {
-            size_t val = std::stoul(line);
-
-            if (line[0] == '-') {
-              std::cerr << "Parsing Error: Found Negative Index in Pattern"
-                        << std::endl;
-              return -1;
-            } else
-              pattern.push_back(val);
-          } catch (const std::invalid_argument &ia) {
-            std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
-            return -1;
-          }
-        }
-      }
+    case 's':
+      pattern_scatter_string << optarg;
+      if (pattern_parser(pattern_scatter_string, pattern_scatter, type_scatter,
+              generator_scatter) != 0)
+        return -1;
       break;
 
     case 't':
@@ -248,16 +266,16 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(
-          kernel, pattern, nruns, verbosity);
+          kernel, pattern, pattern_gather, pattern_scatter, nruns, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(
-          kernel, pattern, nthreads, nruns, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(kernel,
+          pattern, pattern_gather, pattern_scatter, nthreads, nruns, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(
-          kernel, pattern, nruns, verbosity);
+          kernel, pattern, pattern_gather, pattern_scatter, nruns, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
