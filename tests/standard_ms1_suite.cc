@@ -134,16 +134,14 @@ int main(int argc, char **argv) {
   if (ms1_test_3() != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  /*
-    if (ms1_test_delta1() != EXIT_SUCCESS)
-      return EXIT_FAILURE;
+  if (ms1_test_delta1() != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-    if (ms1_test_delta2() != EXIT_SUCCESS)
-      return EXIT_FAILURE;
+  if (ms1_test_delta2() != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-    if (ms1_test_delta3() != EXIT_SUCCESS)
-      return EXIT_FAILURE;
-  */
+  if (ms1_test_delta3() != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
 }

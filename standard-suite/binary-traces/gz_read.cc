@@ -31,7 +31,7 @@ int gz_buf_read(gzFile fp, uint64_t * buf, uint64_t ** pbuf, int * edx) {
 
 
 ///* EXAMPLE USE
-int main( int argc, char ** argv) {
+int main(int argc, char ** argv) {
   if (argc <= 1) {
     printf("Usage: ./gz_read -f <file> -q\n");
     exit(1);

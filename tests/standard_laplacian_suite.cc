@@ -44,10 +44,8 @@ int main(int argc, char **argv) {
   if (laplacian_test() != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  /*
-    if (laplacian_test_delta() != EXIT_SUCCESS)
-      return EXIT_FAILURE;
-  */
+  if (laplacian_test_delta() != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
 }

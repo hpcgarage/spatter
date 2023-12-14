@@ -11,16 +11,14 @@ int main(int argc, char **argv) {
   int argc_ = 4;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
-  asprintf(&argv_[1], "-sUNIFORM:8:1");
-  asprintf(&argv_[2], "-gUNIFORM:8:1");
-  asprintf(&argv_[3], "-kGS");
-
-  Spatter::ClArgs cl;
+  asprintf(&argv_[0], "../src/spatter-driver");
+  asprintf(&argv_[1], "-p0,1,2,3,4,5,6,7");
+  asprintf(&argv_[2], "-j4");
+  asprintf(&argv_[3], "-kGather");
 
   if (Spatter::parse_input(argc, argv, cl) != 0) {
     std::cerr << "Parse Input Failed" << std::endl;
-    return EXIT_FAILURE;
+    return
   }
 
   if (cl.configs.size() != 1) {
@@ -39,20 +37,20 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  std::vector<size_t> gold[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+  std::vector<size_t> gold[4] = {0, 1, 2, 3};
 
-  for (int i = 0; i < 8; i++) {
-    if (gold[i] != cl.configs[0]->pattern_scatter[i]) {
-      std::cerr << "Test failure on Concurrent Pattern: input "
-                   "pattern-scatter does not match parsed pattern-scatter!"
-                << std::endl;
-      return EXIT_FAILURE;
-    }
+  if (cl.configs[0]->pattern.size() != 4) {
+    std::cerr << "Test failure Size Limited Pattern: input pattern was not "
+                 "truncated to the correct length!"
+              << std::cerr;
+    return EXIT_FAILURE;
+  }
 
-    if (gold[i] != cl.configs[0]->pattern_gather[i]) {
-      std::cerr << "Test failure on Concurrent Pattern: input pattern-gather "
-                   "does not match parsed pattern-gather!"
-                << std::endl;
+  for (size_t i = 0; i < 4; i++) {
+    if (gold[i] != rc[0].pattern[i]) {
+      std::cerr << "Test failure Size Limited Pattern: input pattern does not "
+                   "much parse pattern!"
+                << std::cerr;
       return EXIT_FAILURE;
     }
   }

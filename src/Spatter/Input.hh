@@ -25,14 +25,17 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:d:f:g:hk:l:p:r:s:t:v:w:";
+static char *shortargs = (char *)"b:d:e:f:g:hj:k:l:n:p:r:s:t:v:w:";
 const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
     {"delta", required_argument, nullptr, 'd'},
+    {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
     {"help", no_argument, nullptr, 'h'},
+    {"pattern-size", required_argument, nullptr, 'j'},
     {"kernel", required_argument, nullptr, 'k'},
-    {"count", required_argument, nullptr, 'l'},
+    {"random", required_argument, nullptr, 'l'},
+    {"count", required_argument, nullptr, 'n'},
     {"pattern", required_argument, nullptr, 'p'},
     {"runs", required_argument, nullptr, 'r'},
     {"pattern-scatter", required_argument, nullptr, 's'},
@@ -51,6 +54,8 @@ void help(char *progname) {
             << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
+            << "Set Boundary (i.e. Set max value of pattern array)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
   std::cout
@@ -61,7 +66,11 @@ void help(char *progname) {
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-l (--count)" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-j (--pattern-size)" << std::setw(40)
+            << "Set Pattern Size" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-m (--random)" << std::setw(40)
+            << "Sets Random Seed (default random)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-n (--count)" << std::setw(40)
             << "Set Number of Gathers or Scatters to Perform (default 1024)"
             << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-p (--pattern)" << std::setw(40)
@@ -104,9 +113,14 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::vector<size_t> pattern_gather;
   std::vector<size_t> pattern_scatter;
 
+  size_t boundary;
+  size_t pattern_size;
+
   size_t count = 1024;
   size_t delta = 8;
   size_t wrap = 1;
+
+  int seed = -1;
 
   std::string backend = "serial";
   std::string kernel = "gather";
@@ -164,6 +178,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
+    case 'e':
+      try {
+        boundary = std::stoul(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Boundary" << std::endl;
+        return -1;
+      }
+      break;
+
     case 'f':
       json = 1;
       json_fname = optarg;
@@ -178,6 +201,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     case 'h':
       help(argv[0]);
       return -1;
+
+    case 'j':
+      try {
+        pattern_size = std::stoul(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Pattern Size" << std::endl;
+        return -1;
+      }
+      break;
 
     case 'k':
       kernel = optarg;
@@ -196,12 +228,24 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'l':
       try {
+        seed = std::stoi(optarg);
+        if (seed < 0)
+          seed = time(NULL);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Random Seed" << std::endl;
+        return -1;
+      }
+      break;
+
+    case 'n':
+      try {
         count = std::stoul(optarg);
       } catch (const std::invalid_argument &ia) {
         std::cerr << "Parsing Error: Invalid Count" << std::endl;
         return -1;
       }
       break;
+
 
     case 'p':
       pattern_string << optarg;

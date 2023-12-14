@@ -45,10 +45,8 @@ int main(int argc, char **argv) {
   if (uniform_test_length_gap() != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  /*
-    if (uniform_test_delta() != EXIT_SUCCESS)
-        return EXIT_FAILURE;
-  */
+  if (uniform_test_delta() != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
 }
