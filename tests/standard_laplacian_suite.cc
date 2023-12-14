@@ -1,5 +1,4 @@
 #include <iostream>
-#include <vector>
 
 int laplacian_test() {
   int dimension = 1, pseudo_order = 1, problem_size = 100;

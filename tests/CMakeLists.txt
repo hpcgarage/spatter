@@ -11,13 +11,13 @@ set(SPATTER_TESTS
       parse_json_suite
 #      parse_run_config_suite
 #      parse_random_suite
-#      parse_concurrent
-#      parse_multilevel
+      parse_concurrent
+      parse_multilevel
 #      parse_size
       standard_uniform_suite
       standard_ms1_suite
-#      concurrent
-#      multilevel
+      concurrent
+      multilevel
 #      binary-trace
       standard_suite_cpu
       standard_laplacian_suite
