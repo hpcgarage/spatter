@@ -36,11 +36,13 @@ class ConfigurationBase {
 public:
   ConfigurationBase(std::string k, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
-      const std::vector<size_t> pattern_scatter, const int nthreads,
+      const std::vector<size_t> pattern_scatter, const size_t delta,
+      const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
       : kernel(k), pattern(pattern), pattern_gather(pattern_gather),
-        pattern_scatter(pattern_scatter), omp_threads(nthreads), nruns(nruns),
-        verbosity(verbosity), time_seconds(0) {
+        pattern_scatter(pattern_scatter), delta(delta), wrap(wrap),
+        count(count), omp_threads(nthreads), nruns(nruns), verbosity(verbosity),
+        time_seconds(0) {
     std::transform(kernel.begin(), kernel.end(), kernel.begin(),
         [](unsigned char c) { return std::tolower(c); });
   }
@@ -86,9 +88,42 @@ public:
   }
 
   virtual void setup() {
-    if (pattern.size() == 0) {
-      std::cerr << "Pattern needs to have length of at least 1" << std::endl;
-      exit(1);
+    if (kernel.compare("multigather")) {
+      if (pattern.size() == 0) {
+        std::cerr << "Pattern needs to have length of at least 1" << std::endl;
+        exit(1);
+      }
+      if (pattern_gather.size() == 0) {
+        std::cerr << "Pattern-Gather needs to have length of at least 1"
+                  << std::endl;
+        exit(1);
+      }
+    } else if (kernel.compare("multiscatter")) {
+      if (pattern.size() == 0) {
+        std::cerr << "Pattern needs to have length of at least 1" << std::endl;
+        exit(1);
+      }
+      if (pattern_scatter.size() == 0) {
+        std::cerr << "Pattern-Scatter needs to have length of at least 1"
+                  << std::endl;
+        exit(1);
+      }
+    } else if (kernel.compare("sg")) {
+      if (pattern_gather.size() == 0) {
+        std::cerr << "Pattern-Gather needs to have length of at least 1"
+                  << std::endl;
+        exit(1);
+      }
+      if (pattern_scatter.size() == 0) {
+        std::cerr << "Pattern-Scatter needs to have length of at least 1"
+                  << std::endl;
+        exit(1);
+      }
+    } else {
+      if (pattern.size() == 0) {
+        std::cerr << "Pattern needs to have length of at least 1" << std::endl;
+        exit(1);
+      }
     }
 
     dense.resize(pattern.size());
@@ -125,6 +160,10 @@ public:
 
   std::vector<double> dense;
 
+  const size_t delta;
+  const size_t wrap;
+  const size_t count;
+
   const int omp_threads;
   const unsigned long nruns;
   const unsigned long verbosity;
@@ -153,10 +192,11 @@ template <> class Configuration<Spatter::Serial> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
-      const std::vector<size_t> pattern_scatter, const unsigned long nruns = 10,
+      const std::vector<size_t> pattern_scatter, const size_t delta,
+      const size_t wrap, const size_t count, const unsigned long nruns = 10,
       const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter, 1,
-            nruns, verbosity) {
+      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter,
+            delta, wrap, count, 1, nruns, verbosity) {
     setup();
   };
 
@@ -275,10 +315,11 @@ template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
-      std::vector<size_t> pattern_scatter, const int nthreads,
+      std::vector<size_t> pattern_scatter, const size_t delta,
+      const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns = 10, const unsigned long verbosity = 3)
       : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter,
-            nthreads, nruns, verbosity) {
+            delta, wrap, count, nthreads, nruns, verbosity) {
     setup();
   };
 
@@ -408,10 +449,11 @@ template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
 public:
   Configuration(const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
-      const std::vector<size_t> pattern_scatter, const unsigned long nruns = 10,
+      const std::vector<size_t> pattern_scatter, conat size_t delta,
+      const size_t wrap, const size_t count, const unsigned long nruns = 10,
       const unsigned long verbosity = 3)
-      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter, 1,
-            nruns, verbosity) {
+      : ConfigurationBase(kernel, pattern, pattern_gather, pattern_scatter,
+            delta, wrap, count, 1, nruns, verbosity) {
     setup();
   };
 

@@ -25,17 +25,20 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:f:g:hk:n:p:s:t:v:";
+static char *shortargs = (char *)"b:d:f:g:hk:l:p:r:s:t:v:w:";
 const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
+    {"delta", required_argument, nullptr, 'd'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
     {"help", no_argument, nullptr, 'h'},
     {"kernel", required_argument, nullptr, 'k'},
-    {"nruns", required_argument, nullptr, 'n'},
+    {"count", required_argument, nullptr, 'l'},
     {"pattern", required_argument, nullptr, 'p'},
+    {"runs", required_argument, nullptr, 'r'},
     {"pattern-scatter", required_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
-    {"verbosity", required_argument, nullptr, 'v'}};
+    {"verbosity", required_argument, nullptr, 'v'},
+    {"wrap", required_argument, nullptr, 'w'}};
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -46,6 +49,8 @@ void help(char *progname) {
   std::cout << "Usage: " << progname << "\n";
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
+            << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
   std::cout
@@ -56,10 +61,13 @@ void help(char *progname) {
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-n (--nruns)" << std::setw(40)
-            << "Set Number of Runs (default 10)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-l (--count)" << std::setw(40)
+            << "Set Number of Gathers or Scatters to Perform (default 1024)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-p (--pattern)" << std::setw(40)
             << "Set Pattern" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-r (--runs)" << std::setw(40)
+            << "Set Number of Runs (default 10)" << std::left << "\n";
   std::cout
       << std::left << std::setw(10) << "-s (--pattern-scatter)" << std::setw(4)
       << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
@@ -71,15 +79,19 @@ void help(char *progname) {
             << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
+            << "Set Wrap (default 1)" << std::left << "\n";
 }
 
 void usage(char *progname) {
-  std::cout << "Usage: " << progname
-            << "[-b backend] [-f input file] [-g inner gather pattern] [-h "
-               "help] [-k kernel] [-n nruns] "
-               "[-p pattern] [-s inner scatter pattern] [-t nthreads] [-v "
-               "verbosity]"
-            << std::endl;
+  std::cout
+      << "Usage: " << progname
+      << "[-b backend] [-d delta] [-f input file] [-g inner gather pattern] "
+         "[-h "
+         "help] [-k kernel] [-l count] "
+         "[-p pattern] [-r runs] [-s inner scatter pattern] [-t nthreads] [-v "
+         "verbosity] [-w wrap]"
+      << std::endl;
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
@@ -92,16 +104,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::vector<size_t> pattern_gather;
   std::vector<size_t> pattern_scatter;
 
-  std::vector<std::vector<size_t>> generator;
-  std::vector<std::vector<size_t>> generator_gather;
-  std::vector<std::vector<size_t>> generator_scatter;
+  size_t count = 1024;
+  size_t delta = 8;
+  size_t wrap = 1;
 
   std::string backend = "serial";
   std::string kernel = "gather";
-
-  std::string type = "";
-  std::string type_gather = "";
-  std::string type_scatter = "";
 
   unsigned long nruns = 10;
 
@@ -147,6 +155,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
+    case 'd':
+      try {
+        delta = std::stoul(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Delta" << std::endl;
+        return -1;
+      }
+      break;
+
     case 'f':
       json = 1;
       json_fname = optarg;
@@ -154,8 +171,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'g':
       pattern_gather_string << optarg;
-      if (pattern_parser(pattern_gather_string, pattern_gather, type_gather,
-              generator_gather) != 0)
+      if (pattern_parser(pattern_gather_string, pattern_gather) != 0)
         return -1;
       break;
 
@@ -178,7 +194,22 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
-    case 'n':
+    case 'l':
+      try {
+        count = std::stoul(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Count" << std::endl;
+        return -1;
+      }
+      break;
+
+    case 'p':
+      pattern_string << optarg;
+      if (pattern_parser(pattern_string, pattern) != 0)
+        return -1;
+      break;
+
+    case 'r':
       try {
         nruns = std::stoul(optarg);
       } catch (const std::invalid_argument &ia) {
@@ -187,16 +218,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       }
       break;
 
-    case 'p':
-      pattern_string << optarg;
-      if (pattern_parser(pattern_string, pattern, type, generator) != 0)
-        return -1;
-      break;
-
     case 's':
       pattern_scatter_string << optarg;
-      if (pattern_parser(pattern_scatter_string, pattern_scatter, type_scatter,
-              generator_scatter) != 0)
+      if (pattern_parser(pattern_scatter_string, pattern_scatter) != 0)
         return -1;
       break;
 
@@ -214,6 +238,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         verbosity = std::stoul(optarg);
       } catch (const std::invalid_argument &ia) {
         std::cerr << "Parsing Error: Invalid Verbosity Level" << std::endl;
+        return -1;
+      }
+      break;
+
+    case 'w':
+      try {
+        wrap = std::stoul(optarg);
+      } catch (const std::invalid_argument &ia) {
+        std::cerr << "Parsing Error: Invalid Wrap" << std::endl;
         return -1;
       }
       break;
@@ -265,17 +298,20 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   if (!json) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(
-          kernel, pattern, pattern_gather, pattern_scatter, nruns, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(kernel,
+          pattern, pattern_gather, pattern_scatter, delta, wrap, count, nruns,
+          verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(kernel,
-          pattern, pattern_gather, pattern_scatter, nthreads, nruns, verbosity);
+          pattern, pattern_gather, pattern_scatter, delta, wrap, count,
+          nthreads, nruns, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(
-          kernel, pattern, pattern_gather, pattern_scatter, nruns, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(kernel,
+          pattern, pattern_gather, pattern_scatter, delta, wrap, count, nruns,
+          verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;

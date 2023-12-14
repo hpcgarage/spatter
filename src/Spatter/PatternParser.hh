@@ -137,9 +137,12 @@ int generate_pattern(std::string type,
   return 0;
 }
 
-int pattern_parser(std::stringstream &pattern_string,
-    std::vector<size_t> &pattern, std::string &type,
-    std::vector<std::vector<size_t>> &generator) {
+int pattern_parser(
+    std::stringstream &pattern_string, std::vector<size_t> &pattern) {
+
+  std::string type;
+  std::vector<std::vector<size_t>> generator;
+
   if (pattern_string.str().rfind("UNIFORM", 0) == 0) {
     std::getline(pattern_string, type, ':');
 
