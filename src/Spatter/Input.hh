@@ -55,7 +55,8 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
-            << "Set Boundary (i.e. Set max value of pattern array)" << std::left << "\n";
+            << "Set Boundary (i.e. Set max value of pattern array)" << std::left
+            << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
   std::cout
@@ -66,8 +67,8 @@ void help(char *progname) {
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-j (--pattern-size)" << std::setw(40)
-            << "Set Pattern Size" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-j (--pattern-size)"
+            << std::setw(40) << "Set Pattern Size" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-m (--random)" << std::setw(40)
             << "Sets Random Seed (default random)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-n (--count)" << std::setw(40)
@@ -101,6 +102,26 @@ void usage(char *progname) {
          "[-p pattern] [-r runs] [-s inner scatter pattern] [-t nthreads] [-v "
          "verbosity] [-w wrap]"
       << std::endl;
+}
+
+int read_int_arg(std::string cl, int &arg, const std::string &err_msg) {
+  try {
+    arg = std::stoi(cl);
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
+  try {
+    arg = std::stoul(cl);
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  }
+  return 0;
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
@@ -170,21 +191,14 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'd':
-      try {
-        delta = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Delta" << std::endl;
+      if (read_ul_arg(optarg, delta, "Parsing Error: Invalid Delta") == -1)
         return -1;
-      }
       break;
 
     case 'e':
-      try {
-        boundary = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Boundary" << std::endl;
+      if (read_ul_arg(optarg, boundary, "Parsing Error: Invalid Boundary") ==
+          -1)
         return -1;
-      }
       break;
 
     case 'f':
@@ -203,12 +217,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       return -1;
 
     case 'j':
-      try {
-        pattern_size = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Pattern Size" << std::endl;
+      if (read_ul_arg(optarg, pattern_size,
+              "Parsing Error: Invalid Pattern Size") == -1)
         return -1;
-      }
       break;
 
     case 'k':
@@ -227,25 +238,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'l':
-      try {
-        seed = std::stoi(optarg);
-        if (seed < 0)
-          seed = time(NULL);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Random Seed" << std::endl;
+      if (read_int_arg(optarg, seed, "Parsing Error: Invalid Random Seed") ==
+          -1)
         return -1;
-      }
       break;
 
     case 'n':
-      try {
-        count = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Count" << std::endl;
+      if (read_ul_arg(optarg, count, "Parsing Error: Invalid Count") == -1)
         return -1;
-      }
       break;
-
 
     case 'p':
       pattern_string << optarg;
@@ -254,12 +255,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'r':
-      try {
-        nruns = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Number of Runs" << std::endl;
+      if (read_ul_arg(optarg, nruns, "Parsing Error: Invalid Number of Runs") ==
+          -1)
         return -1;
-      }
       break;
 
     case 's':
@@ -269,30 +267,20 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 't':
-      try {
-        nthreads = std::stoi(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Number of Threads" << std::endl;
+      if (read_int_arg(optarg, nthreads,
+              "Parsing Error: Invalid Number of Threads") == -1)
         return -1;
-      }
       break;
 
     case 'v':
-      try {
-        verbosity = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Verbosity Level" << std::endl;
+      if (read_ul_arg(optarg, verbosity,
+              "Parsing Error: Invalid Verbosity Level") == -1)
         return -1;
-      }
       break;
 
     case 'w':
-      try {
-        wrap = std::stoul(optarg);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Wrap" << std::endl;
+      if (read_ul_arg(optarg, wrap, "Parsing Error: Invalid Wrap") == -1)
         return -1;
-      }
       break;
 
     case '?':

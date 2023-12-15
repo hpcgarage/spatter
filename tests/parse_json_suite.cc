@@ -42,8 +42,8 @@ int json_test(size_t run_count, std::string kernel,
 
     if (cl.configs[i]->generic_len != counts[i]) {
       std::cerr << "Test failure on JSON Parse: counts for configuration " << i
-                << " was " < < < <
-          ", expected " << counts[i] << std::endl;
+                << " was "
+                << ", expected " << counts[i] << std::endl;
       return EXIT_FAILURE;
     }
 
