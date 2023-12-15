@@ -25,7 +25,8 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:z:";
+static char *shortargs =
+    (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
@@ -47,6 +48,8 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
     {"wrap", required_argument, nullptr, 'w'},
+    {"delta-gather", required_argument, nullptr, 'x'},
+    {"delta-scatter", required_argument, nullptr, 'y'},
     {"local-work-size", required_argument, nullptr, 'z'}};
 
 struct ClArgs {
@@ -109,6 +112,10 @@ void help(char *progname) {
             << "Set Verbosity Level" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
             << "Set Wrap (default 1)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-x (--delta-gather)"
+            << std::setw(40) << "Delta (default 8)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-y (--delta-scatter)"
+            << std::setw(40) << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-z (--local-work-size)"
             << std::setw(40) << "Set Local Work Size (default 1024)"
             << std::left << "\n";
@@ -147,13 +154,23 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
   return 0;
 }
 
+size_t remap_pattern(std::vector<size_t> &pattern, const size_t boundary) {
+  const size_t pattern_len = pattern.size();
+  for (size_t j = 0; j < pattern_len; ++j) {
+    pattern[j] = pattern[j] % boundary;
+  }
+
+  size_t max_pattern_val = *(std::max_element(pattern.begin(), pattern.end()));
+  return max_pattern_val;
+}
+
 int parse_input(const int argc, char **argv, ClArgs &cl) {
   // In flag alphabetical order
   bool aggregate = false;
   std::string backend = "serial";
   bool compress = false;
   size_t delta = 8;
-  size_t boundary;
+  size_t boundary = 0;
 
   bool json = 0;
   std::string json_fname = "";
@@ -161,11 +178,11 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::vector<size_t> pattern_gather;
   std::stringstream pattern_gather_string;
 
-  size_t pattern_size;
+  size_t pattern_size = 0;
   std::string kernel = "gather";
   size_t count = 1024;
   size_t shared_mem;
-  std::string config_name;
+  std::string config_name = "";
   size_t op;
 
   std::stringstream pattern_string;
@@ -185,7 +202,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
   unsigned long verbosity = 3;
   size_t wrap = 1;
-
+  size_t delta_gather = 8;
+  size_t delta_scatter = 8;
   size_t local_work_size;
 
   int c;
@@ -337,6 +355,18 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         return -1;
       break;
 
+    case 'x':
+      if (read_ul_arg(optarg, delta_gather,
+              "Parsing Error: Invalid Delta Gather") == -1)
+        return -1;
+      break;
+
+    case 'y':
+      if (read_ul_arg(optarg, delta_scatter,
+              "Parsing Error: Invalid Delta Scatter") == -1)
+        return -1;
+      break;
+
     case 'z':
       if (read_ul_arg(
               optarg, local_work_size, "Parsing Error: Local Work Size") == -1)
@@ -387,23 +417,61 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 #endif
 
+  if (pattern_size > 0) {
+    if (pattern.size() > 0)
+      pattern.resize(pattern_size);
+
+    if (pattern_gather.size() > 0)
+      pattern_gather.resize(pattern_size);
+
+    if (pattern_scatter.size() > 0)
+      pattern_scatter.resize(pattern_size);
+  }
+
+  if (boundary > 0) {
+    if (pattern.size() > 0) {
+      if (remap_pattern(pattern, boundary) > boundary) {
+        std::cerr << "Re-mapping pattern to have maximum value of " << boundary
+                  << "failed" << std::endl;
+        return -1;
+      }
+    }
+
+    if (pattern_gather.size() > 0) {
+      if (remap_pattern(pattern_gather, boundary) > boundary) {
+        std::cerr << "Re-mapping pattern_gather to have maximum value of "
+                  << boundary << "failed" << std::endl;
+        return -1;
+      }
+    }
+
+    if (pattern_scatter.size() > 0) {
+      if (remap_pattern(pattern_scatter, boundary) > boundary) {
+        std::cerr << "Re-mapping pattern_scatter to have maximum value of "
+                  << boundary << "failed" << std::endl;
+        return -1;
+      }
+    }
+  }
+
   if (!json) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(kernel,
-          pattern, pattern_gather, pattern_scatter, delta, wrap, count, nruns,
-          verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(config_name,
+          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
+          delta_scatter, wrap, count, nruns, aggregate, compress, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(kernel,
-          pattern, pattern_gather, pattern_scatter, delta, wrap, count,
-          nthreads, nruns, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(config_name,
+          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
+          delta_scatter, wrap, count, nthreads, nruns, aggregate, compress,
+          verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(kernel,
-          pattern, pattern_gather, pattern_scatter, delta, wrap, count, nruns,
-          verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(config_name,
+          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
+          delta_scatter, wrap, count, nruns, aggregate, compress, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -412,8 +480,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     cl.configs.push_back(std::move(c));
   } else {
-    Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, kernel, nthreads, nruns, verbosity);
+    Spatter::JSONParser json_file =
+        Spatter::JSONParser(json_fname, backend, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

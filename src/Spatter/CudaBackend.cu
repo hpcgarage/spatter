@@ -23,7 +23,7 @@ __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
   int i = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (i < pattern_length)
-    sparse_scatter[pattern_scatter] = sparse_dense[pattern_gather];
+    sparse_scatter[pattern_scatter[i]] = sparse_gather[pattern_gather[i]];
 }
 
 __global__ void cuda_multi_gather(const size_t *pattern,
@@ -41,7 +41,7 @@ __global__ void cuda_multi_scatter(const size_t *pattern,
   int i = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (i < pattern_length)
-    sparse[patter[pattern_scatter[i]]] = dense[i];
+    sparse[pattern[pattern_scatter[i]]] = dense[i];
 }
 
 void cuda_gather_wrapper(const size_t *pattern, const double *sparse,
@@ -86,7 +86,7 @@ void cuda_multi_scatter_wrapper(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
     const int pattern_length) {
   int threads_per_block = 256;
-  int blocksPerGird =
+  int blocks_per_grid =
       (pattern_length + threads_per_block - 1) / threads_per_block;
   cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(
       pattern, pattern_scatter, sparse, dense, pattern_length);

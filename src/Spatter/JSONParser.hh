@@ -26,14 +26,19 @@ namespace Spatter {
 
 class JSONParser {
 public:
-  JSONParser(std::string filename, const std::string backend = "serial",
+  JSONParser(std::string filename, const std::string backend,
+      const unsigned long verbosity, const std::string name = "",
       const std::string kernel = "gather", const size_t delta = 8,
+      const size_t delta_gather = 8, const size_t delta_scatter = 8,
       const size_t wrap = 1, const size_t count = 1024, const int nthreads = 1,
-      const unsigned long nruns = 10, const unsigned long verbosity = 3)
-      : backend_(backend), default_kernel_(kernel), default_delta_(delta),
-        default_wrap_(wrap), default_count_(count),
-        default_omp_threads_(nthreads), default_nruns_(nruns),
-        default_verbosity_(verbosity) {
+      const unsigned long nruns = 10, const bool aggregate = false,
+      const bool compress = false)
+      : default_name_(name), backend_(backend), default_kernel_(kernel),
+        default_delta_(delta), default_delta_gather_(delta_gather),
+        default_delta_scatter_(delta_scatter), default_wrap_(wrap),
+        default_count_(count), default_omp_threads_(nthreads),
+        default_nruns_(nruns), default_aggregate_(aggregate),
+        default_compress_(compress), verbosity_(verbosity) {
     if (!file_exists_(filename)) {
       std::cerr << "File does not exist" << std::endl;
       exit(1);
@@ -46,6 +51,9 @@ public:
     for (const auto &[key, v] : data_.items()) {
       assert(v.contains("pattern"));
 
+      if (!v.contains("name"))
+        v["name"] = default_name_;
+
       if (!v.contains("kernel"))
         v["kernel"] = default_kernel_;
       else {
@@ -56,8 +64,20 @@ public:
         v["kernel"] = kernel;
       }
 
+      if (!v.contains("aggregate"))
+        v["aggregate"] = default_aggregate_;
+
+      if (!v.contains("compress"))
+        v["compress"] = default_compress_;
+
       if (!v.contains("delta"))
         v["delta"] = default_delta_;
+
+      if (!v.contains("delta-gather"))
+        v["delta-gather"] = default_delta_gather_;
+
+      if (!v.contains("delta-scatter"))
+        v["delta-scatter"] = default_delta_scatter_;
 
       if (!v.contains("wrap"))
         v["wrap"] = default_wrap_;
@@ -70,9 +90,6 @@ public:
 
       if (!v.contains("nruns"))
         v["nruns"] = default_nruns_;
-
-      if (!v.contains("verbosity"))
-        v["verbosity"] = default_verbosity_;
     }
   }
 
@@ -81,16 +98,22 @@ public:
   std::unique_ptr<Spatter::ConfigurationBase> operator[](const size_t index) {
     assert(index < (size_));
 
+    assert(data_[index].contains("name"));
+
     assert(data_[index].contains("kernel"));
     assert(data_[index]["kernel"].type() == json::value_t::string);
 
+    assert(data_[index].contains("aggregate"));
+    assert(data_[index].contains("compress"));
+
     assert(data_[index].contains("delta"));
+    assert(data_[index].contains("delta-gather"));
+    assert(data_[index].contains("delta-scatter"));
     assert(data_[index].contains("wrap"));
     assert(data_[index].contains("count"));
 
     assert(data_[index].contains("nthreads"));
     assert(data_[index].contains("nruns"));
-    assert(data_[index].contains("verbosity"));
 
     std::vector<size_t> pattern;
     std::vector<size_t> pattern_gather;
@@ -109,23 +132,29 @@ public:
 
     if (backend_.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(
-          data_[index]["kernel"], pattern, pattern_gather, pattern_scatter,
-          data_[index]["delta"], data_[index]["wrap"], data_[index]["count"],
-          data_[index]["nruns"], data_[index]["verbosity"]);
+          data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
+          pattern_scatter, data_[index]["delta"], data_[index]["delta-gather"],
+          data_[index]["delta-scatter"], data_[index]["wrap"],
+          data_[index]["count"], data_[index]["nruns"],
+          data_[index]["aggregate"], data_[index]["compress"], verbosity_);
 #ifdef USE_OPENMP
     else if (backend_.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(
-          data_[index]["kernel"], pattern, pattern_scatter, pattern_gather,
-          data_[index]["delta"], data_[index]["wrap"], data_[index]["count"],
-          data_[index]["nthreads"], data_[index]["nruns"],
-          data_[index]["verbosity"]);
+          data_[index]["name"], data_[index]["kernel"], pattern,
+          pattern_scatter, pattern_gather, data_[index]["delta"],
+          data_[index]["delta-gather"], data_[index]["delta-scatter"],
+          data_[index]["wrap"], data_[index]["count"], data_[index]["nthreads"],
+          data_[index]["nruns"], data_[index]["aggregate"],
+          data_[index]["compress"], verbosity_);
 #endif
 #ifdef USE_CUDA
     else if (backend_.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(
-          data_[index]["kernel"], pattern, pattern_gather, pattern_scatter,
-          data_[index]["delta"], data_[index]["wrap"], data_[index]["count"],
-          data_[index]["nruns"], data_[index]["verbosity"]);
+          data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
+          pattern_scatter, data_[index]["delta"], data_[index]["delta-gather"],
+          data_[index]["delta-scatter"], data_[index]["wrap"],
+          data_[index]["count"], data_[index]["nruns"],
+          data_[index]["aggregate"], data_[index]["compress"], verbosity_);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend_ << std::endl;
@@ -168,17 +197,24 @@ private:
 private:
   json data_;
   size_t size_;
-  std::string backend_;
 
+  std::string default_name_;
+  std::string backend_;
   const std::string default_kernel_;
 
   const size_t default_delta_;
+  const size_t default_delta_gather_;
+  const size_t default_delta_scatter_;
+
   const size_t default_wrap_;
   const size_t default_count_;
 
   const int default_omp_threads_;
   const unsigned long default_nruns_;
-  const unsigned long default_verbosity_;
+
+  const bool default_aggregate_;
+  const bool default_compress_;
+  const unsigned long verbosity_;
 };
 
 } // namespace Spatter
