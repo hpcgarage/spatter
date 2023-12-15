@@ -850,6 +850,7 @@ public:
     std::vector<size_t> cuda_pattern;
     if (pattern.size() > 0) {
       const size_t pattern_length = pattern.size();
+      cuda_pattern.resize(count * pattern_length);
       for (size_t i = 0; i < count; ++i)
         for (size_t j = 0; j < pattern_length; ++j)
           cuda_pattern[i * pattern_length + j] = pattern[j] + delta * i;
@@ -858,6 +859,7 @@ public:
     std::vector<size_t> cuda_pattern_gather;
     if (pattern_gather.size() > 0) {
       const size_t pattern_gather_length = pattern_gather.size();
+      cuda_pattern_gather.resize(count * pattern_gather_length);
       for (size_t i = 0; i < count; ++i)
         for (size_t j = 0; j < pattern_gather_length; ++j)
           if (kernel.compare("sg") == 0)
@@ -872,6 +874,7 @@ public:
     std::vector<size_t> cuda_pattern_scatter;
     if (pattern_scatter.size() > 0) {
       const size_t pattern_scatter_length = pattern_scatter.size();
+      cuda_pattern_scatter.resize(count * pattern_scatter_length);
       for (size_t i = 0; i < count; ++i)
         for (size_t j = 0; j < pattern_scatter_length; ++j)
           if (kernel.compare("sg") == 0)
