@@ -149,6 +149,8 @@ public:
   }
 
 public:
+  const std::string name;
+
   std::string kernel;
   const std::vector<size_t> pattern;
   const std::vector<size_t> pattern_gather;
@@ -161,8 +163,21 @@ public:
   std::vector<double> dense;
 
   const size_t delta;
+  const std::vector<size_t> deltas;
   const size_t wrap;
   const size_t count;
+
+  int seed;
+  size_t vector_len;
+  size_t shmem;
+  size_t local_work_size;
+  size_t op;
+
+  int ro_morton;
+  int ro_hilbert;
+  int ro_block;
+
+  int stride_kernel;
 
   const int omp_threads;
   const unsigned long nruns;

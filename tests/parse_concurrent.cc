@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  std::vector<size_t> gold[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+  std::vector<size_t> gold = {0, 1, 2, 3, 4, 5, 6, 7};
 
   for (int i = 0; i < 8; i++) {
     if (gold[i] != cl.configs[0]->pattern_scatter[i]) {

@@ -5,9 +5,11 @@
 #include "Spatter/Input.hh"
 
 int random_test(int seed, int argc, char **argv) {
+  Spatter::ClArgs cl;
+
   if (Spatter::parse_input(argc, argv, cl) != 0) {
     std::cerr << "Parse Input Failed" << std::endl;
-    return
+    return EXIT_FAILURE;
   }
 
   if (cl.configs.size() != 1) {
@@ -45,7 +47,7 @@ int main(int argc, char **argv) {
   int argc_ = 3;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  for (size_t i = 0; i < argc_; ++i)
+  for (int i = 0; i < argc_; ++i)
     argv_[i] = (char *)malloc(sizeof(char) * 1024);
 
   sprintf(argv_[0], "./src/spatter-driver");
@@ -71,7 +73,7 @@ int main(int argc, char **argv) {
   if (random_test(789, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  for (size_t i = 0; i < argc_; ++i)
+  for (int i = 0; i < argc_; ++i)
     free(argv_[i]);
   free(argv);
 

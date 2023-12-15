@@ -16,9 +16,11 @@ int main(int argc, char **argv) {
   asprintf(&argv_[2], "-j4");
   asprintf(&argv_[3], "-kGather");
 
+  Spatter::ClArgs cl;
+
   if (Spatter::parse_input(argc, argv, cl) != 0) {
     std::cerr << "Parse Input Failed" << std::endl;
-    return
+    return EXIT_FAILURE;
   }
 
   if (cl.configs.size() != 1) {
@@ -37,20 +39,20 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  std::vector<size_t> gold[4] = {0, 1, 2, 3};
+  std::vector<size_t> gold = {0, 1, 2, 3};
 
   if (cl.configs[0]->pattern.size() != 4) {
     std::cerr << "Test failure Size Limited Pattern: input pattern was not "
                  "truncated to the correct length!"
-              << std::cerr;
+              << std::endl;
     return EXIT_FAILURE;
   }
 
   for (size_t i = 0; i < 4; i++) {
-    if (gold[i] != rc[0].pattern[i]) {
+    if (gold[i] != cl.configs[0]->pattern[i]) {
       std::cerr << "Test failure Size Limited Pattern: input pattern does not "
                    "much parse pattern!"
-                << std::cerr;
+                << std::endl;
       return EXIT_FAILURE;
     }
   }

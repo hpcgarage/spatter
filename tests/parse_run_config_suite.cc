@@ -203,10 +203,10 @@ int l_tests(int argc_, char **argv_) {
 
   free(argv_[2]);
 
-  if (cl1.configs[0]->generic_len != 100) {
+  if (cl1.configs[0]->count != 100) {
     std::cerr << "Test failure on Run_Config Suite: -l with argument 100 had "
                  "incorrect value of "
-              << cl1.configs[0]->generic_len << "." << std::endl;
+              << cl1.configs[0]->count << "." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -218,10 +218,10 @@ int l_tests(int argc_, char **argv_) {
 
   free(argv_[2]);
 
-  if (cl2.configs[0]->generic_len != 500) {
+  if (cl2.configs[0]->count != 500) {
     std::cerr << "Test failure on Run_Config Suite: -l with argument 500 had "
                  "incorrect value of "
-              << cl2.configs[0]->generic_len << "." << std::endl;
+              << cl2.configs[0]->count << "." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -233,10 +233,10 @@ int l_tests(int argc_, char **argv_) {
 
   free(argv_[2]);
 
-  if (cl3.configs[0]->generic_len != 1000) {
+  if (cl3.configs[0]->count != 1000) {
     std::cerr << "Test failure on Run_Config Suite: -l with argument 1000 had "
                  "incorrect value of "
-              << cl3.configs[0]->generic_len << "." << std::endl;
+              << cl3.configs[0]->count << "." << std::endl;
     return EXIT_FAILURE;
   }
 
