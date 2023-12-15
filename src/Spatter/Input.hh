@@ -25,8 +25,10 @@
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
-static char *shortargs = (char *)"b:d:e:f:g:hj:k:l:n:p:r:s:t:v:w:";
-const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
+static char *shortargs = (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:z:";
+const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
+    {"backend", required_argument, nullptr, 'b'},
+    {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
     {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
@@ -34,14 +36,18 @@ const option longargs[] = {{"backend", required_argument, nullptr, 'b'},
     {"help", no_argument, nullptr, 'h'},
     {"pattern-size", required_argument, nullptr, 'j'},
     {"kernel", required_argument, nullptr, 'k'},
-    {"random", required_argument, nullptr, 'l'},
-    {"count", required_argument, nullptr, 'n'},
+    {"count", required_argument, nullptr, 'l'},
+    {"shared-memory", required_argument, nullptr, 'm'},
+    {"name", required_argument, nullptr, 'n'},
+    {"op", required_argument, nullptr, 'o'},
     {"pattern", required_argument, nullptr, 'p'},
     {"runs", required_argument, nullptr, 'r'},
-    {"pattern-scatter", required_argument, nullptr, 's'},
+    {"random", required_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
+    {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
-    {"wrap", required_argument, nullptr, 'w'}};
+    {"wrap", required_argument, nullptr, 'w'},
+    {"local-work-size", required_argument, nullptr, 'z'}};
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -50,8 +56,12 @@ struct ClArgs {
 void help(char *progname) {
   std::cout << "Spatter\n";
   std::cout << "Usage: " << progname << "\n";
+  std::cout << std::left << std::setw(10) << "-a (--aggregate)" << std::setw(40)
+            << "Aggregate (default off)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-c (--compress)" << std::setw(40)
+            << "TODO" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
@@ -65,43 +75,56 @@ void help(char *progname) {
       << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
-            << "Kernel (default gather)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-j (--pattern-size)"
             << std::setw(40) << "Set Pattern Size" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-m (--random)" << std::setw(40)
-            << "Sets Random Seed (default random)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "-n (--count)" << std::setw(40)
+  std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
+            << "Kernel (default gather)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-l (--count)" << std::setw(40)
             << "Set Number of Gathers or Scatters to Perform (default 1024)"
             << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-m (--shared-memory)"
+            << std::setw(40)
+            << "Set Amount of Dummy Shared Memory to Allocate on GPUs"
+            << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-n (--name)" << std::setw(40)
+            << "Specify the Configuration Name" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-o (--op)" << std::setw(40)
+            << "TODO" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-p (--pattern)" << std::setw(40)
             << "Set Pattern" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-r (--runs)" << std::setw(40)
             << "Set Number of Runs (default 10)" << std::left << "\n";
-  std::cout
-      << std::left << std::setw(10) << "-s (--pattern-scatter)" << std::setw(4)
-      << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
-      << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-s (--random)" << std::setw(40)
+            << "Set Random Seed (default random)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-t (--omp-threads)"
             << std::setw(40)
             << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
                "openmp or OMP_MAX_THREADS if USE_OPENMP)"
             << std::left << "\n";
+  std::cout
+      << std::left << std::setw(10) << "-u (--pattern-scatter)" << std::setw(4)
+      << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
+      << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
             << "Set Wrap (default 1)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "-z (--local-work-size)"
+            << std::setw(40) << "Set Local Work Size (default 1024)"
+            << std::left << "\n";
 }
 
 void usage(char *progname) {
-  std::cout
-      << "Usage: " << progname
-      << "[-b backend] [-d delta] [-f input file] [-g inner gather pattern] "
-         "[-h "
-         "help] [-k kernel] [-l count] "
-         "[-p pattern] [-r runs] [-s inner scatter pattern] [-t nthreads] [-v "
-         "verbosity] [-w wrap]"
-      << std::endl;
+  std::cout << "Usage: " << progname
+            << "[-a aggregate] [-b backend] [-c compress] [-d delta] [-e "
+               "boundary] [-f input file] [-g inner gather pattern] "
+               "[-h "
+               "help] [-j pattern-size] [-k kernel] [-l count] [-m "
+               "shared-memory] [-n name] [-o op]"
+               "[-p pattern] [-r runs] [-s random] [-t nthreads] [-u inner "
+               "scatter pattern] [-v "
+               "verbosity] [-w wrap] [-z local-work-size]"
+            << std::endl;
 }
 
 int read_int_arg(std::string cl, int &arg, const std::string &err_msg) {
@@ -125,28 +148,31 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
-  int c;
-  std::stringstream pattern_string;
-  std::stringstream pattern_gather_string;
-  std::stringstream pattern_scatter_string;
-
-  std::vector<size_t> pattern;
-  std::vector<size_t> pattern_gather;
-  std::vector<size_t> pattern_scatter;
-
-  size_t boundary;
-  size_t pattern_size;
-
-  size_t count = 1024;
-  size_t delta = 8;
-  size_t wrap = 1;
-
-  int seed = -1;
-
+  // In flag alphabetical order
+  bool aggregate = false;
   std::string backend = "serial";
+  bool compress = false;
+  size_t delta = 8;
+  size_t boundary;
+
+  bool json = 0;
+  std::string json_fname = "";
+
+  std::vector<size_t> pattern_gather;
+  std::stringstream pattern_gather_string;
+
+  size_t pattern_size;
   std::string kernel = "gather";
+  size_t count = 1024;
+  size_t shared_mem;
+  std::string config_name;
+  size_t op;
+
+  std::stringstream pattern_string;
+  std::vector<size_t> pattern;
 
   unsigned long nruns = 10;
+  int seed = -1;
 
 #ifdef USE_OPENMP
   int nthreads = omp_get_max_threads();
@@ -154,12 +180,21 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   int nthreads = 1;
 #endif
 
-  unsigned long verbosity = 3;
-  bool json = 0;
-  std::string json_fname = "";
+  std::stringstream pattern_scatter_string;
+  std::vector<size_t> pattern_scatter;
 
+  unsigned long verbosity = 3;
+  size_t wrap = 1;
+
+  size_t local_work_size;
+
+  int c;
   while ((c = getopt_long(argc, argv, shortargs, longargs, nullptr)) != -1) {
     switch (c) {
+    case 'a':
+      aggregate = true;
+      break;
+
     case 'b':
       backend = optarg;
       std::transform(backend.begin(), backend.end(), backend.begin(),
@@ -188,6 +223,10 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         return -1;
 #endif
       }
+      break;
+
+    case 'c':
+      compress = true;
       break;
 
     case 'd':
@@ -238,13 +277,22 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'l':
-      if (read_int_arg(optarg, seed, "Parsing Error: Invalid Random Seed") ==
-          -1)
+      if (read_ul_arg(optarg, count, "Parsing Error: Invalid Count") == -1)
+        return -1;
+      break;
+
+    case 'm':
+      if (read_ul_arg(
+              optarg, shared_mem, "Parsing Error: Invalid Shared Memory") == -1)
         return -1;
       break;
 
     case 'n':
-      if (read_ul_arg(optarg, count, "Parsing Error: Invalid Count") == -1)
+      config_name = optarg;
+      break;
+
+    case 'o':
+      if (read_ul_arg(optarg, op, "Parsing Error: Invalid Operation") == -1)
         return -1;
       break;
 
@@ -261,14 +309,20 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 's':
-      pattern_scatter_string << optarg;
-      if (pattern_parser(pattern_scatter_string, pattern_scatter) != 0)
+      if (read_int_arg(optarg, seed, "Parsing Error: Invalid Random Seed") ==
+          -1)
         return -1;
       break;
 
     case 't':
       if (read_int_arg(optarg, nthreads,
               "Parsing Error: Invalid Number of Threads") == -1)
+        return -1;
+      break;
+
+    case 'u':
+      pattern_scatter_string << optarg;
+      if (pattern_parser(pattern_scatter_string, pattern_scatter) != 0)
         return -1;
       break;
 
@@ -280,6 +334,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'w':
       if (read_ul_arg(optarg, wrap, "Parsing Error: Invalid Wrap") == -1)
+        return -1;
+      break;
+
+    case 'z':
+      if (read_ul_arg(
+              optarg, local_work_size, "Parsing Error: Local Work Size") == -1)
         return -1;
       break;
 
