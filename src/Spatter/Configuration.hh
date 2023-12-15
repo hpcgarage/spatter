@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cctype>
 #include <experimental/iterator>
+#include <iomanip>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -34,19 +35,20 @@ namespace Spatter {
 
 class ConfigurationBase {
 public:
-  ConfigurationBase(const std::string name, std::string k,
+  ConfigurationBase(const size_t id, const std::string name, std::string k,
       const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
       const std::vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const size_t wrap,
-      const size_t count, const int nthreads, const unsigned long nruns = 10,
-      const bool aggregate = false, const bool compress = false,
-      const unsigned long verbosity = 3)
-      : name(name), kernel(k), pattern(pattern), pattern_gather(pattern_gather),
-        pattern_scatter(pattern_scatter), delta(delta),
-        delta_gather(delta_gather), delta_scatter(delta_scatter), wrap(wrap),
-        count(count), omp_threads(nthreads), nruns(nruns), aggregate(aggregate),
-        compress(compress), verbosity(verbosity), time_seconds(0) {
+      const size_t delta_gather, const size_t delta_scatter, const int seed,
+      const size_t wrap, const size_t count, const int nthreads,
+      const unsigned long nruns, const bool aggregate, const bool compress,
+      const unsigned long verbosity)
+      : id(id), name(name), kernel(k), pattern(pattern),
+        pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
+        delta(delta), delta_gather(delta_gather), delta_scatter(delta_scatter),
+        seed(seed), wrap(wrap), count(count), omp_threads(nthreads),
+        nruns(nruns), aggregate(aggregate), compress(compress),
+        verbosity(verbosity), time_seconds(0) {
     std::transform(kernel.begin(), kernel.end(), kernel.begin(),
         [](unsigned char c) { return std::tolower(c); });
   }
@@ -79,16 +81,17 @@ public:
   virtual void multi_scatter(bool timed) = 0;
 
   virtual void report() {
-    std::cout << nruns * pattern.size() * sizeof(size_t) << " Total Bytes Moved"
-              << std::endl;
-    std::cout << pattern.size() * sizeof(size_t) << " Bytes Moved per Run"
-              << std::endl;
-    std::cout << nruns << " Runs took " << std::fixed << time_seconds
-              << " Seconds" << std::endl;
-    std::cout << "Average Bandwidth: "
-              << (double)(nruns * pattern.size() * sizeof(size_t)) /
-            time_seconds / 1000000.
-              << " MB/s" << std::endl;
+    size_t total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
+    size_t bytes_per_run = total_bytes_moved / nruns;
+
+    double average_time_per_run = time_seconds / (double)nruns;
+    double average_bandwidth =
+        (double)(bytes_per_run) / average_time_per_run / 1000000.0;
+
+    std::cout << std::setw(15) << std::left << id << std::setw(15) << std::left
+              << bytes_per_run << std::setw(15) << std::left
+              << average_time_per_run << std::setw(15) << std::left
+              << average_bandwidth << std::endl;
   }
 
   virtual void setup() {
@@ -243,6 +246,7 @@ public:
   }
 
 public:
+  const size_t id;
   const std::string name;
 
   std::string kernel;
@@ -263,10 +267,10 @@ public:
   const size_t delta_scatter;
   const std::vector<size_t> deltas_scatter;
 
+  int seed;
   const size_t wrap;
   const size_t count;
 
-  int seed;
   size_t vector_len;
   size_t shmem;
   size_t local_work_size;
@@ -292,33 +296,66 @@ public:
 std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config) {
   std::stringstream config_output;
 
-  if (config.verbosity >= 1)
-    config_output << "Kernel: " << config.kernel;
+  config_output << "{";
 
-  if (config.verbosity >= 2) {
-    config_output << "\nPattern: ";
-    std::copy(std::begin(config.pattern), std::end(config.pattern),
-        std::experimental::make_ostream_joiner(config_output, ", "));
-  }
-  return out << config_output.str() << std::endl;
+  config_output << "'id: " << config.id << ", ";
+
+  if (config.name.compare("") != 0)
+    config_output << "'name': " << config.name << ", ";
+
+  config_output << "'kernel': " << config.kernel << ", ";
+
+  config_output << "'pattern': [";
+  std::copy(std::begin(config.pattern), std::end(config.pattern),
+      std::experimental::make_ostream_joiner(config_output, ", "));
+  config_output << "], ";
+
+  config_output << "'pattern-gather': [";
+  std::copy(std::begin(config.pattern_gather), std::end(config.pattern_gather),
+      std::experimental::make_ostream_joiner(config_output, ", "));
+  config_output << "], ";
+
+  config_output << "'pattern-scatter': [";
+  std::copy(std::begin(config.pattern_scatter),
+      std::end(config.pattern_scatter),
+      std::experimental::make_ostream_joiner(config_output, ", "));
+  config_output << "], ";
+
+  config_output << "'delta': " << config.delta << ",";
+  config_output << "'delta-gather': " << config.delta_gather << ", ";
+  config_output << "'delta-scatter': " << config.delta_scatter << ", ";
+
+  config_output << "'count': " << config.count << ", ";
+
+  if (config.seed > 0)
+    config_output << "'seed': " << config.seed << ", ";
+
+  if (config.aggregate)
+    config_output << "'agg (nruns)': " << config.nruns << ", ";
+
+  config_output << "'wrap': " << config.wrap << ", ";
+
+  config_output << "'threads': " << config.omp_threads;
+
+  config_output << "}";
+  return out << config_output.str();
 }
 
 template <typename Backend> class Configuration : public ConfigurationBase {};
 
 template <> class Configuration<Spatter::Serial> : public ConfigurationBase {
 public:
-  Configuration(const std::string name, const std::string kernel,
-      const std::vector<size_t> pattern,
+  Configuration(const size_t id, const std::string name,
+      const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
       const std::vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const size_t wrap,
-      const size_t count, const unsigned long nruns = 10,
-      const bool aggregate = false, const bool compress = false,
-      const unsigned long verbosity = 3)
-      : ConfigurationBase(name, kernel, pattern, pattern_gather,
-            pattern_scatter, delta, delta_gather, delta_scatter, wrap, count, 1,
-            nruns, aggregate, compress, verbosity) {
-    setup();
+      const size_t delta_gather, const size_t delta_scatter, const int seed,
+      const size_t wrap, const size_t count, const unsigned long nruns,
+      const bool aggregate, const bool compress, const unsigned long verbosity)
+      : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
+            pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+            count, 1, nruns, aggregate, compress, verbosity) {
+    ConfigurationBase::setup();
   };
 
   void gather(bool timed) {
@@ -424,36 +461,23 @@ public:
       time_seconds = timer.seconds();
     }
   }
-
-  void report() {
-    std::cout << "Spatter Serial Report" << std::endl;
-
-    ConfigurationBase::report();
-  }
-
-  void setup() {
-    if (verbosity >= 3)
-      std::cout << "Spatter Serial Setup" << std::endl;
-
-    ConfigurationBase::setup();
-  }
 };
 
 #ifdef USE_OPENMP
 template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
-  Configuration(const std::string name, const std::string kernel,
-      const std::vector<size_t> pattern,
+  Configuration(const size_t id, const std::string name,
+      const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
       std::vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const size_t wrap,
-      const size_t count, const int nthreads, const unsigned long nruns = 10,
-      const bool aggregate = false, const bool compress = false,
-      const unsigned long verbosity = 3)
-      : ConfigurationBase(name, kernel, pattern, pattern_gather,
-            pattern_scatter, delta, delta_gather, delta_scatter, wrap, count,
-            nthreads, nruns, aggregate, compress, verbosity) {
-    setup();
+      const size_t delta_gather, const size_t delta_scatter, const int seed,
+      const size_t wrap, const size_t count, const int nthreads,
+      const unsigned long nruns, const bool aggregate, const bool compress,
+      const unsigned long verbosity)
+      : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
+            pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+            count, nthreads, nruns, aggregate, compress, verbosity) {
+    ConfigurationBase::setup();
   };
 
   int run(bool timed) {
@@ -569,45 +593,26 @@ public:
       time_seconds = timer.seconds();
     }
   }
-
-  void report() {
-    std::cout << "Spatter OpenMP Report" << std::endl;
-
-    ConfigurationBase::report();
-  }
-
-  void setup() {
-    if (verbosity >= 3)
-      std::cout << "Spatter OpenMP Setup" << std::endl;
-
-    ConfigurationBase::setup();
-  }
 };
 #endif
 
 #ifdef USE_CUDA
 template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
 public:
-  Configuration(const std::string name, const std::string kernel,
-      const std::vector<size_t> pattern,
+  Configuration(const size_t id, const std::string name,
+      const std::string kernel, const std::vector<size_t> pattern,
       const std::vector<size_t> pattern_gather,
       const std::vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const size_t wrap,
-      const size_t count, const unsigned long nruns = 10,
-      const bool aggregate = false, const bool compress = false,
-      const unsigned long verbosity = 3)
-      : ConfigurationBase(name, kernel, pattern, pattern_gather,
-            pattern_scatter, delta, delta_gather, delta_scatter, wrap, count, 1,
-            nruns, aggregate, compress, verbosity) {
+      const size_t delta_gather, const size_t delta_scatter, const int seed,
+      const size_t wrap, const size_t count, const unsigned long nruns,
+      const bool aggregate, const bool compress, const unsigned long verbosity)
+      : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
+            pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+            count, 1, nruns, aggregate, compress, verbosity) {
     setup();
   };
 
   ~Configuration() {
-    std::cout << "Deleting Configuration" << std::endl;
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-
     cudaFree(dev_pattern);
     cudaFree(dev_pattern_gather);
     cudaFree(dev_pattern_scatter);
@@ -622,9 +627,6 @@ public:
   int run(bool timed) {
     ConfigurationBase::run(timed);
 
-    if (verbosity >= 3)
-      std::cout << "Copying Vectors back to CPU" << std::endl;
-
     cudaMemcpy(sparse.data(), dev_sparse, sizeof(double) * sparse.size(),
         cudaMemcpyDeviceToHost);
     cudaMemcpy(sparse_gather.data(), dev_sparse_gather,
@@ -635,115 +637,41 @@ public:
     cudaMemcpy(dense.data(), dev_dense, sizeof(double) * dense.size(),
         cudaMemcpyDeviceToHost);
 
-    if (verbosity >= 3)
-      std::cout << "Synchronizing CUDA Device" << std::endl;
-
     cudaDeviceSynchronize();
-
-    if (verbosity >= 3) {
-      if (kernel.compare("sg") == 0) {
-        std::cout << "Pattern Gather: ";
-        for (size_t val : pattern_gather)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Pattern Scatter: ";
-        for (size_t val : pattern_scatter)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Sparse Gather: ";
-        for (double val : sparse_gather)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Sparse Scatter: ";
-        for (double val : sparse_scatter)
-          std::cout << val << " ";
-        std::cout << std::endl;
-      } else {
-        std::cout << "Pattern: ";
-        for (size_t val : pattern)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        if (kernel.compare("multiscatter") == 0) {
-          std::cout << "Pattern Scatter: ";
-          for (size_t val : pattern_scatter)
-            std::cout << val << " ";
-          std::cout << std::endl;
-        }
-
-        if (kernel.compare("multigather") == 0) {
-          std::cout << "Pattern Gather: ";
-          for (size_t val : pattern_gather)
-            std::cout << val << " ";
-          std::cout << std::endl;
-        }
-
-        std::cout << "Sparse: ";
-        for (double val : sparse)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Dense: ";
-        for (double val : dense)
-          std::cout << val << " ";
-        std::cout << std::endl;
-      }
-    }
 
     return 0;
   }
 
   void gather(bool timed) {
     int pattern_length = static_cast<int>(pattern.size());
-    cudaDeviceSynchronize();
 
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (timed)
-      cudaEventRecord(start);
-
-    cuda_gather_wrapper(
+    float time_ms = cuda_gather_wrapper(
         dev_pattern, dev_sparse, dev_dense, pattern_length, count, wrap);
 
-    if (timed) {
-      cudaEventRecord(stop);
-      cudaEventSynchronize(stop);
-    } else
-      cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
 
-    float time_ms = 0;
-    cudaEventElapsedTime(&time_ms, start, stop);
-    time_seconds += ((double)time_ms / 1000.0);
+    if (timed)
+      time_seconds += ((double)time_ms / 1000.0);
   }
 
   void scatter(bool timed) {
     int pattern_length = static_cast<int>(pattern.size());
-    cudaDeviceSynchronize();
 
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (timed)
-      cudaEventRecord(start);
-
-    cuda_scatter_wrapper(
+    float time_ms = cuda_scatter_wrapper(
         dev_pattern, dev_sparse, dev_dense, pattern_length, count, wrap);
 
-    if (timed) {
-      cudaEventRecord(stop);
-      cudaEventSynchronize(stop);
-    } else
-      cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
 
-    float time_ms = 0;
-    cudaEventElapsedTime(&time_ms, start, stop);
-    time_seconds += ((double)time_ms / 1000.0);
+    if (timed)
+      time_seconds += ((double)time_ms / 1000.0);
   }
 
   void scatter_gather(bool timed) {
@@ -754,16 +682,14 @@ public:
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+    float time_ms =
+        cuda_scatter_gather_wrapper(dev_pattern_scatter, dev_sparse_scatter,
+            dev_pattern_gather, dev_sparse_gather, pattern_length, count, wrap);
+
+    cudaDeviceSynchronize();
+
     if (timed)
-      timer.start();
-
-    cuda_scatter_gather_wrapper(dev_pattern_scatter, dev_sparse_scatter,
-        dev_pattern_gather, dev_sparse_gather, pattern_length, count, wrap);
-
-    if (timed) {
-      timer.stop();
-      time_seconds = timer.seconds();
-    }
+      time_seconds += ((double)time_ms / 1000.0);
   }
 
   void multi_gather(bool timed) {
@@ -773,16 +699,13 @@ public:
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+    float time_ms = cuda_multi_gather_wrapper(dev_pattern, dev_pattern_gather,
+        dev_sparse, dev_dense, pattern_length, count, wrap);
+
+    cudaDeviceSynchronize();
+
     if (timed)
-      timer.start();
-
-    cuda_multi_gather_wrapper(dev_pattern, dev_pattern_gather, dev_sparse,
-        dev_dense, pattern_length, count, wrap);
-
-    if (timed) {
-      timer.stop();
-      time_seconds = timer.seconds();
-    }
+      time_seconds += ((double)time_ms / 1000.0);
   }
 
   void multi_scatter(bool timed) {
@@ -792,60 +715,17 @@ public:
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    if (timed)
-      timer.start();
-
-    cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter, dev_sparse,
-        dev_dense, pattern_length, count, wrap);
-
-    if (timed) {
-      timer.stop();
-      time_seconds = timer.seconds();
-    }
-  }
-
-  void report() {
-    std::cout << "Spatter CUDA Report" << std::endl;
-
-    ConfigurationBase::report();
-  }
-
-  void setup() {
-    if (verbosity >= 1) {
-      std::cout << "Spatter CUDA Setup" << std::endl;
-
-      int num_devices = 0;
-      cudaGetDeviceCount(&num_devices);
-
-      int gpu_id = 0;
-
-      cudaDeviceProp prop;
-      cudaGetDeviceProperties(&prop, gpu_id);
-
-      std::cout << "Device Number: " << gpu_id << std::endl;
-      std::cout << "\tDevice Name: " << prop.name << std::endl;
-      std::cout << "\tMemory Clock Rate (KHz): " << prop.memoryClockRate
-                << std::endl;
-      std::cout << "\tMemory Bus Width (bits): " << prop.memoryBusWidth
-                << std::endl;
-      std::cout << "\tPeak Memory Bandwidth (GB/s): "
-                << 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) /
-              1.0e6
-                << std::endl;
-    }
-
-    ConfigurationBase::setup();
-
-    if (verbosity >= 3)
-      std::cout << "Creating CUDA Events" << std::endl;
-
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    float time_ms = cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter,
+        dev_sparse, dev_dense, pattern_length, count, wrap);
 
     cudaDeviceSynchronize();
 
-    if (verbosity >= 3)
-      std::cout << "Allocating Vectors on CUDA Device" << std::endl;
+    if (timed)
+      time_seconds += ((double)time_ms / 1000.0);
+  }
+
+  void setup() {
+    ConfigurationBase::setup();
 
     std::vector<size_t> cuda_pattern;
     if (pattern.size() > 0) {
@@ -906,9 +786,6 @@ public:
         (void **)&dev_sparse_scatter, sizeof(double) * sparse_scatter.size());
     cudaMalloc((void **)&dev_dense, sizeof(double) * dense.size());
 
-    if (verbosity >= 3)
-      std::cout << "Copying Vectors on to CUDA Device" << std::endl;
-
     /*
         cudaMemcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size(),
             cudaMemcpyHostToDevice);
@@ -934,63 +811,7 @@ public:
     cudaMemcpy(dev_dense, dense.data(), sizeof(double) * dense.size(),
         cudaMemcpyHostToDevice);
 
-    if (verbosity >= 3)
-      std::cout << "Synchronizing CUDA Device" << std::endl;
-
     cudaDeviceSynchronize();
-
-    if (verbosity >= 3) {
-      if (kernel.compare("sg") == 0) {
-        std::cout << "Pattern Gather: ";
-        for (size_t val : pattern_gather)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Pattern Scatter: ";
-        for (size_t val : pattern_scatter)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Sparse Gather: ";
-        for (double val : sparse_gather)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Sparse Scatter: ";
-        for (double val : sparse_scatter)
-          std::cout << val << " ";
-        std::cout << std::endl;
-      } else {
-        std::cout << "Pattern: ";
-        for (size_t val : pattern)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        if (kernel.compare("multiscatter") == 0) {
-          std::cout << "Pattern Scatter: ";
-          for (size_t val : pattern_scatter)
-            std::cout << val << " ";
-          std::cout << std::endl;
-        }
-
-        if (kernel.compare("multigather") == 0) {
-          std::cout << "Pattern Gather: ";
-          for (size_t val : pattern_gather)
-            std::cout << val << " ";
-          std::cout << std::endl;
-        }
-
-        std::cout << "Sparse: ";
-        for (double val : sparse)
-          std::cout << val << " ";
-        std::cout << std::endl;
-
-        std::cout << "Dense: ";
-        for (double val : dense)
-          std::cout << val << " ";
-        std::cout << std::endl;
-      }
-    }
   }
 
 public:
@@ -1003,9 +824,6 @@ public:
   double *dev_sparse_scatter;
 
   double *dev_dense;
-
-  cudaEvent_t start;
-  cudaEvent_t stop;
 };
 #endif
 

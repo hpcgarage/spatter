@@ -54,7 +54,32 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
+  std::string backend;
+  bool aggregate;
+  bool compress;
+  unsigned long verbosity;
+
+  void report() {
+    std::cout << std::setw(15) << std::left << "config" << std::setw(15)
+              << std::left << "bytes" << std::setw(15) << std::left << "time(s)"
+              << std::setw(15) << std::left << "bw(MB/s)" << std::endl;
+    for (auto const &config : configs)
+      config->report();
+  }
 };
+
+std::ostream &operator<<(std::ostream &out, const ClArgs &cl) {
+  out << "[";
+
+  for (size_t i = 0; i < cl.configs.size(); ++i) {
+    out << *(cl.configs[i].get());
+    if (i != cl.configs.size() - 1)
+      out << ", ";
+  }
+
+  out << "]" << std::endl;
+  return out << std::endl;
+}
 
 void help(char *progname) {
   std::cout << "Spatter\n";
@@ -109,7 +134,7 @@ void help(char *progname) {
       << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
       << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
-            << "Set Verbosity Level" << std::left << "\n";
+            << "Set Verbosity Level (default 1)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
             << "Set Wrap (default 1)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-x (--delta-gather)"
@@ -165,10 +190,15 @@ size_t remap_pattern(std::vector<size_t> &pattern, const size_t boundary) {
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
+  cl.backend = "serial";
+  cl.aggregate = false;
+  cl.compress = false;
+  cl.verbosity = 1;
+
   // In flag alphabetical order
-  bool aggregate = false;
-  std::string backend = "serial";
-  bool compress = false;
+  bool aggregate = cl.aggregate;
+  std::string backend = cl.backend;
+  bool compress = cl.compress;
   size_t delta = 8;
   size_t boundary = 0;
 
@@ -200,7 +230,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::stringstream pattern_scatter_string;
   std::vector<size_t> pattern_scatter;
 
-  unsigned long verbosity = 3;
+  unsigned long verbosity = cl.verbosity;
   size_t wrap = 1;
   size_t delta_gather = 8;
   size_t delta_scatter = 8;
@@ -224,19 +254,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         return -1;
       }
       if (backend.compare("openmp") == 0) {
-        std::cout << "Checking if OpenMP Backend is Enabled" << std::endl;
-#ifdef USE_OPENMP
-        std::cout << "SUCCESS - OpenMP Backend Enabled" << std::endl;
-#else
+#ifndef USE_OPENMP
         std::cerr << "FAIL - OpenMP Backend is not Enabled" << std::endl;
         return -1;
 #endif
       }
       if (backend.compare("cuda") == 0) {
-        std::cout << "Checking if CUDA Backend is Enabled" << std::endl;
-#ifdef USE_CUDA
-        std::cout << "SUCCESS - CUDA Backend Enabled" << std::endl;
-#else
+#ifndef USE_CUDA
         std::cerr << "FAIL - CUDA Backend is not Enabled" << std::endl;
         return -1;
 #endif
@@ -379,6 +403,11 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     }
   }
 
+  cl.backend = backend;
+  cl.aggregate = aggregate;
+  cl.compress = compress;
+  cl.verbosity = verbosity;
+
 #ifdef USE_OPENMP
   int max_threads = omp_get_max_threads();
   if (backend.compare("openmp") != 0) {
@@ -457,21 +486,23 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   if (!json) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(config_name,
-          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
-          delta_scatter, wrap, count, nruns, aggregate, compress, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(0,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
+          compress, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(config_name,
-          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
-          delta_scatter, wrap, count, nthreads, nruns, aggregate, compress,
-          verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          delta_gather, delta_scatter, seed, wrap, count, nthreads, nruns,
+          aggregate, compress, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
-      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(config_name,
-          kernel, pattern, pattern_gather, pattern_scatter, delta, delta_gather,
-          delta_scatter, wrap, count, nruns, aggregate, compress, verbosity);
+      c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(0,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
+          compress, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -480,12 +511,35 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     cl.configs.push_back(std::move(c));
   } else {
-    Spatter::JSONParser json_file =
-        Spatter::JSONParser(json_fname, backend, verbosity);
+    Spatter::JSONParser json_file = Spatter::JSONParser(
+        json_fname, backend, aggregate, compress, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
       cl.configs.push_back(std::move(c));
+    }
+  }
+
+  for (auto const &config : cl.configs) {
+    if (config->aggregate != aggregate) {
+      std::cerr << "Aggregate flag of Config does not match the aggregate flag "
+                   "passed to the command line"
+                << std::endl;
+      return -1;
+    }
+
+    if (config->compress != compress) {
+      std::cerr << "Compress flag of Config does not match the compress flag "
+                   "passed to the command line"
+                << std::endl;
+      return -1;
+    }
+
+    if (config->verbosity != verbosity) {
+      std::cerr << "Verbosity level of Config does not match the verbosity "
+                   "level passed to the command line"
+                << std::endl;
+      return -1;
     }
   }
 

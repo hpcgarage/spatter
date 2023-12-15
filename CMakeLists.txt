@@ -10,6 +10,7 @@ project(Spatter VERSION 1.1.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 include(BuildType)
+include(CompilerType)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
