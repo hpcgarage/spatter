@@ -13,7 +13,7 @@ __global__ void cuda_gather(const size_t *pattern, const double *sparse,
 
   double x;
 
-  if (j < pattern_length) {
+  if (j < pattern_length && i < count) {
     // dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
     x = sparse[pattern[j] + delta * i];
     if (x == 0.5)
