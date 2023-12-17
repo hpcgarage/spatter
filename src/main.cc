@@ -11,7 +11,8 @@
 void print_header(Spatter::ClArgs &cl) {
   std::cout << std::endl;
   std::cout << "Running Spatter version 1.1" << std::endl;
-  std::cout << "Compiler: " << xstr(SPAT_CXX_NAME) << " ver. " << xstr(SPAT_CXX_VER) << std::endl;
+  std::cout << "Compiler: " << xstr(SPAT_CXX_NAME) << " ver. "
+            << xstr(SPAT_CXX_VER) << std::endl;
   std::cout << "Backend: ";
   if (cl.backend.compare("serial") == 0)
     std::cout << "Serial" << std::endl;
@@ -20,11 +21,11 @@ void print_header(Spatter::ClArgs &cl) {
   else if (cl.backend.compare("cuda") == 0)
     std::cout << "CUDA" << std::endl;
 
-   std::cout << "Aggregate Results? ";
-   if (cl.aggregate == true) 
-     std::cout << "YES" << std::endl;
-   else
-     std::cout << "NO" << std::endl;
+  std::cout << "Aggregate Results? ";
+  if (cl.aggregate == true)
+    std::cout << "YES" << std::endl;
+  else
+    std::cout << "NO" << std::endl;
 
 #ifdef USE_CUDA
   int gpu_id = 0;
@@ -37,13 +38,17 @@ void print_header(Spatter::ClArgs &cl) {
 
     std::cout << "Number of Devices: " << num_devices << std::endl;
     std::cout << "Device Name: " << prop.name << std::endl;
-    std::cout << "Memory Clock Rage (KHz): " << prop.memoryClockRate << std::endl;
-    std::cout << "Memory Bus Width (bits): " << prop.memoryBusWidth << std::endl;
-    std::cout << "Peak Memory Bandwidth (GB/s): " << 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6 << std::endl;
+    std::cout << "Memory Clock Rage (KHz): " << prop.memoryClockRate
+              << std::endl;
+    std::cout << "Memory Bus Width (bits): " << prop.memoryBusWidth
+              << std::endl;
+    std::cout << "Peak Memory Bandwidth (GB/s): "
+              << 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6
+              << std::endl;
   }
 #endif
 
-  //print_papi_names();
+  // print_papi_names();
   std::cout << std::endl;
 }
 
@@ -69,7 +74,7 @@ int main(int argc, char **argv) {
 #ifdef USE_MPI
   if (rank == 0)
 #endif
-    if (cl.verbosity >= 2)
+    if (cl.verbosity >= 1)
       print_header(cl);
 
   for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
@@ -88,7 +93,7 @@ int main(int argc, char **argv) {
 #ifdef USE_MPI
   if (rank == 0) {
 #endif
-    if (cl.verbosity >= 1)
+    if (cl.verbosity >= 2)
       std::cout << cl;
 
     cl.report();

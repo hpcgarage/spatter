@@ -1,68 +1,102 @@
+#include <stdio.h>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 
 __global__ void cuda_gather(const size_t *pattern, const double *sparse,
-    double *dense, const int gsops, const int dense_length) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
+    double *dense, const size_t pattern_length, const size_t delta,
+    const size_t wrap, const size_t count) {
+  size_t total_id =
+      (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+  size_t j = total_id % pattern_length; // pat_idx
+  size_t i = total_id / pattern_length; // count_idx
 
-  if (i < gsops)
-    dense[i % dense_length] = sparse[pattern[i]];
+  // double x;
+
+  if (j < pattern_length && i < count) {
+    dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
+    // x = sparse[pattern[j] + delta * i];
+    // if (x == 0.5) dense[0] = x;
+  }
 }
 
 __global__ void cuda_scatter(const size_t *pattern, double *sparse,
-    const double *dense, const int gsops, const int dense_length) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
+    const double *dense, const size_t pattern_length, const size_t delta,
+    const size_t wrap, const size_t count) {
+  size_t total_id =
+      (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+  size_t j = total_id % pattern_length; // pat_idx
+  size_t i = total_id / pattern_length; // count_idx
 
-  if (i < gsops)
-    sparse[pattern[i]] = dense[i % dense_length];
+  if (j < pattern_length && i < count)
+    sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
 }
 
 __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
-    const double *sparse_gather, const int gsops) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
+    const double *sparse_gather, const size_t pattern_length,
+    const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
+    const size_t count) {
+  size_t total_id =
+      (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+  size_t j = total_id % pattern_length; // pat_idx
+  size_t i = total_id / pattern_length; // count_idx
 
-  if (i < gsops)
-    sparse_scatter[pattern_scatter[i]] = sparse_gather[pattern_gather[i]];
+  if (j < pattern_length && i < count)
+    sparse_scatter[pattern_scatter[j] + delta_scatter * i] =
+        sparse_gather[pattern_gather[j] + delta_gather * i];
 }
 
 __global__ void cuda_multi_gather(const size_t *pattern,
     const size_t *pattern_gather, const double *sparse, double *dense,
-    const int gsops, const int dense_length) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count) {
+  size_t total_id =
+      (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+  size_t j = total_id % pattern_length; // pat_idx
+  size_t i = total_id / pattern_length; // count_idx
 
-  if (i < gsops)
-    dense[i % dense_length] = sparse[pattern_gather[i]];
+  // double x;
+
+  if (j < pattern_length && i < count) {
+    dense[j + pattern_length * (i % wrap)] =
+        sparse[pattern[pattern_gather[j]] + delta * i];
+    // x = sparse[pattern[pattern_gather[j]] + delta * i];
+    // if (x == 0.5) dense[0] = x;
+  }
 }
 
 __global__ void cuda_multi_scatter(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
-    const int gsops, const int dense_length) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count) {
+  size_t total_id =
+      (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+  size_t j = total_id % pattern_length; // pat_idx
+  size_t i = total_id / pattern_length; // count_idx
 
-  if (i < gsops)
-    sparse[pattern_scatter[i]] = dense[i % dense_length];
+  if (j < pattern_length && i < count)
+    sparse[pattern[pattern_scatter[j]] + delta * i] =
+        dense[j + pattern_length * (i % wrap)];
 }
 
 float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
-    double *dense, const int pattern_length, const size_t count,
-    const size_t wrap) {
+    double *dense, const size_t pattern_length, const size_t delta,
+    const size_t wrap, const size_t count) {
   cudaEvent_t start, stop;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  int gsops = (int)((int)pattern_length * (int)count);
-  int dense_length = pattern_length * (int)wrap;
-
-  int threads_per_block = 256;
-  int blocks_per_grid = (gsops + threads_per_block - 1) / threads_per_block;
+  int threads_per_block = min(pattern_length, (size_t)1024);
+  int blocks_per_grid =
+      ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
   cudaDeviceSynchronize();
   cudaEventRecord(start);
 
   cuda_gather<<<blocks_per_grid, threads_per_block>>>(
-      pattern, sparse, dense, gsops, dense_length);
+      pattern, sparse, dense, pattern_length, delta, wrap, count);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -77,24 +111,22 @@ float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
 }
 
 float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
-    const double *dense, const int pattern_length, const size_t count,
-    const size_t wrap) {
+    const double *dense, const size_t pattern_length, const size_t delta,
+    const size_t wrap, const size_t count) {
   cudaEvent_t start, stop;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  int gsops = (int)((int)pattern_length * (int)count);
-  int dense_length = pattern_length * (int)wrap;
-
-  int threads_per_block = 256;
-  int blocks_per_grid = (gsops + threads_per_block - 1) / threads_per_block;
+  int threads_per_block = min(pattern_length, (size_t)1024);
+  int blocks_per_grid =
+      ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
   cudaDeviceSynchronize();
   cudaEventRecord(start);
 
   cuda_scatter<<<blocks_per_grid, threads_per_block>>>(
-      pattern, sparse, dense, gsops, dense_length);
+      pattern, sparse, dense, pattern_length, delta, wrap, count);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -110,23 +142,24 @@ float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
 
 float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
-    const double *sparse_gather, const int pattern_length, const size_t count,
-    const size_t wrap) {
+    const double *sparse_gather, const size_t pattern_length,
+    const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
+    const size_t count) {
   cudaEvent_t start, stop;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  int gsops = (int)((int)pattern_length * (int)count);
-
-  int threads_per_block = 256;
-  int blocks_per_grid = (gsops + threads_per_block - 1) / threads_per_block;
+  int threads_per_block = min(pattern_length, (size_t)1024);
+  int blocks_per_grid =
+      ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
   cudaDeviceSynchronize();
   cudaEventRecord(start);
 
-  cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(
-      pattern_scatter, sparse_scatter, pattern_gather, sparse_gather, gsops);
+  cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pattern_scatter,
+      sparse_scatter, pattern_gather, sparse_gather, pattern_length,
+      delta_scatter, delta_gather, wrap, count);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -142,23 +175,22 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
 
 float cuda_multi_gather_wrapper(const size_t *pattern,
     const size_t *pattern_gather, const double *sparse, double *dense,
-    const int pattern_length, const size_t count, const size_t wrap) {
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count) {
   cudaEvent_t start, stop;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  int gsops = (int)((int)pattern_length * (int)count);
-  int dense_length = pattern_length * (int)wrap;
-
-  int threads_per_block = 256;
-  int blocks_per_grid = (gsops + threads_per_block - 1) / threads_per_block;
+  int threads_per_block = min(pattern_length, (size_t)1024);
+  int blocks_per_grid =
+      ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
   cudaDeviceSynchronize();
   cudaEventRecord(start);
 
-  cuda_multi_gather<<<blocks_per_grid, threads_per_block>>>(
-      pattern, pattern_gather, sparse, dense, gsops, dense_length);
+  cuda_multi_gather<<<blocks_per_grid, threads_per_block>>>(pattern,
+      pattern_gather, sparse, dense, pattern_length, delta, wrap, count);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -174,23 +206,22 @@ float cuda_multi_gather_wrapper(const size_t *pattern,
 
 float cuda_multi_scatter_wrapper(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
-    const int pattern_length, const size_t count, const size_t wrap) {
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count) {
   cudaEvent_t start, stop;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  int gsops = (int)((int)pattern_length * (int)count);
-  int dense_length = pattern_length * (int)wrap;
-
-  int threads_per_block = 256;
-  int blocks_per_grid = (gsops + threads_per_block - 1) / threads_per_block;
+  int threads_per_block = min(pattern_length, (size_t)1024);
+  int blocks_per_grid =
+      ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
   cudaDeviceSynchronize();
   cudaEventRecord(start);
 
-  cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(
-      pattern, pattern_scatter, sparse, dense, gsops, dense_length);
+  cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(pattern,
+      pattern_scatter, sparse, dense, pattern_length, delta, wrap, count);
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);

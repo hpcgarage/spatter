@@ -643,14 +643,14 @@ public:
   }
 
   void gather(bool timed) {
-    int pattern_length = static_cast<int>(pattern.size());
+    size_t pattern_length = pattern.size();
 
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     float time_ms = cuda_gather_wrapper(
-        dev_pattern, dev_sparse, dev_dense, pattern_length, count, wrap);
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
     cudaDeviceSynchronize();
 
@@ -659,14 +659,14 @@ public:
   }
 
   void scatter(bool timed) {
-    int pattern_length = static_cast<int>(pattern.size());
+    size_t pattern_length = pattern.size();
 
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     float time_ms = cuda_scatter_wrapper(
-        dev_pattern, dev_sparse, dev_dense, pattern_length, count, wrap);
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
     cudaDeviceSynchronize();
 
@@ -682,9 +682,9 @@ public:
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    float time_ms =
-        cuda_scatter_gather_wrapper(dev_pattern_scatter, dev_sparse_scatter,
-            dev_pattern_gather, dev_sparse_gather, pattern_length, count, wrap);
+    float time_ms = cuda_scatter_gather_wrapper(dev_pattern_scatter,
+        dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
+        pattern_length, delta_scatter, delta_gather, wrap, count);
 
     cudaDeviceSynchronize();
 
@@ -700,7 +700,7 @@ public:
 #endif
 
     float time_ms = cuda_multi_gather_wrapper(dev_pattern, dev_pattern_gather,
-        dev_sparse, dev_dense, pattern_length, count, wrap);
+        dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
     cudaDeviceSynchronize();
 
@@ -716,7 +716,7 @@ public:
 #endif
 
     float time_ms = cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter,
-        dev_sparse, dev_dense, pattern_length, count, wrap);
+        dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
     cudaDeviceSynchronize();
 
@@ -727,57 +727,11 @@ public:
   void setup() {
     ConfigurationBase::setup();
 
-    std::vector<size_t> cuda_pattern;
-    if (pattern.size() > 0) {
-      const size_t pattern_length = pattern.size();
-      cuda_pattern.resize(count * pattern_length);
-      for (size_t i = 0; i < count; ++i)
-        for (size_t j = 0; j < pattern_length; ++j)
-          cuda_pattern[i * pattern_length + j] = pattern[j] + delta * i;
-    }
-
-    std::vector<size_t> cuda_pattern_gather;
-    if (pattern_gather.size() > 0) {
-      const size_t pattern_gather_length = pattern_gather.size();
-      cuda_pattern_gather.resize(count * pattern_gather_length);
-      for (size_t i = 0; i < count; ++i)
-        for (size_t j = 0; j < pattern_gather_length; ++j)
-          if (kernel.compare("sg") == 0)
-            cuda_pattern_gather[i * pattern_gather_length + j] =
-                pattern_gather[j] + delta_gather * i;
-          else
-            // This is cheating - we need an alternative for multi-level on GPU
-            cuda_pattern_gather[i * pattern_gather_length + j] =
-                pattern[pattern_gather[j]] + delta * i;
-    }
-
-    std::vector<size_t> cuda_pattern_scatter;
-    if (pattern_scatter.size() > 0) {
-      const size_t pattern_scatter_length = pattern_scatter.size();
-      cuda_pattern_scatter.resize(count * pattern_scatter_length);
-      for (size_t i = 0; i < count; ++i)
-        for (size_t j = 0; j < pattern_scatter_length; ++j)
-          if (kernel.compare("sg") == 0)
-            cuda_pattern_scatter[i * pattern_scatter_length + j] =
-                pattern_scatter[j] + delta_scatter * i;
-          else
-            // This is cheating - we need an alternative for multi-level on GPU
-            cuda_pattern_scatter[i * pattern_scatter_length + j] =
-                pattern[pattern_scatter[j]] + delta * i;
-    }
-
-    /*
-        cudaMalloc((void **)&dev_pattern, sizeof(size_t) * pattern.size());
-        cudaMalloc(
-            (void **)&dev_pattern_gather, sizeof(size_t) *
-       pattern_gather.size()); cudaMalloc( (void **)&dev_pattern_scatter,
-       sizeof(size_t) * pattern_scatter.size());
-    */
-    cudaMalloc((void **)&dev_pattern, sizeof(size_t) * cuda_pattern.size());
-    cudaMalloc((void **)&dev_pattern_gather,
-        sizeof(size_t) * cuda_pattern_gather.size());
-    cudaMalloc((void **)&dev_pattern_scatter,
-        sizeof(size_t) * cuda_pattern_scatter.size());
+    cudaMalloc((void **)&dev_pattern, sizeof(size_t) * pattern.size());
+    cudaMalloc(
+        (void **)&dev_pattern_gather, sizeof(size_t) * pattern_gather.size());
+    cudaMalloc(
+        (void **)&dev_pattern_scatter, sizeof(size_t) * pattern_scatter.size());
 
     cudaMalloc((void **)&dev_sparse, sizeof(double) * sparse.size());
     cudaMalloc(
@@ -786,21 +740,12 @@ public:
         (void **)&dev_sparse_scatter, sizeof(double) * sparse_scatter.size());
     cudaMalloc((void **)&dev_dense, sizeof(double) * dense.size());
 
-    /*
-        cudaMemcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size(),
-            cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_pattern_gather, pattern_gather.data(),
-            sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(),
-            sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice);
-    */
-
-    cudaMemcpy(dev_pattern, cuda_pattern.data(),
-        sizeof(size_t) * cuda_pattern.size(), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_pattern_gather, cuda_pattern_gather.data(),
-        sizeof(size_t) * cuda_pattern_gather.size(), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_pattern_scatter, cuda_pattern_scatter.data(),
-        sizeof(size_t) * cuda_pattern_scatter.size(), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size(),
+        cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pattern_gather, pattern_gather.data(),
+        sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(),
+        sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice);
 
     cudaMemcpy(dev_sparse, sparse.data(), sizeof(double) * sparse.size(),
         cudaMemcpyHostToDevice);
