@@ -81,7 +81,23 @@ public:
   virtual void multi_scatter(bool timed) = 0;
 
   virtual void report() {
-    size_t total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
+    size_t total_bytes_moved = 0;
+
+    if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
+      total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
+
+    if (kernel.compare("sg") == 0)
+      total_bytes_moved =
+          nruns * pattern_gather.size() * count * sizeof(size_t);
+
+    if (kernel.compare("multiscatter") == 0)
+      total_bytes_moved =
+          nruns * pattern_scatter.size() * count * sizeof(size_t);
+
+    if (kernel.compare("multigather") == 0)
+      total_bytes_moved =
+          nruns * pattern_gather.size() * count * sizeof(size_t);
+
     size_t bytes_per_run = total_bytes_moved / nruns;
 
     double average_time_per_run = time_seconds / (double)nruns;
@@ -124,6 +140,12 @@ public:
       if (pattern_scatter.size() == 0) {
         std::cerr << "Pattern-Scatter needs to have length of at least 1"
                   << std::endl;
+        exit(1);
+      }
+      if (pattern_scatter.size() != pattern_gather.size()) {
+        std::cerr
+            << "Pattern-Scatter needs to be the same length as Pattern-gather"
+            << std::endl;
         exit(1);
       }
     } else {
@@ -201,11 +223,11 @@ public:
       if (kernel.compare("multiscatter") == 0) {
         const size_t max_pattern_scatter_val = *(std::max_element(
             std::begin(pattern_scatter), std::end(pattern_scatter)));
-        if (pattern.size() <= max_pattern_scatter_val + 1) {
+        if (pattern.size() <= max_pattern_scatter_val) {
           std::cerr << "Pattern only has length " << pattern.size()
                     << " but needs to have length of at least "
-                       "max_pattern_scatter_val + 1 = "
-                    << max_pattern_scatter_val + 1 << std::endl;
+                       "max_pattern_scatter_val = "
+                    << max_pattern_scatter_val << std::endl;
           exit(1);
         }
       }
@@ -213,11 +235,11 @@ public:
       if (kernel.compare("multigather") == 0) {
         const size_t max_pattern_gather_val = *(std::max_element(
             std::begin(pattern_gather), std::end(pattern_gather)));
-        if (pattern.size() <= max_pattern_gather_val + 1) {
+        if (pattern.size() <= max_pattern_gather_val) {
           std::cerr << "Pattern only has length " << pattern.size()
                     << " but needs to have length of at least "
-                       "max_pattern_gather_val + 1 = "
-                    << max_pattern_gather_val + 1 << std::endl;
+                       "max_pattern_gather_val = "
+                    << max_pattern_gather_val << std::endl;
           exit(1);
         }
       }

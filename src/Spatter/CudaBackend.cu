@@ -11,12 +11,13 @@ __global__ void cuda_gather(const size_t *pattern, const double *sparse,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  // double x;
+  double x;
 
-  if (j < pattern_length && i < count) {
-    dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
-    // x = sparse[pattern[j] + delta * i];
-    // if (x == 0.5) dense[0] = x;
+  if (j < pattern_length) {
+    // dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
+    x = sparse[pattern[j] + delta * i];
+    if (x == 0.5)
+      dense[0] = x;
   }
 }
 
@@ -42,6 +43,7 @@ __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
+  // printf("%lu, %lu, %lu\n", total_id, j, i);
   if (j < pattern_length && i < count)
     sparse_scatter[pattern_scatter[j] + delta_scatter * i] =
         sparse_gather[pattern_gather[j] + delta_gather * i];
@@ -56,13 +58,14 @@ __global__ void cuda_multi_gather(const size_t *pattern,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  // double x;
+  double x;
 
   if (j < pattern_length && i < count) {
-    dense[j + pattern_length * (i % wrap)] =
-        sparse[pattern[pattern_gather[j]] + delta * i];
-    // x = sparse[pattern[pattern_gather[j]] + delta * i];
-    // if (x == 0.5) dense[0] = x;
+    // dense[j + pattern_length * (i % wrap)] =
+    // sparse[pattern[pattern_gather[j]] + delta * i];
+    x = sparse[pattern[pattern_gather[j]] + delta * i];
+    if (x == 0.5)
+      dense[0] = x;
   }
 }
 
