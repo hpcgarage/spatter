@@ -27,6 +27,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "Spatter/SpatterTypes.hh"
 #include "Spatter/Timer.hh"
