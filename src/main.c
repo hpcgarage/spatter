@@ -629,17 +629,6 @@ int main(int argc, char **argv)
             for (int i = -10; i < (int) rc2[k].nruns; i++) {
 #define arr_len (1)
                 if (rc2[k].kernel == MULTISCATTER) {
-                  if (rc2[k].pattern_scatter_len > rc2[k].local_work_size) {
-                      error("Pattern length cannot exceed local_work_size", ERROR);
-                  }
-                  if (rc2[k].local_work_size > 1024) {
-                      error("Pattern length cannot exceed 1024 on GPU", ERROR);
-                  }
-                    /*
-                  if (rc2[k].pattern_scatter_len > local_work_size) {
-                      error("Pattern length cannot exceed local_work_size", ERROR);
-                  }
-                  */
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_scatter_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
@@ -648,12 +637,6 @@ int main(int argc, char **argv)
                   time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == MULTIGATHER) {
-                  if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
-                      error("Pattern length cannot exceed local_work_size", ERROR);
-                  }
-                  if (rc2[k].local_work_size > 1024) {
-                      error("Pattern length cannot exceed 1024 on GPU", ERROR);
-                  }
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                   unsigned long local_work_size = rc2[k].local_work_size;
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
@@ -662,12 +645,6 @@ int main(int argc, char **argv)
                   time_ms = cuda_block_multigather_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_gath_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 }
                 else if (rc2[k].kernel == GS) {
-                    if (rc2[k].pattern_gather_len > rc2[k].local_work_size) {
-                        error("Pattern length cannot exceed local_work_size", ERROR);
-                    }
-                    if (rc2[k].local_work_size > 1024) {
-                        error("Pattern length cannot exceed 1024 on GPU", ERROR);
-                    }
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
@@ -676,20 +653,21 @@ int main(int argc, char **argv)
                     assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
                     time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 } else {
-                    if (rc2[k].pattern_len > rc2[k].local_work_size) {
-                        error("Pattern length cannot exceed local_work_size", ERROR);
-                    }
-                    if (rc2[k].local_work_size > 1024) {
-                        error("Pattern length cannot exceed 1024 on GPU", ERROR);
-                    }
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
                     unsigned long grid[arr_len]  = {global_work_size/local_work_size};
                     unsigned long block[arr_len] = {local_work_size};
 
-                    if (rc2[k].random_seed == 0) {
-                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                    if (rc2[k].random_seed == 0) { 
+                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, target.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                     } else {
+                        if (rc2[k].pattern_len > rc2[k].local_work_size) {
+                            error("Pattern length cannot exceed local_work_size", ERROR);
+                        }
+
+                        if (rc2[k].pattern_len > 1024 || rc2[k].local_work_size > 1024) {
+                            error("Pattern length cannot exceed 1024 on GPU", ERROR);
+                        }
                         time_ms = cuda_block_random_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].random_seed);
                     }
                 }
