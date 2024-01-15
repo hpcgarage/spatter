@@ -14,7 +14,8 @@ cd $GITHUB_WORKSPACE
 hostname
 #This line allows the GH runner to use the module command on the targeted node
 source /tools/misc/.read_profile
-module load cuda
+#Load NVHPC SDK, which includes the latest CUDA support
+module load nvhpc
 cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda_workflow -S .
 make -C build_cuda_workflow
 cd build_cuda_workflow
