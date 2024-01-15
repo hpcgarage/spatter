@@ -83,10 +83,9 @@ add_definitions (-DSG_DATA_TYPE=double)
             )
         endif()
  
-        if (USE_MPI)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
-        endif()
+	#By default, use PIE flags for compatibility with newest NVHPC
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
 	
         if (DEFINED CUDA_ARCH)
             set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
