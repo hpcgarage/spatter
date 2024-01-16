@@ -259,6 +259,22 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 
 }
 
+__global__ void cuda_scatter(const ssize_t* pattern, double *sparse, const double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    if (j < pattern_length && i < count)
+        sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
+}
+
 //assume block size >= index buffer size
 //assume index buffer size divides block size
 template<int V>
@@ -324,6 +340,28 @@ __global__ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, 
         //src_loc[idx_shared[tid%V]] = 1337.;
         //src_loc += delta;
     //}
+}
+
+__global__ void cuda_gather(const ssize_t* pattern, const double *sparse, double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    double x;
+
+    if (j < pattern_length) {
+        // dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i]; // configuration 1
+        x = sparse[pattern[j] + delta * i]; // configuration 2
+        if (x == 0.5)
+            dense[0] = x;
+    }
 }
 
 //V2 = 8
@@ -565,6 +603,7 @@ INSTANTIATE2(4096);
 extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         enum sg_kernel kernel,
         double *source,
+        double *target,
         ssize_t* pat_dev,
         ssize_t* pat,
         size_t pat_len,
@@ -586,6 +625,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
     cudaEvent_t start, stop;
 
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
+
+    int threads_per_block = min(pat_len, (size_t)1024);
+    threads_per_block = min(threads_per_block, block[0]);
+    int blocks_per_grid = ((pat_len * n) + threads_per_block - 1) / threads_per_block;
+
     cudaMemcpy(pat_dev, pat, sizeof(sgIdx_t)*pat_len, cudaMemcpyHostToDevice);
     cudaMemcpy(order_dev, order, sizeof(uint32_t)*n, cudaMemcpyHostToDevice);
 
@@ -653,6 +697,8 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             }
 
         } else {
+            cuda_gather<<<blocks_per_grid, threads_per_block>>>(pat_dev, source, target, pat_len, delta, wrap, n, validate);
+            /*
             if (pat_len == 8) {
                 gather_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
             }else if (pat_len == 16) {
@@ -678,10 +724,12 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             }else {
                 printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
                 exit(1);
-            }
+            }*/
         }
-        cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost);
+        //cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost);
     } else if (kernel == SCATTER) {
+        cuda_scatter<<<blocks_per_grid, threads_per_block>>>(pat_dev, source, target, pat_len, delta, wrap, n, validate);
+        /*
         if (pat_len == 8) {
             scatter_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
         }else if (pat_len == 16) {
@@ -706,7 +754,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
             printf("ERROR NOT SUPPORTED, %zu\n", pat_len);
             exit(1);
         }
-
+        */
     }
 
     cudaEventRecord(stop);
@@ -954,6 +1002,27 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
 
 }*/
 
+__global__ void cuda_scatter_gather(const size_t *pattern_scatter,
+    double *sparse_scatter, const size_t *pattern_gather,
+    const double *sparse_gather, const size_t pattern_length,
+    const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
+    const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    // printf("%lu, %lu, %lu\n", total_id, j, i);
+    if (j < pattern_length && i < count)
+        sparse_scatter[pattern_scatter[j] + delta_scatter * i] = sparse_gather[pattern_gather[j] + delta_gather * i];
+}
+
 template<int V>
 __global__ void sg_block(double *source, double* target, sgIdx_t* pat_gath, sgIdx_t* pat_scat, spSize_t pat_len, size_t delta_gather, size_t delta_scatter, int wpt, char validate)
 {
@@ -1029,20 +1098,30 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
     cudaEvent_t start, stop;
 
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
-    cudaMemcpy(pat_gath_dev, rc->pattern_gather, sizeof(sgIdx_t)*rc->pattern_gather_len, cudaMemcpyHostToDevice);
-    cudaMemcpy(pat_scat_dev, rc->pattern_scatter, sizeof(sgIdx_t)*rc->pattern_scatter_len, cudaMemcpyHostToDevice);
 
     size_t delta_gather = rc->delta_gather;
     size_t delta_scatter = rc->delta_scatter;
 
     spSize_t pat_len = rc->pattern_gather_len;
 
+    size_t n = rc->generic_len;
+    size_t wrap = rc->wrap;
+
+    int threads_per_block = min(pat_len, (size_t)1024);
+    threads_per_block = min(threads_per_block, block[0]);
+    int blocks_per_grid = ((pat_len * n) + threads_per_block - 1) / threads_per_block;
+
+    cudaMemcpy(pat_gath_dev, rc->pattern_gather, sizeof(sgIdx_t)*rc->pattern_gather_len, cudaMemcpyHostToDevice);
+    cudaMemcpy(pat_scat_dev, rc->pattern_scatter, sizeof(sgIdx_t)*rc->pattern_scatter_len, cudaMemcpyHostToDevice);
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
     cudaDeviceSynchronize();
     cudaEventRecord(start);
-   
+
+    cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pat_scat_dev, target, pat_gath_dev, source, pat_len, delta_scatter, delta_gather, wrap, n, validate);   
+
+/*
     // KERNEL
     if (pat_len == 8) {
         sg_block<8><<<grid_dim, block_dim>>>(source, target, pat_gath_dev, pat_scat_dev, pat_len, delta_gather, delta_scatter, wpt, validate);
@@ -1069,6 +1148,7 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
     }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
+*/
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
@@ -1086,6 +1166,24 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
     return time_ms; 
 }
 
+__global__ void cuda_multi_scatter(const size_t *pattern,
+    const size_t *pattern_scatter, double *sparse, const double *dense,
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_dx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    if (j < pattern_length && i < count)
+        sparse[pattern[pattern_scatter[j]] + delta * i] = dense[j + pattern_length * (i % wrap)];
+}
 
 template<int V>
 __global__ void multiscatter_block(double *source, double* target, sgIdx_t* outer_pat, sgIdx_t* inner_pat, spSize_t pat_len, size_t delta, int wpt, char validate)
@@ -1159,19 +1257,29 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
     cudaEvent_t start, stop;
 
     if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
-    cudaMemcpy(outer_pat, rc->pattern, sizeof(sgIdx_t)*rc->pattern_len, cudaMemcpyHostToDevice);
-    cudaMemcpy(inner_pat, rc->pattern_scatter, sizeof(sgIdx_t)*rc->pattern_scatter_len, cudaMemcpyHostToDevice);
 
     size_t delta = rc->delta;
-
     spSize_t pat_len = rc->pattern_scatter_len;
+
+    size_t n = rc->generic_len;
+    size_t wrap = rc->wrap;
+
+    int threads_per_block = min(pat_len, (size_t)1024);
+    threads_per_block = min(threads_per_block, block[0]);
+    int blocks_per_grid = ((pat_len * n) + threads_per_block - 1) / threads_per_block;
+
+    cudaMemcpy(outer_pat, rc->pattern, sizeof(sgIdx_t)*rc->pattern_len, cudaMemcpyHostToDevice);
+    cudaMemcpy(inner_pat, rc->pattern_scatter, sizeof(sgIdx_t)*rc->pattern_scatter_len, cudaMemcpyHostToDevice);
 
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
     cudaDeviceSynchronize();
     cudaEventRecord(start);
-   
+
+    cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(outer_pat, inner_pat, source, target, pat_len, delta, wrap, n, validate);
+
+/*   
     // KERNEL
     if (pat_len == 8) {
         multiscatter_block<8><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
@@ -1198,6 +1306,7 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
     }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
+*/
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
@@ -1213,6 +1322,32 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
     float time_ms = 0;
     cudaEventElapsedTime(&time_ms, start, stop);
     return time_ms; 
+}
+
+__global__ void cuda_multi_gather(const size_t *pattern,
+    const size_t *pattern_gather, const double *sparse, double *dense,
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    double x;
+
+    if (j < pattern_length && i < count) {
+        // dense[j + pattern_length * (i % wrap)] =
+        // sparse[pattern[pattern_gather[j]] + delta * i];
+        x = sparse[pattern[pattern_gather[j]] + delta * i];
+        if (x == 0.5)
+            dense[0] = x;
+    }
 }
 
 template<int V>
@@ -1286,20 +1421,30 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
     dim3 grid_dim, block_dim;
     cudaEvent_t start, stop;
 
-    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
-    cudaMemcpy(outer_pat, rc->pattern, sizeof(sgIdx_t)*rc->pattern_len, cudaMemcpyHostToDevice);
-    cudaMemcpy(inner_pat, rc->pattern_gather, sizeof(sgIdx_t)*rc->pattern_gather_len, cudaMemcpyHostToDevice);
-
+    spSize_t pat_len = rc->pattern_gather_len;
     size_t delta = rc->delta;
 
-    spSize_t pat_len = rc->pattern_gather_len;
+    size_t n = rc->generic_len;
+    size_t wrap = rc->wrap;
+
+    if(translate_args(dim, grid, block, &grid_dim, &block_dim)) return 0;
+
+    int threads_per_block = min(pat_len, (size_t)1024);
+    threads_per_block = min(threads_per_block, block[0]);
+    int blocks_per_grid = ((pat_len * n) + threads_per_block - 1) / threads_per_block;
+
+    cudaMemcpy(outer_pat, rc->pattern, sizeof(sgIdx_t)*rc->pattern_len, cudaMemcpyHostToDevice);
+    cudaMemcpy(inner_pat, rc->pattern_gather, sizeof(sgIdx_t)*rc->pattern_gather_len, cudaMemcpyHostToDevice);
 
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
     cudaDeviceSynchronize();
     cudaEventRecord(start);
-   
+
+    cuda_multi_gather<<<blocks_per_grid, threads_per_block>>>(outer_pat, inner_pat, source, target, pat_len, delta, wrap, n, validate);
+
+ /*   
     // KERNEL
     if (pat_len == 8) {
         multigather_block<8><<<grid_dim, block_dim>>>(source, target, outer_pat, inner_pat, pat_len, delta, wpt, validate);
@@ -1326,6 +1471,7 @@ extern "C" float cuda_block_multigather_wrapper(uint dim, uint* grid, uint* bloc
     }else {
         printf("ERROR NOT SUPPORTED: %zu\n", pat_len);
     }
+*/
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);

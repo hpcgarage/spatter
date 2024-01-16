@@ -82,12 +82,11 @@ add_definitions (-DSG_DATA_TYPE=double)
                     "Only nvcc is supported for CUDA backend"
             )
         endif()
-
-        if (USE_MPI)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
-        endif()
-
+ 
+        #By default, use PIE flags for compatibility with newest NVHPC
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+	
         if (DEFINED CUDA_ARCH)
             set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
         else ()
@@ -98,13 +97,11 @@ add_definitions (-DSG_DATA_TYPE=double)
 
     #SYCL
     if ("${BACKEND}" STREQUAL "sycl")
-        if (USE_MPI)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
-        endif()
-
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+        
         #message("No SYCL architecture specified, default set to PVC")
-	#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
+	      #set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsycl -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device 12.60.7\"")
     endif ()
 
     #OPENMP

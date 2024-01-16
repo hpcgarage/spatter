@@ -49,6 +49,7 @@ extern float cuda_block_sg_wrapper(long unsigned dim, long unsigned* grid, long 
 extern float cuda_block_wrapper(long unsigned dim, long unsigned* grid, long unsigned* block,
         enum sg_kernel kernel,
         double *source,
+        double *target,
         sgIdx_t* pat_dev,
         ssize_t* pat,
         size_t pat_len,
