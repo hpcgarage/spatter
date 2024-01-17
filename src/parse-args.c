@@ -748,7 +748,7 @@ struct run_config *parse_runs(int argc, char **argv)
     if (!strcasecmp(rc->name, "NONE"))
     {
         if (rc->type != CUSTOM)
-            safestrcopy(rc->name, rc->generator);
+            safestrcopy(rc->name, pattern->sval[0]);
         else
             safestrcopy(rc->name, "CUSTOM");
     }
