@@ -1,3 +1,4 @@
+#include <sys/types.h>
 template<int N, typename T>
 __global__
 void my_kernel(T* data) {
@@ -7,8 +8,8 @@ void my_kernel(T* data) {
     }
 };
 
-template<V>
-__global__ void gather(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate, const int VV)
+template<int V>
+__global__ void gather(double *src, ssize_t* idx, size_t idx_len, size_t delta, char validate)
 {
     __shared__ ssize_t idx_shared[1024];
     //extern __shared__ ssize_t idx_shared[];

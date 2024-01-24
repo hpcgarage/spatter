@@ -69,39 +69,67 @@ int find_device_cuda(char *name) {
     return -1;
 }
 
+// Block to GSOP ratio.
+// If we can fit 2 GSOPs in a block, the ratio is 1:2
+// If we need 2 blocks to fit a single GSOP, the ratio is 2:1
+// One of the numbers will always be 1
+
+struct ratio_t {
+    int blocks;
+    int ops;
+};
+
+ratio_t calculate_ratio(int thread_block_size, int pattern_len) {
+    ratio_t ret;
+    if (pattern_len > thread_block_size) {
+        ret.ops = 1;
+        ret.blocks = pattern_len / thread_block_size + (pattern_len % thread_block_size != 0);
+    } else {
+        ret.blocks = 1;
+        ret.ops = thread_block_size / pattern_len;
+    }
+    return ret;
+}
+
+float cuda_execute(struct run_config rc, double *src, ssize_t *pat_dev)
+{
+
+    // Grow the grid size if GSOPs are too big to fit in a thread block
+    // Shrink it if we can fit multiple GSOPs in a block
+    int grid_size = rc.generic_len;
+    ratio_t ratio = calculate_ratio(rc.local_work_size, rc.pattern_len);
+    if (ratio.blocks > 1) {
+        grid_size *= ratio.blocks;
+    } else {
+        grid_size /= ratio.ops;
+    }
+
+    dim3 grid(grid_size);
+    dim3 block(rc.local_work_size);
+
+    // Transfer pattern to device
+    gpuErrchk( cudaMemcpy(pat_dev, rc.pattern, sizeof(ssize_t)*rc.pattern_len, cudaMemcpyHostToDevice) );
+
 #ifdef USE_CUDA_JIT
-float cuda_execute_jit(struct run_config rc) {
+
+    //TODO: May want to run some of this in an init function
+    jitify::detail::vector<std::string> includes = {"<sys/types.h>"};
     static jitify::JitCache kernel_cache;
     jitify::Program program = kernel_cache.program("kernels.cu");
-    // ...set up data etc.
-    int len = 10;
-    double *data = (double*)malloc(sizeof(double) * len);
-    dim3 grid(1);
-    dim3 block(1);
-    program.kernel("gather")
-           .instantiate(len, jitify::reflection::type_of(*data))
-           .configure(grid, block)
-           .launch(data);
-    return 100.0;
-}
-#else
-#define len 10
-float cuda_execute_normal(struct run_config rc) {
-    double *data = (double*)malloc(sizeof(double) * len);
-    dim3 grid(1);
-    dim3 block(1);
-    gather<1024><<<grid,block>>>(data);
-    return 200.0;
-}
-#undef len
-#endif
+    //TODO: add error checking
 
-float cuda_execute(struct run_config rc)
-{
-#ifdef USE_CUDA_JIT
-    return cuda_execute_jit(rc);
+    program.kernel("gather")
+           .instantiate(rc.local_work_size)
+           .configure(grid, block)
+           .launch(src, pat_dev, rc.pattern_len, rc.delta, false);
+
+    return 110.0;
+
 #else
-    return cuda_execute_normal(rc);
+
+    gather<1024><<<grid,block>>>(src, pat_dev, (size_t)rc.pattern_len, (size_t)rc.delta, false);
+    return 220.0;
+
 #endif
 }
 
@@ -204,7 +232,6 @@ __global__ void scatter_block_random(double *src, ssize_t* idx, size_t idx_len, 
 //V2 = 8
 //assume block size >= index buffer size
 //assume index buffer size divides block size
-/*
 #define V 1024
 __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t delta, int wpb, char validate, const int VV)
 {
@@ -249,7 +276,6 @@ __global__ void gather_block(double *src, ssize_t* idx, size_t idx_len, size_t d
 
 }
 #undef V
-*/
 
 // Multiple blocks per GSOP
 __global__ void gather_big(double *src, ssize_t* idx, size_t idx_len, size_t delta)

@@ -661,7 +661,8 @@ int main(int argc, char **argv)
                         error("Unsupported kernel for CUDA backend", ERROR);
                 }
                 */
-                time_ms = cuda_execute(rc2[k]);
+                time_ms = cuda_execute(rc2[k], source.dev_ptr_cuda, pat_dev);
+                        //time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
                 printf("time_ms: %f\n", time_ms);
 
                 if (rc2[k].kernel == MULTISCATTER) {

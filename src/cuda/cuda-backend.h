@@ -12,7 +12,7 @@ void create_dev_buffers_cuda(sgDataBuf* source);
 
 int find_device_cuda(char *name);
 
-float cuda_execute(struct run_config);
+float cuda_execute(struct run_config, double *src, ssize_t *pat_dev);
 
 #ifdef __cplusplus
 }
