@@ -62,9 +62,9 @@ void parse_backend(int argc, char **argv);
 
 void** argtable;
 unsigned int number_of_arguments = 37;
-struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress, *strong_scale;
+struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
 struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *delta_gather, *delta_scatter, *name, *papi, *op;
-struct arg_int *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
+struct arg_int *strong_scale, *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
 
@@ -92,7 +92,7 @@ void initialize_argtable()
     malloc_argtable[14] = delta_scatter   = arg_strn("y", "delta-scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
     malloc_argtable[15] = boundary        = arg_intn("e", "boundary", "<boundary>", 0, 1, "Specify the boundary to mod pattern indices with to limit data array size.");
     malloc_argtable[16] = pattern_size    = arg_intn("j", "pattern-size", "<n>", 0, 1, "Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.");
-    malloc_argtable[17] = strong_scale    = arg_litn("u", "strong-scale", 0, 1, "Enable Strong Scaling.");
+    malloc_argtable[17] = strong_scale    = arg_intn("u", "strong-scale", "<n>", 0, 1, "Enable Strong Scaling.");
     malloc_argtable[18] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
     malloc_argtable[19] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
     malloc_argtable[20] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
@@ -1329,8 +1329,8 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
         *pattern_len = read;
     }
 
-    if (strong_scale->count > 0) {
-        printf("Strong Scaling Enabled");
+    if (strong_scale->count > 0 && strong_scale->ival[0] > 0) {
+        printf("Strong Scaling Enabled\n");
         int numpes = 1;
         int pe = 0;
 #ifdef USE_MPI
