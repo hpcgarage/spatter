@@ -21,6 +21,10 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 #ifdef USE_PAPI
 #include "papi_helper.h"
 int papi_nevents;
@@ -57,10 +61,10 @@ void xkp_pattern(ssize_t *pat, ptrdiff_t dim);
 void parse_backend(int argc, char **argv);
 
 void** argtable;
-unsigned int number_of_arguments = 36;
+unsigned int number_of_arguments = 37;
 struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
 struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *delta_gather, *delta_scatter, *name, *papi, *op;
-struct arg_int *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
+struct arg_int *strong_scale, *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
 
@@ -88,26 +92,27 @@ void initialize_argtable()
     malloc_argtable[14] = delta_scatter   = arg_strn("y", "delta-scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
     malloc_argtable[15] = boundary        = arg_intn("e", "boundary", "<boundary>", 0, 1, "Specify the boundary to mod pattern indices with to limit data array size.");
     malloc_argtable[16] = pattern_size    = arg_intn("j", "pattern-size", "<n>", 0, 1, "Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.");
-    malloc_argtable[17] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
-    malloc_argtable[18] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
-    malloc_argtable[19] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
-    malloc_argtable[20] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
-    malloc_argtable[21] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
-    malloc_argtable[22] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
-    malloc_argtable[23] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
-    malloc_argtable[24] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
-    malloc_argtable[25] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
-    malloc_argtable[26] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
-    malloc_argtable[27] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[28] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[29] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
+    malloc_argtable[17] = strong_scale    = arg_intn("u", "strong-scale", "<n>", 0, 1, "Enable Strong Scaling.");
+    malloc_argtable[18] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
+    malloc_argtable[19] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
+    malloc_argtable[20] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
+    malloc_argtable[21] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
+    malloc_argtable[22] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
+    malloc_argtable[23] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
+    malloc_argtable[24] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
+    malloc_argtable[25] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
+    malloc_argtable[26] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
+    malloc_argtable[27] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[28] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[29] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[30] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
     // Other Configurations
-    malloc_argtable[30] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
-    malloc_argtable[31] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
-    malloc_argtable[32] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
-    malloc_argtable[33] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
-    malloc_argtable[34] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
-    malloc_argtable[35] = end             = arg_end(20);
+    malloc_argtable[31] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
+    malloc_argtable[32] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
+    malloc_argtable[33] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
+    malloc_argtable[34] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
+    malloc_argtable[35] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
+    malloc_argtable[36] = end             = arg_end(20);
 
     // Random has an option to provide an argument. Default its value to -1.
     random_arg->hdr.flag |= ARG_HASOPTVALUE;
@@ -1322,6 +1327,31 @@ void parse_p(char* optarg, struct run_config *rc, int mode)
 
         *pattern = mypat;
         *pattern_len = read;
+    }
+
+    if (strong_scale->count > 0 && strong_scale->ival[0] > 0) {
+        printf("Strong Scaling Enabled\n");
+        int numpes = 1;
+        int pe = 0;
+#ifdef USE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &pe);
+        MPI_Comm_size(MPI_COMM_WORLD, &numpes);
+#endif
+
+        size_t partition = *pattern_len / (size_t) numpes;
+	size_t new_length = partition;
+        if (pe == numpes - 1)
+            new_length += *pattern_len % (size_t) numpes;
+
+        ssize_t *trunc_pat = sp_malloc(sizeof(spIdx_t), new_length, ALIGN_CACHE);
+
+        for (size_t i = 0; i < new_length; ++i) {
+            trunc_pat[i] = (*pattern)[pe * partition + i];
+        }
+
+        free(*pattern);
+        *pattern = trunc_pat;
+        *pattern_len = new_length;
     }
 
     if (*pattern_len == 0)
