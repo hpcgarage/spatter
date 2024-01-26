@@ -12,7 +12,7 @@ jobs:
   build-and-run-serial:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Build-Serial
       run: cmake -DBACKEND=serial -DCOMPILER=gnu -B build_serial_gnu -S . && make -C build_serial_gnu
     - name: Test-Serial
@@ -20,7 +20,7 @@ jobs:
   build-and-run-omp:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2 
+    - uses: actions/checkout@v4 
     - name: Build-OMP
       run: 
         cmake -DBACKEND=openmp -DCOMPILER=gnu -B build_omp_gnu -S . && make -C build_omp_gnu
@@ -29,6 +29,6 @@ jobs:
   build-cuda:
     runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Run batch file
       run: cd tests/misc && chmod +x run-crnch-cuda.sh && sbatch run-crnch-cuda.sh
