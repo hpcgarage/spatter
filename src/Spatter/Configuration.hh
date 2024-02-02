@@ -54,7 +54,7 @@ public:
         [](unsigned char c) { return std::tolower(c); });
   }
 
-  ~ConfigurationBase() = default;
+  virtual ~ConfigurationBase() = default;
 
   virtual int run(bool timed) {
     if (kernel.compare("gather") == 0)
