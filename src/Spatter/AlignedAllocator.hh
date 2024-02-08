@@ -113,17 +113,13 @@ class aligned_allocator
 			}
 
 			// Allocate memory
-			printf("Allocating...\n");
-			printf("-> n: %zu, sizeof(T): %lu, Alignment: %lu, max_size(): %zu\n", n, sizeof(T), Alignment, max_size());
 			void * const pv = std::aligned_alloc(Alignment, alloc);
 
 			// Allocators should throw std::bad_alloc in the case of memory allocation failure.
 			if (pv == NULL)
 			{
-				printf("-> FAILURE !!! FAILURE !!! FAILURE\n");
 				throw std::bad_alloc();
 			}
-			printf("-> Success.\n");
 
 			return static_cast<T *>(pv);
 		}
