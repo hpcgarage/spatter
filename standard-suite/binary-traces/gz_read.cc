@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
   while (gz_buf_read(zfp, zbuff, &pzbuff, &izret)) {
 
     if (quiet == 0)
-      printf("%d\n", (*pzbuff));
+      printf("%llu\n", (*pzbuff));
 
     pzbuff++;
   }
