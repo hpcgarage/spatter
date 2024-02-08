@@ -47,29 +47,26 @@ int main(int argc, char **argv) {
   int argc_ = 3;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  for (int i = 0; i < argc_; ++i)
-    argv_[i] = (char *)malloc(sizeof(char) * 1024);
-
-  sprintf(argv_[0], "./src/spatter-driver");
-  sprintf(argv_[1], "-p1,2,3,4");
-  sprintf(argv_[2], "-l");
+  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[1], "-p1,2,3,4");
+  asprintf(&argv_[2], "-l");
 
   if (random_test(-1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  sprintf(argv_[2], "-l123");
+  asprintf(&argv_[2], "-l123");
   if (random_test(123, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  sprintf(argv_[2], "-l456");
+  asprintf(&argv_[2], "-l456");
   if (random_test(456, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  sprintf(argv_[2], "--random");
+  asprintf(&argv_[2], "--random");
   if (random_test(-1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  sprintf(argv_[2], "--random=789");
+  asprintf(&argv_[2], "--random=789");
   if (random_test(789, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 

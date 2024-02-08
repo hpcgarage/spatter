@@ -72,35 +72,33 @@ int main(int argc, char **argv) {
 
   int argc_ = 4;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
-  for (int i = 0; i < argc_; i++)
-    argv_[i] = (char *)malloc(sizeof(char) * 1024);
 
-  strcpy(argv_[0], "./src/spatter-driver");
-  strcpy(argv_[1], "-p1,2,3,4");
-  strcpy(argv_[2], "-bopenmp");
+  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[1], "-p1,2,3,4");
+  asprintf(&argv_[2], "-bopenmp");
 
   optind = 1;
-  sprintf(argv_[3], "-t4");
+  asprintf(&argv_[3], "-t4");
   if (omp_thread_test(4, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
-  sprintf(argv_[3], "-t0");
+  asprintf(&argv_[3], "-t0");
   if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
-  sprintf(argv_[3], "-t10000000");
+  asprintf(&argv_[3], "-t10000000");
   if (omp_thread_test(10000000, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
-  sprintf(argv_[3], "-t-1");
+  asprintf(&argv_[3], "-t-1");
   if (omp_thread_test(-1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
-  sprintf(argv_[3], "--omp-threads=0");
+  asprintf(&argv_[3], "--omp-threads=0");
   if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 

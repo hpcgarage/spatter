@@ -49,27 +49,24 @@ int main(int argc, char **argv) {
   int argc_ = 3;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  for (int i = 0; i < argc_; ++i)
-    argv_[i] = (char *)malloc(sizeof(char) * 1024);
-
   for (unsigned int i = 1; i <= 16; i *= 2) {
     for (unsigned int j = 8; j <= 64; j *= 2) {
       optind = 1;
-      sprintf(argv_[1], "-pUNIFORM:%d:%d", j, i);
+      asprintf(&argv_[1], "-pUNIFORM:%d:%d", j, i);
       if (uniform_stride_test(j, i, argc_ - 1, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
     }
 
     for (int j = 8; j <= 64; j *= 2) {
       optind = 1;
-      sprintf(argv_[1], "--pattern=UNIFORM:%d:%d", j, i);
+      asprintf(&argv_[1], "--pattern=UNIFORM:%d:%d", j, i);
       if (uniform_stride_test(j, i, argc_ - 1, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
     }
     for (int j = 8; j <= 64; j *= 2) {
       optind = 1;
-      sprintf(argv_[1], "-p");
-      sprintf(argv_[2], "UNIFORM:%d:%d", j, i);
+      asprintf(&argv_[1], "-p");
+      asprintf(&argv_[2], "UNIFORM:%d:%d", j, i);
       if (uniform_stride_test(j, i, argc_, argv_) != EXIT_SUCCESS)
         return EXIT_FAILURE;
     }
