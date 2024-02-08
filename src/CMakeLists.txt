@@ -4,6 +4,8 @@ add_subdirectory(Spatter)
 
 add_executable(spatter-driver main.cc)
 
+#target_compile_options(spatter-driver PUBLIC "-fnew-alignment 32")
+
 target_link_libraries(spatter-driver ${COMMON_LINK_LIBRARIES} Spatter)
 target_include_directories(spatter-driver
     PUBLIC

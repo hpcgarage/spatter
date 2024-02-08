@@ -110,9 +110,9 @@ public:
     assert(data_[index].contains("nthreads"));
     assert(data_[index].contains("nruns"));
 
-    std::vector<size_t> pattern;
-    std::vector<size_t> pattern_gather;
-    std::vector<size_t> pattern_scatter;
+    aligned_vector<size_t> pattern;
+    aligned_vector<size_t> pattern_gather;
+    aligned_vector<size_t> pattern_scatter;
 
     if (data_[index].contains("pattern"))
       if (get_pattern_("pattern", pattern, index) != 0)
@@ -162,7 +162,7 @@ public:
   }
 
 private:
-  int get_pattern_(const std::string &pattern_key, std::vector<size_t> &pattern,
+  int get_pattern_(const std::string &pattern_key, aligned_vector<size_t> &pattern,
       const size_t index) {
     if (data_[index][pattern_key].type() == json::value_t::string) {
       std::string pattern_string =
@@ -176,7 +176,7 @@ private:
 
       return pattern_parser(pattern_stream, pattern);
     } else {
-      pattern = data_[index][pattern_key].template get<std::vector<size_t>>();
+      pattern = data_[index][pattern_key].template get<aligned_vector<size_t>>();
       return 0;
     }
   }
