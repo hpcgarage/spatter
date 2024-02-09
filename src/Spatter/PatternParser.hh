@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "Spatter/Configuration.hh"
-#include "Spatter/JSONParser.hh"
 #include "Spatter/SpatterTypes.hh"
 
 namespace Spatter {
