@@ -77,16 +77,13 @@ int main(int argc, char **argv) {
 
   int argc_ = 2;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
-  for (int i = 0; i < argc_; i++) {
-    argv_[i] = (char *)malloc(sizeof(char) * 1024);
-  }
-  strcpy(argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[0], "./src/spatter-driver");
 
   for (size_t i = 8; i <= 64; i *= 2) {
     // Uniform gap sizes
     // [ 9, 10, 11, 12, 13, 14, 15, 16 ]
     optind = 1;
-    sprintf(argv_[1], "-pMS1:%ld:%s:%d", i, "0", 10);
+    asprintf(&argv_[1], "-pMS1:%ld:%s:%d", i, "0", 10);
     std::vector<size_t> gap_locations = {0};
     std::vector<int> gap_sizes = {10};
     if (ms1_test(i, 1, gap_locations, 1, gap_sizes, argc_, argv_) !=
@@ -95,7 +92,7 @@ int main(int argc, char **argv) {
 
     // [ 0, 5, 6, 7, 8, 13, 14, 19]
     optind = 1;
-    sprintf(argv_[1], "-pMS1:%ld:%s:%d", i, "1, 5, 7", 5);
+    asprintf(&argv_[1], "-pMS1:%ld:%s:%d", i, "1, 5, 7", 5);
     std::vector<size_t> gap_locations1 = {1, 5, 7};
     std::vector<int> gap_sizes1 = {5};
     if (ms1_test(i, 3, gap_locations1, 1, gap_sizes1, argc_, argv_) !=
@@ -105,7 +102,7 @@ int main(int argc, char **argv) {
     // Variable gap sizes
     // [ 4, 5, 14, 15, 16, 17, 18, 19 ]
     optind = 1;
-    sprintf(argv_[1], "-pMS1:%ld:%s:%s", i, "0, 2", "5, 9");
+    asprintf(&argv_[1], "-pMS1:%ld:%s:%s", i, "0, 2", "5, 9");
     std::vector<size_t> gap_locations2 = {0, 2};
     std::vector<int> gap_sizes2 = {5, 9};
     if (ms1_test(i, 2, gap_locations2, 2, gap_sizes2, argc_, argv_) !=
@@ -114,7 +111,7 @@ int main(int argc, char **argv) {
 
     // [ 0, 4, 5, 6, 7, 15, 16, 36 ]
     optind = 1;
-    sprintf(argv_[1], "-pMS1:%ld:%s:%s", i, "1, 5, 7", "3, 8, 20");
+    asprintf(&argv_[1], "-pMS1:%ld:%s:%s", i, "1, 5, 7", "3, 8, 20");
     std::vector<size_t> gap_locations3 = {1, 5, 7};
     std::vector<int> gap_sizes3 = {3, 8, 20};
     if (ms1_test(i, 3, gap_locations3, 3, gap_sizes3, argc_, argv_) !=

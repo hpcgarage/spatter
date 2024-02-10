@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
 
   optind = 1;
-  sprintf(argv_[1], "-p0");
+  asprintf(&argv_[1], "-p0");
   std::vector<size_t> testValues1 = {0};
   if (custom_test(1, testValues1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;

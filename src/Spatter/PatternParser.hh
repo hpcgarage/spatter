@@ -24,7 +24,7 @@ size_t power(size_t base, size_t exp) {
 }
 
 int generate_pattern(std::string type,
-    std::vector<std::vector<size_t>> generator, std::vector<size_t> &pattern) {
+    std::vector<std::vector<size_t>> generator, aligned_vector<size_t> &pattern) {
   if (type.compare("UNIFORM") == 0) {
     if (generator.size() != 2) {
       std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
@@ -137,7 +137,7 @@ int generate_pattern(std::string type,
 }
 
 int pattern_parser(
-    std::stringstream &pattern_string, std::vector<size_t> &pattern) {
+    std::stringstream &pattern_string, aligned_vector<size_t> &pattern) {
 
   std::string type;
   std::vector<std::vector<size_t>> generator;

@@ -179,7 +179,7 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
   return 0;
 }
 
-size_t remap_pattern(std::vector<size_t> &pattern, const size_t boundary) {
+size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
   const size_t pattern_len = pattern.size();
   for (size_t j = 0; j < pattern_len; ++j) {
     pattern[j] = pattern[j] % boundary;
@@ -205,7 +205,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   bool json = 0;
   std::string json_fname = "";
 
-  std::vector<size_t> pattern_gather;
+  aligned_vector<size_t> pattern_gather;
   std::stringstream pattern_gather_string;
 
   size_t pattern_size = 0;
@@ -216,7 +216,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t op;
 
   std::stringstream pattern_string;
-  std::vector<size_t> pattern;
+  aligned_vector<size_t> pattern;
 
   unsigned long nruns = 10;
   int seed = -1;
@@ -228,7 +228,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
 
   std::stringstream pattern_scatter_string;
-  std::vector<size_t> pattern_scatter;
+  aligned_vector<size_t> pattern_scatter;
 
   unsigned long verbosity = cl.verbosity;
   size_t wrap = 1;

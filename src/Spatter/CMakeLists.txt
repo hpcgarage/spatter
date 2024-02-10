@@ -15,6 +15,7 @@ set(SPATTER_INCLUDE_FILES
     JSONParser.hh
     PatternParser.hh
     SpatterTypes.hh
+    AlignedAllocator.hh
     Timer.hh)
 
 add_library(Spatter INTERFACE)
