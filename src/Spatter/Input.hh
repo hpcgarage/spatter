@@ -236,6 +236,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t delta_scatter = 8;
   size_t local_work_size;
 
+  optind = 1;
   int c;
   while ((c = getopt_long(argc, argv, shortargs, longargs, nullptr)) != -1) {
     switch (c) {
