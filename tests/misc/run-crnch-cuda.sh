@@ -3,10 +3,9 @@
 #SBATCH -N1 --ntasks-per-node=4                  # Number of nodes and cores per node required
 #SBATCH --mem-per-cpu=4G                         # Memory per core
 #SBATCH -t 00:30:00                              # Duration of the job (Ex: 30 mins)
-#SBATCH -p rg-nextgen-hpc                                # Partition Name
+#SBATCH -p rg-nextgen-hpc                        # Partition Name
 #SBATCH -o /tools/ci-reports/spatter-cuda-test-%j.out   # Combined output and error messages file
-#SBATCH --nodelist quorra1			     # Specify a specific node
-#SBATCH -G 1					     # Request a GPU on that node
+#SBATCH --gres gpu:A100:1	  	         # Request a A100 GPU on any available node
 #SBATCH -W                                       # Do not exit until the submitted job terminates.
 
 ##Add commands here to build and execute
