@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -Jspatter-ci-cuda                        # Job name
-#SBATCH -N1 --ntasks-per-node=4                  # Number of nodes and cores per node required
+#SBATCH -N1 -c=4                  		 # Number of nodes and CPUs per node required
 #SBATCH --mem-per-cpu=4G                         # Memory per core
 #SBATCH -t 00:30:00                              # Duration of the job (Ex: 30 mins)
 #SBATCH -p rg-nextgen-hpc                        # Partition Name
