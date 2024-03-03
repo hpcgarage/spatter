@@ -52,6 +52,10 @@ To do an MPI build with GNU, note that `Release` build is the default choice whe
 cmake -DBACKEND=openmp -DCOMPILER=gnu -DUSE_MPI=1 -B build_openmp_gnu_mpi -S .
 ```
 
+To do an CUDA build, specify nvcc as the compiler. Note we usually use NVHPC to build Spatter:
+```
+cmake -DBACKEND=cuda -DCOMPILER=nvcc -B build_cuda -S .
+```
 For a complete list of build options, see [Build.md](Build.md)
 
 ## Running Spatter
