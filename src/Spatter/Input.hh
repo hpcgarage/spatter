@@ -19,10 +19,10 @@
 #include <omp.h>
 #endif
 
-#include "Spatter/Configuration.hh"
-#include "Spatter/JSONParser.hh"
-#include "Spatter/PatternParser.hh"
-#include "Spatter/SpatterTypes.hh"
+#include "Configuration.hh"
+#include "JSONParser.hh"
+#include "PatternParser.hh"
+#include "SpatterTypes.hh"
 
 namespace Spatter {
 static char *shortargs =
