@@ -259,7 +259,7 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 
 }
 
-__global__ void cuda_scatter(const ssize_t* pattern, double *sparse, const double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
+__global__ void cuda_scatter(const ssize_t* pattern, double *sparse, double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
     size_t j = total_id % pattern_length; // pat_idx
     size_t i = total_id / pattern_length; // count_idx
@@ -272,7 +272,8 @@ __global__ void cuda_scatter(const ssize_t* pattern, double *sparse, const doubl
     #endif
 
     if (j < pattern_length && i < count)
-        sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
+        atomicExch((unsigned long long int*)&sparse[pattern[j] + delta * i], __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
+        //sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
 }
 
 //assume block size >= index buffer size
@@ -1004,7 +1005,7 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
 
 __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
-    const double *sparse_gather, const size_t pattern_length,
+    double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
     const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
@@ -1020,7 +1021,8 @@ __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
 
     // printf("%lu, %lu, %lu\n", total_id, j, i);
     if (j < pattern_length && i < count)
-        sparse_scatter[pattern_scatter[j] + delta_scatter * i] = sparse_gather[pattern_gather[j] + delta_gather * i];
+          atomicExch((unsigned long long int*)&sparse_scatter[pattern_scatter[j] + delta_scatter * i], __double_as_longlong(sparse_gather[pattern_gather[j] + delta_gather * i]));
+//        sparse_scatter[pattern_scatter[j] + delta_scatter * i] = sparse_gather[pattern_gather[j] + delta_gather * i];
 }
 
 template<int V>
@@ -1167,7 +1169,7 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
 }
 
 __global__ void cuda_multi_scatter(const size_t *pattern,
-    const size_t *pattern_scatter, double *sparse, const double *dense,
+    const size_t *pattern_scatter, double *sparse, double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
@@ -1182,7 +1184,8 @@ __global__ void cuda_multi_scatter(const size_t *pattern,
     #endif
 
     if (j < pattern_length && i < count)
-        sparse[pattern[pattern_scatter[j]] + delta * i] = dense[j + pattern_length * (i % wrap)];
+        atomicExch((unsigned long long int*)&sparse[pattern[pattern_scatter[j]] + delta * i], __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
+        //sparse[pattern[pattern_scatter[j]] + delta * i] = dense[j + pattern_length * (i % wrap)];
 }
 
 template<int V>
