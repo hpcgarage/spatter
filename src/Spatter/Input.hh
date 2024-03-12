@@ -60,9 +60,24 @@ struct ClArgs {
   unsigned long verbosity;
 
   void report() {
+#ifdef USE_MPI
+    int numpes = 0;
+    int rank = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &numpes);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+      std::cout << std::setw(15) << std::left << "config" << std::setw(30)
+                << std::left << "average bytes per rank" << std::setw(30)
+                << std::left << "total bytes" << std::setw(30) << std::left
+                << "average time per rank(s)" << std::setw(30) << std::left
+                << "average bw per rank(MB/s)" << std::setw(30) << std::left
+                << "total bw(MB/s)" << std::endl;
+    }
+#else
     std::cout << std::setw(15) << std::left << "config" << std::setw(15)
               << std::left << "bytes" << std::setw(15) << std::left << "time(s)"
               << std::setw(15) << std::left << "bw(MB/s)" << std::endl;
+#endif
     for (auto const &config : configs)
       config->report();
   }

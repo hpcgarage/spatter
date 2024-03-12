@@ -64,6 +64,16 @@ public:
 
   virtual void setup();
 
+private:
+  void print_no_mpi(size_t bytes_per_run, double average_time_per_run,
+      double average_bandwidth);
+
+#ifdef USE_MPI
+  void print_mpi(std::vector<int> &vector_bytes_per_run,
+      std::vector<double> &vector_average_time_per_run,
+      std::vector<double> &vector_average_bandwidth);
+#endif
+
 public:
   const size_t id;
   const std::string name;

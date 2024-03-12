@@ -2,6 +2,8 @@
   \file Configuration.cc
 */
 
+#include <numeric>
+
 #include "Configuration.hh"
 
 namespace Spatter {
@@ -60,16 +62,37 @@ void ConfigurationBase::report() {
   if (kernel.compare("multigather") == 0)
     total_bytes_moved = nruns * pattern_gather.size() * count * sizeof(size_t);
 
-  size_t bytes_per_run = total_bytes_moved / nruns;
+  int bytes_per_run =
+      static_cast<int>(total_bytes_moved) / static_cast<int>(nruns);
 
   double average_time_per_run = time_seconds / (double)nruns;
   double average_bandwidth =
       (double)(bytes_per_run) / average_time_per_run / 1000000.0;
 
-  std::cout << std::setw(15) << std::left << id << std::setw(15) << std::left
-            << bytes_per_run << std::setw(15) << std::left
-            << average_time_per_run << std::setw(15) << std::left
-            << average_bandwidth << std::endl;
+#ifdef USE_MPI
+  int numpes = 0;
+  int rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &numpes);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  std::vector<int> vector_bytes_per_run(numpes, 0);
+  MPI_Gather(&bytes_per_run, 1, MPI_INT, vector_bytes_per_run.data(), 1,
+      MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<double> vector_average_time_per_run(numpes, 0.0);
+  MPI_Gather(&average_time_per_run, 1, MPI_DOUBLE,
+      vector_average_time_per_run.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  std::vector<double> vector_average_bandwidth(numpes, 0.0);
+  MPI_Gather(&average_bandwidth, 1, MPI_DOUBLE, vector_average_bandwidth.data(),
+      1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (rank == 0)
+    print_mpi(vector_bytes_per_run, vector_average_time_per_run,
+        vector_average_bandwidth);
+#else
+  print_no_mpi(bytes_per_run, average_time_per_run, average_bandwidth);
+#endif
 }
 
 void ConfigurationBase::setup() {
@@ -227,6 +250,64 @@ void ConfigurationBase::setup() {
     }
   }
 }
+
+void ConfigurationBase::print_no_mpi(size_t bytes_per_run,
+    double average_time_per_run, double average_bandwidth) {
+  std::cout << std::setw(15) << std::left << id << std::setw(15) << std::left
+            << bytes_per_run << std::setw(15) << std::left
+            << average_time_per_run << std::setw(15) << std::left
+            << average_bandwidth << std::endl;
+}
+
+#ifdef USE_MPI
+void ConfigurationBase::print_mpi(std::vector<int> &vector_bytes_per_run,
+    std::vector<double> &vector_time_per_run,
+    std::vector<double> &vector_average_bandwidth) {
+
+  int total_bytes = std::accumulate(vector_bytes_per_run.begin(),
+      vector_bytes_per_run.end(),
+      std::remove_reference_t<decltype(vector_bytes_per_run)>::value_type(0));
+  double average_bytes_per_rank = static_cast<double>(total_bytes) /
+      static_cast<double>(vector_bytes_per_run.size());
+
+  double total_time = std::accumulate(vector_time_per_run.begin(),
+      vector_time_per_run.end(),
+      std::remove_reference_t<decltype(vector_time_per_run)>::value_type(0));
+  double average_time_per_rank =
+      total_time / static_cast<double>(vector_time_per_run.size());
+
+  double total_average_bandwidth = std::accumulate(
+      vector_average_bandwidth.begin(), vector_average_bandwidth.end(),
+      std::remove_reference_t<decltype(vector_average_bandwidth)>::value_type(
+          0));
+  double average_bandwidth_per_rank = total_average_bandwidth /
+      static_cast<double>(vector_average_bandwidth.size());
+
+  std::cout << std::setw(15) << std::left << id << std::setw(30) << std::left
+            << average_bytes_per_rank << std::setw(30) << std::left
+            << total_bytes << std::setw(30) << std::left
+            << average_time_per_rank << std::setw(30) << std::left
+            << average_bandwidth_per_rank << std::setw(30) << std::left
+            << total_average_bandwidth << std::endl;
+
+  if (verbosity >= 3) {
+    std::cout << "Bytes per run per rank\n";
+    for (int bytes : vector_bytes_per_run)
+      std::cout << bytes << ' ';
+    std::cout << "\n\n";
+
+    std::cout << "Average time per run per rank(s)\n";
+    for (double t : vector_time_per_run)
+      std::cout << t << ' ';
+    std::cout << "\n\n";
+
+    std::cout << "Average bandwidth per run per rank(MB/s)\n";
+    for (double bw : vector_average_bandwidth)
+      std::cout << bw << ' ';
+    std::cout << std::endl;
+  }
+}
+#endif
 
 std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config) {
   std::stringstream config_output;

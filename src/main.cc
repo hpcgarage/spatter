@@ -95,11 +95,11 @@ int main(int argc, char **argv) {
 #endif
     if (cl.verbosity >= 2)
       std::cout << cl;
-
-    cl.report();
 #ifdef USE_MPI
   }
 #endif
+
+  cl.report();
 
 #ifdef USE_MPI
   MPI_Finalize();
