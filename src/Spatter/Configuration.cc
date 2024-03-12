@@ -288,7 +288,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
           count, 1, nruns, aggregate, compress, verbosity) {
   ConfigurationBase::setup();
-};
+}
 
 void Configuration<Spatter::Serial>::gather(bool timed) {
   size_t pattern_length = pattern.size();
@@ -538,7 +538,7 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
           count, 1, nruns, aggregate, compress, verbosity) {
   setup();
-};
+}
 
 Configuration<Spatter::CUDA>::~Configuration() {
   cudaFree(dev_pattern);
