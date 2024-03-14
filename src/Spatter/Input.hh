@@ -28,6 +28,7 @@ namespace Spatter {
 static char *shortargs =
     (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
+    {"atomic-writes", required_argument, nullptr, 0},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
@@ -56,6 +57,7 @@ struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
   std::string backend;
   bool aggregate;
+  bool atomic;
   bool compress;
   unsigned long verbosity;
 
@@ -101,6 +103,11 @@ void help(char *progname) {
   std::cout << "Usage: " << progname << "\n";
   std::cout << std::left << std::setw(10) << "-a (--aggregate)" << std::setw(40)
             << "Aggregate (default off)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "   (--atomic-writes)"
+            << std::setw(40)
+            << "Enable atomic writes for CUDA backend (default 0/off) (TODO: "
+               "OpenMP atomics)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-c (--compress)" << std::setw(40)
@@ -163,7 +170,8 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-a aggregate] [-b backend] [-c compress] [-d delta] [-e "
+            << "[-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
+               "[-d delta] [-e "
                "boundary] [-f input file] [-g inner gather pattern] "
                "[-h "
                "help] [-j pattern-size] [-k kernel] [-l count] [-m "
@@ -207,11 +215,13 @@ size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
 int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.backend = "serial";
   cl.aggregate = false;
+  cl.atomic = false;
   cl.compress = false;
   cl.verbosity = 1;
 
   // In flag alphabetical order
   bool aggregate = cl.aggregate;
+  bool atomic = cl.atomic;
   std::string backend = cl.backend;
   bool compress = cl.compress;
   size_t delta = 8;
@@ -251,10 +261,24 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t delta_scatter = 8;
   size_t local_work_size;
 
+  int option_index = 0;
   optind = 1;
   int c;
-  while ((c = getopt_long(argc, argv, shortargs, longargs, nullptr)) != -1) {
+  while (
+      (c = getopt_long(argc, argv, shortargs, longargs, &option_index)) != -1) {
     switch (c) {
+    case 0:
+      if (longargs[option_index].flag != 0)
+        break;
+      if (strcmp(longargs[option_index].name, "atomic-writes") == 0) {
+        int atomic_val = 0;
+        if (read_int_arg(optarg, atomic_val,
+                "Parsing Error: Invalid Atomic Write") == -1)
+          return -1;
+        atomic = (atomic_val > 0) ? true : false;
+      }
+      break;
+
     case 'a':
       aggregate = true;
       break;
@@ -511,14 +535,14 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
           config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
           delta_gather, delta_scatter, seed, wrap, count, nthreads, nruns,
-          aggregate, compress, verbosity);
+          aggregate, atomic, compress, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(0,
           config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
           delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
-          compress, verbosity);
+          atomic, compress, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -528,7 +552,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     cl.configs.push_back(std::move(c));
   } else {
     Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, aggregate, compress, verbosity);
+        json_fname, backend, aggregate, atomic, compress, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

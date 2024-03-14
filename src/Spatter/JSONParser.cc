@@ -9,14 +9,15 @@ using json = nlohmann::json;
 namespace Spatter {
 
 JSONParser::JSONParser(std::string filename, const std::string backend,
-    const bool aggregate, const bool compress, const unsigned long verbosity,
-    const std::string name, const std::string kernel, const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const int seed,
-    const size_t wrap, const size_t count, const int nthreads,
-    const unsigned long nruns)
-    : backend_(backend), aggregate_(aggregate), compress_(compress),
-      verbosity_(verbosity), default_name_(name), default_kernel_(kernel),
-      default_delta_(delta), default_delta_gather_(delta_gather),
+    const bool aggregate, const bool atomic, const bool compress,
+    const unsigned long verbosity, const std::string name,
+    const std::string kernel, const size_t delta, const size_t delta_gather,
+    const size_t delta_scatter, const int seed, const size_t wrap,
+    const size_t count, const int nthreads, const unsigned long nruns)
+    : backend_(backend), aggregate_(aggregate), atomic_(atomic),
+      compress_(compress), verbosity_(verbosity), default_name_(name),
+      default_kernel_(kernel), default_delta_(delta),
+      default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_seed_(seed),
       default_wrap_(wrap), default_count_(count),
       default_omp_threads_(nthreads), default_nruns_(nruns) {
@@ -123,7 +124,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_gather, data_[index]["delta"], data_[index]["delta-gather"],
         data_[index]["delta-scatter"], data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nthreads"],
-        data_[index]["nruns"], aggregate_, compress_, verbosity_);
+        data_[index]["nruns"], aggregate_, atomic_, compress_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
@@ -132,7 +133,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, data_[index]["delta"], data_[index]["delta-gather"],
         data_[index]["delta-scatter"], data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
-        aggregate_, compress_, verbosity_);
+        aggregate_, atomic_, compress_, verbosity_);
 #endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;

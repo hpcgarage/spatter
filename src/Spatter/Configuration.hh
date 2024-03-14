@@ -47,8 +47,8 @@ public:
       const aligned_vector<size_t> pattern_scatter, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const int nthreads,
-      const unsigned long nruns, const bool aggregate, const bool compress,
-      const unsigned long verbosity);
+      const unsigned long nruns, const bool aggregate, const bool atomic,
+      const bool compress, const unsigned long verbosity);
 
   virtual ~ConfigurationBase();
 
@@ -69,7 +69,7 @@ private:
       double average_bandwidth);
 
 #ifdef USE_MPI
-  void print_mpi(std::vector<int> &vector_bytes_per_run,
+  void print_mpi(std::vector<unsigned long long> &vector_bytes_per_run,
       std::vector<double> &vector_average_time_per_run,
       std::vector<double> &vector_average_bandwidth);
 #endif
@@ -115,6 +115,7 @@ public:
   const unsigned long nruns;
 
   const bool aggregate;
+  const bool atomic;
   const bool compress;
   const unsigned long verbosity;
 
@@ -152,8 +153,8 @@ public:
       aligned_vector<size_t> pattern_scatter, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const int nthreads,
-      const unsigned long nruns, const bool aggregate, const bool compress,
-      const unsigned long verbosity);
+      const unsigned long nruns, const bool aggregate, const bool atomic,
+      const bool compress, const unsigned long verbosity);
 
   int run(bool timed);
 
@@ -174,7 +175,8 @@ public:
       const aligned_vector<size_t> pattern_scatter, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const unsigned long nruns,
-      const bool aggregate, const bool compress, const unsigned long verbosity);
+      const bool aggregate, const bool atomic, const bool compress,
+      const unsigned long verbosity);
 
   ~Configuration();
 

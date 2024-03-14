@@ -14,14 +14,14 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     const aligned_vector<size_t> pattern_scatter, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
-    const unsigned long nruns, const bool aggregate, const bool compress,
-    const unsigned long verbosity)
+    const unsigned long nruns, const bool aggregate, const bool atomic,
+    const bool compress, const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
       delta(delta), delta_gather(delta_gather), delta_scatter(delta_scatter),
       seed(seed), wrap(wrap), count(count), omp_threads(nthreads), nruns(nruns),
-      aggregate(aggregate), compress(compress), verbosity(verbosity),
-      time_seconds(0) {
+      aggregate(aggregate), atomic(atomic), compress(compress),
+      verbosity(verbosity), time_seconds(0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -62,12 +62,13 @@ void ConfigurationBase::report() {
   if (kernel.compare("multigather") == 0)
     total_bytes_moved = nruns * pattern_gather.size() * count * sizeof(size_t);
 
-  int bytes_per_run =
-      static_cast<int>(total_bytes_moved) / static_cast<int>(nruns);
+  unsigned long long bytes_per_run =
+      static_cast<unsigned long long>(total_bytes_moved) /
+      static_cast<unsigned long long>(nruns);
 
-  double average_time_per_run = time_seconds / (double)nruns;
+  double average_time_per_run = time_seconds / static_cast<double>(nruns);
   double average_bandwidth =
-      (double)(bytes_per_run) / average_time_per_run / 1000000.0;
+      static_cast<double>(bytes_per_run) / average_time_per_run / 1000000.0;
 
 #ifdef USE_MPI
   int numpes = 0;
@@ -75,9 +76,10 @@ void ConfigurationBase::report() {
   MPI_Comm_size(MPI_COMM_WORLD, &numpes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<int> vector_bytes_per_run(numpes, 0);
-  MPI_Gather(&bytes_per_run, 1, MPI_INT, vector_bytes_per_run.data(), 1,
-      MPI_INT, 0, MPI_COMM_WORLD);
+  std::vector<unsigned long long> vector_bytes_per_run(numpes, 0);
+  MPI_Gather(&bytes_per_run, 1, MPI_UNSIGNED_LONG_LONG,
+      vector_bytes_per_run.data(), 1, MPI_UNSIGNED_LONG_LONG, 0,
+      MPI_COMM_WORLD);
 
   std::vector<double> vector_average_time_per_run(numpes, 0.0);
   MPI_Gather(&average_time_per_run, 1, MPI_DOUBLE,
@@ -260,11 +262,12 @@ void ConfigurationBase::print_no_mpi(size_t bytes_per_run,
 }
 
 #ifdef USE_MPI
-void ConfigurationBase::print_mpi(std::vector<int> &vector_bytes_per_run,
+void ConfigurationBase::print_mpi(
+    std::vector<unsigned long long> &vector_bytes_per_run,
     std::vector<double> &vector_time_per_run,
     std::vector<double> &vector_average_bandwidth) {
 
-  int total_bytes = std::accumulate(vector_bytes_per_run.begin(),
+  unsigned long long total_bytes = std::accumulate(vector_bytes_per_run.begin(),
       vector_bytes_per_run.end(),
       std::remove_reference_t<decltype(vector_bytes_per_run)>::value_type(0));
   double average_bytes_per_rank = static_cast<double>(total_bytes) /
@@ -292,7 +295,7 @@ void ConfigurationBase::print_mpi(std::vector<int> &vector_bytes_per_run,
 
   if (verbosity >= 3) {
     std::cout << "Bytes per run per rank\n";
-    for (int bytes : vector_bytes_per_run)
+    for (unsigned long long bytes : vector_bytes_per_run)
       std::cout << bytes << ' ';
     std::cout << "\n\n";
 
@@ -367,7 +370,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
     const bool aggregate, const bool compress, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 1, nruns, aggregate, compress, verbosity) {
+          count, 1, nruns, aggregate, false, compress, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -483,11 +486,11 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     aligned_vector<size_t> pattern_scatter, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
-    const unsigned long nruns, const bool aggregate, const bool compress,
-    const unsigned long verbosity)
+    const unsigned long nruns, const bool aggregate, const bool atomic,
+    const bool compress, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nthreads, nruns, aggregate, compress, verbosity) {
+          count, nthreads, nruns, aggregate, atomic, compress, verbosity) {
   ConfigurationBase::setup();
 };
 
@@ -614,10 +617,11 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
     const aligned_vector<size_t> pattern_scatter, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
-    const bool aggregate, const bool compress, const unsigned long verbosity)
+    const bool aggregate, const bool atomic, const bool compress,
+    const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 1, nruns, aggregate, compress, verbosity) {
+          count, 1, nruns, aggregate, atomic, compress, verbosity) {
   setup();
 }
 
@@ -674,8 +678,14 @@ void Configuration<Spatter::CUDA>::scatter(bool timed) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  float time_ms = cuda_scatter_wrapper(
-      dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+  float time_ms = 0.0;
+
+  if (atomic)
+    time_ms = cuda_scatter_atomic_wrapper(
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+  else
+    time_ms = cuda_scatter_wrapper(
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
   cudaDeviceSynchronize();
 
@@ -691,9 +701,16 @@ void Configuration<Spatter::CUDA>::scatter_gather(bool timed) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  float time_ms = cuda_scatter_gather_wrapper(dev_pattern_scatter,
-      dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather, pattern_length,
-      delta_scatter, delta_gather, wrap, count);
+  float time_ms = 0.0;
+
+  if (atomic)
+    time_ms = cuda_scatter_gather_atomic_wrapper(dev_pattern_scatter,
+        dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
+        pattern_length, delta_scatter, delta_gather, wrap, count);
+  else
+    time_ms = cuda_scatter_gather_wrapper(dev_pattern_scatter,
+        dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
+        pattern_length, delta_scatter, delta_gather, wrap, count);
 
   cudaDeviceSynchronize();
 
@@ -724,8 +741,15 @@ void Configuration<Spatter::CUDA>::multi_scatter(bool timed) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  float time_ms = cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter,
-      dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+  float time_ms = 0.0;
+
+  if (atomic)
+    time_ms =
+        cuda_multi_scatter_atomic_wrapper(dev_pattern, dev_pattern_scatter,
+            dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+  else
+    time_ms = cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter,
+        dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
   cudaDeviceSynchronize();
 
