@@ -252,7 +252,7 @@ struct run_config *parse_json_config(json_value *value)
     }
 
 /*
-    for (int i = 0; i < argc - 1; i++) {
+    for (int i = 0; i < argc; i++) {
       printf("argv[%d]: ", i);
       for(int j = 0; argv[i][j] != '\0' && j < 5000; j++){
         printf("%c", argv[i][j]);
@@ -417,6 +417,11 @@ struct run_config *parse_runs(int argc, char **argv)
             error(output, ERROR);
         }
    }
+
+   if(atomic->count > 0 && atomic->ival[0] > 0) {
+      printf("Atomic CUDA Enabled");
+      atomic_flag++;  
+   } 
 
    if (op->count > 0)
    {
@@ -923,11 +928,6 @@ void parse_backend(int argc, char **argv)
 
     if (compress->count > 0)
         compress_flag = 1;
-
-    if(atomic->count > 0 && atomic->ival[0] > 0) {
-      printf("Atomic CUDA Enabled\n");
-      atomic_flag++;  
-    } 
 
     if (papi->count > 0)
     {
