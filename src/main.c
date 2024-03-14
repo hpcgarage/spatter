@@ -63,6 +63,8 @@ extern int aggregate_flag;
 extern int compress_flag;
 extern int papi_nevents;
 extern int stride_kernel;
+extern int atomic_flag;
+
 #ifdef USE_PAPI
 extern char papi_event_names[PAPI_MAX_COUNTERS][STRING_SIZE];
 int papi_event_codes[PAPI_MAX_COUNTERS];
@@ -634,7 +636,7 @@ int main(int argc, char **argv)
                   unsigned long grid[arr_len] = {global_work_size/local_work_size};
                   unsigned long block[arr_len] = {local_work_size};                  
 
-                  time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                  time_ms = cuda_block_multiscatter_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, atomic_flag, validate_flag);
                 }
                 else if (rc2[k].kernel == MULTIGATHER) {
                   unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_gather_len;
@@ -651,7 +653,7 @@ int main(int argc, char **argv)
                     unsigned long block[arr_len] = {local_work_size};
 
                     assert(rc2[k].pattern_gather_len == rc2[k].pattern_scatter_len);
-                    time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                    time_ms = cuda_block_sg_wrapper(arr_len, grid, block, source.dev_ptr_cuda, target.dev_ptr_cuda, &rc2[k], pat_gath_dev, pat_scat_dev, wpt, &final_block_idx, &final_thread_idx, &final_gather_data, atomic_flag, validate_flag);
                 } else {
                     unsigned long global_work_size = rc2[k].generic_len / wpt * rc2[k].pattern_len;
                     unsigned long local_work_size = rc2[k].local_work_size;
@@ -659,7 +661,7 @@ int main(int argc, char **argv)
                     unsigned long block[arr_len] = {local_work_size};
 
                     if (rc2[k].random_seed == 0) { 
-                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, target.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, validate_flag);
+                        time_ms = cuda_block_wrapper(arr_len, grid, block, rc2[k].kernel, source.dev_ptr_cuda, target.dev_ptr_cuda, pat_dev, rc2[k].pattern, rc2[k].pattern_len, rc2[k].delta, rc2[k].generic_len, rc2[k].wrap, wpt, rc2[k].ro_morton, rc2[k].ro_order, order_dev, rc[k].stride_kernel, &final_block_idx, &final_thread_idx, &final_gather_data, atomic_flag, validate_flag);
                     } else {
                         if (rc2[k].pattern_len > rc2[k].local_work_size) {
                             error("Pattern length cannot exceed local_work_size", ERROR);

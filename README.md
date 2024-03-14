@@ -85,6 +85,7 @@ Usage:
  -q, --no-print-header        Do not print header information.
  -i, --interactive            Pick the platform and the device interactively.
  --validate                   TODO
+--atomic-writes=<n>           Enable atomic writes for CUDA backend [Default 0/off] (TODO: OpenMP atomics)  
  -a, --aggregate              Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)
  -c, --compress               TODO
  -p, --pattern=<pattern>      Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.
