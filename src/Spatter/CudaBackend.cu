@@ -13,7 +13,7 @@ __global__ void cuda_gather(const size_t *pattern, const double *sparse,
 
   double x;
 
-  if (j < pattern_length && i < count) {
+  if (i < count) {
     // dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
     x = sparse[pattern[j] + delta * i];
     if (x == 0.5)
@@ -29,7 +29,7 @@ __global__ void cuda_scatter(const size_t *pattern, double *sparse,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  if (j < pattern_length && i < count)
+  if (i < count)
     sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
 }
 
@@ -41,7 +41,7 @@ __global__ void cuda_scatter_atomic(const size_t *pattern, double *sparse,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  if (j < pattern_length && i < count)
+  if (i < count)
     atomicExch((unsigned long long int *)&sparse[pattern[j] + delta * i],
         __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
 }
@@ -57,7 +57,7 @@ __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
   size_t i = total_id / pattern_length; // count_idx
 
   // printf("%lu, %lu, %lu\n", total_id, j, i);
-  if (j < pattern_length && i < count)
+  if (i < count)
     sparse_scatter[pattern_scatter[j] + delta_scatter * i] =
         sparse_gather[pattern_gather[j] + delta_gather * i];
 }
@@ -73,7 +73,7 @@ __global__ void cuda_scatter_gather_atomic(const size_t *pattern_scatter,
   size_t i = total_id / pattern_length; // count_idx
 
   // printf("%lu, %lu, %lu\n", total_id, j, i);
-  if (j < pattern_length && i < count)
+  if (i < count)
     atomicExch((unsigned long long int *)&sparse_scatter[pattern_scatter[j] +
                    delta_scatter * i],
         __double_as_longlong(
@@ -91,7 +91,7 @@ __global__ void cuda_multi_gather(const size_t *pattern,
 
   double x;
 
-  if (j < pattern_length && i < count) {
+  if (i < count) {
     // dense[j + pattern_length * (i % wrap)] =
     // sparse[pattern[pattern_gather[j]] + delta * i];
     x = sparse[pattern[pattern_gather[j]] + delta * i];
@@ -109,7 +109,7 @@ __global__ void cuda_multi_scatter(const size_t *pattern,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  if (j < pattern_length && i < count)
+  if (i < count)
     sparse[pattern[pattern_scatter[j]] + delta * i] =
         dense[j + pattern_length * (i % wrap)];
 }
@@ -123,7 +123,7 @@ __global__ void cuda_multi_scatter_atomic(const size_t *pattern,
   size_t j = total_id % pattern_length; // pat_idx
   size_t i = total_id / pattern_length; // count_idx
 
-  if (j < pattern_length && i < count)
+  if (i < count)
     atomicExch((unsigned long long int
                        *)&sparse[pattern[pattern_scatter[j]] + delta * i],
         __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
