@@ -259,7 +259,23 @@ extern "C" float cuda_sg_wrapper(enum sg_kernel kernel,
 
 }
 
-__global__ void cuda_scatter(const ssize_t* pattern, double *sparse, const double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
+__global__ void cuda_scatter_atomic(const ssize_t* pattern, double *sparse, double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    if (j < pattern_length && i < count)
+        atomicExch((unsigned long long int*)&sparse[pattern[j] + delta * i], __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
+}
+
+__global__ void cuda_scatter(const ssize_t* pattern, double *sparse, double *dense, const size_t pattern_length, const size_t delta, const size_t wrap, const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
     size_t j = total_id % pattern_length; // pat_idx
     size_t i = total_id / pattern_length; // count_idx
@@ -618,6 +634,7 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         int *final_block_idx,
         int *final_thread_idx,
         double *final_gather_data,
+        int atomic_flag,
         char validate)
 {
 
@@ -728,7 +745,11 @@ extern "C" float cuda_block_wrapper(uint dim, uint* grid, uint* block,
         }
         //cudaMemcpyFromSymbol(final_gather_data, final_gather_data_dev, sizeof(double), 0, cudaMemcpyDeviceToHost);
     } else if (kernel == SCATTER) {
-        cuda_scatter<<<blocks_per_grid, threads_per_block>>>(pat_dev, source, target, pat_len, delta, wrap, n, validate);
+        if (atomic_flag == 0)
+            cuda_scatter<<<blocks_per_grid, threads_per_block>>>(pat_dev, source, target, pat_len, delta, wrap, n, validate);
+        else
+            cuda_scatter_atomic<<<blocks_per_grid, threads_per_block>>>(pat_dev, source, target, pat_len, delta, wrap, n, validate);
+
         /*
         if (pat_len == 8) {
             scatter_block<8><<<grid_dim, block_dim>>>(source, pat_dev, pat_len, delta, wpt, validate);
@@ -1002,9 +1023,30 @@ extern "C" float cuda_new_wrapper(uint dim, uint* grid, uint* block,
 
 }*/
 
+__global__ void cuda_scatter_gather_atomic(const size_t *pattern_scatter,
+    double *sparse_scatter, const size_t *pattern_gather,
+    double *sparse_gather, const size_t pattern_length,
+    const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
+    const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_idx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    // printf("%lu, %lu, %lu\n", total_id, j, i);
+    if (j < pattern_length && i < count)
+          atomicExch((unsigned long long int*)&sparse_scatter[pattern_scatter[j] + delta_scatter * i], __double_as_longlong(sparse_gather[pattern_gather[j] + delta_gather * i]));
+}
+
 __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
-    const double *sparse_gather, const size_t pattern_length,
+    double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
     const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
@@ -1092,6 +1134,7 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
         int *final_block_idx,
         int *final_thread_idx,
         double *final_gather_data,
+        int atomic_flag,
         char validate)
 {
     dim3 grid_dim, block_dim;
@@ -1119,7 +1162,10 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
     cudaDeviceSynchronize();
     cudaEventRecord(start);
 
-    cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pat_scat_dev, target, pat_gath_dev, source, pat_len, delta_scatter, delta_gather, wrap, n, validate);   
+    if (atomic_flag == 0)
+        cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pat_scat_dev, target, pat_gath_dev, source, pat_len, delta_scatter, delta_gather, wrap, n, validate);   
+    else
+        cuda_scatter_gather_atomic<<<blocks_per_grid, threads_per_block>>>(pat_scat_dev, target, pat_gath_dev, source, pat_len, delta_scatter, delta_gather, wrap, n, validate);
 
 /*
     // KERNEL
@@ -1166,8 +1212,26 @@ extern "C" float cuda_block_sg_wrapper(uint dim, uint* grid, uint* block,
     return time_ms; 
 }
 
+__global__ void cuda_multi_scatter_atomic(const size_t *pattern,
+    const size_t *pattern_scatter, double *sparse, double *dense,
+    const size_t pattern_length, const size_t delta, const size_t wrap,
+    const size_t count, char validate) {
+    size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
+    size_t j = total_id % pattern_length; // pat_idx
+    size_t i = total_id / pattern_length; // count_idx
+
+    #ifdef VALIDATE
+    if (validate) {
+        final_block_dx_dev = blockIdx.x;
+        final_thread_idx_dev = threadIdx.x;
+    }
+    #endif
+
+    if (j < pattern_length && i < count)
+        atomicExch((unsigned long long int*)&sparse[pattern[pattern_scatter[j]] + delta * i], __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
+}
 __global__ void cuda_multi_scatter(const size_t *pattern,
-    const size_t *pattern_scatter, double *sparse, const double *dense,
+    const size_t *pattern_scatter, double *sparse, double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count, char validate) {
     size_t total_id = (size_t)((size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x);
@@ -1251,6 +1315,7 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
         int *final_block_idx,
         int *final_thread_idx,
         double *final_gather_data,
+        int atomic_flag,
         char validate)
 {
     dim3 grid_dim, block_dim;
@@ -1277,7 +1342,10 @@ extern "C" float cuda_block_multiscatter_wrapper(uint dim, uint* grid, uint* blo
     cudaDeviceSynchronize();
     cudaEventRecord(start);
 
-    cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(outer_pat, inner_pat, source, target, pat_len, delta, wrap, n, validate);
+    if (atomic_flag == 0)
+        cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(outer_pat, inner_pat, source, target, pat_len, delta, wrap, n, validate);
+    else
+        cuda_multi_scatter_atomic<<<blocks_per_grid, threads_per_block>>>(outer_pat, inner_pat, source, target, pat_len, delta, wrap, n, validate);
 
 /*   
     // KERNEL

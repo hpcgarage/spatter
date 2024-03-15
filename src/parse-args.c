@@ -46,6 +46,7 @@ int quiet_flag = 0;
 int aggregate_flag = 1;
 int compress_flag = 0;
 int stride_kernel = -1;
+int atomic_flag = 0;
 
 enum sg_backend backend = INVALID_BACKEND;
 
@@ -61,10 +62,10 @@ void xkp_pattern(ssize_t *pat, ptrdiff_t dim);
 void parse_backend(int argc, char **argv);
 
 void** argtable;
-unsigned int number_of_arguments = 37;
+unsigned int number_of_arguments = 38;
 struct arg_lit *verb, *help, *interactive, *validate, *aggregate, *compress;
 struct arg_str *backend_arg, *cl_platform, *cl_device, *pattern, *pattern_gather, *pattern_scatter, *kernelName, *delta, *delta_gather, *delta_scatter, *name, *papi, *op;
-struct arg_int *strong_scale, *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
+struct arg_int *atomic, *strong_scale, *boundary, *pattern_size, *count, *wrap, *runs, *omp_threads, *vector_len, *local_work_size, *shared_memory, *morton, *hilbert, *roblock, *stride, *random_arg, *no_print_header;
 struct arg_file *kernelFile;
 struct arg_end *end;
 
@@ -81,38 +82,39 @@ void initialize_argtable()
     malloc_argtable[4] = validate        = arg_litn(NULL, "validate", 0, 1, "Perform extra validation checks to ensure data validity");
     malloc_argtable[5] = aggregate       = arg_litn("a", "aggregate", 0, 1, "Report a minimum time for all runs of a given configuration for 2 or more runs. [Default 1] (Do not use with PAPI)");
     malloc_argtable[6] = compress        = arg_litn("c", "compress", 0, 1, "TODO");
+    malloc_argtable[7] = atomic          = arg_intn(NULL, "atomic-writes", "<n>", 0, 1, "Enable atomic scatters (CUDA backend only)");
     // Benchmark Configuration
-    malloc_argtable[7] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[8] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
-    malloc_argtable[9] = pattern_scatter = arg_strn("h", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS, MultiScatter]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
-    malloc_argtable[10] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather, Options: Gather, Scatter, GS, MultiGather, MultiScatter]");
-    malloc_argtable[11] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
-    malloc_argtable[12] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[13] = delta_gather    = arg_strn("x", "delta-gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[14] = delta_scatter   = arg_strn("y", "delta-scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
-    malloc_argtable[15] = boundary        = arg_intn("e", "boundary", "<boundary>", 0, 1, "Specify the boundary to mod pattern indices with to limit data array size.");
-    malloc_argtable[16] = pattern_size    = arg_intn("j", "pattern-size", "<n>", 0, 1, "Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.");
-    malloc_argtable[17] = strong_scale    = arg_intn("u", "strong-scale", "<n>", 0, 1, "Enable Strong Scaling.");
-    malloc_argtable[18] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
-    malloc_argtable[19] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
-    malloc_argtable[20] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
-    malloc_argtable[21] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
-    malloc_argtable[22] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
-    malloc_argtable[23] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
-    malloc_argtable[24] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
-    malloc_argtable[25] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
-    malloc_argtable[26] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
-    malloc_argtable[27] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
-    malloc_argtable[28] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[29] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
-    malloc_argtable[30] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
+    malloc_argtable[8] = pattern         = arg_strn("p", "pattern", "<pattern>", 0, 1, "Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[9] = pattern_gather  = arg_strn("g", "pattern-gather", "<pattern>", 0, 1, "Valid wtih [kernel-name: GS, MultiGather]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration."); 
+    malloc_argtable[10] = pattern_scatter = arg_strn("h", "pattern-scatter", "<pattern>", 0, 1, "Valid with [kernel-name: GS, MultiScatter]. Specify either a built-in pattern (i.e. UNIFORM), a custom pattern (i.e. 1,2,3,4), or a path to a json file with a run-configuration.");
+    malloc_argtable[11] = kernelName      = arg_strn("k", "kernel-name", "<kernel>", 0, 1, "Specify the kernel you want to run. [Default: Gather, Options: Gather, Scatter, GS, MultiGather, MultiScatter]");
+    malloc_argtable[12] = op              = arg_strn("o", "op", "<s>", 0, 1, "TODO");
+    malloc_argtable[13] = delta           = arg_strn("d", "delta", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[14] = delta_gather    = arg_strn("x", "delta-gather", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[15] = delta_scatter   = arg_strn("y", "delta-scatter", "<delta[,delta,...]>", 0, 1, "Specify one or more deltas. [Default: 8]");
+    malloc_argtable[16] = boundary        = arg_intn("e", "boundary", "<boundary>", 0, 1, "Specify the boundary to mod pattern indices with to limit data array size.");
+    malloc_argtable[17] = pattern_size    = arg_intn("j", "pattern-size", "<n>", 0, 1, "Valid with [kernel-name: Gather, Scatter] and custom patterns (i.e. not UNIFORM, MS1, LAPLACIAN, etc.). Size of Gather/Scatter pattern. Pattern will be truncated to size if used.");
+    malloc_argtable[18] = strong_scale    = arg_intn("u", "strong-scale", "<n>", 0, 1, "Enable Strong Scaling.");
+    malloc_argtable[19] = count           = arg_intn("l", "count", "<n>", 0, 1, "Number of Gathers or Scatters to perform.");
+    malloc_argtable[20] = wrap            = arg_intn("w", "wrap", "<n>", 0, 1, "Number of independent slots in the small buffer (source buffer if Scatter, Target buffer if Gather. [Default: 1]");
+    malloc_argtable[21] = runs            = arg_intn("R", "runs", "<n>", 0, 1, "Number of times to repeat execution of the kernel. [Default: 10]");
+    malloc_argtable[22] = omp_threads     = arg_intn("t", "omp-threads", "<n>", 0, 1, "Number of OpenMP threads. [Default: OMP_MAX_THREADS]");
+    malloc_argtable[23] = vector_len      = arg_intn("v", "vector-len", "<n>", 0, 1, "TODO");
+    malloc_argtable[24] = local_work_size = arg_intn("z", "local-work-size", "<n>", 0, 1, "Numer of Gathers or Scatters performed by each thread on a GPU.");
+    malloc_argtable[25] = shared_memory   = arg_intn("m", "shared-memory", "<n>", 0, 1, "Amount of dummy shared memory to allocate on GPUs (used for occupancy control).");
+    malloc_argtable[26] = name            = arg_strn("n", "name", "<name>", 0, 1, "Specify and name this configuration in the output.");
+    malloc_argtable[27] = random_arg      = arg_intn("s", "random", "<n>", 0, 1, "Sets the seed, or uses a random one if no seed is specified.");
+    malloc_argtable[28] = backend_arg     = arg_strn("b", "backend", "<backend>", 0, 1, "Specify a backend: OpenCL, OpenMP, CUDA, or Serial.");
+    malloc_argtable[29] = cl_platform     = arg_strn(NULL, "cl-platform", "<platform>", 0, 1, "Specify platform if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[30] = cl_device       = arg_strn(NULL, "cl-device", "<device>", 0, 1, "Specify device if using OpenCL (case-insensitive, fuzzy matching).");
+    malloc_argtable[31] = kernelFile      = arg_filen("f", "kernel-file", "<FILE>", 0, 1, "Specify the location of an OpenCL kernel file.");    
     // Other Configurations
-    malloc_argtable[31] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
-    malloc_argtable[32] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
-    malloc_argtable[33] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
-    malloc_argtable[34] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
-    malloc_argtable[35] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
-    malloc_argtable[36] = end             = arg_end(20);
+    malloc_argtable[32] = morton          = arg_intn(NULL, "morton", "<n>", 0, 1, "TODO");
+    malloc_argtable[33] = hilbert         = arg_intn(NULL, "hilbert", "<n>", 0, 1, "TODO");
+    malloc_argtable[34] = roblock         = arg_intn(NULL, "roblock", "<n>", 0, 1, "TODO");
+    malloc_argtable[35] = stride          = arg_intn(NULL, "stride", "<n>", 0, 1, "TODO");
+    malloc_argtable[36] = papi            = arg_strn(NULL, "papi", "<s>", 0, 1, "TODO");
+    malloc_argtable[37] = end             = arg_end(20);
 
     // Random has an option to provide an argument. Default its value to -1.
     random_arg->hdr.flag |= ARG_HASOPTVALUE;
@@ -250,7 +252,7 @@ struct run_config *parse_json_config(json_value *value)
     }
 
 /*
-    for (int i = 0; i < argc - 1; i++) {
+    for (int i = 0; i < argc; i++) {
       printf("argv[%d]: ", i);
       for(int j = 0; argv[i][j] != '\0' && j < 5000; j++){
         printf("%c", argv[i][j]);
@@ -415,6 +417,11 @@ struct run_config *parse_runs(int argc, char **argv)
             error(output, ERROR);
         }
    }
+
+   if(atomic->count > 0 && atomic->ival[0] > 0) {
+      printf("Atomic CUDA Enabled");
+      atomic_flag++;  
+   } 
 
    if (op->count > 0)
    {
