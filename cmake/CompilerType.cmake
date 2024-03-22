@@ -11,7 +11,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
     set(SPAT_CXX_NAME "Cray")
 endif ()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") 
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Intel)(LLVM)?")
     set (OpenMP_CXX_FLAGS "${OpenMP_CXX_FLAGS} -xHost -qopenmp")
     set(SPAT_CXX_NAME "Intel")
 endif ()
