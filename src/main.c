@@ -820,6 +820,9 @@ int main(int argc, char **argv)
                 if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
 
+#ifdef USE_MPI
+                MPI_Barrier(MPI_COMM_WORLD);
+#endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
 
             }
@@ -883,6 +886,9 @@ int main(int argc, char **argv)
                 if (i!= -1) profile_stop(EventSet, rc2[k].papi_ctr[i], __LINE__, __FILE__);
 #endif
 
+#ifdef USE_MPI
+                MPI_Barrier(MPI_COMM_WORLD);
+#endif
                 if (i!= -1) rc2[k].time_ms[i] = sg_get_time_ms();
             }
         }
