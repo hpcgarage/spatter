@@ -86,15 +86,18 @@ struct ClArgs {
 };
 
 std::ostream &operator<<(std::ostream &out, const ClArgs &cl) {
-  out << "[";
+  out << "Run Configurations" << std::endl;
+  out << "[ ";
 
   for (size_t i = 0; i < cl.configs.size(); ++i) {
+    if (i != 0)
+      out << "  ";
     out << *(cl.configs[i].get());
     if (i != cl.configs.size() - 1)
-      out << ", ";
+      out << "," << std::endl;
   }
 
-  out << "]" << std::endl;
+  out << " ]" << std::endl;
   return out << std::endl;
 }
 
