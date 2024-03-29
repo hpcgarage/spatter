@@ -595,7 +595,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     cl.configs.push_back(std::move(c));
   } else {
     Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, aggregate, atomic, compress, verbosity);
+        json_fname, backend, aggregate, atomic, compress, verbosity, nthreads);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

@@ -213,6 +213,18 @@ void ConfigurationBase::setup() {
 
     dense.resize(dense_size);
 
+#ifdef USE_OPENMP
+    if (kernel.compare("gather") == 0) {
+      dense_perthread.resize(omp_threads);
+      for (int j = 0; j < omp_threads; ++j) {
+        dense_perthread[j].resize(dense_size);
+        for (size_t i = 0; i < dense_perthread[j].size(); ++i) {
+          dense_perthread[j][i] = rand();
+        }
+      }
+    }
+#endif
+
     for (size_t i = 0; i < dense.size(); ++i)
       dense[i] = rand();
 
@@ -530,10 +542,23 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
   if (timed)
     timer.start();
 
-#pragma omp parallel for simd
-  for (size_t i = 0; i < count; ++i)
-    for (size_t j = 0; j < pattern_length; ++j)
-      dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
+#pragma omp parallel
+  {
+    int t = omp_get_thread_num();
+
+#pragma omp for
+    for (size_t i = 0; i < count; ++i) {
+      //double *sl = &sparse[delta*i];
+      //double *tl = &(dense_perthread[t][pattern_length*(i%wrap)]);
+
+#pragma omp simd
+      for (size_t j = 0; j < pattern_length; ++j) {
+        dense_perthread[t][j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
+        //tl[j] = sl[pattern[j]];
+        //tl[j] = sparse[pattern[j] + delta*i];
+      }
+    }
+  }
 
   if (timed) {
     timer.stop();

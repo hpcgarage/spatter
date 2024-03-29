@@ -101,6 +101,7 @@ public:
   aligned_vector<double> sparse_scatter;
 
   aligned_vector<double> dense;
+  aligned_vector<aligned_vector<double>> dense_perthread;
 
   const size_t delta;
   const aligned_vector<size_t> deltas;
