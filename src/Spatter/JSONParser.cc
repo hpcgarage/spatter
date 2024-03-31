@@ -106,32 +106,36 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
 
+  size_t delta = data_[index]["delta"];
+  size_t delta_gather = data_[index]["delta-gather"];
+  size_t delta_scatter = data_[index]["delta-scatter"];
+
   if (data_[index].contains("pattern"))
-    if (get_pattern_("pattern", pattern, index) != 0)
+    if (get_pattern_("pattern", pattern, delta, index) != 0)
       exit(1);
 
   if (data_[index].contains("pattern-gather"))
-    if (get_pattern_("pattern-gather", pattern_gather, index) != 0)
+    if (get_pattern_("pattern-gather", pattern_gather, delta_gather, index) != 0)
       exit(1);
 
   if (data_[index].contains("pattern-scatter"))
-    if (get_pattern_("pattern-scatter", pattern_scatter, index) != 0)
+    if (get_pattern_("pattern-scatter", pattern_scatter, delta_scatter, index) != 0)
       exit(1);
 
   std::unique_ptr<Spatter::ConfigurationBase> c;
   if (backend_.compare("serial") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(index,
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, data_[index]["delta"], data_[index]["delta-gather"],
-        data_[index]["delta-scatter"], data_[index]["seed"],
+        pattern_scatter, delta, delta_gather,
+        delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
         aggregate_, compress_, verbosity_);
 #ifdef USE_OPENMP
   else if (backend_.compare("openmp") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(index,
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_scatter,
-        pattern_gather, data_[index]["delta"], data_[index]["delta-gather"],
-        data_[index]["delta-scatter"], data_[index]["seed"],
+        pattern_gather, delta, delta_gather,
+        delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nthreads"],
         data_[index]["nruns"], aggregate_, atomic_, compress_, verbosity_);
 #endif
@@ -139,8 +143,8 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   else if (backend_.compare("cuda") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(index,
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, data_[index]["delta"], data_[index]["delta-gather"],
-        data_[index]["delta-scatter"], data_[index]["seed"],
+        pattern_scatter, delta, delta_gather,
+        delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
         aggregate_, atomic_, compress_, verbosity_);
 #endif
@@ -153,7 +157,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 }
 
 int JSONParser::get_pattern_(const std::string &pattern_key,
-    aligned_vector<size_t> &pattern, const size_t index) {
+    aligned_vector<size_t> &pattern, size_t &delta, const size_t index) {
   if (data_[index][pattern_key].type() == json::value_t::string) {
     std::string pattern_string =
         data_[index][pattern_key].template get<std::string>();
@@ -164,7 +168,7 @@ int JSONParser::get_pattern_(const std::string &pattern_key,
     std::stringstream pattern_stream;
     pattern_stream << pattern_string;
 
-    return pattern_parser(pattern_stream, pattern);
+    return pattern_parser(pattern_stream, pattern, delta);
   } else {
     pattern = data_[index][pattern_key].template get<aligned_vector<size_t>>();
     return 0;

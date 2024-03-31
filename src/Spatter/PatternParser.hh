@@ -23,7 +23,7 @@ int generate_pattern(std::string type,
     aligned_vector<size_t> &pattern);
 
 int pattern_parser(
-    std::stringstream &pattern_string, aligned_vector<size_t> &pattern);
+    std::stringstream &pattern_string, aligned_vector<size_t> &pattern, size_t &delta);
 
 size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary);
 

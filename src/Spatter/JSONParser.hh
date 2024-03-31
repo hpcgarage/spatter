@@ -40,7 +40,7 @@ public:
 
 private:
   int get_pattern_(const std::string &pattern_key,
-      aligned_vector<size_t> &pattern, const size_t index);
+      aligned_vector<size_t> &pattern, size_t &delta, const size_t index);
   bool file_exists_(const std::string &fpth);
 
 private:
