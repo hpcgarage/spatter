@@ -31,19 +31,28 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
   size_ = data_.size();
 
   for (const auto &[key, v] : data_.items()) {
-    assert(v.contains("pattern"));
-
     if (!v.contains("name"))
       v["name"] = default_name_;
 
-    if (!v.contains("kernel"))
+    if (!v.contains("kernel")) {
       v["kernel"] = default_kernel_;
-    else {
+
+      assert(v.contains("pattern"));
+    } else {
       std::string kernel = v["kernel"];
       std::transform(kernel.begin(), kernel.end(), kernel.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
+      // The kernel may be specified as 'GS' instead of 'sg'
+      kernel = (kernel.compare("gs") == 0) ? "sg" : kernel;
       v["kernel"] = kernel;
+
+      if (kernel.compare("sg") == 0) {
+        // This kernel does not require --pattern to be specified
+        assert(v.contains("pattern-gather") && v.contains("pattern-scatter"));
+      } else {
+        assert(v.contains("pattern"));
+      }
     }
 
     if (!v.contains("delta"))
