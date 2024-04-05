@@ -58,7 +58,7 @@ SYMBOLS = {
 
 EXPERIMENTS = {'ustride':'Uniform Stride', 'stream': 'Stream', 'nekbone':'Nekbone', 'lulesh':'LULESH', 'amg':'AMG', 'pennant':'PENNANT'}
 
-KERNELS = {'gather':'Gather', 'scatter':'Scatter', 'sg':'SG', 'multigather':'MultiGather', 'multiscatter':'MultiScatter'}
+KERNELS = {'gather':'Gather', 'scatter':'Scatter', 'sg':'GS', 'multigather':'MultiGather', 'multiscatter':'MultiScatter'}
 
 #################################################################
 # NO EDITING IS REQUIRED BEYOND THIS POINT TO ADD NEW PLATFORMS #
