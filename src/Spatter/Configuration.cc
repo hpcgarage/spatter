@@ -330,12 +330,12 @@ std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config) {
 
   config_output << "{";
 
-  config_output << "'id: " << config.id << ", ";
+  config_output << "'id': " << config.id << ", ";
 
   if (config.name.compare("") != 0)
-    config_output << "'name': " << config.name << ", ";
+    config_output << "'name': '" << config.name << "', ";
 
-  config_output << "'kernel': " << config.kernel << ", ";
+  config_output << "'kernel': '" << config.kernel << "', ";
 
   config_output << "'pattern': [";
   std::copy(std::begin(config.pattern), std::end(config.pattern),
@@ -353,7 +353,7 @@ std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config) {
       std::experimental::make_ostream_joiner(config_output, ", "));
   config_output << "], ";
 
-  config_output << "'delta': " << config.delta << ",";
+  config_output << "'delta': " << config.delta << ", ";
   config_output << "'delta-gather': " << config.delta_gather << ", ";
   config_output << "'delta-scatter': " << config.delta_scatter << ", ";
 
