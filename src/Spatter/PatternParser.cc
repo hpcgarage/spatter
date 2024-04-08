@@ -38,7 +38,7 @@ int generate_pattern(std::string type,
       return -1;
     }
 
-    size_t len;
+    size_t len = 0;
     std::vector<size_t> gap_locations;
     std::vector<size_t> gaps;
     for (size_t i = 0; i < generator.size(); ++i) {
