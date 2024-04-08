@@ -80,12 +80,15 @@ int main(int argc, char **argv) {
   for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
     for (unsigned long run = 0; run < (config->nruns + warmup_runs); ++run) {
 
-      if (run >= warmup_runs)
+      unsigned long run_id = 0;
+      if (run >= warmup_runs) {
         timed = 1;
-      else
+        run_id = run - warmup_runs;
+      } else {
         timed = 0;
+      }
 
-      if (config->run(timed) != 0)
+      if (config->run(timed, run_id) != 0)
         return -1;
     }
   }
