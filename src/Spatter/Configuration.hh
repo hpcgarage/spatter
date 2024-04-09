@@ -5,6 +5,16 @@
 #ifndef SPATTER_CONFIGURATION_HH
 #define SPATTER_CONFIGURATION_HH
 
+#include <algorithm>
+#include <cctype>
+#include <experimental/iterator>
+#include <iomanip>
+#include <iostream>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #ifdef USE_MPI
 #include "mpi.h"
 #endif
@@ -17,17 +27,20 @@
 #include "CudaBackend.hh"
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#endif
 
-#include <algorithm>
-#include <cctype>
-#include <experimental/iterator>
-#include <iomanip>
-#include <iostream>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <vector>
+// stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define checkCudaErrors(ans) \
+  { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(
+    cudaError_t code, const char *file, int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    std::cerr << "checkCudaErrors: " << cudaGetErrorString(code) << " " << file
+              << " " << line << std::endl;
+    if (abort)
+      exit(code);
+  }
+}
+#endif
 
 #include "AlignedAllocator.hh"
 #include "SpatterTypes.hh"

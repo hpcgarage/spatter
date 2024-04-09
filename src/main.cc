@@ -31,10 +31,10 @@ void print_header(Spatter::ClArgs &cl) {
   int gpu_id = 0;
   if (cl.backend.compare("cuda") == 0) {
     int num_devices = 0;
-    cudaGetDeviceCount(&num_devices);
+    checkCudaErrors(cudaGetDeviceCount(&num_devices));
 
     struct cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, gpu_id);
+    checkCudaErrors(cudaGetDeviceProperties(&prop, gpu_id));
 
     std::cout << "Number of Devices: " << num_devices << std::endl;
     std::cout << "Device Name: " << prop.name << std::endl;

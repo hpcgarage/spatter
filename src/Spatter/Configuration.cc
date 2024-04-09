@@ -655,31 +655,31 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
 }
 
 Configuration<Spatter::CUDA>::~Configuration() {
-  cudaFree(dev_pattern);
-  cudaFree(dev_pattern_gather);
-  cudaFree(dev_pattern_scatter);
+  checkCudaErrors(cudaFree(dev_pattern));
+  checkCudaErrors(cudaFree(dev_pattern_gather));
+  checkCudaErrors(cudaFree(dev_pattern_scatter));
 
-  cudaFree(dev_sparse);
-  cudaFree(dev_sparse_gather);
-  cudaFree(dev_sparse_scatter);
+  checkCudaErrors(cudaFree(dev_sparse));
+  checkCudaErrors(cudaFree(dev_sparse_gather));
+  checkCudaErrors(cudaFree(dev_sparse_scatter));
 
-  cudaFree(dev_dense);
+  checkCudaErrors(cudaFree(dev_dense));
 }
 
 int Configuration<Spatter::CUDA>::run(bool timed, unsigned long run_id) {
   ConfigurationBase::run(timed, run_id);
 
-  cudaMemcpy(sparse.data(), dev_sparse, sizeof(double) * sparse.size(),
-      cudaMemcpyDeviceToHost);
-  cudaMemcpy(sparse_gather.data(), dev_sparse_gather,
-      sizeof(double) * sparse_gather.size(), cudaMemcpyDeviceToHost);
-  cudaMemcpy(sparse_scatter.data(), dev_sparse_scatter,
-      sizeof(double) * sparse_scatter.size(), cudaMemcpyDeviceToHost);
+  checkCudaErrors(cudaMemcpy(sparse.data(), dev_sparse,
+      sizeof(double) * sparse.size(), cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(sparse_gather.data(), dev_sparse_gather,
+      sizeof(double) * sparse_gather.size(), cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(sparse_scatter.data(), dev_sparse_scatter,
+      sizeof(double) * sparse_scatter.size(), cudaMemcpyDeviceToHost));
 
-  cudaMemcpy(dense.data(), dev_dense, sizeof(double) * dense.size(),
-      cudaMemcpyDeviceToHost);
+  checkCudaErrors(cudaMemcpy(dense.data(), dev_dense,
+      sizeof(double) * dense.size(), cudaMemcpyDeviceToHost));
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   return 0;
 }
@@ -694,7 +694,7 @@ void Configuration<Spatter::CUDA>::gather(bool timed, unsigned long run_id) {
   float time_ms = cuda_gather_wrapper(
       dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   if (timed)
     time_seconds[run_id] = ((double)time_ms / 1000.0);
@@ -716,7 +716,7 @@ void Configuration<Spatter::CUDA>::scatter(bool timed, unsigned long run_id) {
     time_ms = cuda_scatter_wrapper(
         dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   if (timed)
     time_seconds[run_id] = ((double)time_ms / 1000.0);
@@ -742,7 +742,7 @@ void Configuration<Spatter::CUDA>::scatter_gather(
         dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
         pattern_length, delta_scatter, delta_gather, wrap, count);
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   if (timed)
     time_seconds[run_id] = ((double)time_ms / 1000.0);
@@ -759,7 +759,7 @@ void Configuration<Spatter::CUDA>::multi_gather(
   float time_ms = cuda_multi_gather_wrapper(dev_pattern, dev_pattern_gather,
       dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   if (timed)
     time_seconds[run_id] = ((double)time_ms / 1000.0);
@@ -783,7 +783,7 @@ void Configuration<Spatter::CUDA>::multi_scatter(
     time_ms = cuda_multi_scatter_wrapper(dev_pattern, dev_pattern_scatter,
         dev_sparse, dev_dense, pattern_length, delta, wrap, count);
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 
   if (timed)
     time_seconds[run_id] = ((double)time_ms / 1000.0);
@@ -792,36 +792,39 @@ void Configuration<Spatter::CUDA>::multi_scatter(
 void Configuration<Spatter::CUDA>::setup() {
   ConfigurationBase::setup();
 
-  cudaMalloc((void **)&dev_pattern, sizeof(size_t) * pattern.size());
-  cudaMalloc(
-      (void **)&dev_pattern_gather, sizeof(size_t) * pattern_gather.size());
-  cudaMalloc(
-      (void **)&dev_pattern_scatter, sizeof(size_t) * pattern_scatter.size());
+  checkCudaErrors(
+      cudaMalloc((void **)&dev_pattern, sizeof(size_t) * pattern.size()));
+  checkCudaErrors(cudaMalloc(
+      (void **)&dev_pattern_gather, sizeof(size_t) * pattern_gather.size()));
+  checkCudaErrors(cudaMalloc(
+      (void **)&dev_pattern_scatter, sizeof(size_t) * pattern_scatter.size()));
 
-  cudaMalloc((void **)&dev_sparse, sizeof(double) * sparse.size());
-  cudaMalloc(
-      (void **)&dev_sparse_gather, sizeof(double) * sparse_gather.size());
-  cudaMalloc(
-      (void **)&dev_sparse_scatter, sizeof(double) * sparse_scatter.size());
-  cudaMalloc((void **)&dev_dense, sizeof(double) * dense.size());
+  checkCudaErrors(
+      cudaMalloc((void **)&dev_sparse, sizeof(double) * sparse.size()));
+  checkCudaErrors(cudaMalloc(
+      (void **)&dev_sparse_gather, sizeof(double) * sparse_gather.size()));
+  checkCudaErrors(cudaMalloc(
+      (void **)&dev_sparse_scatter, sizeof(double) * sparse_scatter.size()));
+  checkCudaErrors(
+      cudaMalloc((void **)&dev_dense, sizeof(double) * dense.size()));
 
-  cudaMemcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size(),
-      cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_pattern_gather, pattern_gather.data(),
-      sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(),
-      sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice);
+  checkCudaErrors(cudaMemcpy(dev_pattern, pattern.data(),
+      sizeof(size_t) * pattern.size(), cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(dev_pattern_gather, pattern_gather.data(),
+      sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(),
+      sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice));
 
-  cudaMemcpy(dev_sparse, sparse.data(), sizeof(double) * sparse.size(),
-      cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_sparse_gather, sparse_gather.data(),
-      sizeof(double) * sparse_gather.size(), cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_sparse_scatter, sparse_scatter.data(),
-      sizeof(double) * sparse_scatter.size(), cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_dense, dense.data(), sizeof(double) * dense.size(),
-      cudaMemcpyHostToDevice);
+  checkCudaErrors(cudaMemcpy(dev_sparse, sparse.data(),
+      sizeof(double) * sparse.size(), cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(dev_sparse_gather, sparse_gather.data(),
+      sizeof(double) * sparse_gather.size(), cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(dev_sparse_scatter, sparse_scatter.data(),
+      sizeof(double) * sparse_scatter.size(), cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(dev_dense, dense.data(),
+      sizeof(double) * dense.size(), cudaMemcpyHostToDevice));
 
-  cudaDeviceSynchronize();
+  checkCudaErrors(cudaDeviceSynchronize());
 }
 #endif
 

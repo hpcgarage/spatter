@@ -3,6 +3,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "Configuration.hh"
+
 __global__ void cuda_gather(const size_t *pattern, const double *sparse,
     double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count) {
@@ -134,27 +136,28 @@ float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
     const size_t wrap, const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_gather<<<blocks_per_grid, threads_per_block>>>(
       pattern, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -164,27 +167,28 @@ float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
     const size_t wrap, const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_scatter<<<blocks_per_grid, threads_per_block>>>(
       pattern, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -194,27 +198,28 @@ float cuda_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
     const size_t wrap, const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_scatter_atomic<<<blocks_per_grid, threads_per_block>>>(
       pattern, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -226,28 +231,29 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
     const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pattern_scatter,
       sparse_scatter, pattern_gather, sparse_gather, pattern_length,
       delta_scatter, delta_gather, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -259,28 +265,29 @@ float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
     const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_scatter_gather_atomic<<<blocks_per_grid, threads_per_block>>>(
       pattern_scatter, sparse_scatter, pattern_gather, sparse_gather,
       pattern_length, delta_scatter, delta_gather, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -291,27 +298,28 @@ float cuda_multi_gather_wrapper(const size_t *pattern,
     const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_multi_gather<<<blocks_per_grid, threads_per_block>>>(pattern,
       pattern_gather, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -322,27 +330,28 @@ float cuda_multi_scatter_wrapper(const size_t *pattern,
     const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_multi_scatter<<<blocks_per_grid, threads_per_block>>>(pattern,
       pattern_scatter, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
@@ -353,27 +362,28 @@ float cuda_multi_scatter_atomic_wrapper(const size_t *pattern,
     const size_t count) {
   cudaEvent_t start, stop;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   int threads_per_block = min(pattern_length, (size_t)1024);
   int blocks_per_grid =
       ((pattern_length * count) + threads_per_block - 1) / threads_per_block;
 
-  cudaDeviceSynchronize();
-  cudaEventRecord(start);
+  checkCudaErrors(cudaDeviceSynchronize());
+  checkCudaErrors(cudaEventRecord(start));
 
   cuda_multi_scatter_atomic<<<blocks_per_grid, threads_per_block>>>(pattern,
       pattern_scatter, sparse, dense, pattern_length, delta, wrap, count);
+  checkCudaErrors(cudaGetLastError());
 
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  checkCudaErrors(cudaEventRecord(stop));
+  checkCudaErrors(cudaEventSynchronize(stop));
 
   float time_ms = 0;
-  cudaEventElapsedTime(&time_ms, start, stop);
+  checkCudaErrors(cudaEventElapsedTime(&time_ms, start, stop));
 
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
 
   return time_ms;
 }
