@@ -17,7 +17,15 @@ set(SPATTER_INCLUDE_FILES
     Timer.hh
     )
 
-add_library(Spatter
+add_library(Spatter STATIC
+    ${SPATTER_INCLUDE_FILES}
+    Configuration.cc
+    JSONParser.cc
+    PatternParser.cc
+    Timer.cc
+    )
+
+add_library(Spatter_shared SHARED
     ${SPATTER_INCLUDE_FILES}
     Configuration.cc
     JSONParser.cc
@@ -31,11 +39,23 @@ set_target_properties(Spatter PROPERTIES
     OUTPUT_NAME "Spatter"
     )
 
+set_target_properties(Spatter_shared PROPERTIES
+    COMPILE_DEFINITIONS "${COMMON_COMPILE_DEFINITIONS}"
+    COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS}"
+    OUTPUT_NAME "Spatter"
+    )
+
 target_include_directories(Spatter
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:include/Spatter>
 )
+
+target_include_directories(Spatter_shared
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include/Spatter>
+    )
 
 if (USE_CUDA)
     set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} cuda_backend)
@@ -46,8 +66,18 @@ target_link_libraries(Spatter
     ${COMMON_LINK_LIBRARIES}
     )
 
+target_link_libraries(Spatter_shared
+    PUBLIC
+    ${COMMON_LINK_LIBRARIES}
+    )
+
 target_compile_options(Spatter
     PRIVATE ${WARNING_FLAGS}
+    )
+
+target_compile_options(Spatter_shared
+    PRIVATE
+    ${WARNING_FLAGS}
     )
 
 # Library/Header installation section
