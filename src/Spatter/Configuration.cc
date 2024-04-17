@@ -54,7 +54,7 @@ void ConfigurationBase::report() {
     total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
 
   if (kernel.compare("sg") == 0)
-    total_bytes_moved = nruns * pattern_gather.size() * count * sizeof(size_t);
+    total_bytes_moved = nruns * (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
     total_bytes_moved = nruns * pattern_scatter.size() * count * sizeof(size_t);
