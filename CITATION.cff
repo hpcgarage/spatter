@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: Lavin
+      given-names: Patrick
+    - family-names: Young
+      given-names: Jeffrey
+    - family-names: Vuduc
+      given-names: Richard
+    - family-names: Riedy
+      given-names: Jason
+    - family-names: Vose
+      given-names: Aaron
+    - family-names: Ernst
+      given-names: Daniel
+  title: "Evaluating Gather and Scatter Performance on CPUs and GPUs"
+  year: 2021
+  publisher:
+    name: "Association for Computing Machinery"
+    city: "New York"
+    region: "NY"
+    country: US
+  url: "https://doi.org/10.1145/3422575.3422794"
+  doi: 10.1145/3422575.3422794
+  abstract: "This paper describes a new benchmark tool, Spatter, for assessing memory system architectures in the context of a specific category of indexed accesses known as gather and scatter. These types of operations are increasingly used to express sparse and irregular data access patterns, and they have widespread utility in many modern HPC applications including scientific simulations, data mining and analysis computations, and graph processing. However, many traditional benchmarking tools like STREAM, STRIDE, and GUPS focus on characterizing only uniform stride or fully random accesses despite evidence that modern applications use varied sets of more complex access patterns. Spatter is an open-source benchmark that provides a tunable and configurable framework to benchmark a variety of indexed access patterns, including variations of gather / scatter that are seen in HPC mini-apps evaluated in this work. The design of Spatter includes backends for OpenMP and CUDA, and experiments show how it can be used to evaluate 1) uniform access patterns for CPU and GPU, 2) prefetching regimes for gather / scatter, 3) compiler implementations of vectorization for gather / scatter, and 4) trace-driven “proxy patterns” that reflect the patterns found in multiple applications. The results from Spatter experiments show, for instance, that GPUs typically outperform CPUs for these operations in absolute bandwidth but not fraction of peak bandwidth, and that Spatter can better represent the performance of some cache-dependent mini-apps than traditional STREAM bandwidth measurements."
+  collection-doi: 10.1145/3422575
+  collection-title: "Proceedings of the International Symposium on Memory Systems"
+  collection-type: proceedings
+  conference:
+    name: "MEMSYS '20"
+    isbn: "9781450388993"
+    city: "Washington"
+    region: "DC"
+    country: US
+    date-start: 2020-09-28
+    date-end: 2020-10-01
+    date-published: 2021-03-21
+  start: 209
+  end: 222
+  pages: 14
+  
