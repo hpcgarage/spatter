@@ -55,13 +55,13 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
       }
     }
 
-    if (!v.contains("delta"))
+    if (!v.contains("delta") || (v["delta"] <= -1))
       v["delta"] = default_delta_;
 
-    if (!v.contains("delta-gather"))
+    if (!v.contains("delta-gather") || (v["delta-gather"] <= -1))
       v["delta-gather"] = default_delta_gather_;
 
-    if (!v.contains("delta-scatter"))
+    if (!v.contains("delta-scatter") || (v["delta-scatter"] <= -1))
       v["delta-scatter"] = default_delta_scatter_;
 
     if (!v.contains("seed"))
