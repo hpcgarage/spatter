@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+preferred-citation:
+  type: conference-paper
+  doi: 10.1145/3422575.3422794
+  authors:
+    - family-names: Lavin
+      given-names: Patrick
+    - family-names: Young
+      given-names: Jeffrey
+    - family-names: Vuduc
+      given-names: Richard
+    - family-names: Riedy
+      given-names: Jason
+    - family-names: Vose
+      given-names: Aaron
+    - family-names: Ernst
+      given-names: Daniel
+  title: "Evaluating Gather and Scatter Performance on CPUs and GPUs"
+  url: "https://doi.org/10.1145/3422575.3422794"
+  publisher:
+    name: "Association for Computing Machinery"
+  collection-title: "Proceedings of the International Symposium on Memory Systems"
+  conference:
+    name: "MEMSYS '20"
+  start: 209
+  end: 222
+  year: 2021
+  
