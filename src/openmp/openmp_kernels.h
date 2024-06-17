@@ -6,6 +6,7 @@
 #endif
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include "../include/sgtype.h"
 
 void sg_omp(
