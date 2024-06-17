@@ -11,13 +11,14 @@ namespace Spatter {
 JSONParser::JSONParser(std::string filename, const std::string backend,
     const bool aggregate, const bool atomic, const bool compress,
     const unsigned long verbosity, const std::string name,
-    const std::string kernel, const size_t delta, const size_t delta_gather,
-    const size_t delta_scatter, const int seed, const size_t wrap,
-    const size_t count, const int nthreads, const unsigned long nruns)
+    const std::string kernel, const size_t pattern_size, const size_t delta,
+    const size_t delta_gather, const size_t delta_scatter, const int seed,
+    const size_t wrap, const size_t count, const int nthreads,
+    const unsigned long nruns)
     : backend_(backend), aggregate_(aggregate), atomic_(atomic),
       compress_(compress), verbosity_(verbosity), default_name_(name),
-      default_kernel_(kernel), default_delta_(delta),
-      default_delta_gather_(delta_gather),
+      default_kernel_(kernel), default_pattern_size_(pattern_size),
+      default_delta_(delta), default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_seed_(seed),
       default_wrap_(wrap), default_count_(count),
       default_omp_threads_(nthreads), default_nruns_(nruns) {
@@ -54,6 +55,9 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
         assert(v.contains("pattern"));
       }
     }
+
+    if (!v.contains("pattern-size") || (v["pattern-size"] <= -1))
+      v["pattern-size"] = default_pattern_size_;
 
     if (!v.contains("delta") || (v["delta"] <= -1))
       v["delta"] = default_delta_;
