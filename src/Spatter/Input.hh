@@ -186,22 +186,42 @@ void usage(char *progname) {
 }
 
 int read_int_arg(std::string cl, int &arg, const std::string &err_msg) {
+  int passed_arg;
+
   try {
-    arg = std::stoi(cl);
+    passed_arg = std::stoi(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
   }
+
+  if (passed_arg < 0) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  } else {
+    arg = passed_arg;
+  }
+
   return 0;
 }
 
 int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
+  int64_t passed_arg;
+
   try {
-    arg = std::stoul(cl);
+    passed_arg = std::stoll(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
   }
+
+  if (passed_arg < 0) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  } else {
+    arg = passed_arg;
+  }
+
   return 0;
 }
 
