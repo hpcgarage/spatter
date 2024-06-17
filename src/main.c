@@ -541,6 +541,10 @@ int main(int argc, char **argv)
     target.host_ptr = target.host_ptrs[0];
     //    printf("-- here -- \n");
 
+    if (source.len < 64) {
+        source.len = 64;
+    }
+
     // Populate buffers on host
     #pragma omp parallel for
     for (size_t i = 0; i < source.len; i++) {
