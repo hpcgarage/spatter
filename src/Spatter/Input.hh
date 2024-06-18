@@ -510,15 +510,31 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
 
   if (pattern_size > 0) {
-    if (pattern.size() > 0)
-      pattern.resize(pattern_size);
+    if (pattern.size() > 0) {
+      if (truncate_pattern(pattern, pattern_size) == -1) {
+        std::cerr << "Truncating pattern to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
 
-    if (pattern_gather.size() > 0)
-      pattern_gather.resize(pattern_size);
+    if (pattern_gather.size() > 0) {
+      if (truncate_pattern(pattern_gather, pattern_size) == -1) {
+        std::cerr << "Truncating pattern_gather to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
 
-    if (pattern_scatter.size() > 0)
-      pattern_scatter.resize(pattern_size);
+    if (pattern_scatter.size() > 0) {
+      if (truncate_pattern(pattern_scatter, pattern_size) == -1) {
+        std::cerr << "Truncating pattern_scatter to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
   }
+
 
   if (boundary > 0) {
     if (pattern.size() > 0) {

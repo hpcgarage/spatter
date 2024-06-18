@@ -236,4 +236,14 @@ int pattern_parser(
   return 0;
 }
 
+int truncate_pattern(aligned_vector<size_t> &pattern, size_t pattern_size) {
+  if (pattern_size > pattern.size()) {
+    return -1;
+  }
+
+  pattern.resize(pattern_size);
+
+  return 0;
+}
+
 } // namespace Spatter
