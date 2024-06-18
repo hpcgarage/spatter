@@ -96,6 +96,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   assert(data_[index].contains("kernel"));
   assert(data_[index]["kernel"].type() == json::value_t::string);
 
+  assert(data_[index].contains("pattern-size"));
   assert(data_[index].contains("delta"));
   assert(data_[index].contains("delta-gather"));
   assert(data_[index].contains("delta-scatter"));
@@ -110,17 +111,32 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
 
-  if (data_[index].contains("pattern"))
+  if (data_[index].contains("pattern")) {
     if (get_pattern_("pattern", pattern, index) != 0)
       exit(1);
 
-  if (data_[index].contains("pattern-gather"))
+    if (data_[index]["pattern-size"] > 0)
+      if (truncate_pattern(pattern, data_[index]["pattern-size"]) != 0)
+        exit(1);
+  }
+
+  if (data_[index].contains("pattern-gather")) {
     if (get_pattern_("pattern-gather", pattern_gather, index) != 0)
       exit(1);
 
-  if (data_[index].contains("pattern-scatter"))
+    if (data_[index]["pattern-size"] > 0)
+      if (truncate_pattern(pattern_gather, data_[index]["pattern-size"]) != 0)
+        exit(1);
+  }
+
+  if (data_[index].contains("pattern-scatter")) {
     if (get_pattern_("pattern-scatter", pattern_scatter, index) != 0)
       exit(1);
+
+    if (data_[index]["pattern-size"] > 0)
+      if (truncate_pattern(pattern_scatter, data_[index]["pattern-size"]) != 0)
+        exit(1);
+  }
 
   std::unique_ptr<Spatter::ConfigurationBase> c;
   if (backend_.compare("serial") == 0)
