@@ -225,16 +225,6 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
   return 0;
 }
 
-size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
-  const size_t pattern_len = pattern.size();
-  for (size_t j = 0; j < pattern_len; ++j) {
-    pattern[j] = pattern[j] % boundary;
-  }
-
-  size_t max_pattern_val = *(std::max_element(pattern.begin(), pattern.end()));
-  return max_pattern_val;
-}
-
 int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.backend = "serial";
   cl.aggregate = false;

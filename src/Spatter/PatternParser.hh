@@ -24,6 +24,8 @@ int generate_pattern(std::string type,
 int pattern_parser(
     std::stringstream &pattern_string, aligned_vector<size_t> &pattern);
 
+size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary);
+
 int truncate_pattern(aligned_vector<size_t> &pattern, size_t pattern_size);
 
 } // namespace Spatter
