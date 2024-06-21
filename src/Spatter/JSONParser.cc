@@ -12,15 +12,15 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
     const bool aggregate, const bool atomic, const bool compress,
     const unsigned long verbosity, const std::string name,
     const std::string kernel, const size_t pattern_size, const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const int seed,
-    const size_t wrap, const size_t count, const int nthreads,
-    const unsigned long nruns)
+    const size_t delta_gather, const size_t delta_scatter,
+    const size_t boundary, const int seed, const size_t wrap,
+    const size_t count, const int nthreads, const unsigned long nruns)
     : backend_(backend), aggregate_(aggregate), atomic_(atomic),
       compress_(compress), verbosity_(verbosity), default_name_(name),
       default_kernel_(kernel), default_pattern_size_(pattern_size),
       default_delta_(delta), default_delta_gather_(delta_gather),
-      default_delta_scatter_(delta_scatter), default_seed_(seed),
-      default_wrap_(wrap), default_count_(count),
+      default_delta_scatter_(delta_scatter), default_boundary_(boundary),
+      default_seed_(seed), default_wrap_(wrap), default_count_(count),
       default_omp_threads_(nthreads), default_nruns_(nruns) {
   if (!file_exists_(filename)) {
     std::cerr << "File does not exist" << std::endl;
@@ -67,6 +67,9 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
 
     if (!v.contains("delta-scatter") || (v["delta-scatter"] <= -1))
       v["delta-scatter"] = default_delta_scatter_;
+
+    if (!v.contains("boundary"))
+      v["boundary"] = default_boundary_;
 
     if (!v.contains("seed"))
       v["seed"] = default_seed_;
@@ -118,6 +121,11 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
     if (data_[index]["pattern-size"] > 0)
       if (truncate_pattern(pattern, data_[index]["pattern-size"]) != 0)
         exit(1);
+
+    if (data_[index]["boundary"] > 0)
+      if (remap_pattern(pattern, data_[index]["boundary"]) >
+          data_[index]["boundary"])
+        exit(1);
   }
 
   if (data_[index].contains("pattern-gather")) {
@@ -127,6 +135,11 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
     if (data_[index]["pattern-size"] > 0)
       if (truncate_pattern(pattern_gather, data_[index]["pattern-size"]) != 0)
         exit(1);
+
+    if (data_[index]["boundary"] > 0)
+      if (remap_pattern(pattern_gather, data_[index]["boundary"]) >
+          data_[index]["boundary"])
+        exit(1);
   }
 
   if (data_[index].contains("pattern-scatter")) {
@@ -135,6 +148,11 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 
     if (data_[index]["pattern-size"] > 0)
       if (truncate_pattern(pattern_scatter, data_[index]["pattern-size"]) != 0)
+        exit(1);
+
+    if (data_[index]["boundary"] > 0)
+      if (remap_pattern(pattern_scatter, data_[index]["boundary"]) >
+          data_[index]["boundary"])
         exit(1);
   }
 
