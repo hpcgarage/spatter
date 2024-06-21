@@ -238,7 +238,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::string backend = cl.backend;
   bool compress = cl.compress;
   size_t delta = 8;
-  size_t boundary = 0;
+  size_t boundary = INT32_MAX;
 
   bool json = 0;
   std::string json_fname = "";

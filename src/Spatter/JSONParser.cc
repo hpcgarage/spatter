@@ -103,6 +103,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   assert(data_[index].contains("delta"));
   assert(data_[index].contains("delta-gather"));
   assert(data_[index].contains("delta-scatter"));
+  assert(data_[index].contains("boundary"));
   assert(data_[index].contains("seed"));
   assert(data_[index].contains("wrap"));
   assert(data_[index].contains("count"));
@@ -114,46 +115,43 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
 
+  size_t pattern_size = data_[index]["pattern-size"];
+  size_t boundary = data_[index]["boundary"];
+
   if (data_[index].contains("pattern")) {
     if (get_pattern_("pattern", pattern, index) != 0)
       exit(1);
 
-    if (data_[index]["pattern-size"] > 0)
-      if (truncate_pattern(pattern, data_[index]["pattern-size"]) != 0)
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern, pattern_size) != 0)
         exit(1);
 
-    if (data_[index]["boundary"] > 0)
-      if (remap_pattern(pattern, data_[index]["boundary"]) >
-          data_[index]["boundary"])
-        exit(1);
+    if (remap_pattern(pattern, boundary) > boundary)
+       exit(1);
   }
 
   if (data_[index].contains("pattern-gather")) {
     if (get_pattern_("pattern-gather", pattern_gather, index) != 0)
       exit(1);
 
-    if (data_[index]["pattern-size"] > 0)
-      if (truncate_pattern(pattern_gather, data_[index]["pattern-size"]) != 0)
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern_gather, pattern_size) != 0)
         exit(1);
 
-    if (data_[index]["boundary"] > 0)
-      if (remap_pattern(pattern_gather, data_[index]["boundary"]) >
-          data_[index]["boundary"])
-        exit(1);
+    if (remap_pattern(pattern_gather, boundary) > boundary)
+      exit(1);
   }
 
   if (data_[index].contains("pattern-scatter")) {
     if (get_pattern_("pattern-scatter", pattern_scatter, index) != 0)
       exit(1);
 
-    if (data_[index]["pattern-size"] > 0)
-      if (truncate_pattern(pattern_scatter, data_[index]["pattern-size"]) != 0)
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern_scatter, pattern_size) != 0)
         exit(1);
 
-    if (data_[index]["boundary"] > 0)
-      if (remap_pattern(pattern_scatter, data_[index]["boundary"]) >
-          data_[index]["boundary"])
-        exit(1);
+    if (remap_pattern(pattern_scatter, boundary) > boundary)
+      exit(1);
   }
 
   std::unique_ptr<Spatter::ConfigurationBase> c;

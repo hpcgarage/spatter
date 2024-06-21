@@ -5,6 +5,7 @@
 #ifndef SPATTER_PATTERNPARSER_HH
 #define SPATTER_PATTERNPARSER_HH
 
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 #include <string>
