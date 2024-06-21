@@ -118,8 +118,8 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
-            << "Set Boundary (i.e. Set max value of pattern array)" << std::left
-            << "\n";
+            << " Set Boundary (limits max value of pattern using modulo)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
   std::cout
@@ -129,7 +129,9 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-j (--pattern-size)"
-            << std::setw(40) << "Set Pattern Size" << std::left << "\n";
+            << std::setw(40)
+            << " Set Pattern Size"
+               " (truncates pattern to pattern-size)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-l (--count)" << std::setw(40)
