@@ -1,0 +1,13 @@
+Array size = 150000000 (elements), Offset = 0 (elements)
+Memory per array = 1144.4 MiB (= 1.1 GiB).
+Total memory required = 3433.2 MiB (= 3.4 GiB).
+Function    Best Rate MB/s  Avg time     Min time     Max time
+1 Thread(s)	Copy:           24102.4     0.099677     0.099575     0.099914
+2 Thread(s)	Copy:           46699.2     0.051560     0.051393     0.051898
+4 Thread(s)	Copy:           94767.8     0.025394     0.025325     0.025604
+8 Thread(s)	Copy:          189916.4     0.012776     0.012637     0.013205
+16 Thread(s)	Copy:          289820.3     0.008290     0.008281     0.008315
+32 Thread(s)	Copy:          366581.6     0.006568     0.006547     0.006604
+56 Thread(s)	Copy:          304302.6     0.007927     0.007887     0.008024
+64 Thread(s)	Copy:          287322.1     0.008476     0.008353     0.008623
+112 Thread(s)	Copy:          415586.2     0.005790     0.005775     0.005797

@@ -23,6 +23,22 @@ CPU_NAMES = {
         'customcpu':'CustomCPU',
        }
 
+NEW_NAMES = {
+    '9684x': 'AMD EPYC 9684X',
+    '9654p': 'AMD EPYC 9654P',
+    '9474f': 'AMD EPYC 9474F',
+    'grace': 'NVidia Grace',
+    'gracegrace': 'NVidia Grace-Grace Superchip',
+    'sprhbm': 'Intel Sapphire Rapids HBM',
+    'sprddr': 'Intel Sapphire Rapids DDR',
+    'skylake': 'Intel Skylake',
+    '9554p': 'AMD EPYC 9554P',
+    'h100': 'NVidia H100',
+    'v100': 'NVidia V100',
+    'a100': 'NVidia A100',
+    'gracehopper': 'NVidia GH200',
+}
+
 COLORS = {
         'gv100':'mediumvioletred',
         'k40':'blue',
@@ -56,7 +72,22 @@ SYMBOLS = {
 
 }
 
-EXPERIMENTS = {'ustride':'Uniform Stride', 'stream': 'Stream', 'nekbone':'Nekbone', 'lulesh':'LULESH', 'amg':'AMG', 'pennant':'PENNANT'}
+EXPERIMENTS = {'ustride':'Uniform Stride', 'stream': 'Stream', 'nekbone':'Nekbone', 'lulesh':'LULESH', 'amg':'AMG', 'pennant':'PENNANT',
+'xrage-asteroid-spatter5':'xRAGE-Spatter5',
+'xrage-asteroid-spatter9':'xRAGE-Spatter9',
+'quicksilver-CycleTracking-CycleTracking_AllEscape1':'Quicksilver-AllEscape1',
+'quicksilver-CollisionEvent-CollisionEvent_AllAbsorb1':'Quicksilver-AllAbsorb1',
+'quicksilver-CollisionEvent-CollisionEvent_AllAbsorb12':'Quicksilver-AllAbsorb2',
+'quicksilver-CollisionEvent-CollisionEvent_AllAbsorb13':'Quicksilver-AllAbsorb13',
+'quicksilver-CollisionEvent-CollisionEvent_AllAbsorb8':'Quicksilver-AllAbsorb8',
+'umt-all-umt_b2_1':'UMT-b2_1',
+'umt-all-umt_b1_3':'UMT-b1_3',
+'branson-marshak-main_marshak_wave_dd20':'Branson-Marshak dd20',
+'branson-marshak-main_marshak_wave_dd7':'Branson-Marshak dd7',
+'branson-marshak-main_marshak_wave_dd13':'Branson-Marshak dd13',
+'flag-static_2d-001.nonfp':'Flag-001.nonfp',
+'flag-static_2d-001':'Flag-001',
+'flag-static_2d-001.fp':' Flag-001.fp',}
 
 #################################################################
 # NO EDITING IS REQUIRED BEYOND THIS POINT TO ADD NEW PLATFORMS #
@@ -72,7 +103,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 ALLARCH = list(GPU_NAMES.keys()) + list(CPU_NAMES.keys())
-ALLNAMES = {**GPU_NAMES, **CPU_NAMES}
+ALLNAMES = {**GPU_NAMES, **CPU_NAMES, **NEW_NAMES}
 
 # These functions have constant value for a file so need not be vectorized
 def get_arch(str):
