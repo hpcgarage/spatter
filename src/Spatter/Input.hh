@@ -118,8 +118,8 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
-            << "Set Boundary (i.e. Set max value of pattern array)" << std::left
-            << "\n";
+            << " Set Boundary (limits max value of pattern using modulo)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-f (--file)" << std::setw(40)
             << "Input File" << std::left << "\n";
   std::cout
@@ -129,7 +129,9 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-j (--pattern-size)"
-            << std::setw(40) << "Set Pattern Size" << std::left << "\n";
+            << std::setw(40)
+            << " Set Pattern Size"
+               " (truncates pattern to pattern-size)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-k (--kernel)" << std::setw(40)
             << "Kernel (default gather)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-l (--count)" << std::setw(40)
@@ -186,33 +188,43 @@ void usage(char *progname) {
 }
 
 int read_int_arg(std::string cl, int &arg, const std::string &err_msg) {
+  int passed_arg;
+
   try {
-    arg = std::stoi(cl);
+    passed_arg = std::stoi(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
   }
+
+  if (passed_arg < 0) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  } else {
+    arg = passed_arg;
+  }
+
   return 0;
 }
 
 int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
+  int64_t passed_arg;
+
   try {
-    arg = std::stoul(cl);
+    passed_arg = std::stoll(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
   }
-  return 0;
-}
 
-size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
-  const size_t pattern_len = pattern.size();
-  for (size_t j = 0; j < pattern_len; ++j) {
-    pattern[j] = pattern[j] % boundary;
+  if (passed_arg < 0) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  } else {
+    arg = passed_arg;
   }
 
-  size_t max_pattern_val = *(std::max_element(pattern.begin(), pattern.end()));
-  return max_pattern_val;
+  return 0;
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
@@ -228,7 +240,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::string backend = cl.backend;
   bool compress = cl.compress;
   size_t delta = 8;
-  size_t boundary = 0;
+  size_t boundary = INT32_MAX;
 
   bool json = 0;
   std::string json_fname = "";
@@ -490,15 +502,31 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
 
   if (pattern_size > 0) {
-    if (pattern.size() > 0)
-      pattern.resize(pattern_size);
+    if (pattern.size() > 0) {
+      if (truncate_pattern(pattern, pattern_size) == -1) {
+        std::cerr << "Truncating pattern to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
 
-    if (pattern_gather.size() > 0)
-      pattern_gather.resize(pattern_size);
+    if (pattern_gather.size() > 0) {
+      if (truncate_pattern(pattern_gather, pattern_size) == -1) {
+        std::cerr << "Truncating pattern_gather to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
 
-    if (pattern_scatter.size() > 0)
-      pattern_scatter.resize(pattern_size);
+    if (pattern_scatter.size() > 0) {
+      if (truncate_pattern(pattern_scatter, pattern_size) == -1) {
+        std::cerr << "Truncating pattern_scatter to size " << pattern_size
+                  << " failed" << std::endl;
+        return -1;
+      }
+    }
   }
+
 
   if (boundary > 0) {
     if (pattern.size() > 0) {

@@ -236,4 +236,24 @@ int pattern_parser(
   return 0;
 }
 
+size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
+  const size_t pattern_len = pattern.size();
+  for (size_t j = 0; j < pattern_len; ++j) {
+    pattern[j] = pattern[j] % boundary;
+  }
+
+  size_t max_pattern_val = *(std::max_element(pattern.begin(), pattern.end()));
+  return max_pattern_val;
+}
+
+int truncate_pattern(aligned_vector<size_t> &pattern, size_t pattern_size) {
+  if (pattern_size > pattern.size()) {
+    return -1;
+  }
+
+  pattern.resize(pattern_size);
+
+  return 0;
+}
+
 } // namespace Spatter

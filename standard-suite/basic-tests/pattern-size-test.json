@@ -1,0 +1,6 @@
+[
+    {"pattern": [0, 1, 2, 3, 4, 5, 6, 7], "kernel": "Scatter", "pattern-size":4, "count": 16777216},
+    {"pattern": [0, 1, 2, 3, 4, 5, 6, 7], "kernel": "Gather", "pattern-size":4, "count": 16777216},
+    {"pattern": "UNIFORM:8:1:NR", "kernel": "Scatter", "count": 16777216},
+    {"pattern": "UNIFORM:8:1:NR", "kernel": "Gather", "count": 16777216}
+]
