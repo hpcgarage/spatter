@@ -12,15 +12,21 @@ namespace Spatter {
 ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     std::string k, const aligned_vector<size_t> pattern,
     const aligned_vector<size_t> pattern_gather,
-    const aligned_vector<size_t> pattern_scatter, const size_t delta,
+    const aligned_vector<size_t> pattern_scatter,
+    aligned_vector<double> &sparse,
+    aligned_vector<double> &sparse_gather,
+    aligned_vector<double> &sparse_scatter,
+    aligned_vector<double> &dense, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
     const bool compress, const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
-      delta(delta), delta_gather(delta_gather), delta_scatter(delta_scatter),
-      seed(seed), wrap(wrap), count(count), omp_threads(nthreads), nruns(nruns),
+      sparse(sparse), sparse_gather(sparse_gather),
+      sparse_scatter(sparse_scatter), dense(dense), delta(delta),
+      delta_gather(delta_gather), delta_scatter(delta_scatter), seed(seed),
+      wrap(wrap), count(count), omp_threads(nthreads), nruns(nruns),
       aggregate(aggregate), atomic(atomic), compress(compress),
       verbosity(verbosity), time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
@@ -186,15 +192,19 @@ void ConfigurationBase::setup() {
     size_t sparse_gather_size =
         max_pattern_gather_val + delta_gather * (count - 1) + 1;
 
-    sparse_scatter.resize(sparse_scatter_size);
+    if (sparse_scatter.size() < sparse_scatter_size) {
+      sparse_scatter.resize(sparse_scatter_size);
 
-    for (size_t i = 0; i < sparse_scatter.size(); ++i)
-      sparse_scatter[i] = rand();
+      for (size_t i = 0; i < sparse_scatter.size(); ++i)
+        sparse_scatter[i] = rand();
+    }
 
-    sparse_gather.resize(sparse_gather_size);
+    if (sparse_gather.size() < sparse_gather_size) {
+      sparse_gather.resize(sparse_gather_size);
 
-    for (size_t i = 0; i < sparse_gather.size(); ++i)
-      sparse_gather[i] = rand();
+      for (size_t i = 0; i < sparse_gather.size(); ++i)
+        sparse_gather[i] = rand();
+    }
 
     if (verbosity >= 3)
       std::cout << "Pattern Gather Array Size: " << pattern_gather.size()
@@ -212,7 +222,12 @@ void ConfigurationBase::setup() {
     const size_t dense_size = pattern.size() * wrap;
     const size_t sparse_size = max_pattern_val + delta * (count - 1) + 1;
 
-    dense.resize(dense_size);
+    if (dense.size() < dense_size) {
+      dense.resize(dense_size);
+
+      for (size_t i = 0; i < dense.size(); ++i)
+        dense[i] = rand();
+    }
 
 #ifdef USE_OPENMP
     if (kernel.compare("gather") == 0 || kernel.compare("multigather") == 0) {
@@ -226,13 +241,12 @@ void ConfigurationBase::setup() {
     }
 #endif
 
-    for (size_t i = 0; i < dense.size(); ++i)
-      dense[i] = rand();
+    if (sparse.size() < sparse_size) {
+      sparse.resize(sparse_size);
 
-    sparse.resize(sparse_size);
-
-    for (size_t i = 0; i < sparse.size(); ++i)
-      sparse[i] = rand();
+      for (size_t i = 0; i < sparse.size(); ++i)
+        sparse[i] = rand();
+    }
 
     if (kernel.compare("multiscatter") == 0) {
       const size_t max_pattern_scatter_val = *(std::max_element(
@@ -390,12 +404,17 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
     const std::string name, const std::string kernel,
     const aligned_vector<size_t> pattern,
     const aligned_vector<size_t> pattern_gather,
-    const aligned_vector<size_t> pattern_scatter, const size_t delta,
+    const aligned_vector<size_t> pattern_scatter,
+    aligned_vector<double> &sparse,
+    aligned_vector<double> &sparse_gather,
+    aligned_vector<double> &sparse_scatter,
+    aligned_vector<double> &dense, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
     const bool aggregate, const bool compress, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+          pattern_scatter, sparse, sparse_gather, sparse_scatter, dense,
+          delta, delta_gather, delta_scatter, seed, wrap,
           count, 1, nruns, aggregate, false, compress, verbosity) {
   ConfigurationBase::setup();
 }
@@ -517,13 +536,18 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const std::string name, const std::string kernel,
     const aligned_vector<size_t> pattern,
     const aligned_vector<size_t> pattern_gather,
-    aligned_vector<size_t> pattern_scatter, const size_t delta,
+    aligned_vector<size_t> pattern_scatter,
+    aligned_vector<double> &sparse,
+    aligned_vector<double> &sparse_gather,
+    aligned_vector<double> &sparse_scatter,
+    aligned_vector<double> &dense, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
     const bool compress, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+          pattern_scatter, sparse, sparse_gather, sparse_scatter, dense,
+          delta, delta_gather, delta_scatter, seed, wrap,
           count, nthreads, nruns, aggregate, atomic, compress, verbosity) {
   ConfigurationBase::setup();
 }
@@ -699,13 +723,18 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
     const std::string name, const std::string kernel,
     const aligned_vector<size_t> pattern,
     const aligned_vector<size_t> pattern_gather,
-    const aligned_vector<size_t> pattern_scatter, const size_t delta,
+    const aligned_vector<size_t> pattern_scatter,
+    aligned_vector<double> &sparse,
+    aligned_vector<double> &sparse_gather,
+    aligned_vector<double> &sparse_scatter,
+    aligned_vector<double> &dense, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
     const bool aggregate, const bool atomic, const bool compress,
     const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
+          pattern_scatter, sparse, sparse_gather, sparse_scatter, dense,
+          delta, delta_gather, delta_scatter, seed, wrap,
           count, 1, nruns, aggregate, atomic, compress, verbosity) {
   setup();
 }

@@ -55,6 +55,13 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
+
+  aligned_vector<double> sparse;
+  aligned_vector<double> sparse_gather;
+  aligned_vector<double> sparse_scatter;
+
+  aligned_vector<double> dense;
+
   std::string backend;
   bool aggregate;
   bool atomic;
@@ -570,20 +577,23 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_gather, cl.sparse_scatter, cl.dense, delta,
           delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
           compress, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_gather, cl.sparse_scatter, cl.dense, delta,
           delta_gather, delta_scatter, seed, wrap, count, nthreads, nruns,
           aggregate, atomic, compress, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_gather, cl.sparse_scatter, cl.dense, delta,
           delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
           atomic, compress, verbosity);
 #endif
@@ -595,7 +605,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     cl.configs.push_back(std::move(c));
   } else {
     Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, aggregate, atomic, compress, verbosity, nthreads);
+        json_fname, cl.sparse, cl.sparse_gather, cl.sparse_scatter, cl.dense,
+        backend, aggregate, atomic, compress, verbosity, nthreads);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
