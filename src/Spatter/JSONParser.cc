@@ -178,8 +178,8 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 #ifdef USE_OPENMP
   else if (backend_.compare("openmp") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_scatter,
-        pattern_gather, sparse, sparse_size, sparse_gather, sparse_gather_size,
+        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
+        pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
         sparse_scatter, sparse_scatter_size, dense, dense_size, delta,
         delta_gather, delta_scatter, data_[index]["seed"], data_[index]["wrap"],
         data_[index]["count"], data_[index]["nthreads"], data_[index]["nruns"],
