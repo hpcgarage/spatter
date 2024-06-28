@@ -10,7 +10,6 @@
 #include <experimental/iterator>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -59,10 +58,10 @@ public:
       const aligned_vector<size_t> pattern,
       const aligned_vector<size_t> pattern_gather,
       const aligned_vector<size_t> pattern_scatter,
-      aligned_vector<double> &sparse,
-      aligned_vector<double> &sparse_gather,
-      aligned_vector<double> &sparse_scatter,
-      aligned_vector<double> &dense, const size_t delta,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse__scatter_size,
+      aligned_vector<double> &dense, size_t &const_size, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
@@ -102,10 +101,14 @@ public:
   const aligned_vector<size_t> pattern_scatter;
 
   aligned_vector<double> &sparse;
+  size_t &sparse_size;
   aligned_vector<double> &sparse_gather;
+  size_t &sparse_gather_size;
   aligned_vector<double> &sparse_scatter;
+  size_t &sparse_scatter_size;
 
   aligned_vector<double> &dense;
+  size_t &dense_size;
   aligned_vector<aligned_vector<double>> dense_perthread;
 
   const size_t delta;
@@ -152,10 +155,10 @@ public:
       const std::string kernel, const aligned_vector<size_t> pattern,
       const aligned_vector<size_t> pattern_gather,
       const aligned_vector<size_t> pattern_scatter,
-      aligned_vector<double> &sparse,
-      aligned_vector<double> &sparse_gather,
-      aligned_vector<double> &sparse_scatter,
-      aligned_vector<double> &dense, const size_t delta,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const unsigned long nruns,
       const bool aggregate, const bool compress, const unsigned long verbosity);
@@ -174,10 +177,10 @@ public:
       const std::string kernel, const aligned_vector<size_t> pattern,
       const aligned_vector<size_t> pattern_gather,
       aligned_vector<size_t> pattern_scatter,
-      aligned_vector<double> &sparse,
-      aligned_vector<double> &sparse_gather,
-      aligned_vector<double> &sparse_scatter,
-      aligned_vector<double> &dense, const size_t delta,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
@@ -200,10 +203,10 @@ public:
       const std::string kernel, const aligned_vector<size_t> pattern,
       const aligned_vector<size_t> pattern_gather,
       const aligned_vector<size_t> pattern_scatter,
-      aligned_vector<double> &sparse,
-      aligned_vector<double> &sparse_gather,
-      aligned_vector<double> &sparse_scatter,
-      aligned_vector<double> &dense, const size_t delta,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_size,
+      aligned_vector<double> &dense, size_t &sparse_size, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const unsigned long nruns,
       const bool aggregate, const bool atomic, const bool compress,
