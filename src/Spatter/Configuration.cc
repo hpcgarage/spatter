@@ -211,11 +211,6 @@ void ConfigurationBase::setup() {
         *(std::max_element(std::begin(pattern), std::end(pattern)));
     const size_t dense_size = pattern.size() * wrap;
     const size_t sparse_size = max_pattern_val + delta * (count - 1) + 1;
-    std::cout << "---\n";
-    std::cout << "sparse_size: " << sparse_size << std::endl;
-    std::cout << "max_pattern_val: " << max_pattern_val << std::endl;
-    std::cout << "delta: " << delta << std::endl;
-    std::cout << "count: " << count << std::endl;
 
     dense.resize(dense_size);
 
@@ -541,14 +536,6 @@ int Configuration<Spatter::OpenMP>::run(bool timed, unsigned long run_id) {
 void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
   size_t pattern_length = pattern.size();
 
-  /*
-  std::cout << "pat_len: " << pattern_length << std::endl;
-  std::cout << "delta: " << delta << std::endl;
-  std::cout << "n: " << count << std::endl;
-  */
-  std::cout << "size of source: " << sizeof(double)*sparse.size()/1024/1024 << "MiB" << std::endl;
-  //std::cout << "size of target: " << sizeof(double)*dense_perthread[0].size()/1024/1024 << "MiB" << std::endl;
-
 #ifdef USE_MPI
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -556,7 +543,6 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
   if (timed)
     timer.start();
 
-  //std::cout << "Wrap: " << wrap << std::endl;
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
@@ -564,28 +550,25 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
       double *sl = &sparse[delta*i];
-      double *tl = &(dense_perthread[t][0]);
+      double *tl = &(dense_perthread[t][pattern_length*(i%wrap)]);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
         dense_perthread[t][j] = sparse[pattern[j] + delta * i];
         tl[j] = sl[pattern[j]];
-        //tl[j] = sparse[pattern[j] + delta*i];
       }
     }
   }
 
   assert(dense_perthread[rand()%omp_threads][rand()%pattern_length]!=0);
 
-  if(dense_perthread[rand()%omp_threads][rand()%pattern_length]){
-    //std::cout << "test................\n";
-  }
   std::atomic_thread_fence(std::memory_order_release);
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
     timer.clear();
   }
+
 }
 
 void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
@@ -598,10 +581,29 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
   if (timed)
     timer.start();
 
+#pragma omp parallel
+  {
+    int t = omp_get_thread_num();
+
+#pragma omp for
+    for (size_t i = 0; i < count; ++i) {
+      double *sl = &sparse[delta*i];
+      //double *tl = &(dense_perthread[t][0]);
+      //double *tl = &dense[pattern_length*i];
+
+#pragma omp simd
+      for (size_t j = 0; j < pattern_length; ++j) {
+        sl[pattern[j]] = dense[j];
+      }
+    }
+  }
+
+  /*
 #pragma omp parallel for simd
   for (size_t i = 0; i < count; ++i)
     for (size_t j = 0; j < pattern_length; ++j)
       sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
+      */
 
   if (timed) {
     timer.stop();
