@@ -215,7 +215,7 @@ void ConfigurationBase::setup() {
     dense.resize(dense_size);
 
 #ifdef USE_OPENMP
-    if (kernel.compare("gather") == 0) {
+    if (kernel.compare("gather") == 0 || kernel.compare("multigather") == 0) {
       dense_perthread.resize(omp_threads);
       for (int j = 0; j < omp_threads; ++j) {
         dense_perthread[j].resize(dense_size);
@@ -648,11 +648,18 @@ void Configuration<Spatter::OpenMP>::multi_gather(
   if (timed)
     timer.start();
 
-#pragma omp parallel for simd
+#pragma omp parallel
+  {
+
+    int t = omp_get_thread_num();
+
+#pragma omp for
   for (size_t i = 0; i < count; ++i)
     for (size_t j = 0; j < pattern_length; ++j)
-      dense[j + pattern_length * (i % wrap)] =
+      dense_perthread[t][j + pattern_length * (i % wrap)] =
           sparse[pattern[pattern_gather[j]] + delta * i];
+
+  }
 
   if (timed) {
     timer.stop();
@@ -660,6 +667,7 @@ void Configuration<Spatter::OpenMP>::multi_gather(
     timer.clear();
   }
 }
+
 
 void Configuration<Spatter::OpenMP>::multi_scatter(
     bool timed, unsigned long run_id) {
