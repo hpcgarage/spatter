@@ -239,6 +239,8 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
+  srand(static_cast<unsigned int>(time(nullptr)));
+
   cl.sparse_size = 0;
   cl.sparse_gather_size = 0;
   cl.sparse_scatter_size = 0;
