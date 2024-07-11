@@ -139,6 +139,9 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 
     if (remap_pattern(pattern, boundary) > boundary)
        exit(1);
+
+    if (compress_)
+      compress_pattern(pattern);
   }
 
   if (data_[index].contains("pattern-gather")) {
@@ -152,6 +155,9 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 
     if (remap_pattern(pattern_gather, boundary) > boundary)
       exit(1);
+
+    if (compress_)
+      compress_pattern(pattern_gather);
   }
 
   if (data_[index].contains("pattern-scatter")) {
@@ -165,6 +171,9 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 
     if (remap_pattern(pattern_scatter, boundary) > boundary)
       exit(1);
+
+    if (compress_)
+      compress_pattern(pattern_scatter);
   }
 
   std::unique_ptr<Spatter::ConfigurationBase> c;
@@ -175,7 +184,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
         delta, delta_gather, delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
-        aggregate_, compress_, verbosity_);
+        aggregate_, verbosity_);
 #ifdef USE_OPENMP
   else if (backend_.compare("openmp") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(index,
@@ -184,7 +193,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
         delta, delta_gather, delta_scatter, data_[index]["seed"], data_[index]["wrap"],
         data_[index]["count"], data_[index]["nthreads"], data_[index]["nruns"],
-        aggregate_, atomic_, compress_, verbosity_);
+        aggregate_, atomic_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
@@ -194,7 +203,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
         delta, delta_gather, delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
-        aggregate_, atomic_, compress_, verbosity_);
+        aggregate_, atomic_, verbosity_);
 #endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;

@@ -14,6 +14,29 @@ size_t power(size_t base, size_t exp) {
   return result;
 }
 
+void compress_pattern(aligned_vector<size_t> &pattern) {
+  std::vector<long> pages;
+
+  const size_t pattern_len = pattern.size();
+  for (size_t i = 0; i < pattern_len; i++) {
+    size_t page = (pattern[i] * 8) >> PAGE_BITS;
+    size_t page_index;
+
+    auto it = std::find(pages.begin(), pages.end(), page);
+    if (it != pages.end()) {
+      page_index = it - pages.begin();
+    } else {
+      page_index = pages.size();
+      pages.push_back(page);
+    }
+
+    size_t new_val = (page_index << PAGE_BITS) |
+        ((pattern[i] * 8) & ((1l << PAGE_BITS) - 1l));
+    new_val /= 8;
+    pattern[i] = new_val;
+  }
+}
+
 int generate_pattern_uniform(std::string args,
     aligned_vector<size_t> &pattern,
     size_t &delta) {

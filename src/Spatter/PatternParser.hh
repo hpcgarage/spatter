@@ -14,9 +14,13 @@
 #include "Configuration.hh"
 #include "SpatterTypes.hh"
 
+#define PAGE_BITS 12 // 12 bits => 4 KiB page
+
 namespace Spatter {
 
 size_t power(size_t base, size_t exp);
+
+void compress_pattern(aligned_vector<size_t> &pattern);
 
 int generate_pattern(std::string type,
     std::vector<std::vector<size_t>> generator,
