@@ -228,7 +228,7 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
-  cl.backend = "serial";
+  cl.backend = "";
   cl.aggregate = false;
   cl.atomic = false;
   cl.compress = false;
@@ -344,7 +344,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'g':
       pattern_gather_string << optarg;
-      if (pattern_parser(pattern_gather_string, pattern_gather) != 0)
+      if (pattern_parser(pattern_gather_string, pattern_gather, delta_gather) != 0)
         return -1;
       break;
 
@@ -395,7 +395,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'p':
       pattern_string << optarg;
-      if (pattern_parser(pattern_string, pattern) != 0)
+      if (pattern_parser(pattern_string, pattern, delta) != 0)
         return -1;
       break;
 
@@ -419,7 +419,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'u':
       pattern_scatter_string << optarg;
-      if (pattern_parser(pattern_scatter_string, pattern_scatter) != 0)
+      if (pattern_parser(pattern_scatter_string, pattern_scatter, delta_scatter) != 0)
         return -1;
       break;
 
@@ -456,6 +456,18 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       usage(argv[0]);
       return -1;
     }
+  }
+
+  // Set default backend if one was not specified
+  if (backend.compare("") == 0) {
+    backend = "serial";
+    // Assume only one of USE_CUDA and USE_OPENMP can be true at once
+#ifdef USE_OPENMP
+    backend = "openmp";
+#endif
+#ifdef USE_CUDA
+      backend = "cuda";
+#endif
   }
 
   cl.backend = backend;
@@ -583,7 +595,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     cl.configs.push_back(std::move(c));
   } else {
     Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, aggregate, atomic, compress, verbosity);
+        json_fname, backend, aggregate, atomic, compress, verbosity, nthreads);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

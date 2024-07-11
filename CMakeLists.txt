@@ -1,5 +1,6 @@
 # Hermes/CMakeLists.txt
 cmake_minimum_required(VERSION 3.20)
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Set build type")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 

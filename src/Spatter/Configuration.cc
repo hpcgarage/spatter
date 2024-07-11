@@ -3,6 +3,7 @@
 */
 
 #include <numeric>
+#include <atomic>
 
 #include "Configuration.hh"
 
@@ -212,6 +213,18 @@ void ConfigurationBase::setup() {
     const size_t sparse_size = max_pattern_val + delta * (count - 1) + 1;
 
     dense.resize(dense_size);
+
+#ifdef USE_OPENMP
+    if (kernel.compare("gather") == 0 || kernel.compare("multigather") == 0) {
+      dense_perthread.resize(omp_threads);
+      for (int j = 0; j < omp_threads; ++j) {
+        dense_perthread[j].resize(dense_size);
+        for (size_t i = 0; i < dense_perthread[j].size(); ++i) {
+          dense_perthread[j][i] = rand();
+        }
+      }
+    }
+#endif
 
     for (size_t i = 0; i < dense.size(); ++i)
       dense[i] = rand();
@@ -513,7 +526,7 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
           pattern_scatter, delta, delta_gather, delta_scatter, seed, wrap,
           count, nthreads, nruns, aggregate, atomic, compress, verbosity) {
   ConfigurationBase::setup();
-};
+}
 
 int Configuration<Spatter::OpenMP>::run(bool timed, unsigned long run_id) {
   omp_set_num_threads(omp_threads);
@@ -530,16 +543,32 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
   if (timed)
     timer.start();
 
-#pragma omp parallel for simd
-  for (size_t i = 0; i < count; ++i)
-    for (size_t j = 0; j < pattern_length; ++j)
-      dense[j + pattern_length * (i % wrap)] = sparse[pattern[j] + delta * i];
+#pragma omp parallel
+  {
+    int t = omp_get_thread_num();
 
+#pragma omp for
+    for (size_t i = 0; i < count; ++i) {
+      double *sl = &sparse[delta*i];
+      double *tl = &(dense_perthread[t][pattern_length*(i%wrap)]);
+
+#pragma omp simd
+      for (size_t j = 0; j < pattern_length; ++j) {
+        dense_perthread[t][j] = sparse[pattern[j] + delta * i];
+        tl[j] = sl[pattern[j]];
+      }
+    }
+  }
+
+  assert(dense_perthread[rand()%omp_threads][rand()%pattern_length]!=0);
+
+  std::atomic_thread_fence(std::memory_order_release);
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
     timer.clear();
   }
+
 }
 
 void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
@@ -552,10 +581,29 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
   if (timed)
     timer.start();
 
+#pragma omp parallel
+  {
+    int t = omp_get_thread_num();
+
+#pragma omp for
+    for (size_t i = 0; i < count; ++i) {
+      double *sl = &sparse[delta*i];
+      //double *tl = &(dense_perthread[t][0]);
+      //double *tl = &dense[pattern_length*i];
+
+#pragma omp simd
+      for (size_t j = 0; j < pattern_length; ++j) {
+        sl[pattern[j]] = dense[j];
+      }
+    }
+  }
+
+  /*
 #pragma omp parallel for simd
   for (size_t i = 0; i < count; ++i)
     for (size_t j = 0; j < pattern_length; ++j)
       sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
+      */
 
   if (timed) {
     timer.stop();
@@ -600,11 +648,18 @@ void Configuration<Spatter::OpenMP>::multi_gather(
   if (timed)
     timer.start();
 
-#pragma omp parallel for simd
+#pragma omp parallel
+  {
+
+    int t = omp_get_thread_num();
+
+#pragma omp for
   for (size_t i = 0; i < count; ++i)
     for (size_t j = 0; j < pattern_length; ++j)
-      dense[j + pattern_length * (i % wrap)] =
+      dense_perthread[t][j + pattern_length * (i % wrap)] =
           sparse[pattern[pattern_gather[j]] + delta * i];
+
+  }
 
   if (timed) {
     timer.stop();
@@ -612,6 +667,7 @@ void Configuration<Spatter::OpenMP>::multi_gather(
     timer.clear();
   }
 }
+
 
 void Configuration<Spatter::OpenMP>::multi_scatter(
     bool timed, unsigned long run_id) {
