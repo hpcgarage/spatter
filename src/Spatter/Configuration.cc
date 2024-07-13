@@ -16,7 +16,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     aligned_vector<double> &sparse, size_t &sparse_size,
     aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
     aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
+    aligned_vector<double> &dense, size_t &dense_size,
+    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
@@ -26,10 +27,11 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
       sparse_scatter_size(sparse_scatter_size), dense(dense),
-      dense_size(dense_size), delta(delta), delta_gather(delta_gather),
-      delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
-      omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
-      compress(compress), verbosity(verbosity), time_seconds(nruns, 0) {
+      dense_size(dense_size), dense_perthread(dense_perthread), delta(delta),
+      delta_gather(delta_gather), delta_scatter(delta_scatter), seed(seed),
+      wrap(wrap), count(count), omp_threads(nthreads), nruns(nruns),
+      aggregate(aggregate), atomic(atomic), compress(compress),
+      verbosity(verbosity), time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -218,17 +220,17 @@ void ConfigurationBase::setup() {
     if (dense_size < dense_size_)
       dense_size = dense_size_;
 
-#ifdef USE_OPENMP
-    if (kernel.compare("gather") == 0 || kernel.compare("multigather") == 0) {
-      dense_perthread.resize(omp_threads);
-      for (int j = 0; j < omp_threads; ++j) {
-        dense_perthread[j].resize(dense_size);
-        for (size_t i = 0; i < dense_perthread[j].size(); ++i) {
-          dense_perthread[j][i] = rand();
-        }
-      }
-    }
-#endif
+// #ifdef USE_OPENMP
+//     if (kernel.compare("gather") == 0 || kernel.compare("multigather") == 0) {
+//       dense_perthread.resize(omp_threads);
+//       for (int j = 0; j < omp_threads; ++j) {
+//         dense_perthread[j].resize(dense_size);
+//         for (size_t i = 0; i < dense_perthread[j].size(); ++i) {
+//           dense_perthread[j][i] = rand();
+//         }
+//       }
+//     }
+// #endif
 
     if (sparse_size < sparse_size_)
       sparse_size = sparse_size_;
@@ -393,15 +395,16 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
     aligned_vector<double> &sparse, size_t &sparse_size,
     aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
     aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
+    aligned_vector<double> &dense, size_t &dense_size,
+    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
     const bool aggregate, const bool compress, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, sparse_size, sparse_gather,
           sparse_gather_size, sparse_scatter, sparse_scatter_size, dense,
-          dense_size, delta, delta_gather, delta_scatter, seed, wrap, count, 1,
-          nruns, aggregate, false, compress, verbosity) {
+          dense_size, dense_perthread, delta, delta_gather, delta_scatter, seed,
+          wrap, count, 1, nruns, aggregate, false, compress, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -526,7 +529,8 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     aligned_vector<double> &sparse, size_t &sparse_size,
     aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
     aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
+    aligned_vector<double> &dense, size_t &dense_size,
+    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
@@ -534,8 +538,9 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, sparse_size, sparse_gather,
           sparse_gather_size, sparse_scatter, sparse_scatter_size, dense,
-          dense_size, delta, delta_gather, delta_scatter, seed, wrap, count,
-          nthreads, nruns, aggregate, atomic, compress, verbosity) {
+          dense_size, dense_perthread, delta, delta_gather, delta_scatter, seed,
+          wrap, count, nthreads, nruns, aggregate, atomic, compress,
+          verbosity) {
   ConfigurationBase::setup();
 }
 

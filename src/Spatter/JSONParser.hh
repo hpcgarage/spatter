@@ -30,13 +30,15 @@ public:
       size_t &sparse_size, aligned_vector<double> &sparse_gather,
       size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
       size_t &sparse_scatter_size, aligned_vector<double> &dense,
-      size_t &dense_size, const std::string backend, const bool aggregate,
-      const bool atomic, const bool compress, const unsigned long verbosity,
-      const int nthreads,const std::string name = "",
-      const std::string kernel = "gather", const size_t pattern_size = 0,
-      const size_t delta = 8, const size_t delta_gather = 8,
-      const size_t delta_scatter = 8, const size_t boundary = INT32_MAX,
-      const int seed = -1, const size_t wrap = 1, const size_t count = 1024,
+      size_t &dense_size,
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const std::string backend, const bool aggregate, const bool atomic,
+      const bool compress, const unsigned long verbosity, const int nthreads,
+      const std::string name = "", const std::string kernel = "gather",
+      const size_t pattern_size = 0, const size_t delta = 8,
+      const size_t delta_gather = 8, const size_t delta_scatter = 8,
+      const size_t boundary = INT32_MAX, const int seed = -1,
+      const size_t wrap = 1, const size_t count = 1024,
       const unsigned long nruns = 10);
 
   size_t size();
@@ -61,6 +63,7 @@ private:
 
   aligned_vector<double> &dense;
   size_t &dense_size;
+  aligned_vector<aligned_vector<double>> &dense_perthread;
 
   std::string backend_;
   const bool aggregate_;
