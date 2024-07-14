@@ -8,18 +8,27 @@ using json = nlohmann::json;
 
 namespace Spatter {
 
-JSONParser::JSONParser(std::string filename, const std::string backend,
-    const bool aggregate, const bool atomic, const bool compress,
-    const unsigned long verbosity, const int nthreads, const std::string name,
-    const std::string kernel, const size_t delta, const size_t delta_gather,
-    const size_t delta_scatter, const int seed, const size_t wrap,
-    const size_t count, const unsigned long nruns)
-    : backend_(backend), aggregate_(aggregate), atomic_(atomic),
+JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
+    size_t &sparse_size, aligned_vector<double> &sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    size_t &sparse_scatter_size, aligned_vector<double> &dense,
+    size_t &dense_size, aligned_vector<aligned_vector<double>> &dense_perthread,
+    const std::string backend, const bool aggregate,
+    const bool atomic, const bool compress, const unsigned long verbosity,
+    const int nthreads, const std::string name, const std::string kernel,
+    const size_t pattern_size, const size_t delta, const size_t delta_gather,
+    const size_t delta_scatter, const size_t boundary, const int seed,
+    const size_t wrap, const size_t count, const unsigned long nruns)
+    : sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
+      sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
+      sparse_scatter_size(sparse_scatter_size), dense(dense),
+      dense_size(dense_size), dense_perthread(dense_perthread),
+      backend_(backend), aggregate_(aggregate), atomic_(atomic),
       compress_(compress), verbosity_(verbosity), default_name_(name),
-      default_kernel_(kernel), default_delta_(delta),
-      default_delta_gather_(delta_gather),
-      default_delta_scatter_(delta_scatter), default_seed_(seed),
-      default_wrap_(wrap), default_count_(count),
+      default_kernel_(kernel), default_pattern_size_(pattern_size),
+      default_delta_(delta), default_delta_gather_(delta_gather),
+      default_delta_scatter_(delta_scatter), default_boundary_(boundary),
+      default_seed_(seed), default_wrap_(wrap), default_count_(count),
       default_omp_threads_(nthreads), default_nruns_(nruns) {
   if (!file_exists_(filename)) {
     std::cerr << "File does not exist" << std::endl;
@@ -55,6 +64,9 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
       }
     }
 
+    if (!v.contains("pattern-size") || (v["pattern-size"] <= -1))
+      v["pattern-size"] = default_pattern_size_;
+
     if (!v.contains("delta") || (v["delta"] <= -1))
       v["delta"] = default_delta_;
 
@@ -63,6 +75,9 @@ JSONParser::JSONParser(std::string filename, const std::string backend,
 
     if (!v.contains("delta-scatter") || (v["delta-scatter"] <= -1))
       v["delta-scatter"] = default_delta_scatter_;
+
+    if (!v.contains("boundary"))
+      v["boundary"] = default_boundary_;
 
     if (!v.contains("seed"))
       v["seed"] = default_seed_;
@@ -92,9 +107,11 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   assert(data_[index].contains("kernel"));
   assert(data_[index]["kernel"].type() == json::value_t::string);
 
+  assert(data_[index].contains("pattern-size"));
   assert(data_[index].contains("delta"));
   assert(data_[index].contains("delta-gather"));
   assert(data_[index].contains("delta-scatter"));
+  assert(data_[index].contains("boundary"));
   assert(data_[index].contains("seed"));
   assert(data_[index].contains("wrap"));
   assert(data_[index].contains("count"));
@@ -106,45 +123,76 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
 
+  size_t pattern_size = data_[index]["pattern-size"];
   size_t delta = data_[index]["delta"];
   size_t delta_gather = data_[index]["delta-gather"];
   size_t delta_scatter = data_[index]["delta-scatter"];
+  size_t boundary = data_[index]["boundary"];
 
-  if (data_[index].contains("pattern"))
+  if (data_[index].contains("pattern")) {
     if (get_pattern_("pattern", pattern, delta, index) != 0)
       exit(1);
 
-  if (data_[index].contains("pattern-gather"))
-    if (get_pattern_("pattern-gather", pattern_gather, delta_gather, index) != 0)
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern, pattern_size) != 0)
+        exit(1);
+
+    if (remap_pattern(pattern, boundary) > boundary)
+       exit(1);
+  }
+
+  if (data_[index].contains("pattern-gather")) {
+    if (get_pattern_("pattern-gather", pattern_gather, delta_gather,
+        index) != 0)
       exit(1);
 
-  if (data_[index].contains("pattern-scatter"))
-    if (get_pattern_("pattern-scatter", pattern_scatter, delta_scatter, index) != 0)
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern_gather, pattern_size) != 0)
+        exit(1);
+
+    if (remap_pattern(pattern_gather, boundary) > boundary)
       exit(1);
+  }
+
+  if (data_[index].contains("pattern-scatter")) {
+    if (get_pattern_("pattern-scatter", pattern_scatter, delta_scatter,
+        index) != 0)
+      exit(1);
+
+    if (pattern_size > 0)
+      if (truncate_pattern(pattern_scatter, pattern_size) != 0)
+        exit(1);
+
+    if (remap_pattern(pattern_scatter, boundary) > boundary)
+      exit(1);
+  }
 
   std::unique_ptr<Spatter::ConfigurationBase> c;
   if (backend_.compare("serial") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(index,
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, delta, delta_gather,
-        delta_scatter, data_[index]["seed"],
+        pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
+        sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
+        delta, delta_gather, delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
         aggregate_, compress_, verbosity_);
 #ifdef USE_OPENMP
   else if (backend_.compare("openmp") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_scatter,
-        pattern_gather, delta, delta_gather,
-        delta_scatter, data_[index]["seed"],
-        data_[index]["wrap"], data_[index]["count"], data_[index]["nthreads"],
-        data_[index]["nruns"], aggregate_, atomic_, compress_, verbosity_);
+        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
+        pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
+        sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
+        delta, delta_gather, delta_scatter, data_[index]["seed"], data_[index]["wrap"],
+        data_[index]["count"], data_[index]["nthreads"], data_[index]["nruns"],
+        aggregate_, atomic_, compress_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(index,
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, delta, delta_gather,
-        delta_scatter, data_[index]["seed"],
+        pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
+        sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
+        delta, delta_gather, delta_scatter, data_[index]["seed"],
         data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
         aggregate_, atomic_, compress_, verbosity_);
 #endif

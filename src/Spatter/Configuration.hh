@@ -55,11 +55,16 @@ namespace Spatter {
 class ConfigurationBase {
 public:
   ConfigurationBase(const size_t id, const std::string name, std::string k,
-      const aligned_vector<size_t> pattern,
-      const aligned_vector<size_t> pattern_gather,
-      const aligned_vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const int seed,
-      const size_t wrap, const size_t count, const int nthreads,
+      const aligned_vector<size_t> &pattern,
+      const aligned_vector<size_t> &pattern_gather,
+      const aligned_vector<size_t> &pattern_scatter,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size,
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const size_t delta, const size_t delta_gather, const size_t delta_scatter,
+      const int seed, const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
       const bool compress, const unsigned long verbosity);
 
@@ -96,12 +101,16 @@ public:
   const aligned_vector<size_t> pattern_gather;
   const aligned_vector<size_t> pattern_scatter;
 
-  aligned_vector<double> sparse;
-  aligned_vector<double> sparse_gather;
-  aligned_vector<double> sparse_scatter;
+  aligned_vector<double> &sparse;
+  size_t &sparse_size;
+  aligned_vector<double> &sparse_gather;
+  size_t &sparse_gather_size;
+  aligned_vector<double> &sparse_scatter;
+  size_t &sparse_scatter_size;
 
-  aligned_vector<double> dense;
-  aligned_vector<aligned_vector<double>> dense_perthread;
+  aligned_vector<double> &dense;
+  size_t &dense_size;
+  aligned_vector<aligned_vector<double>> &dense_perthread;
 
   const size_t delta;
   const aligned_vector<size_t> deltas;
@@ -144,12 +153,18 @@ template <typename Backend> class Configuration : public ConfigurationBase {};
 template <> class Configuration<Spatter::Serial> : public ConfigurationBase {
 public:
   Configuration(const size_t id, const std::string name,
-      const std::string kernel, const aligned_vector<size_t> pattern,
-      const aligned_vector<size_t> pattern_gather,
-      const aligned_vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const int seed,
-      const size_t wrap, const size_t count, const unsigned long nruns,
-      const bool aggregate, const bool compress, const unsigned long verbosity);
+      const std::string kernel, const aligned_vector<size_t> &pattern,
+      const aligned_vector<size_t> &pattern_gather,
+      const aligned_vector<size_t> &pattern_scatter,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size,
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const size_t delta, const size_t delta_gather, const size_t delta_scatter,
+      const int seed, const size_t wrap, const size_t count,
+      const unsigned long nruns, const bool aggregate, const bool compress,
+      const unsigned long verbosity);
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
@@ -162,11 +177,16 @@ public:
 template <> class Configuration<Spatter::OpenMP> : public ConfigurationBase {
 public:
   Configuration(const size_t id, const std::string name,
-      const std::string kernel, const aligned_vector<size_t> pattern,
-      const aligned_vector<size_t> pattern_gather,
-      aligned_vector<size_t> pattern_scatter, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const int seed,
-      const size_t wrap, const size_t count, const int nthreads,
+      const std::string kernel, const aligned_vector<size_t> &pattern,
+      const aligned_vector<size_t> &pattern_gather,
+      aligned_vector<size_t> &pattern_scatter,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size,
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const size_t delta, const size_t delta_gather, const size_t delta_scatter,
+      const int seed, const size_t wrap, const size_t count, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
       const bool compress, const unsigned long verbosity);
 
@@ -184,9 +204,13 @@ public:
 template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
 public:
   Configuration(const size_t id, const std::string name,
-      const std::string kernel, const aligned_vector<size_t> pattern,
-      const aligned_vector<size_t> pattern_gather,
-      const aligned_vector<size_t> pattern_scatter, const size_t delta,
+      const std::string kernel, const aligned_vector<size_t> &pattern,
+      const aligned_vector<size_t> &pattern_gather,
+      const aligned_vector<size_t> &pattern_scatter,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
       const size_t wrap, const size_t count, const unsigned long nruns,
       const bool aggregate, const bool atomic, const bool compress,

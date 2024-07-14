@@ -55,6 +55,18 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
+
+  aligned_vector<double> sparse;
+  size_t sparse_size;
+  aligned_vector<double> sparse_gather;
+  size_t sparse_gather_size;
+  aligned_vector<double> sparse_scatter;
+  size_t sparse_scatter_size;
+
+  aligned_vector<double> dense;
+  size_t dense_size;
+  aligned_vector<aligned_vector<double>> dense_perthread;
+
   std::string backend;
   bool aggregate;
   bool atomic;
@@ -228,6 +240,13 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
 }
 
 int parse_input(const int argc, char **argv, ClArgs &cl) {
+  srand(static_cast<unsigned int>(time(nullptr)));
+
+  cl.sparse_size = 0;
+  cl.sparse_gather_size = 0;
+  cl.sparse_scatter_size = 0;
+  cl.dense_size = 0;
+
   cl.backend = "";
   cl.aggregate = false;
   cl.atomic = false;
@@ -570,22 +589,28 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
-          delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
-          compress, verbosity);
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
+          cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
+          cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
+          count, nruns, aggregate, compress, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
-          delta_gather, delta_scatter, seed, wrap, count, nthreads, nruns,
-          aggregate, atomic, compress, verbosity);
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
+          cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
+          cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
+          count, nthreads, nruns, aggregate, atomic, compress, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(0,
-          config_name, kernel, pattern, pattern_gather, pattern_scatter, delta,
-          delta_gather, delta_scatter, seed, wrap, count, nruns, aggregate,
-          atomic, compress, verbosity);
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
+          cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
+          cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
+          count, nruns, aggregate, atomic, compress, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -594,13 +619,57 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     cl.configs.push_back(std::move(c));
   } else {
-    Spatter::JSONParser json_file = Spatter::JSONParser(
-        json_fname, backend, aggregate, atomic, compress, verbosity, nthreads);
+    Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
+        cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
+        cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
+        cl.dense_perthread, backend, aggregate, atomic, compress, verbosity,
+        nthreads);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
       cl.configs.push_back(std::move(c));
     }
+  }
+
+  if ((backend.compare("serial") == 0) || (backend.compare("openmp") == 0)) {
+    if (cl.sparse.size() < cl.sparse_size) {
+      cl.sparse.resize(cl.sparse_size);
+
+      for (size_t i = 0; i < cl.sparse.size(); ++i)
+        cl.sparse[i] = rand();
+    }
+
+    if (cl.sparse_gather.size() < cl.sparse_gather_size) {
+      cl.sparse_gather.resize(cl.sparse_gather_size);
+
+      for (size_t i = 0; i < cl.sparse_gather.size(); ++i)
+        cl.sparse_gather[i] = rand();
+    }
+
+    if (cl.sparse_scatter.size() < cl.sparse_scatter_size) {
+      cl.sparse_scatter.resize(cl.sparse_scatter_size);
+
+      for (size_t i = 0; i < cl.sparse_scatter.size(); ++i)
+        cl.sparse_scatter[i] = rand();
+    }
+
+    if (cl.dense.size() < cl.dense_size) {
+      cl.dense.resize(cl.dense_size);
+
+      for (size_t i = 0; i < cl.dense.size(); ++i)
+        cl.dense[i] = rand();
+    }
+
+#ifdef USE_OPENMP
+    cl.dense_perthread.resize(nthreads);
+
+    for (int j = 0; j < nthreads; ++j) {
+      cl.dense_perthread[j].resize(cl.dense_size);
+
+      for (size_t i = 0; i < cl.dense_perthread[j].size(); ++i)
+        cl.dense_perthread[j][i] = rand();
+    }
+#endif
   }
 
   for (auto const &config : cl.configs) {
