@@ -37,6 +37,29 @@ void compress_pattern(aligned_vector<size_t> &pattern) {
   }
 }
 
+int generate_pattern_custom(std::string pattern_string,
+    aligned_vector<size_t> &pattern) {
+  try {
+    std::stringstream linestream(pattern_string);
+    std::string line;
+
+    while (std::getline(linestream, line, ',')) {
+      int64_t value = stoll(line);
+
+      if (value < 0)
+        throw std::invalid_argument("Negative value");
+
+      pattern.push_back(static_cast<size_t>(value));
+    }
+
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
+
 int generate_pattern_uniform(std::vector<std::string> args,
     aligned_vector<size_t> &pattern,
     size_t &delta) {
@@ -235,6 +258,7 @@ int pattern_parser(std::stringstream &pattern_string,
     args.push_back(line);
 
   int ret = -1;
+  std::regex rgx(CUSTOM_PATTERN);
 
   if (type.compare("UNIFORM") == 0)
     ret = generate_pattern_uniform(args, pattern, delta);
@@ -242,6 +266,8 @@ int pattern_parser(std::stringstream &pattern_string,
     ret = generate_pattern_ms1(args, pattern);
   else if (type.compare("LAPLACIAN") == 0)
     ret = generate_pattern_laplacian(args, pattern, delta);
+  else if (std::regex_match(type.begin(), type.end(), rgx))
+    ret = generate_pattern_custom(type, pattern);
   else
     std::cerr << "Parsing Error: Invalid Pattern Generator Type (Valid types "
                  "are: UNIFORM, MS1, LAPLACIAN)"

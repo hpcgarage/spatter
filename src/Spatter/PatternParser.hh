@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -14,6 +15,7 @@
 #include "Configuration.hh"
 #include "SpatterTypes.hh"
 
+#define CUSTOM_PATTERN "(^[0-9]+)(,[0-9])*$"
 #define PAGE_BITS 12 // 12 bits => 4 KiB page
 
 namespace Spatter {
@@ -21,6 +23,9 @@ namespace Spatter {
 size_t power(size_t base, size_t exp);
 
 void compress_pattern(aligned_vector<size_t> &pattern);
+
+int generate_pattern_custom(std::string pattern_string,
+    aligned_vector<size_t> &pattern);
 
 int generate_pattern_uniform(std::vector<std::string> args,
     aligned_vector<size_t> &pattern,
