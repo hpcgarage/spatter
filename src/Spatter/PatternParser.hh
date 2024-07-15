@@ -22,14 +22,14 @@ size_t power(size_t base, size_t exp);
 
 void compress_pattern(aligned_vector<size_t> &pattern);
 
-int generate_pattern_uniform(std::string args,
+int generate_pattern_uniform(std::vector<std::string> args,
     aligned_vector<size_t> &pattern,
     size_t &delta);
 
-int generate_pattern_ms1(std::string args,
+int generate_pattern_ms1(std::vector<std::string> args,
     aligned_vector<size_t> &pattern);
 
-int generate_pattern_laplacian(std::string args,
+int generate_pattern_laplacian(std::vector<std::string> args,
     aligned_vector<size_t> &pattern);
 
 int pattern_parser(std::stringstream &pattern_string,
