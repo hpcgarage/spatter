@@ -81,7 +81,7 @@ int generate_pattern_uniform(std::vector<std::string> args,
   }
 
   for (int64_t i = 0; i < length; ++i)
-    pattern.push_back(i * static_cast<size_t>(stride));
+    pattern.push_back(static_cast<size_t>(i * stride));
 
   return 0;
 }
@@ -155,51 +155,72 @@ int generate_pattern_ms1(std::vector<std::string> args,
 }
 
 int generate_pattern_laplacian(std::vector<std::string> args,
-    aligned_vector<size_t> &pattern) {
-    // if (generator.size() != 3) {
-    //   std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
-    //                "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
-    //             << std::endl;
-    //   return -1;
-    // }
+    aligned_vector<size_t> &pattern,
+    size_t &delta) {
+  if (args.size() != 3) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
+                  "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
+              << std::endl;
+    return -1;
+  }
 
-    // size_t dimension = generator[0][0];
-    // size_t pseudo_order = generator[1][0];
-    // size_t problem_size = generator[2][0];
+  int64_t dimension = 0, pseudo_order = 0, problem_size = 0;
 
-    // if (dimension < 1) {
-    //   std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern, Dimension must "
-    //                "be positive"
-    //             << std::endl;
-    //   return -1;
-    // }
+  try {
+    dimension = std::stoll(args[0]);
+    pseudo_order = std::stoll(args[1]);
+    problem_size = std::stoll(args[2]);
 
-    // size_t final_len = dimension * pseudo_order * 2 + 1;
-    // size_t pos_len = 0;
+    if (dimension < 1)
+      throw std::invalid_argument("Invalid dimension");
 
-    // std::vector<size_t> pos;
+    if (pseudo_order < 1)
+      throw std::invalid_argument("Invalid pseudo_order");
 
-    // for (size_t i = 0; i < dimension; ++i) {
-    //   for (size_t j = 0; j < pseudo_order; ++j) {
-    //     pos.push_back((j + 1) * power(problem_size, i));
-    //   }
-    //   pos_len += pseudo_order;
-    // }
+    if (problem_size < 1)
+      throw std::invalid_argument("Invalid problem_size");
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
+                  "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
+              << std::endl;
+    return -1;
+  }
 
-    // size_t max = pos[pos_len - 1];
+  if (dimension < 1) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern, Dimension must "
+                 "be positive"
+              << std::endl;
+    return -1;
+  }
 
-    // for (size_t i = 0; i < final_len; ++i)
-    //   pattern.push_back(2);
+  size_t final_len = static_cast<size_t>(dimension * pseudo_order * 2 + 1);
+  size_t pos_len = 0;
 
-    // for (size_t i = 0; i < pos_len; ++i)
-    //   pattern[i] = -pos[pos_len - i - 1] + max;
+  std::vector<size_t> pos;
 
-    // pattern[pos_len] = max;
+  for (size_t i = 0; i < static_cast<size_t>(dimension); ++i) {
+    for (size_t j = 0; j < static_cast<size_t>(pseudo_order); ++j) {
+      pos.push_back((j + 1) * power(static_cast<size_t>(problem_size), i));
+    }
+    pos_len += static_cast<size_t>(pseudo_order);
+  }
 
-    // for (size_t i = 0; i < pos_len; ++i)
-    //   pattern[pos_len + 1 + i] = pos[i] + max;
+  size_t max = pos[pos_len - 1];
 
-    return 0;
+  for (size_t i = 0; i < final_len; ++i)
+    pattern.push_back(2);
+
+  for (size_t i = 0; i < pos_len; ++i)
+    pattern[i] = -pos[pos_len - i - 1] + max;
+
+  pattern[pos_len] = max;
+
+  for (size_t i = 0; i < pos_len; ++i)
+    pattern[pos_len + 1 + i] = pos[i] + max;
+
+  delta = 1;
+
+  return 0;
 }
 
 int pattern_parser(std::stringstream &pattern_string,
@@ -220,7 +241,7 @@ int pattern_parser(std::stringstream &pattern_string,
   else if (type.compare("MS1") == 0)
     ret = generate_pattern_ms1(args, pattern);
   else if (type.compare("LAPLACIAN") == 0)
-    ret = generate_pattern_laplacian(args, pattern);
+    ret = generate_pattern_laplacian(args, pattern, delta);
   else
     std::cerr << "Parsing Error: Invalid Pattern Generator Type (Valid types "
                  "are: UNIFORM, MS1, LAPLACIAN)"

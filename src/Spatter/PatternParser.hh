@@ -30,7 +30,8 @@ int generate_pattern_ms1(std::vector<std::string> args,
     aligned_vector<size_t> &pattern);
 
 int generate_pattern_laplacian(std::vector<std::string> args,
-    aligned_vector<size_t> &pattern);
+    aligned_vector<size_t> &pattern,
+    size_t &delta);
 
 int pattern_parser(std::stringstream &pattern_string,
     aligned_vector<size_t> &pattern,
