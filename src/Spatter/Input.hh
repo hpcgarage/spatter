@@ -126,7 +126,7 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-c (--compress)" << std::setw(40)
-            << "TODO" << std::left << "\n";
+            << " Enable compression of pattern indices" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
