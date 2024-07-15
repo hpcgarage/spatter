@@ -47,7 +47,7 @@ int generate_pattern_uniform(std::vector<std::string> args,
     return -1;
   }
 
-  int64_t length, stride, new_delta;
+  int64_t length = 0, stride = 0;
 
   try {
     length = std::stoll(args[0]);
@@ -60,16 +60,18 @@ int generate_pattern_uniform(std::vector<std::string> args,
       throw std::invalid_argument("Invalid stride");
 
     if (args.size() == 3) {
+      int64_t new_delta = 0;
+
       if (args[2].compare("NR") == 0) {
-        delta = length * stride;
+        new_delta = length * stride;
       } else {
         new_delta = std::stoll(args[2]);
 
         if (new_delta < 1)
           throw std::invalid_argument("Invalid delta");
-        else
-          delta = new_delta;
       }
+
+      delta = static_cast<size_t>(new_delta);
     }
   } catch (const std::invalid_argument &ia) {
     std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
@@ -79,77 +81,77 @@ int generate_pattern_uniform(std::vector<std::string> args,
   }
 
   for (int64_t i = 0; i < length; ++i)
-    pattern.push_back(i * stride);
+    pattern.push_back(i * static_cast<size_t>(stride));
 
   return 0;
 }
 
 int generate_pattern_ms1(std::vector<std::string> args,
     aligned_vector<size_t> &pattern) {
-    // if (generator.size() != 3) {
-    //   std::cerr << "Parsing Error: Invalid MS1 Pattern "
-    //                "(MS1:<length>:<gap_locations>:<gap(s)>)"
-    //             << std::endl;
-    //   return -1;
-    // }
+  if (args.size() != 3) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
 
-    // size_t len = 0;
-    // std::vector<size_t> gap_locations;
-    // std::vector<size_t> gaps;
-    // for (size_t i = 0; i < generator.size(); ++i) {
-    //   if (i == 0)
-    //     len = generator[i][0];
-    //   if (i == 1)
-    //     for (size_t j = 0; j < generator[i].size(); ++j)
-    //       gap_locations.push_back(generator[i][j]);
-    //   if (i == 2)
-    //     for (size_t j = 0; j < generator[i].size(); ++j)
-    //       gaps.push_back(generator[i][j]);
-    // }
+  int64_t length = 0;
+  std::vector<size_t> gap_locations, gaps;
 
-    // if (gap_locations.size() > 1 && gaps.size() != gap_locations.size() &&
-    //    td::cerr << "Parsing Error: Invalid MS1 Pattern "
-    //                "(MS1:<length>:<gap_locations>:<gap(s)>)"
-    //             << std::endl;
-    //   return -1;
-    // }
+  try {
+    length = stoll(args[0]);
 
-    // int64_t val = -1;
-    // size_t gap_index = 0;
-    // for (size_t i = 0; i < len; ++i) {
-    //   if (gap_index < gap_locations.size() && gap_locations[gap_index] == i) {
-    //     if (gaps.size() > 1)
-    //       val += gaps[gap_index];
-    //     else
-    //       val += gaps[0];
-    //     gap_index++;
-    //   } else
-    //     val++;
+    if (length < 1)
+      throw std::invalid_argument("Invalid length");
 
-    //   pattern.push_back(static_cast<size_t>(val));
-    // }
-    // return 0; gaps.size() != 1) {
-    //   std::cerr << "Parsing Error: Invalid MS1 Pattern "
-    //                "(MS1:<length>:<gap_locations>:<gap(s)>)"
-    //             << std::endl;
-    //   return -1;
-    // }
+    for (size_t i = 1; i < args.size(); i++) {
+      std::stringstream linestream(args[i]);
+      std::string line;
 
-    // int64_t val = -1;
-    // size_t gap_index = 0;
-    // for (size_t i = 0; i < len; ++i) {
-    //   if (gap_index < gap_locations.size() && gap_locations[gap_index] == i) {
-    //     if (gaps.size() > 1)
-    //       val += gaps[gap_index];
-    //     else
-    //       val += gaps[0];
-    //     gap_index++;
-    //   } else
-    //     val++;
+      while (std::getline(linestream, line, ',')) {
+        int64_t value = stoll(line);
 
-    //   pattern.push_back(static_cast<size_t>(val));
-    // }
-    return 0;
+        if (value < 0)
+          throw std::invalid_argument("Negative value");
+
+        if (i == 1)
+          gap_locations.push_back(static_cast<size_t>(value));
+        else
+          gaps.push_back(static_cast<size_t>(value));
+      }
+    }
+
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                  "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
+
+  if ((gap_locations.size() < 1) || (gaps.size() < 1) ||
+        (gap_locations.size() < gaps.size())) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                  "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
+
+  int64_t val = -1;
+  size_t gap_index = 0;
+  for (size_t i = 0; i < static_cast<size_t>(length); ++i) {
+    if (gap_index < gap_locations.size() && gap_locations[gap_index] == i) {
+      if (gaps.size() > 1)
+        val += gaps[gap_index];
+      else
+        val += gaps[0];
+      gap_index++;
+    } else
+      val++;
+
+    pattern.push_back(static_cast<size_t>(val));
+  }
+
+  return 0;
 }
 
 int generate_pattern_laplacian(std::vector<std::string> args,
