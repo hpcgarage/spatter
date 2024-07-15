@@ -126,7 +126,7 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
             << "Backend (default serial)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-c (--compress)" << std::setw(40)
-            << "TODO" << std::left << "\n";
+            << " Enable compression of pattern indices" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
@@ -585,6 +585,17 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     }
   }
 
+  if (compress) {
+    if (pattern.size() > 0)
+      compress_pattern(pattern);
+
+    if (pattern_gather.size() > 0)
+      compress_pattern(pattern_gather);
+
+    if (pattern_scatter.size() > 0)
+      compress_pattern(pattern_scatter);
+  }
+
   if (!json) {
     std::unique_ptr<Spatter::ConfigurationBase> c;
     if (backend.compare("serial") == 0)
@@ -593,7 +604,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nruns, aggregate, compress, verbosity);
+          count, nruns, aggregate, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
@@ -601,7 +612,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nthreads, nruns, aggregate, atomic, compress, verbosity);
+          count, nthreads, nruns, aggregate, atomic, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
@@ -610,7 +621,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nruns, aggregate, atomic, compress, verbosity);
+          count, nruns, aggregate, atomic, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -680,12 +691,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       return -1;
     }
 
-    if (config->compress != compress) {
-      std::cerr << "Compress flag of Config does not match the compress flag "
-                   "passed to the command line"
-                << std::endl;
-      return -1;
-    }
+    // if (config->compress != compress) {
+    //   std::cerr << "Compress flag of Config does not match the compress flag "
+    //                "passed to the command line"
+    //             << std::endl;
+    //   return -1;
+    // }
 
     if (config->verbosity != verbosity) {
       std::cerr << "Verbosity level of Config does not match the verbosity "
