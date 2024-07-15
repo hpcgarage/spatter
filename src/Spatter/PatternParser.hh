@@ -15,7 +15,7 @@
 #include "Configuration.hh"
 #include "SpatterTypes.hh"
 
-#define CUSTOM_PATTERN "(^[0-9]+)(,[0-9])*$"
+#define CUSTOM_PATTERN "(^[0-9]+)(,[0-9]+)*$"
 #define PAGE_BITS 12 // 12 bits => 4 KiB page
 
 namespace Spatter {
