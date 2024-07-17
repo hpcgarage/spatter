@@ -233,7 +233,7 @@ int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
     std::cerr << err_msg << std::endl;
     return -1;
   } else {
-    arg = passed_arg;
+    arg = static_cast<size_t>(passed_arg);
   }
 
   return 0;

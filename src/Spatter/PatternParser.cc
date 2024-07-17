@@ -37,344 +37,244 @@ void compress_pattern(aligned_vector<size_t> &pattern) {
   }
 }
 
-int generate_pattern_uniform(std::string args,
-    aligned_vector<size_t> &pattern,
-    size_t &delta) {
+int generate_pattern_custom(std::string pattern_string,
+    aligned_vector<size_t> &pattern) {
+  try {
+    std::stringstream linestream(pattern_string);
+    std::string line;
 
-    std::string len_str;
-    std::string stride_str;
-    std::string delta_str;
-    bool no_reuse_flag = false;
+    while (std::getline(linestream, line, ',')) {
+      int64_t value = stoll(line);
 
-    std::stringstream args_stream(args);
+      if (value < 0)
+        throw std::invalid_argument("Negative value");
 
-    std::getline(args_stream, len_str, ':');
-    std::getline(args_stream, stride_str, ':');
-    std::getline(args_stream, delta_str);
-
-    size_t len;
-    size_t stride;
-
-    try {
-      len = std::stoul(len_str);
-      stride = std::stoul(stride_str);
-      if (std::stol(len_str) < 1) {
-        throw std::invalid_argument("Negative len");
-      }
-      if (std::stol(stride_str) < 1) {
-        throw std::invalid_argument("Negative stride");
-      }
-    } catch (const std::invalid_argument &ia) {
-      std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
-                   "(UNIFORM:<length>:<stride>[:<delta|NR>])"
-                << std::endl;
-      return -1;
+      pattern.push_back(static_cast<size_t>(value));
     }
 
-    try {
-      delta = std::stoul(delta_str);
-    } catch (const std::invalid_argument &ia) {
-      if (delta_str.compare("NR") == 0) {
-        no_reuse_flag = true;
-      } else if (!delta_str.compare("") == 0) {
-        std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
-                   "(UNIFORM:<length>:<stride>[:<delta|NR>])"
-                  << std::endl;
-        return -1;
-      }
-    }
-
-    if (no_reuse_flag) {
-      delta = len*stride;
-    }
-
-    /*
-    std::cout << "len: " << len << std::endl;
-    std::cout << "stride: " << stride << std::endl;
-    std::cout << "delta: " << delta << std::endl;
-    std::cout << "delta_str: " << delta_str << std::endl;
-
-    exit(1);
-    */
-
-    /*
-    for (std::string line; std::getline(pattern_string, line, ':');) {
-      try {
-        size_t val = std::stoul(line);
-
-
-        if (line[0] == '-') {
-          std::cerr
-              << "Parsing Error: Found Negative Index in Pattern Generator"
-              << std::endl;
-          return -1;
-        } else {
-          std::vector<size_t> values;
-          values.push_back(val);
-          generator.push_back(values);
-        }
-      } catch (const std::invalid_argument &ia) {
-        if (line.compare("NR") == 0) {
-          std::cout << "Found NR but ignoring it\n";
-        }
-      }
-    }
-
-    if (generator.size() != 2 || generator.size() != 3) {
-      std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
-                   "(UNIFORM:<length>:<stride>[:NR])"
-                << std::endl;
-      return -1;
-    }
-
-    size_t len = generator[0][0];
-    size_t stride = generator[1][0];
-    */
-
-    for (size_t i = 0; i < len; ++i)
-      pattern.push_back(i * stride);
-
-    return 0;
-}
-
-int generate_pattern_ms1(std::vector<std::vector<size_t>> generator,
-    aligned_vector<size_t> &pattern,
-    size_t &delta) {
-    if (generator.size() != 3) {
-      std::cerr << "Parsing Error: Invalid MS1 Pattern "
-                   "(MS1:<length>:<gap_locations>:<gap(s)>)"
-                << std::endl;
-      return -1;
-    }
-
-    size_t len = 0;
-    std::vector<size_t> gap_locations;
-    std::vector<size_t> gaps;
-    for (size_t i = 0; i < generator.size(); ++i) {
-      if (i == 0)
-        len = generator[i][0];
-      if (i == 1)
-        for (size_t j = 0; j < generator[i].size(); ++j)
-          gap_locations.push_back(generator[i][j]);
-      if (i == 2)
-        for (size_t j = 0; j < generator[i].size(); ++j)
-          gaps.push_back(generator[i][j]);
-    }
-
-    if (gap_locations.size() > 1 && gaps.size() != gap_locations.size() &&
-        gaps.size() != 1) {
-      std::cerr << "Parsing Error: Invalid MS1 Pattern "
-                   "(MS1:<length>:<gap_locations>:<gap(s)>)"
-                << std::endl;
-      return -1;
-    }
-
-    size_t val = -1;
-    size_t gap_index = 0;
-    for (size_t i = 0; i < len; ++i) {
-      if (gap_index < gap_locations.size() && gap_locations[gap_index] == i) {
-        if (gaps.size() > 1)
-          val += gaps[gap_index];
-        else
-          val += gaps[0];
-        gap_index++;
-      } else
-        val++;
-
-      pattern.push_back(val);
-    }
-    return 0;
-}
-int generate_pattern_laplacian(std::vector<std::vector<size_t>> generator,
-    aligned_vector<size_t> &pattern,
-    size_t &delta) {
-
-    if (generator.size() != 3) {
-      std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
-                   "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
-                << std::endl;
-      return -1;
-    }
-
-    size_t dimension = generator[0][0];
-    size_t pseudo_order = generator[1][0];
-    size_t problem_size = generator[2][0];
-
-    if (dimension < 1) {
-      std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern, Dimension must "
-                   "be positive"
-                << std::endl;
-      return -1;
-    }
-
-    size_t final_len = dimension * pseudo_order * 2 + 1;
-    size_t pos_len = 0;
-
-    std::vector<size_t> pos;
-
-    for (size_t i = 0; i < dimension; ++i) {
-      for (size_t j = 0; j < pseudo_order; ++j) {
-        pos.push_back((j + 1) * power(problem_size, i));
-      }
-      pos_len += pseudo_order;
-    }
-
-    size_t max = pos[pos_len - 1];
-
-    for (size_t i = 0; i < final_len; ++i)
-      pattern.push_back(2);
-
-    for (size_t i = 0; i < pos_len; ++i)
-      pattern[i] = -pos[pos_len - i - 1] + max;
-
-    pattern[pos_len] = max;
-
-    for (size_t i = 0; i < pos_len; ++i)
-      pattern[pos_len + 1 + i] = pos[i] + max;
-
-    return 0;
-}
-
-int pattern_parser(
-    std::stringstream &pattern_string, aligned_vector<size_t> &pattern, size_t &delta) {
-
-  std::string type;
-  std::string args;
-
-  std::getline(pattern_string, type, ':');
-  std::getline(pattern_string, args);
-
-  if (type.compare("UNIFORM") == 0) {
-    return generate_pattern_uniform(args, pattern, delta);
-  } else if (type.compare("MS1") == 0) {
-    //return generate_pattern_ms1(args, pattern, delta);
-    return 0;
-  } else if (type.compare("LAPLACIAN") == 0) {
-    //return generate_pattern_laplacian(args, pattern, delta);
-    return 0;
-  } else {
-    std::cerr << "Parsing Error: Invalid Pattern Generator Type (Valid types "
-                 "are: UNIFORM, MS1, LAPLACIAN)"
-              << std::endl << "Recieved: " << type << std::endl;
-  return -1;
-  }
-  // Unreachable
-}
-/*
-
-  std::getline(pattern_string, type, ':');
-  std::getline(pattern_string, args);
-  std::cout << "type: " << type << std::endl;
-  std::cout << "args: " << args << std::endl;
-  exit(1);
-  std::vector<std::vector<size_t>> generator;
-
-  if (pattern_string.str().rfind("UNIFORM", 0) == 0) {
-    std::getline(pattern_string, type, ':');
-
-    for (std::string line; std::getline(pattern_string, line, ':');) {
-      try {
-        size_t val = std::stoul(line);
-
-
-        if (line[0] == '-') {
-          std::cerr
-              << "Parsing Error: Found Negative Index in Pattern Generator"
-              << std::endl;
-          return -1;
-        } else {
-          std::vector<size_t> values;
-          values.push_back(val);
-          generator.push_back(values);
-        }
-      } catch (const std::invalid_argument &ia) {
-        if (line.compare("NR") == 0) {
-          std::cout << "Found NR but ignoring it\n";
-        }
-      }
-    }
-  } else if (pattern_string.str().rfind("MS1", 0) == 0) {
-    std::getline(pattern_string, type, ':');
-
-    for (std::string line; std::getline(pattern_string, line, ':');) {
-      try {
-        std::vector<size_t> values;
-
-        std::stringstream linestream;
-        linestream << line;
-        for (std::string subline; std::getline(linestream, subline, ',');) {
-          try {
-            size_t val = std::stoul(subline);
-
-            if (subline[0] == '-') {
-              std::cerr << "Parsing Error: Found Negative Index in Pattern"
-                        << std::endl;
-              return -1;
-            } else
-              values.push_back(val);
-          } catch (const std::invalid_argument &ia) {
-            std::cerr << "Parsing Error: Invalid Pattern Generator Format"
-                      << std::endl;
-            return -1;
-          }
-        }
-        generator.push_back(values);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Pattern Generator Format"
-                  << std::endl;
-        return -1;
-      }
-    }
-  } else if (pattern_string.str().rfind("LAPLACIAN", 0) == 0) {
-    std::getline(pattern_string, type, ':');
-
-    for (std::string line; std::getline(pattern_string, line, ':');) {
-      try {
-        size_t val = std::stoul(line);
-
-        if (line[0] == '-') {
-          std::cerr
-              << "Parsing Error: Found Negative Index in Pattern Generator"
-              << std::endl;
-          return -1;
-        } else {
-          std::vector<size_t> values;
-          values.push_back(val);
-          generator.push_back(values);
-        }
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Pattern Generator Format"
-                  << std::endl;
-        return -1;
-      }
-    }
-  }
-
-  if (!type.empty())
-    if (generate_pattern(type, generator, pattern, delta) != 0)
-      return -1;
-
-  if (type.empty()) {
-    for (std::string line; std::getline(pattern_string, line, ',');) {
-      try {
-        size_t val = std::stoul(line);
-
-        if (line[0] == '-') {
-          std::cerr << "Parsing Error: Found Negative Index in Pattern"
-                    << std::endl;
-          return -1;
-        } else
-          pattern.push_back(val);
-      } catch (const std::invalid_argument &ia) {
-        std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
-        return -1;
-      }
-    }
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid Pattern Format" << std::endl;
+    return -1;
   }
 
   return 0;
 }
-*/
+
+int generate_pattern_uniform(std::vector<std::string> args,
+    aligned_vector<size_t> &pattern,
+    size_t &delta) {
+  if ((args.size() != 2) && (args.size() != 3)) {
+    std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
+                   "(UNIFORM:<length>:<stride>[:<delta|NR>])"
+                << std::endl;
+    return -1;
+  }
+
+  int64_t length = 0, stride = 0;
+
+  try {
+    length = std::stoll(args[0]);
+    stride = std::stoll(args[1]);
+
+    if (length < 1)
+      throw std::invalid_argument("Invalid length");
+
+    if (stride < 1)
+      throw std::invalid_argument("Invalid stride");
+
+    if (args.size() == 3) {
+      int64_t new_delta = 0;
+
+      if (args[2].compare("NR") == 0) {
+        new_delta = length * stride;
+      } else {
+        new_delta = std::stoll(args[2]);
+
+        if (new_delta < 1)
+          throw std::invalid_argument("Invalid delta");
+      }
+
+      delta = static_cast<size_t>(new_delta);
+    }
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid UNIFORM Pattern "
+                  "(UNIFORM:<length>:<stride>[:<delta|NR>])"
+              << std::endl;
+    return -1;
+  }
+
+  for (int64_t i = 0; i < length; ++i)
+    pattern.push_back(static_cast<size_t>(i * stride));
+
+  return 0;
+}
+
+int generate_pattern_ms1(std::vector<std::string> args,
+    aligned_vector<size_t> &pattern) {
+  if (args.size() != 3) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
+
+  int64_t length = 0;
+  std::vector<size_t> gap_locations, gaps;
+
+  try {
+    length = stoll(args[0]);
+
+    if (length < 1)
+      throw std::invalid_argument("Invalid length");
+
+    for (size_t i = 1; i < args.size(); i++) {
+      std::stringstream linestream(args[i]);
+      std::string line;
+
+      while (std::getline(linestream, line, ',')) {
+        int64_t value = stoll(line);
+
+        if (value < 0)
+          throw std::invalid_argument("Negative value");
+
+        if (i == 1)
+          gap_locations.push_back(static_cast<size_t>(value));
+        else
+          gaps.push_back(static_cast<size_t>(value));
+      }
+    }
+
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                  "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
+
+  if ((gap_locations.size() < 1) || (gaps.size() < 1) ||
+        (gap_locations.size() < gaps.size())) {
+    std::cerr << "Parsing Error: Invalid MS1 Pattern "
+                  "(MS1:<length>:<gap_locations>:<gap(s)>)"
+              << std::endl;
+    return -1;
+  }
+
+  int64_t val = -1;
+  size_t gap_index = 0;
+  for (size_t i = 0; i < static_cast<size_t>(length); ++i) {
+    if (gap_index < gap_locations.size() && gap_locations[gap_index] == i) {
+      if (gaps.size() > 1)
+        val += gaps[gap_index];
+      else
+        val += gaps[0];
+      gap_index++;
+    } else
+      val++;
+
+    pattern.push_back(static_cast<size_t>(val));
+  }
+
+  return 0;
+}
+
+int generate_pattern_laplacian(std::vector<std::string> args,
+    aligned_vector<size_t> &pattern,
+    size_t &delta) {
+  if (args.size() != 3) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
+                  "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
+              << std::endl;
+    return -1;
+  }
+
+  int64_t dimension = 0, pseudo_order = 0, problem_size = 0;
+
+  try {
+    dimension = std::stoll(args[0]);
+    pseudo_order = std::stoll(args[1]);
+    problem_size = std::stoll(args[2]);
+
+    if (dimension < 1)
+      throw std::invalid_argument("Invalid dimension");
+
+    if (pseudo_order < 1)
+      throw std::invalid_argument("Invalid pseudo_order");
+
+    if (problem_size < 1)
+      throw std::invalid_argument("Invalid problem_size");
+  } catch (const std::invalid_argument &ia) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern "
+                  "(LAPLACIAN:<dimension>:<pseudo_order>:<problem_size>)"
+              << std::endl;
+    return -1;
+  }
+
+  if (dimension < 1) {
+    std::cerr << "Parsing Error: Invalid LAPLACIAN Pattern, Dimension must "
+                 "be positive"
+              << std::endl;
+    return -1;
+  }
+
+  size_t final_len = static_cast<size_t>(dimension * pseudo_order * 2 + 1);
+  size_t pos_len = 0;
+
+  std::vector<size_t> pos;
+
+  for (size_t i = 0; i < static_cast<size_t>(dimension); ++i) {
+    for (size_t j = 0; j < static_cast<size_t>(pseudo_order); ++j) {
+      pos.push_back((j + 1) * power(static_cast<size_t>(problem_size), i));
+    }
+    pos_len += static_cast<size_t>(pseudo_order);
+  }
+
+  size_t max = pos[pos_len - 1];
+
+  for (size_t i = 0; i < final_len; ++i)
+    pattern.push_back(2);
+
+  for (size_t i = 0; i < pos_len; ++i)
+    pattern[i] = -pos[pos_len - i - 1] + max;
+
+  pattern[pos_len] = max;
+
+  for (size_t i = 0; i < pos_len; ++i)
+    pattern[pos_len + 1 + i] = pos[i] + max;
+
+  delta = 1;
+
+  return 0;
+}
+
+int pattern_parser(std::stringstream &pattern_string,
+    aligned_vector<size_t> &pattern,
+    size_t &delta) {
+  std::string type, line;
+  std::vector<std::string> args;
+
+  std::getline(pattern_string, type, ':');
+
+  while (std::getline(pattern_string, line, ':'))
+    args.push_back(line);
+
+  int ret = -1;
+  std::regex rgx(CUSTOM_PATTERN);
+
+  if (type.compare("UNIFORM") == 0)
+    ret = generate_pattern_uniform(args, pattern, delta);
+  else if (type.compare("MS1") == 0)
+    ret = generate_pattern_ms1(args, pattern);
+  else if (type.compare("LAPLACIAN") == 0)
+    ret = generate_pattern_laplacian(args, pattern, delta);
+  else if (std::regex_match(type.begin(), type.end(), rgx))
+    ret = generate_pattern_custom(type, pattern);
+  else
+    std::cerr << "Parsing Error: Invalid Pattern Generator Type (Valid types "
+                 "are: UNIFORM, MS1, LAPLACIAN)"
+              << std::endl << "Recieved: " << type << std::endl;
+
+  return ret;
+}
 
 size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
   const size_t pattern_len = pattern.size();
