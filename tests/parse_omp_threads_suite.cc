@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
   int argc_ = 4;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[0], "./spatter");
   asprintf(&argv_[1], "-p1,2,3,4");
   asprintf(&argv_[2], "-bopenmp");
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 
   optind = 1;
   asprintf(&argv_[3], "-t-1");
-  if (omp_thread_test(-1, argc_, argv_) != EXIT_SUCCESS)
+  if (omp_thread_test(-1, argc_, argv_) == EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;

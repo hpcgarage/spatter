@@ -35,7 +35,7 @@ int k_tests(int argc_, char **argv_) {
   char **sg_argv_ = (char **)malloc(sizeof(char *) * sg_argc_);
 
   int ret;
-  ret = asprintf(&sg_argv_[0], "./src/spatter-driver");
+  ret = asprintf(&sg_argv_[0], "./spatter");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -43,7 +43,7 @@ int k_tests(int argc_, char **argv_) {
   if (ret == -1)
     return EXIT_FAILURE;
 
-  ret = asprintf(&sg_argv_[2], "-s1,2,3,4");
+  ret = asprintf(&sg_argv_[2], "-u1,2,3,4");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -79,7 +79,7 @@ int k_tests(int argc_, char **argv_) {
   asprintf(&sg_argv_[3], "-kSG");
 
   Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
+  if (parse_check(sg_argc_, sg_argv_, cl3) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   free(sg_argv_[3]);
@@ -124,7 +124,7 @@ int k_tests(int argc_, char **argv_) {
   asprintf(&sg_argv_[3], "--kernel=SG");
 
   Spatter::ClArgs cl6;
-  if (parse_check(argc_, argv_, cl6) == EXIT_FAILURE)
+  if (parse_check(sg_argc_, sg_argv_, cl6) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   free(sg_argv_[3]);
@@ -148,46 +148,10 @@ int d_tests(int argc_, char **argv_) {
 
   free(argv_[2]);
 
-  if (cl1.configs[0]->deltas.size() != 1) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9 had "
-                 "incorrect length of "
-              << cl1.configs[0]->deltas.size() << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl1.configs[0]->deltas[0] != 9) {
+  if (cl1.configs[0]->delta != 9) {
     std::cerr << "Test failure on Run_Config Suite: -d with argument 9 had "
                  "incorrect element of "
-              << cl1.configs[0]->deltas[0] << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--delta=9,7");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->deltas.size() != 2) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect length of "
-              << cl2.configs[0]->deltas.size() << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl2.configs[0]->deltas[0] != 9) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect element of "
-              << cl2.configs[0]->deltas[0] << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl2.configs[0]->deltas[1] != 7) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect element of "
-              << cl2.configs[0]->deltas[1] << "." << std::endl;
+              << cl1.configs[0]->delta << "." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -657,7 +621,7 @@ int main(int argc, char **argv) {
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
   int ret;
-  ret = asprintf(&argv_[0], "./src/spatter-driver");
+  ret = asprintf(&argv_[0], "./spatter");
   if (ret == -1)
     return EXIT_FAILURE;
 

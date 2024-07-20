@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   int argc_ = 3;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[0], "./spatter");
   asprintf(&argv_[1], "-p1,2,3,4");
   asprintf(&argv_[2], "-l");
 

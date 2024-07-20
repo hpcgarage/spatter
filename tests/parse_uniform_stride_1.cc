@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < argc_; i++)
     argv_[i] = (char *)malloc(sizeof(char) * 1024);
 
-  strcpy(argv_[0], "./src/spatter-driver");
+  strcpy(argv_[0], "./spatter");
   strcpy(argv_[1], "-pUNIFORM:8:1");
 
   Spatter::ClArgs cl;
