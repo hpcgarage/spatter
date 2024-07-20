@@ -120,16 +120,8 @@ public:
   const size_t wrap;
   const size_t count;
 
-  size_t vector_len;
   size_t shmem;
   size_t local_work_size;
-  size_t op;
-
-  int ro_morton;
-  int ro_hilbert;
-  int ro_block;
-
-  int stride_kernel;
 
   const int omp_threads;
   const unsigned long nruns;
