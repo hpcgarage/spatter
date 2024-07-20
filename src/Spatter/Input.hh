@@ -73,7 +73,7 @@ struct ClArgs {
   bool compress;
   unsigned long verbosity;
 
-  void report() {
+  void report_header() {
 #ifdef USE_MPI
     int numpes = 0;
     int rank = 0;
@@ -92,8 +92,6 @@ struct ClArgs {
               << std::left << "bytes" << std::setw(15) << std::left << "time(s)"
               << std::setw(15) << std::left << "bw(MB/s)" << std::endl;
 #endif
-    for (auto const &config : configs)
-      config->report();
   }
 };
 

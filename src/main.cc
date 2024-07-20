@@ -8,7 +8,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-void print_header(Spatter::ClArgs &cl) {
+void print_build_info(Spatter::ClArgs &cl) {
   std::cout << std::endl;
   std::cout << "Running Spatter version 1.1" << std::endl;
   std::cout << "Compiler: " << xstr(SPAT_CXX_NAME) << " ver. "
@@ -48,7 +48,6 @@ void print_header(Spatter::ClArgs &cl) {
   }
 #endif
 
-  // print_papi_names();
   std::cout << std::endl;
 }
 
@@ -72,10 +71,18 @@ int main(int argc, char **argv) {
     return -1;
 
 #ifdef USE_MPI
-  if (rank == 0)
+  if (rank == 0) {
 #endif
     if (cl.verbosity >= 1)
-      print_header(cl);
+      print_build_info(cl);
+
+    if (cl.verbosity >= 2)
+      std::cout << cl;
+
+    cl.report_header();
+#ifdef USE_MPI
+  }
+#endif
 
   for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
     for (unsigned long run = 0; run < (config->nruns + warmup_runs); ++run) {
@@ -91,18 +98,15 @@ int main(int argc, char **argv) {
       if (config->run(timed, run_id) != 0)
         return -1;
     }
-  }
 
 #ifdef USE_MPI
-  if (rank == 0) {
+    if (rank == 0) {
 #endif
-    if (cl.verbosity >= 2)
-      std::cout << cl;
+    config->report();
 #ifdef USE_MPI
-  }
+    }
 #endif
-
-  cl.report();
+  }
 
 #ifdef USE_MPI
   MPI_Finalize();
