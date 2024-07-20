@@ -744,25 +744,7 @@ Configuration<Spatter::CUDA>::~Configuration() {
 }
 
 int Configuration<Spatter::CUDA>::run(bool timed, unsigned long run_id) {
-  ConfigurationBase::run(timed, run_id);
-
-  if (kernel.compare("sg") == 0) {
-    checkCudaErrors(cudaMemcpy(sparse_gather.data(), dev_sparse_gather,
-        sizeof(double) * sparse_gather.size(), cudaMemcpyDeviceToHost));
-
-    checkCudaErrors(cudaMemcpy(sparse_scatter.data(), dev_sparse_scatter,
-        sizeof(double) * sparse_scatter.size(), cudaMemcpyDeviceToHost));
-  } else {
-    checkCudaErrors(cudaMemcpy(sparse.data(), dev_sparse,
-        sizeof(double) * sparse.size(), cudaMemcpyDeviceToHost));
-
-    checkCudaErrors(cudaMemcpy(dense.data(), dev_dense,
-        sizeof(double) * dense.size(), cudaMemcpyDeviceToHost));
-  }
-
-  checkCudaErrors(cudaDeviceSynchronize());
-
-  return 0;
+  return ConfigurationBase::run(timed, run_id);
 }
 
 void Configuration<Spatter::CUDA>::gather(bool timed, unsigned long run_id) {
