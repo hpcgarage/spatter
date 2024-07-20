@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < argc_; i++)
     argv_[i] = (char *)malloc(sizeof(char) * 1024);
 
-  strcpy(argv_[0], "./spatter");
-  strcpy(argv_[1], "-pUNIFORM:8:1");
+  strncpy(argv_[0], "./spatter", 1024);
+  strncpy(argv_[1], "-pUNIFORM:8:4:NR", 1024);
 
   Spatter::ClArgs cl;
 
@@ -38,11 +38,18 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  std::vector<size_t> validate = {0, 1, 2, 3, 4, 5, 6, 7};
-
-  for (size_t i = 0; i < validate.size(); ++i)
-    if (validate[i] != cl.configs[0]->pattern[i])
+  std::vector<size_t> expected_pattern = {0, 4, 8, 12, 16, 20, 24, 28};
+  for (size_t i = 0; i < expected_pattern.size(); ++i)
+    if (expected_pattern[i] != cl.configs[0]->pattern[i])
       return EXIT_FAILURE;
+
+  size_t expected_delta = 8 * 4;
+  if (cl.configs[0]->delta != expected_delta)
+    return EXIT_FAILURE;
+
+  free(argv_[0]);
+  free(argv_[1]);
+  free(argv_);
 
   return EXIT_SUCCESS;
 }
