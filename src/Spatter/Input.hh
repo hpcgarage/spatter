@@ -379,7 +379,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'k':
       kernel = optarg;
-      std::transform(backend.begin(), backend.end(), backend.begin(),
+      std::transform(kernel.begin(), kernel.end(), kernel.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
