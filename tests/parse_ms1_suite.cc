@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
   int argc_ = 2;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
-  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[0], "./spatter");
 
   for (size_t i = 8; i <= 64; i *= 2) {
     // Uniform gap sizes

@@ -7,7 +7,7 @@ int uniform_test_length_gap() {
     char *command;
 
     int ret = asprintf(
-        &command, "../src/spatter-driver -pUNIFORM:%d:%d", length, gap);
+        &command, "../spatter -pUNIFORM:%d:%d", length, gap);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;
@@ -26,7 +26,7 @@ int uniform_test_delta() {
     char *command;
 
     int ret =
-        asprintf(&command, "../src/spatter-driver -pUNIFORM:8:4 -d%d", delta);
+        asprintf(&command, "../spatter -pUNIFORM:8:4 -d%d", delta);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;

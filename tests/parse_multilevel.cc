@@ -8,14 +8,14 @@ int multilevel_test(int multigather) {
   int argc_ = 4;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
-  asprintf(&argv_[1], ".-pUNIFORM:8:1");
+  asprintf(&argv_[0], "./spatter");
+  asprintf(&argv_[1], "-pUNIFORM:8:1");
 
   if (multigather) {
     asprintf(&argv_[2], "-gUNIFORM:8:1");
     asprintf(&argv_[3], "-kMultiGather");
   } else {
-    asprintf(&argv_[2], "-sUNIFORM:8:1");
+    asprintf(&argv_[2], "-uUNIFORM:8:1");
     asprintf(&argv_[3], "-kMultiScatter");
   }
 

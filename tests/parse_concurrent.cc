@@ -11,14 +11,14 @@ int main(int argc, char **argv) {
   int argc_ = 4;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
-  asprintf(&argv_[1], "-sUNIFORM:8:1");
+  asprintf(&argv_[0], "./spatter");
+  asprintf(&argv_[1], "-uUNIFORM:8:1");
   asprintf(&argv_[2], "-gUNIFORM:8:1");
-  asprintf(&argv_[3], "-kGS");
+  asprintf(&argv_[3], "-kSG");
 
   Spatter::ClArgs cl;
 
-  if (Spatter::parse_input(argc, argv, cl) != 0) {
+  if (Spatter::parse_input(argc_, argv_, cl) != 0) {
     std::cerr << "Parse Input Failed" << std::endl;
     return EXIT_FAILURE;
   }

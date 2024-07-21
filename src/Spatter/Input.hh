@@ -73,7 +73,7 @@ struct ClArgs {
   bool compress;
   unsigned long verbosity;
 
-  void report() {
+  void report_header() {
 #ifdef USE_MPI
     int numpes = 0;
     int rank = 0;
@@ -92,8 +92,6 @@ struct ClArgs {
               << std::left << "bytes" << std::setw(15) << std::left << "time(s)"
               << std::setw(15) << std::left << "bw(MB/s)" << std::endl;
 #endif
-    for (auto const &config : configs)
-      config->report();
   }
 };
 
@@ -379,7 +377,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'k':
       kernel = optarg;
-      std::transform(backend.begin(), backend.end(), backend.begin(),
+      std::transform(kernel.begin(), kernel.end(), kernel.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&

@@ -5,7 +5,7 @@ int gpu_stream_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/basic-tests/gpu-stream.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
@@ -20,7 +20,7 @@ int gpu_ustride_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/basic-tests/gpu-ustride.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
@@ -35,7 +35,7 @@ int gpu_amg_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/app-traces/amg_gpu.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
@@ -50,7 +50,7 @@ int gpu_lulesh_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/app-traces/lulesh_gpu.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
@@ -65,7 +65,7 @@ int gpu_nekbone_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/app-traces/nekbone_gpu.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
@@ -80,7 +80,7 @@ int gpu_pennant_test() {
   char *command;
 
   int ret = asprintf(&command,
-      "../src/spatter-driver -b cuda  -f "
+      "../spatter -b cuda  -f "
       "../../standard-suite/app-traces/pennant_gpu.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;

@@ -10,7 +10,6 @@ set(SPATTER_TESTS
       parse_uniform_stride_suite
       parse_ms1_suite
       parse_custom_suite
-      parse_omp_threads_suite
       parse_json_suite
       parse_run_config_suite
       parse_random_suite
@@ -25,6 +24,10 @@ set(SPATTER_TESTS
       standard_suite_cpu
       standard_laplacian_suite
   )
+
+if (USE_OPENMP)
+  set(SPATTER_TESTS ${SPATTER_TESTS} parse_omp_threads_suite)
+endif()
 
 if (USE_CUDA)
   set(SPATTER_TESTS ${SPATTER_TESTS} standard_suite_gpu)

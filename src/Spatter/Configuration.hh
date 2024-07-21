@@ -113,26 +113,15 @@ public:
   aligned_vector<aligned_vector<double>> &dense_perthread;
 
   const size_t delta;
-  const aligned_vector<size_t> deltas;
   const size_t delta_gather;
-  const aligned_vector<size_t> deltas_gather;
   const size_t delta_scatter;
-  const aligned_vector<size_t> deltas_scatter;
 
   int seed;
   const size_t wrap;
   const size_t count;
 
-  size_t vector_len;
   size_t shmem;
   size_t local_work_size;
-  size_t op;
-
-  int ro_morton;
-  int ro_hilbert;
-  int ro_block;
-
-  int stride_kernel;
 
   const int omp_threads;
   const unsigned long nruns;

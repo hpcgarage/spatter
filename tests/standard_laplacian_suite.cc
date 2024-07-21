@@ -6,7 +6,7 @@ int laplacian_test() {
   for (int i = 0; i < 3; i++) {
     char *command;
 
-    int ret = asprintf(&command, "../src/spatter-driver -pLAPLACIAN:%d:%d:%d",
+    int ret = asprintf(&command, "../spatter -pLAPLACIAN:%d:%d:%d",
         dimension, pseudo_order, problem_size);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
@@ -27,7 +27,7 @@ int laplacian_test_delta() {
     char *command;
 
     int ret = asprintf(
-        &command, "../src/spatter-driver -pLAPLACIAN:2:2:100 -d%d", delta);
+        &command, "../spatter -pLAPLACIAN:2:2:100 -d%d", delta);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;

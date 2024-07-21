@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   int argc_ = 2;
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
-  asprintf(&argv_[0], "./src/spatter-driver");
+  asprintf(&argv_[0], "./spatter");
   asprintf(&argv_[1], "-p1,2,3,4,5,6,7,8,9");
 
   std::vector<size_t> testValues = {1, 2, 3, 4, 5, 6, 7, 8, 9};

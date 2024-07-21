@@ -35,7 +35,7 @@ int k_tests(int argc_, char **argv_) {
   char **sg_argv_ = (char **)malloc(sizeof(char *) * sg_argc_);
 
   int ret;
-  ret = asprintf(&sg_argv_[0], "./src/spatter-driver");
+  ret = asprintf(&sg_argv_[0], "./spatter");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -43,7 +43,7 @@ int k_tests(int argc_, char **argv_) {
   if (ret == -1)
     return EXIT_FAILURE;
 
-  ret = asprintf(&sg_argv_[2], "-s1,2,3,4");
+  ret = asprintf(&sg_argv_[2], "-u1,2,3,4");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -79,7 +79,7 @@ int k_tests(int argc_, char **argv_) {
   asprintf(&sg_argv_[3], "-kSG");
 
   Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
+  if (parse_check(sg_argc_, sg_argv_, cl3) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   free(sg_argv_[3]);
@@ -124,7 +124,7 @@ int k_tests(int argc_, char **argv_) {
   asprintf(&sg_argv_[3], "--kernel=SG");
 
   Spatter::ClArgs cl6;
-  if (parse_check(argc_, argv_, cl6) == EXIT_FAILURE)
+  if (parse_check(sg_argc_, sg_argv_, cl6) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   free(sg_argv_[3]);
@@ -148,46 +148,10 @@ int d_tests(int argc_, char **argv_) {
 
   free(argv_[2]);
 
-  if (cl1.configs[0]->deltas.size() != 1) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9 had "
-                 "incorrect length of "
-              << cl1.configs[0]->deltas.size() << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl1.configs[0]->deltas[0] != 9) {
+  if (cl1.configs[0]->delta != 9) {
     std::cerr << "Test failure on Run_Config Suite: -d with argument 9 had "
                  "incorrect element of "
-              << cl1.configs[0]->deltas[0] << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--delta=9,7");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->deltas.size() != 2) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect length of "
-              << cl2.configs[0]->deltas.size() << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl2.configs[0]->deltas[0] != 9) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect element of "
-              << cl2.configs[0]->deltas[0] << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (cl2.configs[0]->deltas[1] != 7) {
-    std::cerr << "Test failure on Run_Config Suite: -d with argument 9, 7 had "
-                 "incorrect element of "
-              << cl2.configs[0]->deltas[1] << "." << std::endl;
+              << cl1.configs[0]->delta << "." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -292,55 +256,6 @@ int w_tests(int argc_, char **argv_) {
   return EXIT_SUCCESS;
 }
 
-int v_tests(int argc_, char **argv_) {
-  asprintf(&argv_[2], "-v100");
-
-  Spatter::ClArgs cl1;
-  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl1.configs[0]->vector_len != 100) {
-    std::cerr << "Test failure on Run_Config Suite: -v with argument 100 had "
-                 "incorrect value of "
-              << cl1.configs[0]->vector_len << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "-v500");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->vector_len != 500) {
-    std::cerr << "Test failure on Run_Config Suite: -v with argument 500 had "
-                 "incorrect value of "
-              << cl2.configs[0]->vector_len << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--vector-len=1000");
-
-  Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl3.configs[0]->vector_len != 1000) {
-    std::cerr << "Test failure on Run_Config Suite: -v with argument 1000 had "
-                 "incorrect value of "
-              << cl3.configs[0]->vector_len << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
 int r_tests(int argc_, char **argv_) {
   asprintf(&argv_[2], "-r100");
 
@@ -384,55 +299,6 @@ int r_tests(int argc_, char **argv_) {
     std::cerr << "Test failure on Run_Config Suite: -r with argument 1000 had "
                  "incorrect value of "
               << cl3.configs[0]->nruns << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
-int o_tests(int argc_, char **argv_) {
-  asprintf(&argv_[2], "-oCOPY");
-
-  Spatter::ClArgs cl1;
-  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl1.configs[0]->op != 0) {
-    std::cerr << "Test failure on Run_Config Suite: -o with argument COPY had "
-                 "incorrect value of "
-              << cl1.configs[0]->op << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "-oACCUM");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->op != 1) {
-    std::cerr << "Test failure on Run_Config Suite: -o with argument ACCUM had "
-                 "incorrect value of "
-              << cl2.configs[0]->op << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--op=COPY");
-
-  Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl3.configs[0]->op != 0) {
-    std::cerr << "Test failure on Run_Config Suite: -o with argument COPY had "
-                 "incorrect value of "
-              << cl3.configs[0]->op << "." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -586,69 +452,6 @@ int n_tests(int argc_, char **argv_) {
   return EXIT_SUCCESS;
 }
 
-int other_tests(int argc_, char **argv_) {
-  asprintf(&argv_[2], "--morton=1");
-
-  Spatter::ClArgs cl1;
-  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl1.configs[0]->ro_morton != 1) {
-    std::cerr << "Test failure on Run_Config Suite: --morton with argument 1 "
-                 "had incorrect value of "
-              << cl1.configs[0]->ro_morton << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--hilbert=1");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->ro_hilbert != 1) {
-    std::cerr << "Test failure on Run_Config Suite: --hilbert with argument 1 "
-                 "had incorrect value of "
-              << cl2.configs[0]->ro_hilbert << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--roblock=1");
-
-  Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl3.configs[0]->ro_block != 1) {
-    std::cerr << "Test failure on Run_Config Suite: --roblock with argument 1 "
-                 "had incorrect value of "
-              << cl3.configs[0]->ro_block << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--stride=1");
-
-  Spatter::ClArgs cl4;
-  if (parse_check(argc_, argv_, cl4) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl4.configs[0]->stride_kernel != 1) {
-    std::cerr << "Test failure on Run_Config Suite: --stride with argument 1 "
-                 "had incorrect value of "
-              << cl4.configs[0]->stride_kernel << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
-}
-
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -657,7 +460,7 @@ int main(int argc, char **argv) {
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
   int ret;
-  ret = asprintf(&argv_[0], "./src/spatter-driver");
+  ret = asprintf(&argv_[0], "./spatter");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -681,16 +484,8 @@ int main(int argc, char **argv) {
   if (w_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  // vector-len v
-  if (v_tests(argc_, argv_) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
   // runs r
   if (r_tests(argc_, argv_) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
-  // op o
-  if (o_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   // local-work-size z
@@ -703,10 +498,6 @@ int main(int argc, char **argv) {
 
   // name n
   if (n_tests(argc_, argv_) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
-  // morton, hilbert, roblock, and stride
-  if (other_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   free(argv_[0]);

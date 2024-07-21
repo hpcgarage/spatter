@@ -7,7 +7,7 @@ int ms1_test_1() {
   for (int i = 0; i < 8; i++) {
     char *command;
 
-    int ret = asprintf(&command, "../src/spatter-driver -pMS1:%d:%d:%d", length,
+    int ret = asprintf(&command, "../spatter -pMS1:%d:%d:%d", length,
         locations, gaps);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
@@ -29,7 +29,7 @@ int ms1_test_2() {
   for (int i = 0; i < 8; i++) {
     char *command;
 
-    int ret = asprintf(&command, "../src/spatter-driver -pMS1:%d:%d,%d:%d",
+    int ret = asprintf(&command, "../spatter -pMS1:%d:%d,%d:%d",
         length, length2, locations, locations2);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
@@ -52,7 +52,7 @@ int ms1_test_3() {
   for (int i = 0; i < 8; i++) {
     char *command;
 
-    int ret = asprintf(&command, "../src/spatter-driver -pMS1:%d:%d,%d:%d,%d",
+    int ret = asprintf(&command, "../spatter -pMS1:%d:%d,%d:%d,%d",
         length, length2, locations, locations2, gaps);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
@@ -75,7 +75,7 @@ int ms1_test_delta1() {
     char *command;
 
     int ret =
-        asprintf(&command, "../src/spatter-driver -pMS1:8:4:32 -d%d", delta);
+        asprintf(&command, "../spatter -pMS1:8:4:32 -d%d", delta);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;
@@ -92,7 +92,7 @@ int ms1_test_delta2() {
     char *command;
 
     int ret =
-        asprintf(&command, "../src/spatter-driver -pMS1:8:2,3:20 -d%d", delta);
+        asprintf(&command, "../spatter -pMS1:8:2,3:20 -d%d", delta);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;
@@ -109,7 +109,7 @@ int ms1_test_delta3() {
     char *command;
 
     int ret = asprintf(
-        &command, "../src/spatter-driver -pMS1:8:2,3:20,22 -d%d", delta);
+        &command, "../spatter -pMS1:8:2,3:20,22 -d%d", delta);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
       return EXIT_FAILURE;

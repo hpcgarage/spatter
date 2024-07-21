@@ -8,7 +8,7 @@ int uniform_multilevel_test() {
     char *command;
 
     int ret = asprintf(&command,
-        "../src/spatter-driver -kMultiGather -pUNIFORM:%d:%d -gUNIFORM:%d:%d ",
+        "../spatter -kMultiGather -pUNIFORM:%d:%d -gUNIFORM:%d:%d ",
         len1, i, len2, 1);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
@@ -27,7 +27,7 @@ int uniform_multilevel_test() {
     char *command;
 
     int ret = asprintf(&command,
-        "../src/spatter-driver -kMultiScatter -pUNIFORM:%d:%d -sUNIFORM:%d:%d ",
+        "../spatter -kMultiScatter -pUNIFORM:%d:%d -uUNIFORM:%d:%d ",
         len1, i, len2, 1);
     if (ret == -1 || system(command) != EXIT_SUCCESS) {
       std::cerr << "Test failure on " << command << std::endl;
