@@ -291,7 +291,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t wrap = 1;
   size_t delta_gather = 8;
   size_t delta_scatter = 8;
-  size_t local_work_size;
+  size_t local_work_size = 1024;
 
   int option_index = 0;
   optind = 1;
@@ -619,7 +619,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nruns, aggregate, atomic, verbosity);
+          count, local_work_size, nruns, aggregate, atomic, verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;

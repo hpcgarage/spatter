@@ -64,7 +64,8 @@ public:
       aligned_vector<double> &dense, size_t &dense_size,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       const size_t delta, const size_t delta_gather, const size_t delta_scatter,
-      const int seed, const size_t wrap, const size_t count, const int nthreads,
+      const int seed, const size_t wrap, const size_t count,
+      const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
       const unsigned long verbosity);
 
@@ -201,8 +202,9 @@ public:
       aligned_vector<double> &dense, size_t &dense_size,
       aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
       const size_t delta_gather, const size_t delta_scatter, const int seed,
-      const size_t wrap, const size_t count, const unsigned long nruns,
-      const bool aggregate, const bool atomic, const unsigned long verbosity);
+      const size_t wrap, const size_t count, const size_t local_work_size,
+      const unsigned long nruns, const bool aggregate, const bool atomic,
+      const unsigned long verbosity);
 
   ~Configuration();
 

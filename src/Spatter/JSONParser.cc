@@ -18,7 +18,8 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     const int nthreads, const std::string name, const std::string kernel,
     const size_t pattern_size, const size_t delta, const size_t delta_gather,
     const size_t delta_scatter, const size_t boundary, const int seed,
-    const size_t wrap, const size_t count, const unsigned long nruns)
+    const size_t wrap, const size_t count, const size_t local_work_size,
+    const unsigned long nruns)
     : sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
       sparse_scatter_size(sparse_scatter_size), dense(dense),
@@ -29,7 +30,8 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
       default_delta_(delta), default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_boundary_(boundary),
       default_seed_(seed), default_wrap_(wrap), default_count_(count),
-      default_omp_threads_(nthreads), default_nruns_(nruns) {
+      default_local_work_size_(local_work_size), default_omp_threads_(nthreads),
+      default_nruns_(nruns) {
   if (!file_exists_(filename)) {
     std::cerr << "File does not exist" << std::endl;
     exit(1);
@@ -88,6 +90,9 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     if (!v.contains("count"))
       v["count"] = default_count_;
 
+    if (!v.contains("local-work-size") || (v["local-work-size"] <= -1))
+      v["local-work-size"] = default_local_work_size_;
+
     if (!v.contains("nthreads"))
       v["nthreads"] = default_omp_threads_;
 
@@ -116,6 +121,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   assert(data_[index].contains("wrap"));
   assert(data_[index].contains("count"));
 
+  assert(data_[index].contains("local-work-size"));
   assert(data_[index].contains("nthreads"));
   assert(data_[index].contains("nruns"));
 
@@ -202,8 +208,9 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
         delta, delta_gather, delta_scatter, data_[index]["seed"],
-        data_[index]["wrap"], data_[index]["count"], data_[index]["nruns"],
-        aggregate_, atomic_, verbosity_);
+        data_[index]["wrap"], data_[index]["count"],
+        data_[index]["local-work-size"], data_[index]["nruns"], aggregate_,
+        atomic_, verbosity_);
 #endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;

@@ -39,7 +39,7 @@ public:
       const size_t delta_gather = 8, const size_t delta_scatter = 8,
       const size_t boundary = INT32_MAX, const int seed = -1,
       const size_t wrap = 1, const size_t count = 1024,
-      const unsigned long nruns = 10);
+      const size_t local_work_size = 1024, const unsigned long nruns = 10);
 
   size_t size();
 
@@ -83,6 +83,8 @@ private:
   const int default_seed_;
   const size_t default_wrap_;
   const size_t default_count_;
+
+  const size_t default_local_work_size_;
 
   const int default_omp_threads_;
   const unsigned long default_nruns_;
