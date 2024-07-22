@@ -14,24 +14,24 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     size_t &sparse_scatter_size, aligned_vector<double> &dense,
     size_t &dense_size, aligned_vector<aligned_vector<double>> &dense_perthread,
     const std::string backend, const bool aggregate,
-    const bool atomic, const bool compress, const unsigned long verbosity,
-    const int nthreads, const std::string name, const std::string kernel,
-    const size_t pattern_size, const size_t delta, const size_t delta_gather,
-    const size_t delta_scatter, const size_t boundary, const int seed,
-    const size_t wrap, const size_t count, const size_t local_work_size,
-    const unsigned long nruns)
+    const bool atomic, const bool compress, size_t shared_mem,
+    const int nthreads, const unsigned long verbosity, const std::string name,
+    const std::string kernel, const size_t pattern_size, const size_t delta,
+    const size_t delta_gather, const size_t delta_scatter,
+    const size_t boundary, const int seed, const size_t wrap,
+    const size_t count, const size_t local_work_size, const unsigned long nruns)
     : sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
       sparse_scatter_size(sparse_scatter_size), dense(dense),
       dense_size(dense_size), dense_perthread(dense_perthread),
       backend_(backend), aggregate_(aggregate), atomic_(atomic),
-      compress_(compress), verbosity_(verbosity), default_name_(name),
-      default_kernel_(kernel), default_pattern_size_(pattern_size),
-      default_delta_(delta), default_delta_gather_(delta_gather),
+      compress_(compress), shared_mem_(shared_mem), omp_threads_(nthreads),
+      verbosity_(verbosity), default_name_(name), default_kernel_(kernel),
+      default_pattern_size_(pattern_size), default_delta_(delta),
+      default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_boundary_(boundary),
       default_seed_(seed), default_wrap_(wrap), default_count_(count),
-      default_local_work_size_(local_work_size), default_omp_threads_(nthreads),
-      default_nruns_(nruns) {
+      default_local_work_size_(local_work_size), default_nruns_(nruns) {
   if (!file_exists_(filename)) {
     std::cerr << "File does not exist" << std::endl;
     exit(1);
@@ -93,9 +93,6 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     if (!v.contains("local-work-size") || (v["local-work-size"] <= -1))
       v["local-work-size"] = default_local_work_size_;
 
-    if (!v.contains("nthreads"))
-      v["nthreads"] = default_omp_threads_;
-
     if (!v.contains("nruns"))
       v["nruns"] = default_nruns_;
   }
@@ -122,7 +119,6 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   assert(data_[index].contains("count"));
 
   assert(data_[index].contains("local-work-size"));
-  assert(data_[index].contains("nthreads"));
   assert(data_[index].contains("nruns"));
 
   aligned_vector<size_t> pattern;
@@ -197,9 +193,9 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
         pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
-        delta, delta_gather, delta_scatter, data_[index]["seed"], data_[index]["wrap"],
-        data_[index]["count"], data_[index]["nthreads"], data_[index]["nruns"],
-        aggregate_, atomic_, verbosity_);
+        delta, delta_gather, delta_scatter, data_[index]["seed"],
+        data_[index]["wrap"], data_[index]["count"], omp_threads_,
+        data_[index]["nruns"], aggregate_, atomic_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
@@ -208,7 +204,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
         sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
         delta, delta_gather, delta_scatter, data_[index]["seed"],
-        data_[index]["wrap"], data_[index]["count"],
+        data_[index]["wrap"], data_[index]["count"], shared_mem_,
         data_[index]["local-work-size"], data_[index]["nruns"], aggregate_,
         atomic_, verbosity_);
 #endif

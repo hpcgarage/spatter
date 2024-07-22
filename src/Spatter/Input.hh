@@ -617,7 +617,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, local_work_size, nruns, aggregate, atomic, verbosity);
+          count, shared_mem, local_work_size, nruns, aggregate, atomic,
+          verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -629,8 +630,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
         cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
         cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
-        cl.dense_perthread, backend, aggregate, atomic, compress, verbosity,
-        nthreads);
+        cl.dense_perthread, backend, aggregate, atomic, compress, shared_mem,
+        nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
