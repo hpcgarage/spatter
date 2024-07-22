@@ -291,7 +291,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t wrap = 1;
   size_t delta_gather = 8;
   size_t delta_scatter = 8;
-  size_t local_work_size;
+  size_t local_work_size = 1024;
 
   int option_index = 0;
   optind = 1;
