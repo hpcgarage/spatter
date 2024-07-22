@@ -257,7 +257,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::string backend = cl.backend;
   bool compress = cl.compress;
   size_t delta = 8;
-  size_t boundary = INT32_MAX;
+  size_t boundary = 0;
 
   bool json = 0;
   std::string json_fname = "";
@@ -557,29 +557,27 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 
 
-  if (boundary > 0) {
-    if (pattern.size() > 0) {
-      if (remap_pattern(pattern, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern to have maximum value of " << boundary
-                  << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern.size() > 0) {
+    if (remap_pattern(pattern, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern to have maximum value of " << boundary
+                << "failed" << std::endl;
+      return -1;
     }
+  }
 
-    if (pattern_gather.size() > 0) {
-      if (remap_pattern(pattern_gather, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern_gather to have maximum value of "
-                  << boundary << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern_gather.size() > 0) {
+    if (remap_pattern(pattern_gather, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern_gather to have maximum value of "
+                << boundary << "failed" << std::endl;
+      return -1;
     }
+  }
 
-    if (pattern_scatter.size() > 0) {
-      if (remap_pattern(pattern_scatter, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern_scatter to have maximum value of "
-                  << boundary << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern_scatter.size() > 0) {
+    if (remap_pattern(pattern_scatter, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern_scatter to have maximum value of "
+                << boundary << "failed" << std::endl;
+      return -1;
     }
   }
 

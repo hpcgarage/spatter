@@ -143,7 +143,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
       if (truncate_pattern(pattern, pattern_size) != 0)
         exit(1);
 
-    if (remap_pattern(pattern, boundary) > boundary)
+    if (remap_pattern(pattern, boundary, this->size()) > boundary)
        exit(1);
 
     if (compress_)
@@ -159,7 +159,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
       if (truncate_pattern(pattern_gather, pattern_size) != 0)
         exit(1);
 
-    if (remap_pattern(pattern_gather, boundary) > boundary)
+    if (remap_pattern(pattern_gather, boundary, this->size()) > boundary)
       exit(1);
 
     if (compress_)
@@ -175,7 +175,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
       if (truncate_pattern(pattern_scatter, pattern_size) != 0)
         exit(1);
 
-    if (remap_pattern(pattern_scatter, boundary) > boundary)
+    if (remap_pattern(pattern_scatter, boundary, this->size()) > boundary)
       exit(1);
 
     if (compress_)

@@ -276,7 +276,13 @@ int pattern_parser(std::stringstream &pattern_string,
   return ret;
 }
 
-size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary) {
+size_t remap_pattern(aligned_vector<size_t> &pattern,
+    size_t &boundary,
+    const size_t nrc) {
+  if (boundary <= 0) {
+    boundary = ((((65ll * 1000 * 1000 * 1000) - 1) / sizeof(double)) / nrc) / 2;
+  }
+
   const size_t pattern_len = pattern.size();
   for (size_t j = 0; j < pattern_len; ++j) {
     pattern[j] = pattern[j] % boundary;
