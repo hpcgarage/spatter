@@ -48,8 +48,10 @@ int main(int argc, char **argv) {
   char **argv_ = (char **)malloc(sizeof(char *) * argc_);
 
   asprintf(&argv_[0], "./spatter");
+  //Specify random patterns as input
   asprintf(&argv_[1], "-p1,2,3,4");
-  asprintf(&argv_[2], "-l");
+  //Use a small buffer size
+  asprintf(&argv_[2], "-l1024");
 
   if (random_test(-1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
