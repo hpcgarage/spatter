@@ -26,7 +26,7 @@
 
 namespace Spatter {
 static char *shortargs =
-    (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:x:y:z:";
+    (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s::t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"atomic-writes", required_argument, nullptr, 0},
     {"backend", required_argument, nullptr, 'b'},
@@ -44,7 +44,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"op", required_argument, nullptr, 'o'},
     {"pattern", required_argument, nullptr, 'p'},
     {"runs", required_argument, nullptr, 'r'},
-    {"random", required_argument, nullptr, 's'},
+    {"random", optional_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
     {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
@@ -257,7 +257,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   std::string backend = cl.backend;
   bool compress = cl.compress;
   size_t delta = 8;
-  size_t boundary = INT32_MAX;
+  size_t boundary = 0;
 
   bool json = 0;
   std::string json_fname = "";
@@ -276,7 +276,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   aligned_vector<size_t> pattern;
 
   unsigned long nruns = 10;
-  int seed = -1;
+  long int seed = -1;
 
 #ifdef USE_OPENMP
   int nthreads = omp_get_max_threads();
@@ -291,7 +291,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   size_t wrap = 1;
   size_t delta_gather = 8;
   size_t delta_scatter = 8;
-  size_t local_work_size;
+  size_t local_work_size = 1024;
 
   int option_index = 0;
   optind = 1;
@@ -423,9 +423,16 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 's':
-      if (read_int_arg(optarg, seed, "Parsing Error: Invalid Random Seed") ==
-          -1)
-        return -1;
+      if (optarg != nullptr) {
+        int seed_arg = -1;
+        if (read_int_arg(optarg, seed_arg,
+            "Parsing Error: Invalid Random Seed") == -1)
+          return -1;
+
+        seed = seed_arg;
+      } else {
+        seed = time(NULL);
+      }
       break;
 
     case 't':
@@ -557,29 +564,27 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 
 
-  if (boundary > 0) {
-    if (pattern.size() > 0) {
-      if (remap_pattern(pattern, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern to have maximum value of " << boundary
-                  << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern.size() > 0) {
+    if (remap_pattern(pattern, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern to have maximum value of " << boundary
+                << "failed" << std::endl;
+      return -1;
     }
+  }
 
-    if (pattern_gather.size() > 0) {
-      if (remap_pattern(pattern_gather, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern_gather to have maximum value of "
-                  << boundary << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern_gather.size() > 0) {
+    if (remap_pattern(pattern_gather, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern_gather to have maximum value of "
+                << boundary << "failed" << std::endl;
+      return -1;
     }
+  }
 
-    if (pattern_scatter.size() > 0) {
-      if (remap_pattern(pattern_scatter, boundary) > boundary) {
-        std::cerr << "Re-mapping pattern_scatter to have maximum value of "
-                  << boundary << "failed" << std::endl;
-        return -1;
-      }
+  if (pattern_scatter.size() > 0) {
+    if (remap_pattern(pattern_scatter, boundary, 1) > boundary) {
+      std::cerr << "Re-mapping pattern_scatter to have maximum value of "
+                << boundary << "failed" << std::endl;
+      return -1;
     }
   }
 
@@ -619,7 +624,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
           cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
           cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
-          count, nruns, aggregate, atomic, verbosity);
+          count, shared_mem, local_work_size, nruns, aggregate, atomic,
+          verbosity);
 #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
@@ -631,8 +637,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
         cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
         cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
-        cl.dense_perthread, backend, aggregate, atomic, compress, verbosity,
-        nthreads);
+        cl.dense_perthread, backend, aggregate, atomic, compress, shared_mem,
+        nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

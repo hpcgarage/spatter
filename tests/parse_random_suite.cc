@@ -4,7 +4,7 @@
 #include "Spatter/Configuration.hh"
 #include "Spatter/Input.hh"
 
-int random_test(int seed, int argc, char **argv) {
+int random_test(long int seed, int argc, char **argv) {
   Spatter::ClArgs cl;
 
   if (Spatter::parse_input(argc, argv, cl) != 0) {
@@ -49,16 +49,16 @@ int main(int argc, char **argv) {
 
   asprintf(&argv_[0], "./spatter");
   asprintf(&argv_[1], "-p1,2,3,4");
-  asprintf(&argv_[2], "-l");
+  asprintf(&argv_[2], "-s");
 
   if (random_test(-1, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  asprintf(&argv_[2], "-l123");
+  asprintf(&argv_[2], "-s123");
   if (random_test(123, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  asprintf(&argv_[2], "-l456");
+  asprintf(&argv_[2], "-s456");
   if (random_test(456, argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < argc_; ++i)
     free(argv_[i]);
-  free(argv);
+  free(argv_);
 
   return EXIT_SUCCESS;
 }

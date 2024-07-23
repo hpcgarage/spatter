@@ -42,7 +42,9 @@ int pattern_parser(std::stringstream &pattern_string,
     aligned_vector<size_t> &pattern,
     size_t &delta);
 
-size_t remap_pattern(aligned_vector<size_t> &pattern, const size_t boundary);
+size_t remap_pattern(aligned_vector<size_t> &pattern,
+    size_t &boundary,
+    const size_t nrc);
 
 int truncate_pattern(aligned_vector<size_t> &pattern, size_t pattern_size);
 

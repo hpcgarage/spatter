@@ -11,7 +11,7 @@ set(SPATTER_TESTS
       parse_ms1_suite
       parse_custom_suite
       parse_json_suite
-      parse_run_config_suite
+      parse_run_config_suite_cpu
       parse_random_suite
       parse_concurrent
       parse_multilevel
@@ -30,7 +30,7 @@ if (USE_OPENMP)
 endif()
 
 if (USE_CUDA)
-  set(SPATTER_TESTS ${SPATTER_TESTS} standard_suite_gpu)
+  set(SPATTER_TESTS ${SPATTER_TESTS} standard_suite_gpu parse_run_config_suite_gpu)
 endif()
 
 foreach (APP ${SPATTER_TESTS})

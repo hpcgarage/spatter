@@ -305,104 +305,6 @@ int r_tests(int argc_, char **argv_) {
   return EXIT_SUCCESS;
 }
 
-int z_tests(int argc_, char **argv_) {
-  asprintf(&argv_[2], "-z100");
-
-  Spatter::ClArgs cl1;
-  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl1.configs[0]->local_work_size != 100) {
-    std::cerr << "Test failure on Run_Config Suite: -z with argument 100 had "
-                 "incorrect value of "
-              << cl1.configs[0]->local_work_size << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "-z500");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->local_work_size != 500) {
-    std::cerr << "Test failure on Run_Config Suite: -z with argument 500 had "
-                 "incorrect value of "
-              << cl2.configs[0]->local_work_size << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--local-work-size=1000");
-
-  Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl3.configs[0]->local_work_size != 1000) {
-    std::cerr << "Test failure on Run_Config Suite: -z with argument 1000 had "
-                 "incorrect value of "
-              << cl3.configs[0]->local_work_size << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
-int m_tests(int argc_, char **argv_) {
-  asprintf(&argv_[2], "-m100");
-
-  Spatter::ClArgs cl1;
-  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl1.configs[0]->shmem != 100) {
-    std::cerr << "Test Failure on Run_Config Suite: -m with argument 100 had "
-                 "incorrect value of "
-              << cl1.configs[0]->shmem << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "-m500");
-
-  Spatter::ClArgs cl2;
-  if (parse_check(argc_, argv_, cl2) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl2.configs[0]->shmem != 500) {
-    std::cerr << "Test failure on Run_Config Suite: -m with argument 500 had "
-                 "incorrect value of "
-              << cl2.configs[0]->shmem << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  asprintf(&argv_[2], "--shared-mem=1000");
-
-  Spatter::ClArgs cl3;
-  if (parse_check(argc_, argv_, cl3) == EXIT_FAILURE)
-    return EXIT_FAILURE;
-
-  free(argv_[2]);
-
-  if (cl3.configs[0]->shmem != 1000) {
-    std::cerr << "Test failure on Run_Config Suite: -m with argument 1000 had "
-                 "incorrect value of "
-              << cl3.configs[0]->shmem << "." << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
 int n_tests(int argc_, char **argv_) {
   asprintf(&argv_[2], "-nTestName");
 
@@ -486,14 +388,6 @@ int main(int argc, char **argv) {
 
   // runs r
   if (r_tests(argc_, argv_) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
-  // local-work-size z
-  if (z_tests(argc_, argv_) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
-  // shared-mem m
-  if (m_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   // name n
