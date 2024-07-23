@@ -38,8 +38,8 @@ public:
       const std::string kernel = "gather", const size_t pattern_size = 0,
       const size_t delta = 8, const size_t delta_gather = 8,
       const size_t delta_scatter = 8, const size_t boundary = 0,
-      const int seed = -1, const size_t wrap = 1, const size_t count = 1024,
-      const size_t local_work_size = 1024, const unsigned long nruns = 10);
+      const long int seed = -1, const size_t wrap = 1,
+      const size_t count = 1024, const size_t local_work_size = 1024, const unsigned long nruns = 10);
 
   size_t size();
 
@@ -82,7 +82,7 @@ private:
   const size_t default_delta_scatter_;
 
   const size_t default_boundary_;
-  const int default_seed_;
+  const long int default_seed_;
   const size_t default_wrap_;
   const size_t default_count_;
 

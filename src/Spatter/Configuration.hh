@@ -64,7 +64,7 @@ public:
       aligned_vector<double> &dense, size_t &dense_size,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       const size_t delta, const size_t delta_gather, const size_t delta_scatter,
-      const int seed, const size_t wrap, const size_t count,
+      const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
       const unsigned long verbosity);
@@ -117,7 +117,7 @@ public:
   const size_t delta_gather;
   const size_t delta_scatter;
 
-  int seed;
+  long int seed;
   const size_t wrap;
   const size_t count;
 
@@ -151,7 +151,7 @@ public:
       aligned_vector<double> &dense, size_t &dense_size,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       const size_t delta, const size_t delta_gather, const size_t delta_scatter,
-      const int seed, const size_t wrap, const size_t count,
+      const long int seed, const size_t wrap, const size_t count,
       const unsigned long nruns, const bool aggregate,
       const unsigned long verbosity);
 
@@ -175,9 +175,9 @@ public:
       aligned_vector<double> &dense, size_t &dense_size,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       const size_t delta, const size_t delta_gather, const size_t delta_scatter,
-      const int seed, const size_t wrap, const size_t count, const int nthreads,
-      const unsigned long nruns, const bool aggregate, const bool atomic,
-      const unsigned long verbosity);
+      const long int seed, const size_t wrap, const size_t count,
+      const int nthreads, const unsigned long nruns, const bool aggregate,
+      const bool atomic, const unsigned long verbosity);
 
   int run(bool timed, unsigned long run_id);
 
@@ -200,11 +200,12 @@ public:
       aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
       aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
       aligned_vector<double> &dense, size_t &dense_size,
-      aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter, const int seed,
-      const size_t wrap, const size_t count, const size_t shared_mem,
-      const size_t local_work_size, const unsigned long nruns,
-      const bool aggregate, const bool atomic, const unsigned long verbosity);
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const size_t delta, const size_t delta_gather, const size_t delta_scatter,
+      const long int seed, const size_t wrap, const size_t count,
+      const size_t shared_mem, const size_t local_work_size,
+      const unsigned long nruns, const bool aggregate, const bool atomic,
+      const unsigned long verbosity);
 
   ~Configuration();
 

@@ -26,7 +26,7 @@
 
 namespace Spatter {
 static char *shortargs =
-    (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s:t:u:v:w:x:y:z:";
+    (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s::t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"atomic-writes", required_argument, nullptr, 0},
     {"backend", required_argument, nullptr, 'b'},
@@ -44,7 +44,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"op", required_argument, nullptr, 'o'},
     {"pattern", required_argument, nullptr, 'p'},
     {"runs", required_argument, nullptr, 'r'},
-    {"random", required_argument, nullptr, 's'},
+    {"random", optional_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
     {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
@@ -276,7 +276,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   aligned_vector<size_t> pattern;
 
   unsigned long nruns = 10;
-  int seed = -1;
+  long int seed = -1;
 
 #ifdef USE_OPENMP
   int nthreads = omp_get_max_threads();
@@ -423,9 +423,16 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 's':
-      if (read_int_arg(optarg, seed, "Parsing Error: Invalid Random Seed") ==
-          -1)
-        return -1;
+      if (optarg != nullptr) {
+        int seed_arg = -1;
+        if (read_int_arg(optarg, seed_arg,
+            "Parsing Error: Invalid Random Seed") == -1)
+          return -1;
+
+        seed = seed_arg;
+      } else {
+        seed = time(NULL);
+      }
       break;
 
     case 't':

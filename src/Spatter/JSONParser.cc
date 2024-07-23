@@ -18,7 +18,7 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     const int nthreads, const unsigned long verbosity, const std::string name,
     const std::string kernel, const size_t pattern_size, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter,
-    const size_t boundary, const int seed, const size_t wrap,
+    const size_t boundary, const long int seed, const size_t wrap,
     const size_t count, const size_t local_work_size, const unsigned long nruns)
     : sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
