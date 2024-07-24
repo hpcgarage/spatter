@@ -58,6 +58,8 @@ SYMBOLS = {
 
 EXPERIMENTS = {'ustride':'Uniform Stride', 'stream': 'Stream', 'nekbone':'Nekbone', 'lulesh':'LULESH', 'amg':'AMG', 'pennant':'PENNANT'}
 
+KERNELS = {'gather':'Gather', 'scatter':'Scatter', 'sg':'GS', 'multigather':'MultiGather', 'multiscatter':'MultiScatter'}
+
 #################################################################
 # NO EDITING IS REQUIRED BEYOND THIS POINT TO ADD NEW PLATFORMS #
 #################################################################
@@ -140,9 +142,21 @@ def file2df(filename, restrict_pat_len=0, archtype=None):
     end = contents.find("config")
     config = pd.DataFrame(eval(contents[start:end]))
 
+    # Update kernel names
+    config['kernel'] = config['kernel'].apply(lambda x: KERNELS.get(x, x))
+
+    # Determine end of data
+    stats = -1
+    if "Min" in contents:
+        stats = contents.find("Min") # Summary info
+    elif "Simulation" in contents:
+        stats = contents.find("Simulation") # Simulation info
+
     # Read data
-    stats = contents.find("Min")
-    data = pd.read_csv(StringIO(contents[end:stats]), delim_whitespace=True)
+    if stats == -1:
+        data = pd.read_csv(StringIO(contents[end:]), delim_whitespace=True)
+    else:
+        data = pd.read_csv(StringIO(contents[end:stats]), delim_whitespace=True)
 
     # Join config with data
     table = data.join(config, on='config', how='inner')

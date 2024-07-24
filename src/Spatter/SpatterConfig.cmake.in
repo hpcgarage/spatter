@@ -1,0 +1,7 @@
+include(CMakeFindDependencyMacro)
+
+# Add the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/SpatterTargets.cmake")
+
+# External dependencies
+find_dependency(MPI)

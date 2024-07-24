@@ -1,0 +1,6 @@
+#ifndef SPATTER_CONFIG_HPP
+#define SPATTER_CONFIG_HPP
+
+#define Spatter_VERSION_STRING "@PROJECT_VERSION@"
+
+#endif
