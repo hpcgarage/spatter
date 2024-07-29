@@ -10,22 +10,34 @@ on:
 
 jobs:
   build-and-run-serial:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Build-Serial
-      run: cmake -DBACKEND=serial -DCOMPILER=gnu -B build_serial_gnu -S . && make -C build_serial_gnu
+      run: cmake -B build_serial_gnu -S . && make -C build_serial_gnu
     - name: Test-Serial
       run: make test -C build_serial_gnu
+
   build-and-run-omp:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4 
     - name: Build-OMP
       run: 
-        cmake -DBACKEND=openmp -DCOMPILER=gnu -B build_omp_gnu -S . && make -C build_omp_gnu
+        cmake -DUSE_OPENMP=1 -B build_omp_gnu -S . && make -C build_omp_gnu
     - name: Test-OMP
       run: make test -C build_omp_gnu
+
+  build-and-run-mpi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4 
+    - name: Build-MPI
+      run: 
+        cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
+    - name: Test-OMP
+      run: make test -C build_mpi
+  
   build-cuda:
     runs-on: self-hosted
     steps:
