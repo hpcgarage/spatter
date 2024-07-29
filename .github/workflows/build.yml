@@ -31,7 +31,12 @@ jobs:
   build-and-run-mpi:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
+      # Add OpenMPI to test against  
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: openmpi-bin libopenmpi-dev 
+          version: 1.0 
     - name: Build-MPI
       run: 
         cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
