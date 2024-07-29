@@ -10,3 +10,4 @@ src/python/env
 .vscode/
 *.pyc
 spatter-cuda-test.out
+json.tar.xz
