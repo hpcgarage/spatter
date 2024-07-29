@@ -39,7 +39,7 @@ jobs:
       - name: Build-MPI
         run: 
           cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
-      - name: Test-OMP
+      - name: Test-MPI
         run: make test -C build_mpi
   
   build-cuda:
