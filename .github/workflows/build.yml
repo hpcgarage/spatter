@@ -36,10 +36,11 @@ jobs:
         with:
           packages: openmpi-bin libopenmpi-dev 
           version: 1.0 
-    - name: Build-MPI
-      run: cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
-    - name: Test-OMP
-      run: make test -C build_mpi
+      - name: Build-MPI
+        run: 
+          cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
+      - name: Test-OMP
+        run: make test -C build_mpi
   
   build-cuda:
     runs-on: self-hosted
