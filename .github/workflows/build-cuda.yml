@@ -1,0 +1,17 @@
+name: Build and Test CUDA Backend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '30 8 * * *'
+
+jobs:  
+  build-cuda:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run batch file
+      run: cd tests/misc && chmod +x run-crnch-cuda.sh && sbatch run-crnch-cuda.sh

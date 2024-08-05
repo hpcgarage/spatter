@@ -1,0 +1,24 @@
+name: Build and Test MPI Backend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '30 8 * * *'
+
+jobs:  
+  build-and-run-mpi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest #Add OpenMPI to test against 
+        with:
+          packages: openmpi-bin libopenmpi-dev 
+          version: 1.0 
+      - name: Build-MPI
+        run: 
+          cmake -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
+      - name: Test-MPI
+        run: make test -C build_mpi
