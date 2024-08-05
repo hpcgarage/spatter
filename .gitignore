@@ -1,12 +1,11 @@
 *.swp
 **/*.swp
-sgbench
 docs/*
 build/*
 build_*
 modulefiles/
-/configure_*
 src/python/env
 .vscode/
 *.pyc
 spatter-cuda-test.out
+json.tar.xz
