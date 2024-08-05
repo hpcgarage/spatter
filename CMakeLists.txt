@@ -1,12 +1,11 @@
-# Hermes/CMakeLists.txt
-cmake_minimum_required(VERSION 3.20)
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Set build type")
+# CMakeLists.txt
+cmake_minimum_required(VERSION 3.25)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 include(DisableIntree)
 
-project(Spatter VERSION 1.1.0 LANGUAGES CXX)
+project(Spatter VERSION 2.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
