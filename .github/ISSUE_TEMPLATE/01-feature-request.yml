@@ -7,7 +7,7 @@ body:
   attributes:
     value: |
       ## Spatter Feature Request
-      ✨ Welcome to COC Salt Feature Request Form. Fill out the below items with as much detail as possible & don't forget to include a title!
+      ✨ Welcome to Spatter Feature Request Form. Fill out the below items with as much detail as possible & don't forget to include a title!
       Please do **not** use this form for Bug Reports.
 - type: dropdown
   id: os

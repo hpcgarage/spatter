@@ -26,8 +26,7 @@ If a longer explanation is required, it goes in paragraphs below the title sente
 
 ## 🚀 TODOs
 
-- [x] Create a short list of TODOs that are relevant to this PR
-- [ ] Add items to this list that shouldn't be forgotten, or that reviewers have requested that you complete.
+- [ ] Add items to this TODO list that shouldn't be forgotten, or that reviewers have requested that you complete.
 
 ## 📌 Future Work
 
