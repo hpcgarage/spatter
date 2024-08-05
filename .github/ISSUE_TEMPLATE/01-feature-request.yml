@@ -1,0 +1,34 @@
+name: ✨ Feature Request
+description: Create a new issue for a feature request.
+title: ✨ [FEATURE REQUEST] - <title>
+labels: [feature request]
+body:
+- type: markdown
+  attributes:
+    value: |
+      ## Spatter Feature Request
+      ✨ Welcome to Spatter Feature Request Form. Fill out the below items with as much detail as possible & don't forget to include a title!
+      Please do **not** use this form for Bug Reports.
+- type: dropdown
+  id: os
+  attributes:
+    label: 💿 OS
+    description: Select the target OS -- multiple selections allowed
+    multiple: true
+    options:
+    - Ubuntu 24
+    - Ubuntu 22
+    - Ubuntu 20
+    - RHEL 9
+    - RHEL 8
+    - Other
+  validations:
+    required: true
+- type: textarea
+  id: description
+  attributes:
+    label: 📝 Description
+    description: Please enter an short description of the requested feature
+    placeholder: Short and description of the feature and any reasoning for why to implement it
+  validations:
+    required: true

@@ -1,0 +1,67 @@
+name: 🐛 Bug Report
+description: Create a new issue for a bug with Spatter.
+title: 🐛 [BUG] - <title>
+labels: [bug]
+body:
+- type: markdown
+  attributes:
+    value: |
+      ## Spatter Bug Reporting
+      🐛 Welcome to the Spatter Bug Report Form! Fill out the below items with as much detail as possible & don't forget to include a title!
+      Please do **not** use this form for Feature Requests.
+- type: dropdown
+  id: os
+  attributes:
+    label: 💿 OS
+    description: Select your OS -- multiple selections allowed
+    multiple: true
+    options:
+    - Ubuntu 24
+    - Ubuntu 22
+    - Ubuntu 20
+    - RHEL 9
+    - RHEL 8
+    - Other
+  validations:
+    required: true
+- type: dropdown
+  id: arch
+  attributes:
+    label: 🏗️ Architecture
+    description: Select your Architecture -- multiple selections allowed
+    multiple: true
+    options:
+    - x86_64
+    - Arm
+    - RISC-V
+    - Other (please note below)
+  validations:
+    required: false
+- type: textarea
+  id: description
+  attributes:
+    label: 📝 Description
+    description: Please enter an short description of your issue
+    placeholder: Short and explicit description of your incident...
+  validations:
+    required: true
+- type: textarea
+  id: reproduction
+  attributes:
+    label: 🔄 Reproduction steps
+    description: Please enter an explicit description of your issue
+    placeholder: |
+      1. Go to '...'
+      2. Run CMake to build backend.. '....'
+      3. Run specific test '....'
+      4. Error output is..
+  validations:
+    required: false
+- type: textarea
+  id: logs
+  attributes:
+    label: 💬 Logs
+    description: Please copy and paste any relevant log output. This will be automatically formatted into code, so you don't need to add backticks.
+    render: bash
+  validations:
+    required: false
