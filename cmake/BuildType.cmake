@@ -13,7 +13,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "RelWithDebInfo")
 endif()
 
-message(STATUS "Setting build type to '${default_build_type}'.")
+message(STATUS "CMake build type is '${default_build_type}'.")
 
 set(WARNING_FLAGS
   $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:-pedantic-errors -Wall -Wextra -Wconversion -Wno-sign-conversion>
