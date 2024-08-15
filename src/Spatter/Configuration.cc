@@ -59,23 +59,19 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
 }
 
 void ConfigurationBase::report() {
-  size_t total_bytes_moved = 0;
+  size_t bytes_moved = 0;
 
   if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
-    total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
+    bytes_moved = pattern.size() * count * sizeof(size_t);
 
   if (kernel.compare("sg") == 0)
-    total_bytes_moved = nruns * (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
+    bytes_moved = (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
-    total_bytes_moved = nruns * pattern_scatter.size() * count * sizeof(size_t);
+    bytes_moved = pattern_scatter.size() * count * sizeof(size_t);
 
   if (kernel.compare("multigather") == 0)
-    total_bytes_moved = nruns * pattern_gather.size() * count * sizeof(size_t);
-
-  unsigned long long bytes_per_run =
-      static_cast<unsigned long long>(total_bytes_moved) /
-      static_cast<unsigned long long>(nruns);
+    bytes_moved = pattern_gather.size() * count * sizeof(size_t);
 
 #ifdef USE_MPI
   int numpes = 0;
@@ -84,7 +80,7 @@ void ConfigurationBase::report() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<unsigned long long> vector_bytes_per_run(numpes, 0);
-  MPI_Gather(&bytes_per_run, 1, MPI_UNSIGNED_LONG_LONG,
+  MPI_Gather(&bytes_moved, 1, MPI_UNSIGNED_LONG_LONG,
       vector_bytes_per_run.data(), 1, MPI_UNSIGNED_LONG_LONG, 0,
       MPI_COMM_WORLD);
 
@@ -113,12 +109,10 @@ void ConfigurationBase::report() {
     print_mpi(
         vector_bytes_per_run, vector_minimum_time, vector_maximum_bandwidth);
 #else
-  double minimum_time =
-      *std::min_element(time_seconds.begin(), time_seconds.end());
-  double maximum_bandwidth =
-      static_cast<double>(bytes_per_run) / minimum_time / 1000000.0;
+  double min_time = *std::min_element(time_seconds.begin(), time_seconds.end());
+  double bandwidth = static_cast<double>(bytes_moved) / min_time / 1000000.0;
 
-  print_no_mpi(bytes_per_run, minimum_time, maximum_bandwidth);
+  print_no_mpi(bytes_moved, min_time, bandwidth);
 #endif
 }
 
