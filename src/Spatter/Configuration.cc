@@ -748,11 +748,25 @@ Configuration<Spatter::CUDA>::~Configuration() {
   checkCudaErrors(cudaFree(dev_pattern_gather));
   checkCudaErrors(cudaFree(dev_pattern_scatter));
 
-  // checkCudaErrors(cudaFree(dev_sparse));
-  // checkCudaErrors(cudaFree(dev_sparse_gather));
-  // checkCudaErrors(cudaFree(dev_sparse_scatter));
+  if (dev_sparse) {
+    checkCudaErrors(cudaFree(dev_sparse));
+    dev_sparse = nullptr;
+  }
 
-  // checkCudaErrors(cudaFree(dev_dense));
+  if (dev_sparse_gather) {
+    checkCudaErrors(cudaFree(dev_sparse_gather));
+    dev_sparse_gather = nullptr;
+  }
+
+  if (dev_sparse_scatter) {
+    checkCudaErrors(cudaFree(dev_sparse_scatter));
+    dev_sparse_scatter = nullptr;
+  }
+
+  if (dev_dense) {
+    checkCudaErrors(cudaFree(dev_dense));
+    dev_dense = nullptr;
+  }
 }
 
 int Configuration<Spatter::CUDA>::run(bool timed, unsigned long run_id) {

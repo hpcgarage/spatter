@@ -251,6 +251,11 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.sparse_scatter_size = 0;
   cl.dense_size = 0;
 
+  cl.dev_sparse = nullptr;
+  cl.dev_sparse_gather = nullptr;
+  cl.dev_sparse_scatter = nullptr;
+  cl.dev_dense = nullptr;
+
   cl.backend = "";
   cl.aggregate = false;
   cl.atomic = false;
