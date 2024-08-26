@@ -13,26 +13,30 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     std::string k, const aligned_vector<size_t> &pattern,
     const aligned_vector<size_t> &pattern_gather,
     const aligned_vector<size_t> &pattern_scatter,
-    aligned_vector<double> &sparse, size_t &sparse_size,
-    aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
-    aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size,
-    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const long int seed,
-    const size_t wrap, const size_t count, const size_t shared_mem,
-    const size_t local_work_size, const int nthreads, const unsigned long nruns,
-    const bool aggregate, const bool atomic, const unsigned long verbosity)
+    aligned_vector<double> &sparse, double *&dev_sparse, size_t &sparse_size,
+    aligned_vector<double> &sparse_gather, double *&dev_sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    double *&dev_sparse_scatter, size_t &sparse_scatter_size,
+    aligned_vector<double> &dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
+    size_t &dense_size, const size_t delta, const size_t delta_gather,
+    const size_t delta_scatter, const long int seed, const size_t wrap,
+    const size_t count, const size_t shared_mem, const size_t local_work_size,
+    const int nthreads, const unsigned long nruns, const bool aggregate,
+    const bool atomic, const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
-      sparse(sparse), sparse_size(sparse_size), sparse_gather(sparse_gather),
+      sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
+      sparse_gather(sparse_gather), dev_sparse_gather(dev_sparse_gather),
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
+      dev_sparse_scatter(dev_sparse_scatter),
       sparse_scatter_size(sparse_scatter_size), dense(dense),
-      dense_size(dense_size), dense_perthread(dense_perthread), delta(delta),
-      delta_gather(delta_gather), delta_scatter(delta_scatter), seed(seed),
-      wrap(wrap), count(count), shmem(shared_mem),
-      local_work_size(local_work_size), omp_threads(nthreads), nruns(nruns),
-      aggregate(aggregate), atomic(atomic), verbosity(verbosity),
-      time_seconds(nruns, 0) {
+      dense_perthread(dense_perthread), dev_dense(dev_dense),
+      dense_size(dense_size), delta(delta), delta_gather(delta_gather),
+      delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
+      shmem(shared_mem), local_work_size(local_work_size),
+      omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
+      verbosity(verbosity), time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -59,23 +63,19 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
 }
 
 void ConfigurationBase::report() {
-  size_t total_bytes_moved = 0;
+  size_t bytes_moved = 0;
 
   if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
-    total_bytes_moved = nruns * pattern.size() * count * sizeof(size_t);
+    bytes_moved = pattern.size() * count * sizeof(size_t);
 
   if (kernel.compare("sg") == 0)
-    total_bytes_moved = nruns * (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
+    bytes_moved = (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
-    total_bytes_moved = nruns * pattern_scatter.size() * count * sizeof(size_t);
+    bytes_moved = pattern_scatter.size() * count * sizeof(size_t);
 
   if (kernel.compare("multigather") == 0)
-    total_bytes_moved = nruns * pattern_gather.size() * count * sizeof(size_t);
-
-  unsigned long long bytes_per_run =
-      static_cast<unsigned long long>(total_bytes_moved) /
-      static_cast<unsigned long long>(nruns);
+    bytes_moved = pattern_gather.size() * count * sizeof(size_t);
 
 #ifdef USE_MPI
   int numpes = 0;
@@ -84,7 +84,7 @@ void ConfigurationBase::report() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<unsigned long long> vector_bytes_per_run(numpes, 0);
-  MPI_Gather(&bytes_per_run, 1, MPI_UNSIGNED_LONG_LONG,
+  MPI_Gather(&bytes_moved, 1, MPI_UNSIGNED_LONG_LONG,
       vector_bytes_per_run.data(), 1, MPI_UNSIGNED_LONG_LONG, 0,
       MPI_COMM_WORLD);
 
@@ -113,12 +113,10 @@ void ConfigurationBase::report() {
     print_mpi(
         vector_bytes_per_run, vector_minimum_time, vector_maximum_bandwidth);
 #else
-  double minimum_time =
-      *std::min_element(time_seconds.begin(), time_seconds.end());
-  double maximum_bandwidth =
-      static_cast<double>(bytes_per_run) / minimum_time / 1000000.0;
+  double min_time = *std::min_element(time_seconds.begin(), time_seconds.end());
+  double bandwidth = static_cast<double>(bytes_moved) / min_time / 1000000.0;
 
-  print_no_mpi(bytes_per_run, minimum_time, maximum_bandwidth);
+  print_no_mpi(bytes_moved, min_time, bandwidth);
 #endif
 }
 
@@ -393,19 +391,23 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
     const aligned_vector<size_t> &pattern,
     const aligned_vector<size_t> &pattern_gather,
     const aligned_vector<size_t> &pattern_scatter,
-    aligned_vector<double> &sparse, size_t &sparse_size,
-    aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
-    aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size,
-    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
+    aligned_vector<double> &sparse, double *&dev_sparse, size_t &sparse_size,
+    aligned_vector<double> &sparse_gather, double *&dev_sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    double *&dev_sparse_scatter, size_t &sparse_scatter_size,
+    aligned_vector<double> &dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread,
+    double *&dev_dense, size_t &dense_size,const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
     const bool aggregate, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, sparse, sparse_size, sparse_gather,
-          sparse_gather_size, sparse_scatter, sparse_scatter_size, dense,
-          dense_size, dense_perthread, delta, delta_gather, delta_scatter, seed,
-          wrap, count, 0, 1024, 1, nruns, aggregate, false, verbosity) {
+          pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
+          dev_sparse_gather, sparse_gather_size, sparse_scatter,
+          dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
+          dev_dense, dense_size, delta, delta_gather,
+          delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
+          verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -527,20 +529,23 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const aligned_vector<size_t> &pattern,
     const aligned_vector<size_t> &pattern_gather,
     aligned_vector<size_t> &pattern_scatter,
-    aligned_vector<double> &sparse, size_t &sparse_size,
-    aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
-    aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size,
-    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
+    aligned_vector<double> &sparse, double *&dev_sparse, size_t &sparse_size,
+    aligned_vector<double> &sparse_gather, double *&dev_sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    double *&dev_sparse_scatter, size_t &sparse_scatter_size,
+    aligned_vector<double> &dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread,
+    double *&dev_dense, size_t &dense_size,const size_t delta,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
     const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, sparse, sparse_size, sparse_gather,
-          sparse_gather_size, sparse_scatter, sparse_scatter_size, dense,
-          dense_size, dense_perthread, delta, delta_gather, delta_scatter, seed,
-          wrap, count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
+          pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
+          dev_sparse_gather, sparse_gather_size, sparse_scatter,
+          dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
+          dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
+          count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -716,21 +721,25 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
     const aligned_vector<size_t> &pattern,
     const aligned_vector<size_t> &pattern_gather,
     const aligned_vector<size_t> &pattern_scatter,
-    aligned_vector<double> &sparse, size_t &sparse_size,
-    aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
-    aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size,
-    aligned_vector<aligned_vector<double>> &dense_perthread, const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const long int seed,
-    const size_t wrap, const size_t count, const size_t shared_mem,
-    const size_t local_work_size, const unsigned long nruns,
-    const bool aggregate, const bool atomic, const unsigned long verbosity)
+    aligned_vector<double> &sparse, double *&dev_sparse, size_t &sparse_size,
+    aligned_vector<double> &sparse_gather, double *&dev_sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    double *&dev_sparse_scatter, size_t &sparse_scatter_size,
+    aligned_vector<double> &dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
+    size_t &dense_size, const size_t delta, const size_t delta_gather,
+    const size_t delta_scatter, const long int seed, const size_t wrap,
+    const size_t count, const size_t shared_mem, const size_t local_work_size,
+    const unsigned long nruns, const bool aggregate, const bool atomic,
+    const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
-          pattern_scatter, sparse, sparse_size, sparse_gather,
-          sparse_gather_size, sparse_scatter, sparse_scatter_size, dense,
-          dense_size, dense_perthread, delta, delta_gather, delta_scatter, seed,
+          pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
+          dev_sparse_gather, sparse_gather_size, sparse_scatter,
+          dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
+          dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
           verbosity) {
+  
   setup();
 }
 
@@ -739,11 +748,25 @@ Configuration<Spatter::CUDA>::~Configuration() {
   checkCudaErrors(cudaFree(dev_pattern_gather));
   checkCudaErrors(cudaFree(dev_pattern_scatter));
 
-  checkCudaErrors(cudaFree(dev_sparse));
-  checkCudaErrors(cudaFree(dev_sparse_gather));
-  checkCudaErrors(cudaFree(dev_sparse_scatter));
+  if (dev_sparse) {
+    checkCudaErrors(cudaFree(dev_sparse));
+    dev_sparse = nullptr;
+  }
 
-  checkCudaErrors(cudaFree(dev_dense));
+  if (dev_sparse_gather) {
+    checkCudaErrors(cudaFree(dev_sparse_gather));
+    dev_sparse_gather = nullptr;
+  }
+
+  if (dev_sparse_scatter) {
+    checkCudaErrors(cudaFree(dev_sparse_scatter));
+    dev_sparse_scatter = nullptr;
+  }
+
+  if (dev_dense) {
+    checkCudaErrors(cudaFree(dev_dense));
+    dev_dense = nullptr;
+  }
 }
 
 int Configuration<Spatter::CUDA>::run(bool timed, unsigned long run_id) {
@@ -858,34 +881,6 @@ void Configuration<Spatter::CUDA>::multi_scatter(
 void Configuration<Spatter::CUDA>::setup() {
   ConfigurationBase::setup();
 
-  if (sparse.size() < sparse_size) {
-    sparse.resize(sparse_size);
-
-    for (size_t i = 0; i < sparse.size(); ++i)
-      sparse[i] = rand();
-  }
-
-  if (sparse_gather.size() < sparse_gather_size) {
-    sparse_gather.resize(sparse_gather_size);
-
-    for (size_t i = 0; i < sparse_gather.size(); ++i)
-      sparse_gather[i] = rand();
-  }
-
-  if (sparse_scatter.size() < sparse_scatter_size) {
-    sparse_scatter.resize(sparse_scatter_size);
-
-    for (size_t i = 0; i < sparse_scatter.size(); ++i)
-      sparse_scatter[i] = rand();
-  }
-
-  if (dense.size() < dense_size) {
-    dense.resize(dense_size);
-
-    for (size_t i = 0; i < dense.size(); ++i)
-      dense[i] = rand();
-  }
-
   checkCudaErrors(
       cudaMalloc((void **)&dev_pattern, sizeof(size_t) * pattern.size()));
   checkCudaErrors(cudaMalloc(
@@ -893,30 +888,12 @@ void Configuration<Spatter::CUDA>::setup() {
   checkCudaErrors(cudaMalloc(
       (void **)&dev_pattern_scatter, sizeof(size_t) * pattern_scatter.size()));
 
-  checkCudaErrors(
-      cudaMalloc((void **)&dev_sparse, sizeof(double) * sparse.size()));
-  checkCudaErrors(cudaMalloc(
-      (void **)&dev_sparse_gather, sizeof(double) * sparse_gather.size()));
-  checkCudaErrors(cudaMalloc(
-      (void **)&dev_sparse_scatter, sizeof(double) * sparse_scatter.size()));
-  checkCudaErrors(
-      cudaMalloc((void **)&dev_dense, sizeof(double) * dense.size()));
-
   checkCudaErrors(cudaMemcpy(dev_pattern, pattern.data(),
       sizeof(size_t) * pattern.size(), cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(dev_pattern_gather, pattern_gather.data(),
       sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(),
       sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice));
-
-  checkCudaErrors(cudaMemcpy(dev_sparse, sparse.data(),
-      sizeof(double) * sparse.size(), cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMemcpy(dev_sparse_gather, sparse_gather.data(),
-      sizeof(double) * sparse_gather.size(), cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMemcpy(dev_sparse_scatter, sparse_scatter.data(),
-      sizeof(double) * sparse_scatter.size(), cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMemcpy(dev_dense, dense.data(),
-      sizeof(double) * dense.size(), cudaMemcpyHostToDevice));
 
   checkCudaErrors(cudaDeviceSynchronize());
 }
