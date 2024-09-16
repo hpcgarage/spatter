@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-void cuda_gather(const size_t *pattern, const double *sparse,
+void oneapi_gather(const size_t *pattern, const double *sparse,
     double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count, sycl::nd_item<3> item_ct1) {
   size_t total_id = (size_t)((size_t)item_ct1.get_local_range(2) *
@@ -28,7 +28,7 @@ void cuda_gather(const size_t *pattern, const double *sparse,
   }
 }
 
-void cuda_scatter(const size_t *pattern, double *sparse,
+void oneapi_scatter(const size_t *pattern, double *sparse,
     const double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count, sycl::nd_item<3> item_ct1) {
   size_t total_id = (size_t)((size_t)item_ct1.get_local_range(2) *
@@ -41,7 +41,7 @@ void cuda_scatter(const size_t *pattern, double *sparse,
     sparse[pattern[j] + delta * i] = dense[j + pattern_length * (i % wrap)];
 }
 
-void cuda_scatter_atomic(const size_t *pattern, double *sparse,
+void oneapi_scatter_atomic(const size_t *pattern, double *sparse,
     const double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count, sycl::nd_item<3> item_ct1) {
   size_t total_id = (size_t)((size_t)item_ct1.get_local_range(2) *
@@ -58,7 +58,7 @@ void cuda_scatter_atomic(const size_t *pattern, double *sparse,
             dense[j + pattern_length * (i % wrap)])));
 }
 
-void cuda_scatter_gather(const size_t *pattern_scatter,
+void oneapi_scatter_gather(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -75,7 +75,7 @@ void cuda_scatter_gather(const size_t *pattern_scatter,
         sparse_gather[pattern_gather[j] + delta_gather * i];
 }
 
-void cuda_scatter_gather_atomic(const size_t *pattern_scatter,
+void oneapi_scatter_gather_atomic(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -96,7 +96,7 @@ void cuda_scatter_gather_atomic(const size_t *pattern_scatter,
             sparse_gather[pattern_gather[j] + delta_gather * i])));
 }
 
-void cuda_multi_gather(const size_t *pattern,
+void oneapi_multi_gather(const size_t *pattern,
     const size_t *pattern_gather, const double *sparse, double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count, sycl::nd_item<3> item_ct1) {
@@ -117,7 +117,7 @@ void cuda_multi_gather(const size_t *pattern,
   }
 }
 
-void cuda_multi_scatter(const size_t *pattern,
+void oneapi_multi_scatter(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count, sycl::nd_item<3> item_ct1) {
@@ -132,7 +132,7 @@ void cuda_multi_scatter(const size_t *pattern,
         dense[j + pattern_length * (i % wrap)];
 }
 
-void cuda_multi_scatter_atomic(const size_t *pattern,
+void oneapi_multi_scatter_atomic(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count, sycl::nd_item<3> item_ct1) {
@@ -151,7 +151,7 @@ void cuda_multi_scatter_atomic(const size_t *pattern,
             dense[j + pattern_length * (i % wrap)])));
 }
 
-float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
+float oneapi_gather_wrapper(const size_t *pattern, const double *sparse,
     double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count) {
   dpct::device_ext &dev_ct1 = dpct::get_current_device();
@@ -185,7 +185,7 @@ float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_gather(pattern, sparse, dense, pattern_length, delta, wrap, count,
+        oneapi_gather(pattern, sparse, dense, pattern_length, delta, wrap, count,
             item_ct1);
       });
   /*
@@ -211,7 +211,7 @@ float cuda_gather_wrapper(const size_t *pattern, const double *sparse,
   return time_ms;
 }
 
-float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
+float oneapi_scatter_wrapper(const size_t *pattern, double *sparse,
     const double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count) {
   dpct::device_ext &dev_ct1 = dpct::get_current_device();
@@ -245,7 +245,7 @@ float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_scatter(pattern, sparse, dense, pattern_length, delta, wrap, count,
+        oneapi_scatter(pattern, sparse, dense, pattern_length, delta, wrap, count,
             item_ct1);
       });
   /*
@@ -271,7 +271,7 @@ float cuda_scatter_wrapper(const size_t *pattern, double *sparse,
   return time_ms;
 }
 
-float cuda_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
+float oneapi_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
     const double *dense, const size_t pattern_length, const size_t delta,
     const size_t wrap, const size_t count) {
   dpct::device_ext &dev_ct1 = dpct::get_current_device();
@@ -305,7 +305,7 @@ float cuda_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_scatter_atomic(pattern, sparse, dense, pattern_length, delta, wrap,
+        oneapi_scatter_atomic(pattern, sparse, dense, pattern_length, delta, wrap,
             count, item_ct1);
       });
   /*
@@ -331,7 +331,7 @@ float cuda_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
   return time_ms;
 }
 
-float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
+float oneapi_scatter_gather_wrapper(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -367,7 +367,7 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_scatter_gather(pattern_scatter, sparse_scatter, pattern_gather,
+        oneapi_scatter_gather(pattern_scatter, sparse_scatter, pattern_gather,
             sparse_gather, pattern_length, delta_scatter, delta_gather, wrap,
             count, item_ct1);
       });
@@ -394,7 +394,7 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
   return time_ms;
 }
 
-float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
+float oneapi_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -430,7 +430,7 @@ float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_scatter_gather_atomic(pattern_scatter, sparse_scatter,
+        oneapi_scatter_gather_atomic(pattern_scatter, sparse_scatter,
             pattern_gather, sparse_gather, pattern_length, delta_scatter,
             delta_gather, wrap, count, item_ct1);
       });
@@ -457,7 +457,7 @@ float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
   return time_ms;
 }
 
-float cuda_multi_gather_wrapper(const size_t *pattern,
+float oneapi_multi_gather_wrapper(const size_t *pattern,
     const size_t *pattern_gather, const double *sparse, double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count) {
@@ -492,7 +492,7 @@ float cuda_multi_gather_wrapper(const size_t *pattern,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_multi_gather(pattern, pattern_gather, sparse, dense,
+        oneapi_multi_gather(pattern, pattern_gather, sparse, dense,
             pattern_length, delta, wrap, count, item_ct1);
       });
   /*
@@ -518,7 +518,7 @@ float cuda_multi_gather_wrapper(const size_t *pattern,
   return time_ms;
 }
 
-float cuda_multi_scatter_wrapper(const size_t *pattern,
+float oneapi_multi_scatter_wrapper(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count) {
@@ -553,7 +553,7 @@ float cuda_multi_scatter_wrapper(const size_t *pattern,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_multi_scatter(pattern, pattern_scatter, sparse, dense,
+        oneapi_multi_scatter(pattern, pattern_scatter, sparse, dense,
             pattern_length, delta, wrap, count, item_ct1);
       });
   /*
@@ -579,7 +579,7 @@ float cuda_multi_scatter_wrapper(const size_t *pattern,
   return time_ms;
 }
 
-float cuda_multi_scatter_atomic_wrapper(const size_t *pattern,
+float oneapi_multi_scatter_atomic_wrapper(const size_t *pattern,
     const size_t *pattern_scatter, double *sparse, const double *dense,
     const size_t pattern_length, const size_t delta, const size_t wrap,
     const size_t count) {
@@ -614,7 +614,7 @@ float cuda_multi_scatter_atomic_wrapper(const size_t *pattern,
               sycl::range<3>(1, 1, threads_per_block),
           sycl::range<3>(1, 1, threads_per_block)),
       [=](sycl::nd_item<3> item_ct1) {
-        cuda_multi_scatter_atomic(pattern, pattern_scatter, sparse, dense,
+        oneapi_multi_scatter_atomic(pattern, pattern_scatter, sparse, dense,
             pattern_length, delta, wrap, count, item_ct1);
       });
   /*
