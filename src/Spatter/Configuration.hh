@@ -42,6 +42,10 @@ inline void gpuAssert(
 }
 #endif
 
+#ifdef USE_ONEAPI
+#include "OneapiBackend.hh"
+#endif
+
 #include "AlignedAllocator.hh"
 #include "SpatterTypes.hh"
 #include "Timer.hh"
@@ -230,6 +234,46 @@ public:
 };
 #endif
 
+#ifdef USE_ONEAPI
+template <> class Configuration<Spatter::OneApi> : public ConfigurationBase {
+public:
+  Configuration(const size_t id, const std::string name,
+      const std::string kernel, const aligned_vector<size_t> &pattern,
+      const aligned_vector<size_t> &pattern_gather,
+      const aligned_vector<size_t> &pattern_scatter,
+      aligned_vector<double> &sparse, size_t &sparse_size,
+      aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
+      aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
+      aligned_vector<double> &dense, size_t &dense_size,
+      aligned_vector<aligned_vector<double>> &dense_perthread,
+      const size_t delta, const size_t delta_gather, const size_t delta_scatter,
+      const long int seed, const size_t wrap, const size_t count,
+      const size_t shared_mem, const size_t local_work_size,
+      const unsigned long nruns, const bool aggregate, const bool atomic,
+      const unsigned long verbosity);
+
+  ~Configuration();
+
+  int run(bool timed, unsigned long run_id);
+  void gather(bool timed, unsigned long run_id);
+  void scatter(bool timed, unsigned long run_id);
+  void scatter_gather(bool timed, unsigned long run_id);
+  void multi_gather(bool timed, unsigned long run_id);
+  void multi_scatter(bool timed, unsigned long run_id);
+  void setup();
+
+public:
+  size_t *dev_pattern;
+  size_t *dev_pattern_gather;
+  size_t *dev_pattern_scatter;
+
+  double *dev_sparse;
+  double *dev_sparse_gather;
+  double *dev_sparse_scatter;
+
+  double *dev_dense;
+};
+#endif
 } // namespace Spatter
 
 #endif
