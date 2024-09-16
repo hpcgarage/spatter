@@ -1,0 +1,2041 @@
+---
+MainSourceFile:  MainSrcFiles_placehold
+Replacements:
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          0
+    Length:          0
+    ReplacementText: "#include <sycl/sycl.hpp>\n#include <dpct/dpct.hpp>\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          20
+    Length:          18
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          38
+    Length:          26
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          92
+    Length:          0
+    ReplacementText: "\n#include <chrono>\n\n#include <cmath>\n\n#include <algorithm>\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          94
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          276
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          323
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          344
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          365
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          681
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          864
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          911
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          932
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          953
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1169
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1359
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1406
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1427
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1448
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1588
+    Length:          10
+    ReplacementText: 'dpct::atomic_exchange<unsigned long long, sycl::access::address_space::generic_space>'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1666
+    Length:          60
+    ReplacementText: '(unsigned long long)(sycl::bit_cast<long long>(dense[j + pattern_length * (i % wrap)])'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1726
+    Length:          0
+    ReplacementText: ')'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          1732
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2019
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2066
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2087
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2108
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2417
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2711
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2758
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2779
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2800
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          2988
+    Length:          10
+    ReplacementText: 'dpct::atomic_exchange<unsigned long long, sycl::access::address_space::generic_space>'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3109
+    Length:          86
+    ReplacementText: '(unsigned long long)(sycl::bit_cast<long long>(sparse_gather[pattern_gather[j] + delta_gather * i])'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3195
+    Length:          0
+    ReplacementText: ')'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3201
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3423
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3470
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3491
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3512
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          3867
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4091
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4138
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4159
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4180
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4421
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4652
+    Length:          0
+    ReplacementText: ', sycl::nd_item<3> item_ct1'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4699
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4720
+    Length:          10
+    ReplacementText: 'item_ct1.get_group(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4741
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4881
+    Length:          10
+    ReplacementText: 'dpct::atomic_exchange<unsigned long long, sycl::access::address_space::generic_space>'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          4999
+    Length:          60
+    ReplacementText: '(unsigned long long)(sycl::bit_cast<long long>(dense[j + pattern_length * (i % wrap)])'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5059
+    Length:          0
+    ReplacementText: ')'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5248
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5251
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5275
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5279
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5306
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5357
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5497
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5522
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:8: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5524
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5549
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:0: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5551
+    Length:          118
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_gather(pattern, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5669
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5671
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:9: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5694
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:10: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5696
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5719
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5773
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5821
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          5848
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6078
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6081
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6105
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6109
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6136
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6187
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6327
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6352
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:11: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6354
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6379
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:1: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6381
+    Length:          119
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_scatter(pattern, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6500
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6502
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:12: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6525
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:13: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6527
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6550
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6604
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6652
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6679
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6916
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6919
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6943
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6947
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          6974
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7025
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7165
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7190
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:14: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7192
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7217
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:2: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7219
+    Length:          126
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_scatter_atomic(pattern, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7345
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7347
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:15: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7370
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:16: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7372
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7395
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7449
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7497
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7524
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7858
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7861
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7885
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7889
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7916
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          7967
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8107
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8132
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:17: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8134
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8159
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:3: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8161
+    Length:          193
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_scatter_gather(pattern_scatter, sparse_scatter, pattern_gather, sparse_gather, pattern_length, delta_scatter, delta_gather, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8354
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8356
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:18: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8379
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:19: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8381
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8404
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8458
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8506
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8533
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8874
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8877
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8901
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8905
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8932
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          8983
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9123
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9148
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:20: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9150
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9175
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:4: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9177
+    Length:          201
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_scatter_gather_atomic(pattern_scatter, sparse_scatter, pattern_gather, sparse_gather, pattern_length, delta_scatter, delta_gather, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9378
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9380
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:21: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9403
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:22: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9405
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9428
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9482
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9530
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9557
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9826
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9829
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9853
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9857
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9884
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          9935
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10075
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10100
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:23: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10102
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10127
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:5: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10129
+    Length:          139
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_multi_gather(pattern, pattern_gather, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10268
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10270
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:24: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10293
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:25: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10295
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10318
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10372
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10420
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10447
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10718
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10721
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10745
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10749
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10776
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10827
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10967
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10992
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:26: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          10994
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11019
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:6: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11021
+    Length:          141
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_multi_scatter(pattern, pattern_scatter, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11162
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11164
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:27: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11187
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:28: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11189
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11212
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11266
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11314
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11341
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11619
+    Length:          0
+    ReplacementText: "\n  dpct::device_ext &dev_ct1 = dpct::get_current_device();\n  sycl::queue &q_ct1 = dev_ct1.default_queue();"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11622
+    Length:          11
+    ReplacementText: 'dpct::event_ptr'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11646
+    Length:          0
+    ReplacementText: "\n  std::chrono::time_point<std::chrono::steady_clock> start_ct1;\n  std::chrono::time_point<std::chrono::steady_clock> stop_ct1;"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11650
+    Length:          23
+    ReplacementText: 'start = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11677
+    Length:          22
+    ReplacementText: 'stop = new sycl::event()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11728
+    Length:          33
+    ReplacementText: 'std::min(pattern_length, (size_t)1024)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11868
+    Length:          23
+    ReplacementText: 'dev_ct1.queues_wait_and_throw()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11893
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:29: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11895
+    Length:          22
+    ReplacementText: 'start_ct1 = std::chrono::steady_clock::now()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11920
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1049:7: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          11922
+    Length:          148
+    ReplacementText: "*stop = q_ct1.parallel_for(\n    sycl::nd_range<3>(sycl::range<3>(1, 1, blocks_per_grid) * sycl::range<3>(1, 1, threads_per_block), sycl::range<3>(1, 1, threads_per_block)), \n    [=](sycl::nd_item<3> item_ct1) {\n      cuda_multi_scatter_atomic(pattern, pattern_scatter, sparse, dense, pattern_length, delta, wrap, count, item_ct1);\n    });"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: true
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12070
+    Length:          1
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12072
+    Length:          22
+    ReplacementText: "  /*\n  DPCT1026:30: The call to cudaGetLastError was removed because this call is redundant in SYCL.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12095
+    Length:          0
+    ReplacementText: "  /*\n  DPCT1012:31: Detected kernel execution time measurement pattern and generated an initial code for time measurements in SYCL. You can change the way time is measured depending on your goals.\n  */\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12097
+    Length:          21
+    ReplacementText: "stop->wait();\n  stop_ct1 = std::chrono::steady_clock::now()"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12120
+    Length:          30
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12174
+    Length:          43
+    ReplacementText: 'time_ms = std::chrono::duration<float, std::milli>(stop_ct1 - start_ct1).count()'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12222
+    Length:          23
+    ReplacementText: 'dpct::destroy_event(start)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Offset:          12249
+    Length:          22
+    ReplacementText: 'dpct::destroy_event(stop)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+MainSourceFilesDigest:
+  - MainSourceFile:  '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+    Digest:          4865bda3b9e4e78cf28035e340b9d41c
+DpctVersion:     2023.0.0
+MainHelperFileName: dpct
+USMLevel:        ''
+FeatureMap:
+  atomic.hpp:
+    atomic_exchange:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     atomic_exchange
+      SubFeatureMap:   {}
+  device.hpp:
+    destroy_event:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     destroy_event
+      SubFeatureMap:   {}
+    dev_mgr:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     dev_mgr
+      SubFeatureMap:
+        dev_mgr_1:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     dev_mgr
+          SubFeatureMap:   {}
+        dev_mgr_2:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     dev_mgr
+          SubFeatureMap:   {}
+        dev_mgr_3:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     dev_mgr
+          SubFeatureMap:   {}
+        dev_mgr_4:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     dev_mgr
+          SubFeatureMap:   {}
+        dev_mgr_check_id:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     'dev_mgr::check_id'
+          SubFeatureMap:   {}
+        dev_mgr_current_device:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     'dev_mgr::current_device'
+          SubFeatureMap:   {}
+        dev_mgr_current_device_id:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     'dev_mgr::current_device_id'
+          SubFeatureMap:   {}
+    device_ext:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     device_ext
+      SubFeatureMap:
+        device_ext_1:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     device_ext
+          SubFeatureMap:   {}
+        device_ext_2:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     device_ext
+          SubFeatureMap:   {}
+        device_ext_default_queue:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     'device_ext::default_queue'
+          SubFeatureMap:   {}
+        device_ext_queues_wait_and_throw:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+          FeatureName:     'device_ext::queues_wait_and_throw'
+          SubFeatureMap:   {}
+    exception_handler:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     exception_handler
+      SubFeatureMap:   {}
+    get_current_device:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     get_current_device
+      SubFeatureMap:   {}
+    get_default_queue:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     get_default_queue
+      SubFeatureMap:   {}
+    get_tid:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     get_tid
+      SubFeatureMap:   {}
+    typedef_event_ptr:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nethome/ychen3274/spatter/spatter/src/Spatter/CudaBackend.cu'
+      FeatureName:     typedef_event_ptr
+      SubFeatureMap:   {}
+  dpct.hpp:
+    non_local_include_dependency:
+      IsCalled:        true
+      CallerSrcFiles:
+        - ''
+      FeatureName:     ''
+      SubFeatureMap:   {}
+CompileTargets:  {}
+OptionMap:
+  AnalysisScopePath:
+    Value:           '/nethome/ychen3274/spatter/spatter/src/Spatter'
+    Specified:       false
+  AsyncHandler:
+    Value:           'false'
+    Specified:       false
+  CommentsEnabled:
+    Value:           'false'
+    Specified:       false
+  CompilationsDir:
+    Value:           ''
+    Specified:       false
+  CtadEnabled:
+    Value:           'false'
+    Specified:       false
+  CustomHelperFileName:
+    Value:           dpct
+    Specified:       false
+  ExperimentalFlag:
+    Value:           '0'
+    Specified:       false
+  ExplicitClNamespace:
+    Value:           'false'
+    Specified:       false
+  ExplicitNamespace:
+    Value:           '20'
+    Specified:       false
+  ExtensionDDFlag:
+    Value:           '0'
+    Specified:       false
+  ExtensionDEFlag:
+    Value:           '4294967295'
+    Specified:       false
+  NDRangeDim:
+    Value:           '3'
+    Specified:       false
+  NoDRYPattern:
+    Value:           'false'
+    Specified:       false
+  OptimizeMigration:
+    Value:           'false'
+    Specified:       false
+  ProcessAll:
+    Value:           'false'
+    Specified:       false
+  RuleFile:
+    Value:           ''
+    Specified:       false
+  SyclNamedLambda:
+    Value:           'false'
+    Specified:       false
+  UsmLevel:
+    Value:           '1'
+    Specified:       false
+...
