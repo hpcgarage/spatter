@@ -6,8 +6,13 @@ if (USE_CUDA)
     set(CUDA_INCLUDE_FILES CudaBackend.hh)
 endif()
 
+if (USE_ONEAPI)
+    set(ONEAPI_INCLUDE_FILES OneApiBackend.hh)
+endif()
+
 set(SPATTER_INCLUDE_FILES
     ${CUDA_INCLUDE_FILES}
+    ${ONEAPI_INCLUDE_FILES}
     Configuration.hh
     Input.hh
     JSONParser.hh
@@ -17,6 +22,7 @@ set(SPATTER_INCLUDE_FILES
     Timer.hh
     )
 
+message(SPATTER_INCLUDE_FILES="${SPATTER_INCLUDE_FILES}")
 add_library(Spatter STATIC
     ${SPATTER_INCLUDE_FILES}
     Configuration.cc

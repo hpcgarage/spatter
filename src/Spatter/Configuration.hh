@@ -43,7 +43,7 @@ inline void gpuAssert(
 #endif
 
 #ifdef USE_ONEAPI
-#include "OneapiBackend.hh"
+#include "OneApiBackend.hh"
 #endif
 
 #include "AlignedAllocator.hh"
