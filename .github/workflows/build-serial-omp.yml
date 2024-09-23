@@ -1,7 +1,7 @@
 name: Build and Test Serial and OpenMP backends
 
 on: 
-  pull_request:
+  [push, pull_request]:
     branches: [main, spatter-devel]
 
 jobs:

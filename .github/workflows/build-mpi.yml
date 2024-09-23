@@ -1,11 +1,9 @@
 name: Build and Test MPI Backend
 
 on:
-  push:
-    branches: [ main spatter-devel ]
-  pull_request:
-    branches: [ main spatter-devel ]
-
+  [push, pull_request]:
+    branches: [main, spatter-devel]
+  
 jobs:  
   build-and-run-mpi:
     runs-on: ubuntu-latest
