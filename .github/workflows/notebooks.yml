@@ -1,7 +1,7 @@
 name: Notebook Build
 
 on:
-  [push, pull_request]:
+  pull_request:
     branches: [main, spatter-devel]
 
 jobs:
