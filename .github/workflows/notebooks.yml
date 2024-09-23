@@ -2,8 +2,9 @@ name: Notebook Build
 
 on:
   push:
-    branches:
-      - 'main'
+    branches: [ main spatter-devel ]
+  pull_request:
+    branches: [ main spatter-devel ]
 
 jobs:
   notebook-tests:

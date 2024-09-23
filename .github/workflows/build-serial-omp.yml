@@ -2,11 +2,9 @@ name: Build and Test Serial and OpenMP backends
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main spatter-devel ]
   pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '30 8 * * *'
+    branches: [ main spatter-devel ]
 
 jobs:
   build-and-run-serial:
