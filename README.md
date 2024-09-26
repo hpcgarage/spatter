@@ -2,7 +2,7 @@
 
 Spatter is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
 
-![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build-serial-omp.yml/badge.svg)
 
 
 ## Purpose 
