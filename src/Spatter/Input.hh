@@ -390,6 +390,10 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       kernel = optarg;
       std::transform(kernel.begin(), kernel.end(), kernel.begin(),
           [](unsigned char c) { return std::tolower(c); });
+      
+      // The gather-scatter kernel may be specified as 'gs' instead of 'sg'
+      if (kernel.compare("gs") == 0)
+        kernel = "sg";
 
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
           (kernel.compare("sg") != 0) && (kernel.compare("multigather") != 0) &&
