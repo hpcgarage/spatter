@@ -46,6 +46,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"runs", required_argument, nullptr, 'r'},
     {"random", optional_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
+    {"target-buffers", required_argument, nullptr, 0},
     {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
     {"wrap", required_argument, nullptr, 'w'},
@@ -77,6 +78,7 @@ struct ClArgs {
   bool aggregate;
   bool atomic;
   bool compress;
+  bool target_buffers;
   unsigned long verbosity;
 
   void report_header() {
@@ -172,10 +174,15 @@ void help(char *progname) {
             << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
                "openmp or OMP_MAX_THREADS if USE_OPENMP)"
             << std::left << "\n";
-  std::cout
-      << std::left << std::setw(10) << "-u (--pattern-scatter)" << std::setw(4)
-      << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
-      << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "   (--target-buffers)"
+            << std::setw(40)
+            << "Enable multiple target buffers for OpenMP backend "
+            << "(default 0/off)" << std::left << "\n";
+  std::cout << std::left << std::setw(10)
+            << "-u (--pattern-scatter)" << std::setw(4)
+            << "Set Inner Scatter Pattern "
+            << "(Valid with kernel-name: sg, multiscatter)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level (default 1)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
@@ -197,8 +204,8 @@ void usage(char *progname) {
                "[-h "
                "help] [-j pattern-size] [-k kernel] [-l count] [-m "
                "shared-memory] [-n name] [-o op]"
-               "[-p pattern] [-r runs] [-s random] [-t nthreads] [-u inner "
-               "scatter pattern] [-v "
+               "[-p pattern] [-r runs] [-s random] [-t nthreads] "
+               "[--target-buffers] [-u inner scatter pattern] [-v "
                "verbosity] [-w wrap] [-z local-work-size]"
             << std::endl;
 }
@@ -260,6 +267,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.aggregate = false;
   cl.atomic = false;
   cl.compress = false;
+  cl.target_buffers = false;
   cl.verbosity = 1;
 
   // In flag alphabetical order
@@ -295,6 +303,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   int nthreads = 1;
 #endif
 
+  bool target_buffers = cl.target_buffers;
   std::stringstream pattern_scatter_string;
   aligned_vector<size_t> pattern_scatter;
 
@@ -319,6 +328,14 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
                 "Parsing Error: Invalid Atomic Write") == -1)
           return -1;
         atomic = (atomic_val > 0) ? true : false;
+      }
+      if (strcmp(longargs[option_index].name, "target-buffers") == 0) {
+        int target_buffers_val = 0;
+        if (read_int_arg(optarg, target_buffers_val,
+                  "Parsing Error: Invalid Target Buffers") == -1) {
+          return -1;
+        }
+        target_buffers = target_buffers_val > 0;
       }
       break;
 
@@ -505,9 +522,11 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
   }
 
+  cl.atomic = atomic;
   cl.backend = backend;
   cl.aggregate = aggregate;
   cl.compress = compress;
+  cl.target_buffers = target_buffers;
   cl.verbosity = verbosity;
 
 #ifdef USE_OPENMP
@@ -629,7 +648,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, nthreads, nruns, aggregate, atomic,
-          verbosity);
+          target_buffers, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
@@ -654,7 +673,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
         cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
         cl.dense_size, backend, aggregate, atomic, compress, shared_mem,
-        nthreads, verbosity);
+        nthreads, target_buffers, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];

@@ -17,7 +17,8 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
     size_t &dense_size, const std::string backend, const bool aggregate,
     const bool atomic, const bool compress, size_t shared_mem,
-    const int nthreads, const unsigned long verbosity, const std::string name,
+    const int nthreads, const bool target_buffers,
+    const unsigned long verbosity, const std::string name,
     const std::string kernel, const size_t pattern_size, const size_t delta,
     const size_t delta_gather, const size_t delta_scatter,
     const size_t boundary, const long int seed, const size_t wrap,
@@ -30,7 +31,8 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
       dense_perthread(dense_perthread), dev_dense(dev_dense),
       dense_size(dense_size), backend_(backend), aggregate_(aggregate),
       atomic_(atomic), compress_(compress), shared_mem_(shared_mem),
-      omp_threads_(nthreads), verbosity_(verbosity), default_name_(name),
+      omp_threads_(nthreads), target_buffers_(target_buffers),
+      verbosity_(verbosity), default_name_(name),
       default_kernel_(kernel), default_pattern_size_(pattern_size),
       default_delta_(delta), default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_boundary_(boundary),
@@ -201,7 +203,8 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
         dev_dense, dense_size, delta, delta_gather, delta_scatter,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_);
+        omp_threads_, data_[index]["nruns"], aggregate_, atomic_,
+        target_buffers_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)

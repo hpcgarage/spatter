@@ -23,7 +23,7 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     const size_t delta_scatter, const long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const int nthreads, const unsigned long nruns, const bool aggregate,
-    const bool atomic, const unsigned long verbosity)
+    const bool atomic, const bool target_buffers, const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
       sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
@@ -36,7 +36,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
       shmem(shared_mem), local_work_size(local_work_size),
       omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
-      verbosity(verbosity), time_seconds(nruns, 0) {
+      target_buffers(target_buffers), verbosity(verbosity),
+      time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -395,7 +396,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
-          verbosity) {
+          false, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -527,13 +528,14 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
-    const unsigned long verbosity)
+    const bool target_buffers, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
+          count, 0, 1024, nthreads, nruns, aggregate, atomic, target_buffers,
+          verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -732,7 +734,7 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
-          verbosity) {
+          false, verbosity) {
   
   setup();
 }
