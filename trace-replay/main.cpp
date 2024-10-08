@@ -31,7 +31,7 @@ int main() {
     tr[7] = to_rwsz(0) | to_addr(0x44); // Read  4
 
     double *local = (double*)malloc(sizeof(double) * GAP_SIZE * omp_get_max_threads());
-    double *mem   = (double*)malloc(sizeof(char)   * 0x64);
+    void *mem   = (void*)malloc(sizeof(char)   * 0x64);
 
     trace_replay_kernel(tr, 8, mem, local);
     printf("All done!\n");

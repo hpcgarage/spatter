@@ -31,6 +31,7 @@
 //  3. Need to ensure that rw_sz() and addr() are inlined
 //  4. Need to consider non-temporal stores for the trace
 
+#define DEBUG 0
 #define GAP_SIZE 32 // 32 doubles == 256 bytes
 
 typedef uint64_t trace_entry;
@@ -39,7 +40,7 @@ int rw_sz(trace_entry t) {
     return t >> ADDR_BITS;
 }
 
-int addr(trace_entry t) {
+long long addr(trace_entry t) {
     return t & ADDR_MASK;
 }
 
@@ -54,15 +55,27 @@ void trace_replay_kernel(trace_entry *tr, long len, void *mem, double *local) {
     for (long i = 0; i < len; i++) {
         switch (rw_sz(tr[i])) {
             case 0:
+#if DEBUG
+                printf("rd 4 0x%llx\n", addr(tr[i]));
+#endif
                 local[tid*GAP_SIZE] = ((float*)mem)[addr(tr[i])/4]; // Adjust from address to array-index by dividing by 4
                 break;
             case 1:
+#if DEBUG
+                printf("rd 8 0x%llx\n", addr(tr[i]));
+#endif
                 local[tid*GAP_SIZE] = ((double*)mem)[addr(tr[i])/8];
                 break;
             case 2:
+#if DEBUG
+                printf("wr 4 0x%llx\n", addr(tr[i]));
+#endif
                 ((float*)mem)[addr(tr[i])/4] = local[tid*GAP_SIZE];
                 break;
             case 3:
+#if DEBUG
+                printf("wr 8 0x%llx\n", addr(tr[i]));
+#endif
                 ((double*)mem)[addr(tr[i])/8] = local[tid*GAP_SIZE];
                 break;
         }
