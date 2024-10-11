@@ -69,7 +69,7 @@ public:
       const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
-      const bool target_buffers, const unsigned long verbosity);
+      const bool dense_buffers, const unsigned long verbosity);
 
   virtual ~ConfigurationBase();
 
@@ -137,7 +137,7 @@ public:
 
   const bool aggregate;
   const bool atomic;
-  const bool target_buffers;
+  const bool dense_buffers;
   const unsigned long verbosity;
 
   Spatter::Timer timer;
@@ -190,7 +190,7 @@ public:
       const size_t delta_gather, const size_t delta_scatter,
       const long int seed, const size_t wrap, const size_t count,
       const int nthreads, const unsigned long nruns, const bool aggregate,
-      const bool atomic, const bool target_buffers,
+      const bool atomic, const bool dense_buffers,
       const unsigned long verbosity);
 
   int run(bool timed, unsigned long run_id);

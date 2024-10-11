@@ -35,7 +35,7 @@ public:
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const std::string backend,
       const bool aggregate, const bool atomic, const bool compress,
-      const size_t shared_mem, const int nthreads, const bool target_buffers,
+      const bool dense_buffers, const size_t shared_mem, const int nthreads,
       const unsigned long verbosity, const std::string name = "",
       const std::string kernel = "gather", const size_t pattern_size = 0,
       const size_t delta = 8, const size_t delta_gather = 8,
@@ -78,9 +78,9 @@ private:
   const bool aggregate_;
   const bool atomic_;
   const bool compress_;
+  const bool dense_buffers_;
   const size_t shared_mem_;
   const int omp_threads_;
-  const bool target_buffers_;
   const unsigned long verbosity_;
 
   std::string default_name_;

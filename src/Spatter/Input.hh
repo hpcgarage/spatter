@@ -32,6 +32,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
+    {"dense-buffers", optional_argument, nullptr, 1},
     {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
@@ -46,13 +47,13 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"runs", required_argument, nullptr, 'r'},
     {"random", optional_argument, nullptr, 's'},
     {"omp-threads", required_argument, nullptr, 't'},
-    {"target-buffers", required_argument, nullptr, 0},
     {"pattern-scatter", required_argument, nullptr, 'u'},
     {"verbosity", required_argument, nullptr, 'v'},
     {"wrap", required_argument, nullptr, 'w'},
     {"delta-gather", required_argument, nullptr, 'x'},
     {"delta-scatter", required_argument, nullptr, 'y'},
-    {"local-work-size", required_argument, nullptr, 'z'}};
+    {"local-work-size", required_argument, nullptr, 'z'},
+    {nullptr, no_argument, nullptr, 0}};
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -78,7 +79,7 @@ struct ClArgs {
   bool aggregate;
   bool atomic;
   bool compress;
-  bool target_buffers;
+  bool dense_buffers;
   unsigned long verbosity;
 
   void report_header() {
@@ -135,6 +136,10 @@ void help(char *progname) {
             << " Enable compression of pattern indices" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "   (--dense-buffers) "
+            << std::setw(40)
+            << "Enable multiple dense buffers for OpenMP kernels "
+            << "(default 0/off)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
             << " Set Boundary (limits max value of pattern using modulo)"
             << std::left << "\n";
@@ -174,10 +179,6 @@ void help(char *progname) {
             << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
                "openmp or OMP_MAX_THREADS if USE_OPENMP)"
             << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "   (--target-buffers)"
-            << std::setw(40)
-            << "Enable multiple target buffers for OpenMP backend "
-            << "(default 0/off)" << std::left << "\n";
   std::cout << std::left << std::setw(10)
             << "-u (--pattern-scatter)" << std::setw(4)
             << "Set Inner Scatter Pattern "
@@ -198,14 +199,14 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
-               "[-d delta] [-e "
+            << " [-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
+               "[-d delta] [--dense-buffers] [-e "
                "boundary] [-f input file] [-g inner gather pattern] "
                "[-h "
                "help] [-j pattern-size] [-k kernel] [-l count] [-m "
                "shared-memory] [-n name] [-o op]"
                "[-p pattern] [-r runs] [-s random] [-t nthreads] "
-               "[--target-buffers] [-u inner scatter pattern] [-v "
+               "[-u inner scatter pattern] [-v "
                "verbosity] [-w wrap] [-z local-work-size]"
             << std::endl;
 }
@@ -267,7 +268,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.aggregate = false;
   cl.atomic = false;
   cl.compress = false;
-  cl.target_buffers = false;
+  cl.dense_buffers = false;
   cl.verbosity = 1;
 
   // In flag alphabetical order
@@ -275,6 +276,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   bool atomic = cl.atomic;
   std::string backend = cl.backend;
   bool compress = cl.compress;
+  bool dense_buffers = cl.dense_buffers;
   size_t delta = 8;
   size_t boundary = 0;
 
@@ -303,7 +305,6 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   int nthreads = 1;
 #endif
 
-  bool target_buffers = cl.target_buffers;
   std::stringstream pattern_scatter_string;
   aligned_vector<size_t> pattern_scatter;
 
@@ -329,13 +330,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           return -1;
         atomic = (atomic_val > 0) ? true : false;
       }
-      if (strcmp(longargs[option_index].name, "target-buffers") == 0) {
-        int target_buffers_val = 0;
-        if (read_int_arg(optarg, target_buffers_val,
-                  "Parsing Error: Invalid Target Buffers") == -1) {
+      if (strcmp(longargs[option_index].name, "dense-buffers") == 0) {
+        int dense_buffers_val = 0;
+        if (read_int_arg(optarg, dense_buffers_val,
+                  "Parsing Error: Invalid Dense Buffers") == -1) {
           return -1;
         }
-        target_buffers = target_buffers_val > 0;
+        dense_buffers = dense_buffers_val > 0;
       }
       break;
 
@@ -526,7 +527,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.backend = backend;
   cl.aggregate = aggregate;
   cl.compress = compress;
-  cl.target_buffers = target_buffers;
+  cl.dense_buffers = dense_buffers;
   cl.verbosity = verbosity;
 
 #ifdef USE_OPENMP
@@ -648,7 +649,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, nthreads, nruns, aggregate, atomic,
-          target_buffers, verbosity);
+          dense_buffers, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
@@ -672,8 +673,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
         cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
         cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
-        cl.dense_size, backend, aggregate, atomic, compress, shared_mem,
-        nthreads, target_buffers, verbosity);
+        cl.dense_size, backend, aggregate, atomic, compress, dense_buffers,
+        shared_mem, nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
