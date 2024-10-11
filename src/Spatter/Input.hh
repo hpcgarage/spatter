@@ -32,7 +32,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
-    {"dense-buffers", required_argument, nullptr, 0},
+    {"dense-buffers", no_argument, nullptr, 0},
     {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
@@ -139,7 +139,7 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "   (--dense-buffers) "
             << std::setw(40)
             << "Enable multiple dense buffers for OpenMP kernels "
-            << "(default 0/off)" << std::left << "\n";
+            << "(default off)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
             << " Set Boundary (limits max value of pattern using modulo)"
             << std::left << "\n";
@@ -331,12 +331,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         atomic = (atomic_val > 0) ? true : false;
       }
       if (strcmp(longargs[option_index].name, "dense-buffers") == 0) {
-        int dense_buffers_val = 0;
-        if (read_int_arg(optarg, dense_buffers_val,
-                  "Parsing Error: Invalid Dense Buffers") == -1) {
-          return -1;
-        }
-        dense_buffers = dense_buffers_val > 0;
+        dense_buffers = true;
       }
       break;
 
