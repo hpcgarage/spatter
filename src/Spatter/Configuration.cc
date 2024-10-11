@@ -557,11 +557,13 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (target_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -591,11 +593,13 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = (target_buffers ? dense_perthread[t].data() : dense.data());
+    double *target = sparse.data();
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -655,11 +659,13 @@ void Configuration<Spatter::OpenMP>::multi_gather(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (target_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -690,11 +696,13 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *target = sparse.data();
+    double *source = (target_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
