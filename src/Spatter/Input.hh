@@ -32,7 +32,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
-    {"dense-buffers", optional_argument, nullptr, 1},
+    {"dense-buffers", required_argument, nullptr, 0},
     {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
@@ -703,15 +703,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       cl.sparse_scatter[i] = rand();
   }
 
-  if (cl.dense.size() < cl.dense_size) {
-    cl.dense.resize(cl.dense_size);
-
-    for (size_t i = 0; i < cl.dense.size(); ++i)
-      cl.dense[i] = rand();
-  }
-
 #ifdef USE_OPENMP
-  if (backend.compare("openmp") == 0) {
+  if ((backend.compare("openmp") == 0) && dense_buffers) {
     cl.dense_perthread.resize(nthreads);
 
     for (int j = 0; j < nthreads; ++j) {
@@ -720,6 +713,20 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       for (size_t i = 0; i < cl.dense_perthread[j].size(); ++i)
         cl.dense_perthread[j][i] = rand();
     }
+  } else {
+      if (cl.dense.size() < cl.dense_size) {
+        cl.dense.resize(cl.dense_size);
+
+      for (size_t i = 0; i < cl.dense.size(); ++i)
+        cl.dense[i] = rand();
+    }
+  }
+#else
+  if (cl.dense.size() < cl.dense_size) {
+    cl.dense.resize(cl.dense_size);
+
+    for (size_t i = 0; i < cl.dense.size(); ++i)
+      cl.dense[i] = rand();
   }
 #endif
 #ifdef USE_CUDA
