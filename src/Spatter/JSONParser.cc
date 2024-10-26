@@ -16,10 +16,10 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     aligned_vector<double> &dense,
     aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
     size_t &dense_size, const std::string backend, const bool aggregate,
-    const bool atomic, const bool compress, size_t shared_mem,
-    const int nthreads, const unsigned long verbosity, const std::string name,
-    const std::string kernel, const size_t pattern_size, const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter,
+    const bool atomic, const bool compress, const bool dense_buffers,
+    size_t shared_mem, const int nthreads, const unsigned long verbosity,
+    const std::string name, const std::string kernel, const size_t pattern_size,
+    const size_t delta, const size_t delta_gather, const size_t delta_scatter,
     const size_t boundary, const long int seed, const size_t wrap,
     const size_t count, const size_t local_work_size, const unsigned long nruns)
     : sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
@@ -29,10 +29,11 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
       sparse_scatter_size(sparse_scatter_size), dense(dense),
       dense_perthread(dense_perthread), dev_dense(dev_dense),
       dense_size(dense_size), backend_(backend), aggregate_(aggregate),
-      atomic_(atomic), compress_(compress), shared_mem_(shared_mem),
-      omp_threads_(nthreads), verbosity_(verbosity), default_name_(name),
-      default_kernel_(kernel), default_pattern_size_(pattern_size),
-      default_delta_(delta), default_delta_gather_(delta_gather),
+      atomic_(atomic), compress_(compress), dense_buffers_(dense_buffers),
+      shared_mem_(shared_mem), omp_threads_(nthreads), verbosity_(verbosity),
+      default_name_(name), default_kernel_(kernel),
+      default_pattern_size_(pattern_size), default_delta_(delta),
+      default_delta_gather_(delta_gather),
       default_delta_scatter_(delta_scatter), default_boundary_(boundary),
       default_seed_(seed), default_wrap_(wrap), default_count_(count),
       default_local_work_size_(local_work_size), default_nruns_(nruns) {
@@ -201,7 +202,8 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
         dev_dense, dense_size, delta, delta_gather, delta_scatter,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_);
+        omp_threads_, data_[index]["nruns"], aggregate_, atomic_,
+        dense_buffers_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)

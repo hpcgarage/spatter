@@ -23,7 +23,7 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     const size_t delta_scatter, const long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const int nthreads, const unsigned long nruns, const bool aggregate,
-    const bool atomic, const unsigned long verbosity)
+    const bool atomic, const bool dense_buffers, const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
       sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
@@ -36,7 +36,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
       shmem(shared_mem), local_work_size(local_work_size),
       omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
-      verbosity(verbosity), time_seconds(nruns, 0) {
+      dense_buffers(dense_buffers), verbosity(verbosity),
+      time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -395,7 +396,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
-          verbosity) {
+          false, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -527,13 +528,14 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
-    const unsigned long verbosity)
+    const bool dense_buffers, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
+          count, 0, 1024, nthreads, nruns, aggregate, atomic, dense_buffers,
+          verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -555,11 +557,13 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -589,11 +593,13 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = (dense_buffers ? dense_perthread[t].data() : dense.data());
+    double *target = sparse.data();
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -653,11 +659,13 @@ void Configuration<Spatter::OpenMP>::multi_gather(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -688,11 +696,13 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *target = sparse.data();
+    double *source = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -732,7 +742,7 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
-          verbosity) {
+          false, verbosity) {
   
   setup();
 }

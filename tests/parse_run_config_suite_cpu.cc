@@ -158,6 +158,33 @@ int d_tests(int argc_, char **argv_) {
   return EXIT_SUCCESS;
 }
 
+int dense_buffers_tests(int argc_, char **argv_) {
+#ifdef USE_OPENMP
+  asprintf(&argv_[2], "--dense-buffers");
+
+  Spatter::ClArgs cl1;
+  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
+  free(argv_[2]);
+
+  if (cl1.configs[0]->dense_buffers != true) {
+    std::cerr << "Test failure on Run_Config Suite: --dense-buffers with no "
+                 "argument had incorrect value of "
+              << cl1.configs[0]->dense_buffers << "." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  if (cl1.configs[0]->dense.size() != 0) {
+    std::cerr << "Test failure on Run_Config Suite: Expected size of dense "
+              << "buffer to be 0, actually was "
+              << cl1.configs[0]->dense.size() << std::endl;
+    return EXIT_FAILURE;
+  }
+#endif
+  return EXIT_SUCCESS;
+}
+
 int l_tests(int argc_, char **argv_) {
   asprintf(&argv_[2], "-l100");
 
@@ -376,6 +403,9 @@ int main(int argc, char **argv) {
 
   // delta d
   if (d_tests(argc_, argv_) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  if (dense_buffers_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   // count l

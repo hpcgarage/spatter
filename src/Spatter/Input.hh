@@ -32,6 +32,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
+    {"dense-buffers", no_argument, nullptr, 0},
     {"boundary", required_argument, nullptr, 'e'},
     {"file", required_argument, nullptr, 'f'},
     {"pattern-gather", required_argument, nullptr, 'g'},
@@ -51,7 +52,8 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"wrap", required_argument, nullptr, 'w'},
     {"delta-gather", required_argument, nullptr, 'x'},
     {"delta-scatter", required_argument, nullptr, 'y'},
-    {"local-work-size", required_argument, nullptr, 'z'}};
+    {"local-work-size", required_argument, nullptr, 'z'},
+    {nullptr, no_argument, nullptr, 0}};
 
 struct ClArgs {
   std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
@@ -77,6 +79,7 @@ struct ClArgs {
   bool aggregate;
   bool atomic;
   bool compress;
+  bool dense_buffers;
   unsigned long verbosity;
 
   void report_header() {
@@ -133,6 +136,10 @@ void help(char *progname) {
             << " Enable compression of pattern indices" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-d (--delta)" << std::setw(40)
             << "Delta (default 8)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "   (--dense-buffers) "
+            << std::setw(40)
+            << "Enable multiple dense buffers for OpenMP kernels "
+            << "(default off)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-e (--boundary)" << std::setw(40)
             << " Set Boundary (limits max value of pattern using modulo)"
             << std::left << "\n";
@@ -172,10 +179,11 @@ void help(char *progname) {
             << "Set Number of Threads (default 1 if !USE_OPENMP or backend != "
                "openmp or OMP_MAX_THREADS if USE_OPENMP)"
             << std::left << "\n";
-  std::cout
-      << std::left << std::setw(10) << "-u (--pattern-scatter)" << std::setw(4)
-      << "Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)"
-      << std::left << "\n";
+  std::cout << std::left << std::setw(10)
+            << "-u (--pattern-scatter)" << std::setw(4)
+            << "Set Inner Scatter Pattern "
+            << "(Valid with kernel-name: sg, multiscatter)"
+            << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level (default 1)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-w (--wrap)" << std::setw(40)
@@ -191,14 +199,14 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << "[-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
-               "[-d delta] [-e "
+            << " [-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
+               "[-d delta] [--dense-buffers] [-e "
                "boundary] [-f input file] [-g inner gather pattern] "
                "[-h "
                "help] [-j pattern-size] [-k kernel] [-l count] [-m "
                "shared-memory] [-n name] [-o op]"
-               "[-p pattern] [-r runs] [-s random] [-t nthreads] [-u inner "
-               "scatter pattern] [-v "
+               "[-p pattern] [-r runs] [-s random] [-t nthreads] "
+               "[-u inner scatter pattern] [-v "
                "verbosity] [-w wrap] [-z local-work-size]"
             << std::endl;
 }
@@ -260,6 +268,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.aggregate = false;
   cl.atomic = false;
   cl.compress = false;
+  cl.dense_buffers = false;
   cl.verbosity = 1;
 
   // In flag alphabetical order
@@ -267,6 +276,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   bool atomic = cl.atomic;
   std::string backend = cl.backend;
   bool compress = cl.compress;
+  bool dense_buffers = cl.dense_buffers;
   size_t delta = 8;
   size_t boundary = 0;
 
@@ -319,6 +329,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
                 "Parsing Error: Invalid Atomic Write") == -1)
           return -1;
         atomic = (atomic_val > 0) ? true : false;
+      }
+      if (strcmp(longargs[option_index].name, "dense-buffers") == 0) {
+        dense_buffers = true;
       }
       break;
 
@@ -505,9 +518,11 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #endif
   }
 
+  cl.atomic = atomic;
   cl.backend = backend;
   cl.aggregate = aggregate;
   cl.compress = compress;
+  cl.dense_buffers = dense_buffers;
   cl.verbosity = verbosity;
 
 #ifdef USE_OPENMP
@@ -629,7 +644,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, nthreads, nruns, aggregate, atomic,
-          verbosity);
+          dense_buffers, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
@@ -653,8 +668,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
         cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
         cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
-        cl.dense_size, backend, aggregate, atomic, compress, shared_mem,
-        nthreads, verbosity);
+        cl.dense_size, backend, aggregate, atomic, compress, dense_buffers,
+        shared_mem, nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
@@ -683,15 +698,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       cl.sparse_scatter[i] = rand();
   }
 
-  if (cl.dense.size() < cl.dense_size) {
-    cl.dense.resize(cl.dense_size);
-
-    for (size_t i = 0; i < cl.dense.size(); ++i)
-      cl.dense[i] = rand();
-  }
-
 #ifdef USE_OPENMP
-  if (backend.compare("openmp") == 0) {
+  if ((backend.compare("openmp") == 0) && dense_buffers) {
     cl.dense_perthread.resize(nthreads);
 
     for (int j = 0; j < nthreads; ++j) {
@@ -700,6 +708,20 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       for (size_t i = 0; i < cl.dense_perthread[j].size(); ++i)
         cl.dense_perthread[j][i] = rand();
     }
+  } else {
+      if (cl.dense.size() < cl.dense_size) {
+        cl.dense.resize(cl.dense_size);
+
+      for (size_t i = 0; i < cl.dense.size(); ++i)
+        cl.dense[i] = rand();
+    }
+  }
+#else
+  if (cl.dense.size() < cl.dense_size) {
+    cl.dense.resize(cl.dense_size);
+
+    for (size_t i = 0; i < cl.dense.size(); ++i)
+      cl.dense[i] = rand();
   }
 #endif
 #ifdef USE_CUDA
