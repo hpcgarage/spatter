@@ -87,7 +87,7 @@ Usage: ./spatter
 -d (--delta) Delta (default 8)
 -e (--boundary) Set Boundary (limits max value of pattern using modulo)
 -f (--file) Input File
--g (--pattern-gather) Set Inner Gather Pattern (Valid with kernel-name: sg, multigather)
+-g (--pattern-gather) Set Inner Gather Pattern (Valid with kernel-name: gs, multigather)
 -h (--help) Print Help Message
 -j (--pattern-size) Set Pattern Size (truncates pattern to pattern-size)
 -k (--kernel) Kernel (default gather)
@@ -98,7 +98,7 @@ Usage: ./spatter
 -r (--runs) Set Number of Runs (default 10)
 -s (--random) Set Random Seed (default random)
 -t (--omp-threads) Set Number of Threads (default 1 if !USE_OPENMP or backend != openmp or OMP_MAX_THREADS if USE_OPENMP)
--u (--pattern-scatter) Set Inner Scatter Pattern (Valid with kernel-name: sg, multiscatter)
+-u (--pattern-scatter) Set Inner Scatter Pattern (Valid with kernel-name: gs, multiscatter)
 -v (--verbosity) Set Verbosity Level (default 1)
 -w (--wrap) Set Wrap (default 1)
 -x (--delta-gather) Delta (default 8)

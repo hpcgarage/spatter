@@ -49,7 +49,7 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
     gather(timed, run_id);
   else if (kernel.compare("scatter") == 0)
     scatter(timed, run_id);
-  else if (kernel.compare("sg") == 0)
+  else if (kernel.compare("gs") == 0)
     scatter_gather(timed, run_id);
   else if (kernel.compare("multigather") == 0)
     multi_gather(timed, run_id);
@@ -69,7 +69,7 @@ void ConfigurationBase::report() {
   if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
     bytes_moved = pattern.size() * count * sizeof(size_t);
 
-  if (kernel.compare("sg") == 0)
+  if (kernel.compare("gs") == 0)
     bytes_moved = (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
@@ -142,7 +142,7 @@ void ConfigurationBase::setup() {
                 << std::endl;
       exit(1);
     }
-  } else if (kernel.compare("sg") == 0) {
+  } else if (kernel.compare("gs") == 0) {
     if (pattern_gather.size() == 0) {
       std::cerr << "Pattern-Gather needs to have length of at least 1"
                 << std::endl;
@@ -185,7 +185,7 @@ void ConfigurationBase::setup() {
   // sparse size = max_pattern_val + delta * (count - 1) + 1
   // assert(pattern.size() > max_pattern_scatter_val + 1)
 
-  if (kernel.compare("sg") == 0) {
+  if (kernel.compare("gs") == 0) {
     size_t max_pattern_scatter_val = *(std::max_element(
         std::cbegin(pattern_scatter), std::cend(pattern_scatter)));
     size_t max_pattern_gather_val = *(std::max_element(

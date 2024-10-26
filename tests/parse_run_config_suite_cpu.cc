@@ -76,7 +76,7 @@ int k_tests(int argc_, char **argv_) {
     return EXIT_FAILURE;
   }
 
-  asprintf(&sg_argv_[3], "-kSG");
+  asprintf(&sg_argv_[3], "-kGS");
 
   Spatter::ClArgs cl3;
   if (parse_check(sg_argc_, sg_argv_, cl3) == EXIT_FAILURE)
@@ -84,7 +84,7 @@ int k_tests(int argc_, char **argv_) {
 
   free(sg_argv_[3]);
 
-  if (cl3.configs[0]->kernel.compare("sg") != 0) {
+  if (cl3.configs[0]->kernel.compare("gs") != 0) {
     std::cerr << "Test failure on Run_Config Suite: POSIX-style k with "
                  "argument GS resulted in kernel "
               << cl3.configs[0]->kernel << "." << std::endl;
@@ -121,7 +121,7 @@ int k_tests(int argc_, char **argv_) {
     return EXIT_FAILURE;
   }
 
-  asprintf(&sg_argv_[3], "--kernel=SG");
+  asprintf(&sg_argv_[3], "--kernel=GS");
 
   Spatter::ClArgs cl6;
   if (parse_check(sg_argc_, sg_argv_, cl6) == EXIT_FAILURE)
@@ -129,8 +129,8 @@ int k_tests(int argc_, char **argv_) {
 
   free(sg_argv_[3]);
 
-  if (cl6.configs[0]->kernel.compare("sg") != 0) {
-    std::cerr << "Test failure on Run_Config Suite: --kernel with argument SG "
+  if (cl6.configs[0]->kernel.compare("gs") != 0) {
+    std::cerr << "Test failure on Run_Config Suite: --kernel with argument GS "
                  "resulted in kernel "
               << cl6.configs[0]->kernel << "." << std::endl;
     return EXIT_FAILURE;
