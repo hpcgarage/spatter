@@ -19,6 +19,7 @@ include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
 include(pkgs/CUDASupport)
+include(pkgs/OneApiSupport)
 
 # Create gz_read executable
 add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
