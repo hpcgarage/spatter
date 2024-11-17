@@ -31,19 +31,19 @@ int parse_check(int argc_, char **argv_, Spatter::ClArgs &cl) {
 }
 
 int k_tests(int argc_, char **argv_) {
-  int sg_argc_ = 4;
-  char **sg_argv_ = (char **)malloc(sizeof(char *) * sg_argc_);
+  int gs_argc_ = 4;
+  char **gs_argv_ = (char **)malloc(sizeof(char *) * gs_argc_);
 
   int ret;
-  ret = asprintf(&sg_argv_[0], "./spatter");
+  ret = asprintf(&gs_argv_[0], "./spatter");
   if (ret == -1)
     return EXIT_FAILURE;
 
-  ret = asprintf(&sg_argv_[1], "-g1,2,3,4");
+  ret = asprintf(&gs_argv_[1], "-g1,2,3,4");
   if (ret == -1)
     return EXIT_FAILURE;
 
-  ret = asprintf(&sg_argv_[2], "-u1,2,3,4");
+  ret = asprintf(&gs_argv_[2], "-u1,2,3,4");
   if (ret == -1)
     return EXIT_FAILURE;
 
@@ -76,15 +76,15 @@ int k_tests(int argc_, char **argv_) {
     return EXIT_FAILURE;
   }
 
-  asprintf(&sg_argv_[3], "-kSG");
+  asprintf(&gs_argv_[3], "-kGS");
 
   Spatter::ClArgs cl3;
-  if (parse_check(sg_argc_, sg_argv_, cl3) == EXIT_FAILURE)
+  if (parse_check(gs_argc_, gs_argv_, cl3) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
-  free(sg_argv_[3]);
+  free(gs_argv_[3]);
 
-  if (cl3.configs[0]->kernel.compare("sg") != 0) {
+  if (cl3.configs[0]->kernel.compare("gs") != 0) {
     std::cerr << "Test failure on Run_Config Suite: POSIX-style k with "
                  "argument GS resulted in kernel "
               << cl3.configs[0]->kernel << "." << std::endl;
@@ -121,16 +121,16 @@ int k_tests(int argc_, char **argv_) {
     return EXIT_FAILURE;
   }
 
-  asprintf(&sg_argv_[3], "--kernel=SG");
+  asprintf(&gs_argv_[3], "--kernel=GS");
 
   Spatter::ClArgs cl6;
-  if (parse_check(sg_argc_, sg_argv_, cl6) == EXIT_FAILURE)
+  if (parse_check(gs_argc_, gs_argv_, cl6) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
-  free(sg_argv_[3]);
+  free(gs_argv_[3]);
 
-  if (cl6.configs[0]->kernel.compare("sg") != 0) {
-    std::cerr << "Test failure on Run_Config Suite: --kernel with argument SG "
+  if (cl6.configs[0]->kernel.compare("gs") != 0) {
+    std::cerr << "Test failure on Run_Config Suite: --kernel with argument GS "
                  "resulted in kernel "
               << cl6.configs[0]->kernel << "." << std::endl;
     return EXIT_FAILURE;

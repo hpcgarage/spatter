@@ -49,8 +49,8 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
     gather(timed, run_id);
   else if (kernel.compare("scatter") == 0)
     scatter(timed, run_id);
-  else if (kernel.compare("sg") == 0)
-    scatter_gather(timed, run_id);
+  else if (kernel.compare("gs") == 0)
+    gather_scatter(timed, run_id);
   else if (kernel.compare("multigather") == 0)
     multi_gather(timed, run_id);
   else if (kernel.compare("multiscatter") == 0)
@@ -69,7 +69,7 @@ void ConfigurationBase::report() {
   if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
     bytes_moved = pattern.size() * count * sizeof(size_t);
 
-  if (kernel.compare("sg") == 0)
+  if (kernel.compare("gs") == 0)
     bytes_moved = (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
@@ -142,7 +142,7 @@ void ConfigurationBase::setup() {
                 << std::endl;
       exit(1);
     }
-  } else if (kernel.compare("sg") == 0) {
+  } else if (kernel.compare("gs") == 0) {
     if (pattern_gather.size() == 0) {
       std::cerr << "Pattern-Gather needs to have length of at least 1"
                 << std::endl;
@@ -185,7 +185,7 @@ void ConfigurationBase::setup() {
   // sparse size = max_pattern_val + delta * (count - 1) + 1
   // assert(pattern.size() > max_pattern_scatter_val + 1)
 
-  if (kernel.compare("sg") == 0) {
+  if (kernel.compare("gs") == 0) {
     size_t max_pattern_scatter_val = *(std::max_element(
         std::cbegin(pattern_scatter), std::cend(pattern_scatter)));
     size_t max_pattern_gather_val = *(std::max_element(
@@ -442,7 +442,7 @@ void Configuration<Spatter::Serial>::scatter(bool timed, unsigned long run_id) {
   }
 }
 
-void Configuration<Spatter::Serial>::scatter_gather(
+void Configuration<Spatter::Serial>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   size_t pattern_length = pattern_scatter.size();
@@ -615,7 +615,7 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
   }
 }
 
-void Configuration<Spatter::OpenMP>::scatter_gather(
+void Configuration<Spatter::OpenMP>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   size_t pattern_length = pattern_scatter.size();
@@ -815,7 +815,7 @@ void Configuration<Spatter::CUDA>::scatter(bool timed, unsigned long run_id) {
     time_seconds[run_id] = ((double)time_ms / 1000.0);
 }
 
-void Configuration<Spatter::CUDA>::scatter_gather(
+void Configuration<Spatter::CUDA>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   int pattern_length = static_cast<int>(pattern_scatter.size());
@@ -827,11 +827,11 @@ void Configuration<Spatter::CUDA>::scatter_gather(
   float time_ms = 0.0;
 
   if (atomic)
-    time_ms = cuda_scatter_gather_atomic_wrapper(dev_pattern_scatter,
+    time_ms = cuda_gather_scatter_atomic_wrapper(dev_pattern_scatter,
         dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
         pattern_length, delta_scatter, delta_gather, wrap, count);
   else
-    time_ms = cuda_scatter_gather_wrapper(dev_pattern_scatter,
+    time_ms = cuda_gather_scatter_wrapper(dev_pattern_scatter,
         dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
         pattern_length, delta_scatter, delta_gather, wrap, count);
 

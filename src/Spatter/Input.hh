@@ -147,7 +147,7 @@ void help(char *progname) {
             << "Input File" << std::left << "\n";
   std::cout
       << std::left << std::setw(10) << "-g (--pattern-gather)" << std::setw(40)
-      << "Set Inner Gather Pattern (Valid with kernel-name: sg, multigather)"
+      << "Set Inner Gather Pattern (Valid with kernel-name: gs, multigather)"
       << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-h (--help)" << std::setw(40)
             << "Print Help Message" << std::left << "\n";
@@ -182,7 +182,7 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10)
             << "-u (--pattern-scatter)" << std::setw(4)
             << "Set Inner Scatter Pattern "
-            << "(Valid with kernel-name: sg, multiscatter)"
+            << "(Valid with kernel-name: gs, multiscatter)"
             << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-v (--verbosity)" << std::setw(40)
             << "Set Verbosity Level (default 1)" << std::left << "\n";
@@ -405,9 +405,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           [](unsigned char c) { return std::tolower(c); });
 
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
-          (kernel.compare("sg") != 0) && (kernel.compare("multigather") != 0) &&
+          (kernel.compare("gs") != 0) && (kernel.compare("multigather") != 0) &&
           (kernel.compare("multiscatter") != 0)) {
-        std::cerr << "Valid Kernels are: gather, scatter, sg, multigather, "
+        std::cerr << "Valid Kernels are: gather, scatter, gs, multigather, "
                      "multiscatter"
                   << std::endl;
         return -1;

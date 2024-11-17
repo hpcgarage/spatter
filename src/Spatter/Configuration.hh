@@ -77,7 +77,7 @@ public:
 
   virtual void gather(bool timed, unsigned long run_id) = 0;
   virtual void scatter(bool timed, unsigned long run_id) = 0;
-  virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
+  virtual void gather_scatter(bool timed, unsigned long run_id) = 0;
   virtual void multi_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
 
@@ -168,7 +168,7 @@ public:
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
@@ -197,7 +197,7 @@ public:
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
@@ -228,7 +228,7 @@ public:
   int run(bool timed, unsigned long run_id);
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
   void setup();
