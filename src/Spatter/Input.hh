@@ -26,7 +26,9 @@
 
 namespace Spatter {
 static unsigned int seed_perthread;
+#ifdef USE_OPENMP
 #pragma omp threadprivate(seed_perthread)
+#endif
 
 static char *shortargs =
     (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s::t:u:v:w:x:y:z:";
@@ -564,7 +566,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 #endif
 
+#ifdef USE_OPENMP
 #pragma omp parallel for num_threads(nthreads)
+#endif
   for(int i = 0; i < nthreads; i++)
     seed_perthread = static_cast<unsigned int>(time(nullptr)) + i;
 
@@ -685,7 +689,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   if (cl.sparse.size() < cl.sparse_size) {
     cl.sparse.resize(cl.sparse_size);
 
-    #pragma omp parallel for num_threads(nthreads)
+#ifdef USE_OPENMP
+#pragma omp parallel for num_threads(nthreads)
+#endif
     for (size_t i = 0; i < cl.sparse.size(); ++i)
       cl.sparse[i] = rand_r(&seed_perthread);
   }
@@ -693,7 +699,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   if (cl.sparse_gather.size() < cl.sparse_gather_size) {
     cl.sparse_gather.resize(cl.sparse_gather_size);
 
-    #pragma omp parallel for num_threads(nthreads)
+#ifdef USE_OPENMP
+#pragma omp parallel for num_threads(nthreads)
+#endif
     for (size_t i = 0; i < cl.sparse_gather.size(); ++i)
       cl.sparse_gather[i] = rand_r(&seed_perthread);
   }
@@ -701,7 +709,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   if (cl.sparse_scatter.size() < cl.sparse_scatter_size) {
     cl.sparse_scatter.resize(cl.sparse_scatter_size);
 
-    #pragma omp parallel for num_threads(nthreads)
+#ifdef USE_OPENMP
+#pragma omp parallel for num_threads(nthreads)
+#endif
     for (size_t i = 0; i < cl.sparse_scatter.size(); ++i)
       cl.sparse_scatter[i] = rand_r(&seed_perthread);
   }
@@ -713,7 +723,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     for (int j = 0; j < nthreads; ++j) {
       cl.dense_perthread[j].resize(cl.dense_size);
 
-      #pragma omp parallel for num_threads(nthreads)
+#pragma omp parallel for num_threads(nthreads)
       for (size_t i = 0; i < cl.dense_perthread[j].size(); ++i)
         cl.dense_perthread[j][i] = rand_r(&seed_perthread);
     }
@@ -721,7 +731,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       if (cl.dense.size() < cl.dense_size) {
         cl.dense.resize(cl.dense_size);
 
-      #pragma omp parallel for num_threads(nthreads)
+#pragma omp parallel for num_threads(nthreads)
       for (size_t i = 0; i < cl.dense.size(); ++i)
         cl.dense[i] = rand_r(&seed_perthread);
     }
