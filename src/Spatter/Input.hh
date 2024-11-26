@@ -28,6 +28,7 @@ namespace Spatter {
 static char *shortargs =
     (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s::t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
+    {"atomic-thread-fence", no_argument, nullptr, 0},
     {"atomic-writes", required_argument, nullptr, 0},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
@@ -78,6 +79,7 @@ struct ClArgs {
   std::string backend;
   bool aggregate;
   bool atomic;
+  bool atomic_fence;
   bool compress;
   bool dense_buffers;
   unsigned long verbosity;
@@ -125,6 +127,10 @@ void help(char *progname) {
   std::cout << "Usage: " << progname << "\n";
   std::cout << std::left << std::setw(10) << "-a (--aggregate)" << std::setw(40)
             << "Aggregate (default off)" << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "   (--atomic-thread-fence) "
+            << std::setw(40)
+            << "Enable atomic thread fence for OpenMP kernels "
+            << "(default off)" << std::left << "\n";
   std::cout << std::left << std::setw(10) << "   (--atomic-writes)"
             << std::setw(40)
             << "Enable atomic writes for CUDA backend (default 0/off) (TODO: "
@@ -199,7 +205,8 @@ void help(char *progname) {
 
 void usage(char *progname) {
   std::cout << "Usage: " << progname
-            << " [-a aggregate] [--atomic-writes] [-b backend] [-c compress] "
+            << " [-a aggregate] [--atomic-thread-fence] [--atomic-writes] "
+               "[-b backend] [-c compress] "
                "[-d delta] [--dense-buffers] [-e "
                "boundary] [-f input file] [-g inner gather pattern] "
                "[-h "
@@ -267,6 +274,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.backend = "";
   cl.aggregate = false;
   cl.atomic = false;
+  cl.atomic_fence = false;
   cl.compress = false;
   cl.dense_buffers = false;
   cl.verbosity = 1;
@@ -274,6 +282,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   // In flag alphabetical order
   bool aggregate = cl.aggregate;
   bool atomic = cl.atomic;
+  bool atomic_fence = cl.atomic_fence;
   std::string backend = cl.backend;
   bool compress = cl.compress;
   bool dense_buffers = cl.dense_buffers;
@@ -329,6 +338,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
                 "Parsing Error: Invalid Atomic Write") == -1)
           return -1;
         atomic = (atomic_val > 0) ? true : false;
+      }
+      if (strcmp(longargs[option_index].name, "atomic-thread-fence") == 0) {
+        atomic_fence = true;
       }
       if (strcmp(longargs[option_index].name, "dense-buffers") == 0) {
         dense_buffers = true;
@@ -519,6 +531,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 
   cl.atomic = atomic;
+  cl.atomic_fence = atomic_fence;
   cl.backend = backend;
   cl.aggregate = aggregate;
   cl.compress = compress;
@@ -644,7 +657,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, nthreads, nruns, aggregate, atomic,
-          dense_buffers, verbosity);
+          atomic_fence, dense_buffers, verbosity);
 #endif
 #ifdef USE_CUDA
     else if (backend.compare("cuda") == 0)
@@ -668,8 +681,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
         cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
         cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
-        cl.dense_size, backend, aggregate, atomic, compress, dense_buffers,
-        shared_mem, nthreads, verbosity);
+        cl.dense_size, backend, aggregate, atomic, atomic_fence, compress,
+        dense_buffers, shared_mem, nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
       std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
