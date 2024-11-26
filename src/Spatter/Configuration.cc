@@ -574,6 +574,9 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -610,6 +613,9 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -639,6 +645,9 @@ void Configuration<Spatter::OpenMP>::gather_scatter(
       tl[pattern_scatter[j]] = sl[pattern_gather[j]];
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -676,6 +685,9 @@ void Configuration<Spatter::OpenMP>::multi_gather(
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -712,6 +724,9 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
