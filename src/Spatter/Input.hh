@@ -28,7 +28,7 @@ namespace Spatter {
 static char *shortargs =
     (char *)"ab:cd:e:f:g:hj:k:l:m:n:o:p:r:s::t:u:v:w:x:y:z:";
 const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
-    {"atomic-writes", required_argument, nullptr, 0},
+    {"atomic-writes", no_argument, nullptr, 0},
     {"backend", required_argument, nullptr, 'b'},
     {"compress", no_argument, nullptr, 'c'},
     {"delta", required_argument, nullptr, 'd'},
@@ -125,9 +125,9 @@ void help(char *progname) {
   std::cout << "Usage: " << progname << "\n";
   std::cout << std::left << std::setw(10) << "-a (--aggregate)" << std::setw(40)
             << "Aggregate (default off)" << std::left << "\n";
-  std::cout << std::left << std::setw(10) << "   (--atomic-writes)"
+  std::cout << std::left << std::setw(10) << "   (--atomic-writes) "
             << std::setw(40)
-            << "Enable atomic writes for CUDA backend (default 0/off) (TODO: "
+            << "Enable atomic writes for CUDA backend (default off) (TODO: "
                "OpenMP atomics)"
             << std::left << "\n";
   std::cout << std::left << std::setw(10) << "-b (--backend)" << std::setw(40)
@@ -211,42 +211,50 @@ void usage(char *progname) {
             << std::endl;
 }
 
-int read_int_arg(std::string cl, int &arg, const std::string &err_msg) {
-  int passed_arg;
+int read_int_arg(std::string cl, int &arg, const int min_value,
+  const std::string &err_msg) {
+  int parsed_arg;
 
   try {
-    passed_arg = std::stoi(cl);
+    parsed_arg = std::stoi(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
-  }
-
-  if (passed_arg < 0) {
+  } catch (const std::out_of_range &oor) {
     std::cerr << err_msg << std::endl;
     return -1;
-  } else {
-    arg = passed_arg;
   }
+
+  if (parsed_arg < min_value) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  }
+
+  arg = parsed_arg;
 
   return 0;
 }
 
-int read_ul_arg(std::string cl, size_t &arg, const std::string &err_msg) {
-  int64_t passed_arg;
+int read_ul_arg(std::string cl, size_t &arg, const long long min_value,
+  const std::string &err_msg) {
+  long long parsed_arg;
 
   try {
-    passed_arg = std::stoll(cl);
+    parsed_arg = std::stoll(cl);
   } catch (const std::invalid_argument &ia) {
     std::cerr << err_msg << std::endl;
     return -1;
-  }
-
-  if (passed_arg < 0) {
+  } catch (const std::out_of_range &oor) {
     std::cerr << err_msg << std::endl;
     return -1;
-  } else {
-    arg = static_cast<size_t>(passed_arg);
   }
+
+  if (parsed_arg < min_value) {
+    std::cerr << err_msg << std::endl;
+    return -1;
+  }
+
+  arg = static_cast<size_t>(parsed_arg);
 
   return 0;
 }
@@ -324,11 +332,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       if (longargs[option_index].flag != 0)
         break;
       if (strcmp(longargs[option_index].name, "atomic-writes") == 0) {
-        int atomic_val = 0;
-        if (read_int_arg(optarg, atomic_val,
-                "Parsing Error: Invalid Atomic Write") == -1)
-          return -1;
-        atomic = (atomic_val > 0) ? true : false;
+        atomic = true;
       }
       if (strcmp(longargs[option_index].name, "dense-buffers") == 0) {
         dense_buffers = true;
@@ -368,12 +372,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'd':
-      if (read_ul_arg(optarg, delta, "Parsing Error: Invalid Delta") == -1)
+      if (read_ul_arg(optarg, delta, 0, "Parsing Error: Invalid Delta") == -1)
         return -1;
       break;
 
     case 'e':
-      if (read_ul_arg(optarg, boundary, "Parsing Error: Invalid Boundary") ==
+      if (read_ul_arg(optarg, boundary, 0, "Parsing Error: Invalid Boundary") ==
           -1)
         return -1;
       break;
@@ -394,7 +398,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       return -1;
 
     case 'j':
-      if (read_ul_arg(optarg, pattern_size,
+      if (read_ul_arg(optarg, pattern_size, 1,
               "Parsing Error: Invalid Pattern Size") == -1)
         return -1;
       break;
@@ -415,13 +419,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'l':
-      if (read_ul_arg(optarg, count, "Parsing Error: Invalid Count") == -1)
+      if (read_ul_arg(optarg, count, 1, "Parsing Error: Invalid Count") == -1)
         return -1;
       break;
 
     case 'm':
       if (read_ul_arg(
-              optarg, shared_mem, "Parsing Error: Invalid Shared Memory") == -1)
+              optarg, shared_mem, 0, "Parsing Error: Invalid Shared Memory") == -1)
         return -1;
       break;
 
@@ -430,7 +434,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'o':
-      if (read_ul_arg(optarg, op, "Parsing Error: Invalid Operation") == -1)
+      if (read_ul_arg(optarg, op, 0, "Parsing Error: Invalid Operation") == -1)
         return -1;
       break;
 
@@ -441,15 +445,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'r':
-      if (read_ul_arg(optarg, nruns, "Parsing Error: Invalid Number of Runs") ==
-          -1)
+      if (read_ul_arg(optarg, nruns, 1,
+          "Parsing Error: Invalid Number of Runs") == -1)
         return -1;
       break;
 
     case 's':
       if (optarg != nullptr) {
         int seed_arg = -1;
-        if (read_int_arg(optarg, seed_arg,
+        if (read_int_arg(optarg, seed_arg, 0,
             "Parsing Error: Invalid Random Seed") == -1)
           return -1;
 
@@ -460,7 +464,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 't':
-      if (read_int_arg(optarg, nthreads,
+      if (read_int_arg(optarg, nthreads, 1,
               "Parsing Error: Invalid Number of Threads") == -1)
         return -1;
       break;
@@ -472,31 +476,31 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       break;
 
     case 'v':
-      if (read_ul_arg(optarg, verbosity,
+      if (read_ul_arg(optarg, verbosity, 0,
               "Parsing Error: Invalid Verbosity Level") == -1)
         return -1;
       break;
 
     case 'w':
-      if (read_ul_arg(optarg, wrap, "Parsing Error: Invalid Wrap") == -1)
+      if (read_ul_arg(optarg, wrap, 1, "Parsing Error: Invalid Wrap") == -1)
         return -1;
       break;
 
     case 'x':
-      if (read_ul_arg(optarg, delta_gather,
+      if (read_ul_arg(optarg, delta_gather, 0,
               "Parsing Error: Invalid Delta Gather") == -1)
         return -1;
       break;
 
     case 'y':
-      if (read_ul_arg(optarg, delta_scatter,
+      if (read_ul_arg(optarg, delta_scatter, 0,
               "Parsing Error: Invalid Delta Scatter") == -1)
         return -1;
       break;
 
     case 'z':
-      if (read_ul_arg(
-              optarg, local_work_size, "Parsing Error: Local Work Size") == -1)
+      if (read_ul_arg(optarg, local_work_size, 0,
+            "Parsing Error: Local Work Size") == -1)
         return -1;
       break;
 
