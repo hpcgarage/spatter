@@ -500,7 +500,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     case 'z':
       if (read_ul_arg(optarg, local_work_size, 0,
-            "Parsing Error: Local Work Size") == -1)
+            "Parsing Error: Invalid Local Work Size") == -1)
         return -1;
       break;
 
@@ -668,16 +668,21 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     cl.configs.push_back(std::move(c));
   } else {
-    Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
-        cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
-        cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
-        cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
-        cl.dense_size, backend, aggregate, atomic, compress, dense_buffers,
-        shared_mem, nthreads, verbosity);
+    try {
+      Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
+          cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
+          cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
+          cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
+          cl.dense_size, backend, aggregate, atomic, compress, dense_buffers,
+          shared_mem, nthreads, verbosity);
 
-    for (size_t i = 0; i < json_file.size(); ++i) {
-      std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
-      cl.configs.push_back(std::move(c));
+      for (size_t i = 0; i < json_file.size(); ++i) {
+        std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
+        cl.configs.push_back(std::move(c));
+      }
+    } catch (const std::invalid_argument &ia) {
+      std::cerr << "Parsing Error: " << ia.what() << std::endl;
+      return -1;
     }
   }
 
