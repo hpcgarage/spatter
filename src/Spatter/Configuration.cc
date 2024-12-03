@@ -23,7 +23,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     const size_t delta_scatter, const long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const int nthreads, const unsigned long nruns, const bool aggregate,
-    const bool atomic, const bool dense_buffers, const unsigned long verbosity)
+    const bool atomic, const bool atomic_fence, const bool dense_buffers,
+    const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
       sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
@@ -36,8 +37,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
       shmem(shared_mem), local_work_size(local_work_size),
       omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
-      dense_buffers(dense_buffers), verbosity(verbosity),
-      time_seconds(nruns, 0) {
+      atomic_fence(atomic_fence), dense_buffers(dense_buffers),
+      verbosity(verbosity), time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
 }
@@ -396,7 +397,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
-          false, verbosity) {
+          false, false, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -528,14 +529,15 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
-    const bool dense_buffers, const unsigned long verbosity)
+    const bool atomic_fence, const bool dense_buffers,
+    const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 0, 1024, nthreads, nruns, aggregate, atomic, dense_buffers,
-          verbosity) {
+          count, 0, 1024, nthreads, nruns, aggregate, atomic, atomic_fence,
+          dense_buffers, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -571,6 +573,9 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -608,6 +613,9 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -637,6 +645,9 @@ void Configuration<Spatter::OpenMP>::gather_scatter(
       tl[pattern_scatter[j]] = sl[pattern_gather[j]];
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -673,6 +684,9 @@ void Configuration<Spatter::OpenMP>::multi_gather(
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -711,6 +725,9 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -742,7 +759,7 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
-          false, verbosity) {
+          false, false, verbosity) {
   
   setup();
 }

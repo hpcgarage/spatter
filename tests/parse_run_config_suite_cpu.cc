@@ -29,6 +29,25 @@ int parse_check(int argc_, char **argv_, Spatter::ClArgs &cl) {
 
   return EXIT_SUCCESS;
 }
+int atomic_fence_tests(int argc_, char **argv_) {
+#ifdef USE_OPENMP
+  asprintf(&argv_[2], "--atomic-thread-fence");
+
+  Spatter::ClArgs cl1;
+  if (parse_check(argc_, argv_, cl1) == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
+  free(argv_[2]);
+
+  if (cl1.configs[0]->atomic_fence != true) {
+    std::cerr << "Test failure on Run_Config Suite: --atomic-thread-fence with "
+                 "no argument had incorrect value of "
+              << cl1.configs[0]->atomic_fence << "." << std::endl;
+    return EXIT_FAILURE;
+  }
+#endif
+  return EXIT_SUCCESS;
+}
 
 int k_tests(int argc_, char **argv_) {
   int gs_argc_ = 4;
@@ -395,6 +414,9 @@ int main(int argc, char **argv) {
 
   ret = asprintf(&argv_[1], "-p1,2,3,4");
   if (ret == -1)
+    return EXIT_FAILURE;
+
+  if (atomic_fence_tests(argc_, argv_) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   // kernel-name k
