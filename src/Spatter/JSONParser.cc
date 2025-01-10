@@ -51,53 +51,116 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
   for (const auto &[key, v] : data_.items()) {
     if (!v.contains("name"))
       v["name"] = default_name_;
+    else if (!v["name"].is_string())
+      throw std::invalid_argument("Invalid Name");
 
-    if (!v.contains("kernel")) {
+    if (!v.contains("kernel"))
       v["kernel"] = default_kernel_;
-
-      assert(v.contains("pattern"));
-    } else {
-      std::string kernel = v["kernel"];
+    else if (!v["kernel"].is_string())
+      throw std::invalid_argument("Invalid Kernel Type");
+    else {
+      std::string kernel = v["kernel"].get<std::string>();
       std::transform(kernel.begin(), kernel.end(), kernel.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
-      if (kernel.compare("gs") == 0) {
-        // This kernel does not require --pattern to be specified
-        assert(v.contains("pattern-gather") && v.contains("pattern-scatter"));
-      } else {
-        assert(v.contains("pattern"));
+      if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
+          (kernel.compare("gs") != 0) && (kernel.compare("multigather") != 0) &&
+          (kernel.compare("multiscatter") != 0)) {
+        throw std::invalid_argument("Invalid Kernel Type");
       }
+
+      v["kernel"] = kernel;
     }
 
-    if (!v.contains("pattern-size") || (v["pattern-size"] <= -1))
+    if (v["kernel"].get<std::string>().compare("multigather") == 0) {
+      if (!v.contains("pattern"))
+        throw std::invalid_argument("Missing Pattern");
+      else if (!v.contains("pattern-gather"))
+        throw std::invalid_argument("Missing Pattern Gather");
+    } else if (v["kernel"].get<std::string>().compare("multiscatter") == 0) {
+      if (!v.contains("pattern"))
+        throw std::invalid_argument("Missing Pattern");
+      else if (!v.contains("pattern-scatter"))
+        throw std::invalid_argument("Missing Pattern Scatter");
+    } else if (v["kernel"].get<std::string>().compare("gs") == 0) {
+      if (!v.contains("pattern-gather"))
+        throw std::invalid_argument("Missing Pattern Gather");
+      else if (!v.contains("pattern-scatter"))
+        throw std::invalid_argument("Missing Pattern Scatter");
+    } else {
+      if (!v.contains("pattern"))
+        throw std::invalid_argument("Missing Pattern");
+    }
+
+    if (!v.contains("pattern-size"))
       v["pattern-size"] = default_pattern_size_;
+    else if (!v["pattern-size"].is_number())
+      throw std::invalid_argument("Invalid Pattern Size");
+    else if (v["pattern-size"].get<int64_t>() < 1)
+      throw std::invalid_argument("Invalid Pattern Size");
 
-    if (!v.contains("delta") || (v["delta"] <= -1))
+    if (!v.contains("delta"))
       v["delta"] = default_delta_;
+    else if (!v["delta"].is_number())
+      throw std::invalid_argument("Invalid Delta");
+    else if (v["delta"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Delta");
 
-    if (!v.contains("delta-gather") || (v["delta-gather"] <= -1))
+    if (!v.contains("delta-gather"))
       v["delta-gather"] = default_delta_gather_;
+    else if (!v["delta-gather"].is_number())
+      throw std::invalid_argument("Invalid Delta Gather");
+    else if (v["delta-gather"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Delta Gather");
 
-    if (!v.contains("delta-scatter") || (v["delta-scatter"] <= -1))
+    if (!v.contains("delta-scatter"))
       v["delta-scatter"] = default_delta_scatter_;
+    else if (!v["delta-scatter"].is_number())
+      throw std::invalid_argument("Invalid Delta Scatter");
+    else if (v["delta-scatter"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Delta Scatter");
 
     if (!v.contains("boundary"))
       v["boundary"] = default_boundary_;
+    else if (!v["boundary"].is_number())
+      throw std::invalid_argument("Invalid Boundary");
+    else if (v["boundary"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Boundary");
 
     if (!v.contains("seed"))
       v["seed"] = default_seed_;
+    else if (!v["seed"].is_number())
+      throw std::invalid_argument("Invalid Random Seed");
+    else if (v["seed"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Random Seed");
 
     if (!v.contains("wrap"))
       v["wrap"] = default_wrap_;
+    else if (!v["wrap"].is_number())
+      throw std::invalid_argument("Invalid Wrap");
+    else if (v["wrap"].get<int64_t>() < 1)
+      throw std::invalid_argument("Invalid Wrap");
 
     if (!v.contains("count"))
       v["count"] = default_count_;
+    else if (!v["count"].is_number())
+      throw std::invalid_argument("Invalid Count");
+    else if (v["count"].get<int64_t>() < 1)
+      throw std::invalid_argument("Invalid Count");
 
-    if (!v.contains("local-work-size") || (v["local-work-size"] <= -1))
+    if (!v.contains("local-work-size"))
       v["local-work-size"] = default_local_work_size_;
+    else if (!v["local-work-size"].is_number())
+      throw std::invalid_argument("Invalid Local Work Size");
+    else if (v["local-work-size"].get<int64_t>() < 0)
+      throw std::invalid_argument("Invalid Local Work Size");
 
     if (!v.contains("nruns"))
       v["nruns"] = default_nruns_;
+    else if (!v["nruns"].is_number())
+      throw std::invalid_argument("Invalid Number of Runs");
+    else if (v["nruns"].get<int64_t>() < 1)
+      throw std::invalid_argument("Invalid Number of Runs");
   }
 }
 
