@@ -48,6 +48,10 @@ void print_build_info(Spatter::ClArgs &cl) {
   }
 #endif
 
+#ifdef USE_ONEAPI
+  std::cout << "oneapi configuration (to be added)" << std::endl;
+#endif
+
   std::cout << std::endl;
 }
 
