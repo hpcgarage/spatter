@@ -14,7 +14,8 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
     size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
     double *&dev_sparse_scatter, size_t &sparse_scatter_size,
     aligned_vector<double> &dense,
-    aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread,
+    aligned_vector<size_t> &trace_rw, double *&dev_dense,
     size_t &dense_size, const std::string backend, const bool aggregate,
     const bool atomic, const bool compress, size_t shared_mem,
     const int nthreads, const unsigned long verbosity, const std::string name,
@@ -27,13 +28,14 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
       sparse_gather_size(sparse_gather_size), sparse_scatter(sparse_scatter),
       dev_sparse_scatter(dev_sparse_scatter),
       sparse_scatter_size(sparse_scatter_size), dense(dense),
-      dense_perthread(dense_perthread), dev_dense(dev_dense),
+      dense_perthread(dense_perthread), trace_rw(trace_rw), dev_dense(dev_dense),
       dense_size(dense_size), backend_(backend), aggregate_(aggregate),
       atomic_(atomic), compress_(compress), shared_mem_(shared_mem),
       omp_threads_(nthreads), verbosity_(verbosity), default_name_(name),
       default_kernel_(kernel), default_pattern_size_(pattern_size),
       default_delta_(delta), default_delta_gather_(delta_gather),
-      default_delta_scatter_(delta_scatter), default_boundary_(boundary),
+      default_delta_scatter_(delta_scatter),
+      default_boundary_(boundary),
       default_seed_(seed), default_wrap_(wrap), default_count_(count),
       default_local_work_size_(local_work_size), default_nruns_(nruns) {
   if (!file_exists_(filename)) {
@@ -128,6 +130,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   aligned_vector<size_t> pattern;
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
+  aligned_vector<size_t> trace_rw;
 
   size_t pattern_size = data_[index]["pattern-size"];
   size_t delta = data_[index]["delta"];
@@ -189,7 +192,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
         dev_sparse_gather, sparse_gather_size, sparse_scatter,
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size, delta, delta_gather, delta_scatter,
+        dev_dense, dense_size, delta, delta_gather, delta_scatter, trace_rw,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
         data_[index]["nruns"], aggregate_, verbosity_);
 #ifdef USE_OPENMP
@@ -199,9 +202,10 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
         dev_sparse_gather, sparse_gather_size, sparse_scatter,
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size, delta, delta_gather, delta_scatter,
+        dev_dense, dense_size, delta, delta_gather, delta_scatter, trace_rw,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_);
+        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_,
+        );
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
@@ -210,7 +214,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
         dev_sparse_gather, sparse_gather_size, sparse_scatter,
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size,delta, delta_gather, delta_scatter,
+        dev_dense, dense_size,delta, delta_gather, delta_scatter, trace_rw,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
         shared_mem_, data_[index]["local-work-size"], data_[index]["nruns"],
         aggregate_, atomic_, verbosity_);

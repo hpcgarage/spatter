@@ -46,6 +46,8 @@ inline void gpuAssert(
 #include "SpatterTypes.hh"
 #include "Timer.hh"
 
+typedef uintptr_t addr_t;
+
 #define ALIGN 64
 template <typename T>
 using aligned_vector = std::vector<T, aligned_allocator<T, ALIGN>>;
@@ -65,7 +67,7 @@ public:
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter,
+      const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
       const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
@@ -80,6 +82,7 @@ public:
   virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
+  virtual void trace_replay(bool timed, unsigned long run_id) = 0;
 
   virtual void report();
 
@@ -103,6 +106,7 @@ public:
   const aligned_vector<size_t> pattern;
   const aligned_vector<size_t> pattern_gather;
   const aligned_vector<size_t> pattern_scatter;
+  const aligned_vector<size_t> trace_rw;
 
   aligned_vector<double> &sparse;
   double *&dev_sparse;
@@ -160,7 +164,7 @@ public:
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter,
+      const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
       const long int seed, const size_t wrap, const size_t count,
       const unsigned long nruns, const bool aggregate,
       const unsigned long verbosity);
@@ -170,6 +174,7 @@ public:
   void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
+  void trace_replay(bool timed, unsigned long run_id);
 };
 
 #ifdef USE_OPENMP
@@ -186,7 +191,7 @@ public:
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter,
+      const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
       const long int seed, const size_t wrap, const size_t count,
       const int nthreads, const unsigned long nruns, const bool aggregate,
       const bool atomic, const unsigned long verbosity);
@@ -215,7 +220,7 @@ public:
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const size_t delta,
-      const size_t delta_gather, const size_t delta_scatter,
+      const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
       const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size,
       const unsigned long nruns, const bool aggregate, const bool atomic,

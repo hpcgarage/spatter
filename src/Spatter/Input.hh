@@ -5,6 +5,7 @@
 #ifndef SPATTER_INPUT_HH
 #define SPATTER_INPUT_HH
 
+#include <filesystem>
 #include <algorithm>
 #include <cctype>
 #include <getopt.h>
@@ -14,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <zlib.h>
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -23,6 +25,19 @@
 #include "JSONParser.hh"
 #include "PatternParser.hh"
 #include "SpatterTypes.hh"
+
+struct _trace_entry_t {
+  unsigned short type; // 2 bytes: trace_type_t
+  unsigned short size;
+  union {
+    addr_t addr;
+    unsigned char length[sizeof(addr_t)];
+  };
+}  __attribute__((packed));
+typedef struct _trace_entry_t trace_entry_t;
+
+#define N_TRACE 1000
+trace_entry_t tracebuf[N_TRACE];
 
 namespace Spatter {
 static char *shortargs =
@@ -38,6 +53,7 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {"help", no_argument, nullptr, 'h'},
     {"pattern-size", required_argument, nullptr, 'j'},
     {"kernel", required_argument, nullptr, 'k'},
+    {"tracefile", required_argument, nullptr, 0},
     {"count", required_argument, nullptr, 'l'},
     {"shared-memory", required_argument, nullptr, 'm'},
     {"name", required_argument, nullptr, 'n'},
@@ -70,10 +86,12 @@ struct ClArgs {
 
   aligned_vector<double> dense;
   aligned_vector<aligned_vector<double>> dense_perthread;
+  aligned_vector<size_t> trace_rw;
   double *dev_dense;
   size_t dense_size;
 
   std::string backend;
+  std::string tracefilename;
   bool aggregate;
   bool atomic;
   bool compress;
@@ -187,6 +205,8 @@ void help(char *progname) {
   std::cout << std::left << std::setw(10) << "-z (--local-work-size)"
             << std::setw(40) << "Set Local Work Size (default 1024)"
             << std::left << "\n";
+  std::cout << std::left << std::setw(10) << "--tracefile" << std::setw(40)
+            << "Trace file" << std::left << "\n";
 }
 
 void usage(char *progname) {
@@ -199,7 +219,7 @@ void usage(char *progname) {
                "shared-memory] [-n name] [-o op]"
                "[-p pattern] [-r runs] [-s random] [-t nthreads] [-u inner "
                "scatter pattern] [-v "
-               "verbosity] [-w wrap] [-z local-work-size]"
+               "verbosity] [-w wrap] [-z local-work-size] [--tracefile]"
             << std::endl;
 }
 
@@ -261,6 +281,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   cl.atomic = false;
   cl.compress = false;
   cl.verbosity = 1;
+  cl.tracefilename = "";
 
   // In flag alphabetical order
   bool aggregate = cl.aggregate;
@@ -285,6 +306,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
   std::stringstream pattern_string;
   aligned_vector<size_t> pattern;
+  aligned_vector<size_t> trace_rw;
 
   unsigned long nruns = 10;
   long int seed = -1;
@@ -319,6 +341,13 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
                 "Parsing Error: Invalid Atomic Write") == -1)
           return -1;
         atomic = (atomic_val > 0) ? true : false;
+      }
+      if (strcmp(longargs[option_index].name, "tracefile") == 0) {
+        if (!std::filesystem::exists(optarg)) {
+          std::cerr << "Error: tracefile (" << optarg << ") does not exist\n";
+          return -1;
+        }
+        cl.tracefilename = optarg;
       }
       break;
 
@@ -393,9 +422,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
       if ((kernel.compare("gather") != 0) && (kernel.compare("scatter") != 0) &&
           (kernel.compare("sg") != 0) && (kernel.compare("multigather") != 0) &&
-          (kernel.compare("multiscatter") != 0)) {
+          (kernel.compare("multiscatter") != 0) && (kernel.compare("trace") != 0)) {
         std::cerr << "Valid Kernels are: gather, scatter, sg, multigather, "
-                     "multiscatter"
+                     "multiscatter, and trace"
                   << std::endl;
         return -1;
       }
@@ -503,6 +532,47 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #ifdef USE_CUDA
       backend = "cuda";
 #endif
+  }
+
+  if (kernel.compare("trace") == 0) {
+
+    // Open trace file
+    if (cl.tracefilename.compare("") == 0) {
+      std::cerr << "Error: trace kernel selected but no tracefile given with \"--tracefile\"\n";
+      exit(1);
+    }
+	gzFile tracefile = gzopen(cl.tracefilename.c_str(), "hrb");
+	if (!tracefile) {
+	  std::cerr << "Could not open tracefile: " << cl.tracefilename << std::endl;
+      exit(1);
+	}
+
+	int total_read = 0;
+	trace_entry_t tr[N_TRACE];;
+	int bytes_read = 0;
+	int nreads  = 0;
+	int nwrites = 0;
+
+	// Read N_TRACE entries at a time from tracefile
+	while ((bytes_read = gzread(tracefile, tr, sizeof(trace_entry_t)*N_TRACE))) {
+	  int entries_read = bytes_read / sizeof(trace_entry_t);
+	  total_read += entries_read;
+	  for (int i = 0; i < entries_read; i++) {
+		switch (tr[i].type) {
+		  case 0: // reads
+			nreads +=1;
+			trace_rw.push_back(0);
+			pattern.push_back(tr[i].addr);
+			break;
+		  case 1: //writes
+			nwrites += 1;
+			trace_rw.push_back(1);
+			pattern.push_back(tr[i].addr);
+			break;
+		}
+	  }
+	}
+	gzclose(tracefile);
   }
 
   cl.backend = backend;
@@ -619,7 +689,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_gather, cl.sparse_gather_size, cl.sparse_scatter,
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
-          delta_scatter, seed, wrap, count, nruns, aggregate, verbosity);
+          delta_scatter, trace_rw, seed, wrap, count, nruns, aggregate, verbosity);
 #ifdef USE_OPENMP
     else if (backend.compare("openmp") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(0,
@@ -628,7 +698,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_gather, cl.sparse_gather_size, cl.sparse_scatter,
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
-          delta_scatter, seed, wrap, count, nthreads, nruns, aggregate, atomic,
+          delta_scatter, trace_rw, seed, wrap, count, nthreads, nruns, aggregate, atomic,
           verbosity);
 #endif
 #ifdef USE_CUDA
@@ -639,7 +709,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dev_sparse_gather, cl.sparse_gather_size, cl.sparse_scatter,
           cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
           cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
-          delta_scatter, seed, wrap, count, shared_mem, local_work_size, nruns,
+          delta_scatter, trace_rw, seed, wrap, count, shared_mem, local_work_size, nruns,
           aggregate, atomic, verbosity);
 #endif
     else {
@@ -652,7 +722,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
     Spatter::JSONParser json_file = Spatter::JSONParser(json_fname, cl.sparse,
         cl.dev_sparse, cl.sparse_size, cl.sparse_gather, cl.dev_sparse_gather,
         cl.sparse_gather_size, cl.sparse_scatter, cl.dev_sparse_scatter,
-        cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.dev_dense,
+        cl.sparse_scatter_size, cl.dense, cl.dense_perthread, cl.trace_rw, cl.dev_dense,
         cl.dense_size, backend, aggregate, atomic, compress, shared_mem,
         nthreads, verbosity);
 

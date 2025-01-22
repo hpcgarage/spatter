@@ -64,11 +64,13 @@ endif()
 target_link_libraries(Spatter
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
+    z
     )
 
 target_link_libraries(Spatter_shared
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
+    z
     )
 
 target_compile_options(Spatter

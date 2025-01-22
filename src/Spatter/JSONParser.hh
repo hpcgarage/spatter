@@ -33,6 +33,7 @@ public:
       double *&dev_sparse_scatter, size_t &sparse_scatter_size,
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
+      aligned_vector<size_t> &trace_rw,
       double *&dev_dense, size_t &dense_size, const std::string backend,
       const bool aggregate, const bool atomic, const bool compress,
       const size_t shared_mem, const int nthreads,
@@ -71,8 +72,10 @@ private:
 
   aligned_vector<double> &dense;
   aligned_vector<aligned_vector<double>> &dense_perthread;
+  aligned_vector<size_t> &trace_rw;
   double *&dev_dense;
   size_t &dense_size;
+
 
   std::string backend_;
   const bool aggregate_;
@@ -97,6 +100,7 @@ private:
 
   const size_t default_local_work_size_;
   const unsigned long default_nruns_;
+
 };
 
 } // namespace Spatter

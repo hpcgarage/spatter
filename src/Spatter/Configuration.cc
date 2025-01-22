@@ -4,6 +4,7 @@
 
 #include <numeric>
 #include <atomic>
+#include <zlib.h>
 
 #include "Configuration.hh"
 
@@ -20,7 +21,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     aligned_vector<double> &dense,
     aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
     size_t &dense_size, const size_t delta, const size_t delta_gather,
-    const size_t delta_scatter, const long int seed, const size_t wrap,
+    const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
+    const long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const int nthreads, const unsigned long nruns, const bool aggregate,
     const bool atomic, const unsigned long verbosity)
@@ -33,7 +35,7 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       sparse_scatter_size(sparse_scatter_size), dense(dense),
       dense_perthread(dense_perthread), dev_dense(dev_dense),
       dense_size(dense_size), delta(delta), delta_gather(delta_gather),
-      delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
+      delta_scatter(delta_scatter), trace_rw(trace_rw), seed(seed), wrap(wrap), count(count),
       shmem(shared_mem), local_work_size(local_work_size),
       omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
       verbosity(verbosity), time_seconds(nruns, 0) {
@@ -54,6 +56,8 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
     multi_gather(timed, run_id);
   else if (kernel.compare("multiscatter") == 0)
     multi_scatter(timed, run_id);
+  else if (kernel.compare("trace") == 0)
+    trace_replay(timed, run_id);
   else {
     std::cerr << "Invalid Kernel Type" << std::endl;
     return -1;
@@ -246,6 +250,10 @@ void ConfigurationBase::setup() {
       }
     }
 
+    if (kernel.compare("trace") == 0) {
+      //TOD: Anything needed here?
+    }
+
     if (verbosity >= 3) {
       std::cout << "Pattern Array Size: " << pattern.size()
                 << "\tDelta: " << delta << "\tCount: " << count
@@ -386,7 +394,8 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
     aligned_vector<double> &dense,
     aligned_vector<aligned_vector<double>> &dense_perthread,
     double *&dev_dense, size_t &dense_size,const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const long int seed,
+    const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
+    const long int seed,
     const size_t wrap, const size_t count, const unsigned long nruns,
     const bool aggregate, const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
@@ -394,7 +403,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather,
-          delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
+          delta_scatter, trace_rw, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
           verbosity) {
   ConfigurationBase::setup();
 }
@@ -511,6 +520,41 @@ void Configuration<Spatter::Serial>::multi_scatter(
   }
 }
 
+void Configuration<Spatter::Serial>::trace_replay(
+    bool timed, unsigned long run_id) {
+  size_t pattern_length = pattern.size();
+
+  if (pattern_length != trace_rw.size()) {
+    std::cout << "Error: Pattern length does not match read/write trace length\n";
+    exit(1);
+  }
+
+#ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+  if (timed)
+    timer.start();
+
+  double x = 0.0;
+  for (size_t i = 0; i < count; ++i)
+    for (size_t j = 0; j < pattern_length; ++j)
+      if (trace_rw[i] == 0) {
+        // Read from address pattern[j]
+        x = sparse[pattern[j]];
+      } else {
+        // Write to address pattern[j]
+        sparse[pattern[j]] = x;
+
+      }
+
+  if (timed) {
+    timer.stop();
+    time_seconds[run_id] = timer.seconds();
+    timer.clear();
+  }
+}
+
 #ifdef USE_OPENMP
 Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const std::string name, const std::string kernel,
@@ -524,7 +568,8 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     aligned_vector<double> &dense,
     aligned_vector<aligned_vector<double>> &dense_perthread,
     double *&dev_dense, size_t &dense_size,const size_t delta,
-    const size_t delta_gather, const size_t delta_scatter, const long int seed,
+    const size_t delta_gather, const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
+    const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
     const unsigned long verbosity)
@@ -532,7 +577,7 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-          dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
+          dev_dense, dense_size, delta, delta_gather, delta_scatter, trace_rw, seed, wrap,
           count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
   ConfigurationBase::setup();
 }
@@ -722,7 +767,8 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
     aligned_vector<double> &dense,
     aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
     size_t &dense_size, const size_t delta, const size_t delta_gather,
-    const size_t delta_scatter, const long int seed, const size_t wrap,
+    const size_t delta_scatter, aligned_vector<size_t> &trace_rw,
+    onst long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const unsigned long nruns, const bool aggregate, const bool atomic,
     const unsigned long verbosity)
@@ -730,10 +776,10 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-          dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
+          dev_dense, dense_size, delta, delta_gather, delta_scatter, trace_rw, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
           verbosity) {
-  
+
   setup();
 }
 
