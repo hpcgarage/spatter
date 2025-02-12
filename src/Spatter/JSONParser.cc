@@ -204,8 +204,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
         dev_dense, dense_size, delta, delta_gather, delta_scatter, trace_rw,
         data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_,
-        );
+        omp_threads_, data_[index]["nruns"], aggregate_, atomic_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)

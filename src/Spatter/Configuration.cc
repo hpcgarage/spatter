@@ -536,17 +536,17 @@ void Configuration<Spatter::Serial>::trace_replay(
   if (timed)
     timer.start();
 
-  double x = 0.0;
-  for (size_t i = 0; i < count; ++i)
-    for (size_t j = 0; j < pattern_length; ++j)
-      if (trace_rw[i] == 0) {
-        // Read from address pattern[j]
-        x = sparse[pattern[j]];
+  double x0 = 1.0;
+  //double x1 = 2.0;
+  for (size_t i = 0; i < count; ++i) {
+    for (size_t j = 0; j < pattern_length; ++j) {
+      if (trace_rw[j] == 0) {
+        x0 = sparse[pattern[j]]; // Read from address pattern[j]
       } else {
-        // Write to address pattern[j]
-        sparse[pattern[j]] = x;
-
+        sparse[pattern[j]] = x0; // Write to address pattern[j]
       }
+    }
+  }
 
   if (timed) {
     timer.stop();
@@ -752,7 +752,44 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
     timer.clear();
   }
 }
+
+void Configuration<Spatter::OpenMP>::trace_replay(
+    bool timed, unsigned long run_id) {
+  size_t pattern_length = pattern.size();
+
+  if (pattern_length != trace_rw.size()) {
+    std::cout << "Error: Pattern length does not match read/write trace length\n";
+    exit(1);
+  }
+
+#ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+  if (timed)
+    timer.start();
+
+  double x0 = 1.0;
+  double x1 = 2.0;
+  for (size_t i = 0; i < count; ++i) {
+#pragma omp parallel for private(x0, x1)
+    for (size_t j = 0; j < pattern_length; ++j) {
+      if (trace_rw[j] == 0) {
+        x0 = sparse[pattern[j]]; // Read from address pattern[j]
+      } else {
+        sparse[pattern[j]] = x1; // Write to address pattern[j]
+      }
+    }
+  }
+
+  if (timed) {
+    timer.stop();
+    time_seconds[run_id] = timer.seconds();
+    timer.clear();
+  }
+}
+
+#endif //USE_OPENMP
 
 #ifdef USE_CUDA
 Configuration<Spatter::CUDA>::Configuration(const size_t id,

@@ -65,12 +65,14 @@ target_link_libraries(Spatter
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
     z
+    stdc++fs
     )
 
 target_link_libraries(Spatter_shared
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
     z
+    stdc++fs
     )
 
 target_compile_options(Spatter

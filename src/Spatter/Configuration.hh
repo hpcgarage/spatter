@@ -203,6 +203,7 @@ public:
   void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
+  void trace_replay(bool timed, unsigned long run_id);
 };
 #endif
 
@@ -234,6 +235,7 @@ public:
   void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
+  void trace_replay(bool timed, unsigned long run_id);
   void setup();
 
 public:
