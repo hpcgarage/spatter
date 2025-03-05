@@ -6,8 +6,15 @@ if (USE_CUDA)
     set(CUDA_INCLUDE_FILES CudaBackend.hh)
 endif()
 
+if (USE_ONEAPI)
+    add_library(one_api SHARED OneAPIBackend.cc)
+    set(ONEAPI_INCLUDE_FILES OneAPIBackend.hh)
+endif()
+
+
 set(SPATTER_INCLUDE_FILES
     ${CUDA_INCLUDE_FILES}
+    ${ONEAPI_INCLUDE_FILES}
     Configuration.hh
     Input.hh
     JSONParser.hh
@@ -61,9 +68,18 @@ if (USE_CUDA)
     set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} cuda_backend)
 endif()
 
+# Ensure OneAPI support by passing -fsycl
+if (USE_ONEAPI)
+    target_compile_options(Spatter PUBLIC -fsycl)
+    target_link_options(Spatter PUBLIC -fsycl)
+    target_compile_options(Spatter_shared PUBLIC -fsycl)
+    target_link_options(Spatter_shared PUBLIC -fsycl)
+endif()
+
 target_link_libraries(Spatter
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
+    one_api
     )
 
 target_link_libraries(Spatter_shared
@@ -71,14 +87,38 @@ target_link_libraries(Spatter_shared
     ${COMMON_LINK_LIBRARIES}
     )
 
-target_compile_options(Spatter
-    PRIVATE ${WARNING_FLAGS}
-    )
+set_target_properties(Spatter PROPERTIES
+    COMPILE_DEFINITIONS "${COMMON_COMPILE_DEFINITIONS}"
+    COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS}"
+    OUTPUT_NAME "Spatter"
+)
 
-target_compile_options(Spatter_shared
-    PRIVATE
-    ${WARNING_FLAGS}
-    )
+set_target_properties(Spatter_shared PROPERTIES
+    COMPILE_DEFINITIONS "${COMMON_COMPILE_DEFINITIONS}"
+    COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS}"
+    OUTPUT_NAME "Spatter"
+)
+
+target_include_directories(Spatter
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include/Spatter>
+)
+
+target_include_directories(Spatter_shared
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include/Spatter>
+)
+
+#target_compile_options(Spatter
+#    PRIVATE ${WARNING_FLAGS}
+#    )
+
+#target_compile_options(Spatter_shared
+#    PRIVATE
+#    ${WARNING_FLAGS}
+#    )
 
 # Library/Header installation section
 

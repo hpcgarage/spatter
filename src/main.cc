@@ -20,6 +20,8 @@ void print_build_info(Spatter::ClArgs &cl) {
     std::cout << "OpenMP" << std::endl;
   else if (cl.backend.compare("cuda") == 0)
     std::cout << "CUDA" << std::endl;
+  else if (cl.backend.compare("oneapi") == 0)
+    std::cout << "OneAPI" << std::endl;
 
   std::cout << "Aggregate Results? ";
   if (cl.aggregate == true)
@@ -46,6 +48,10 @@ void print_build_info(Spatter::ClArgs &cl) {
               << 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6
               << std::endl;
   }
+#endif
+
+#ifdef USE_ONEAPI
+  std::cout << "oneapi configuration (to be added)" << std::endl;
 #endif
 
   std::cout << std::endl;
@@ -84,7 +90,8 @@ int main(int argc, char **argv) {
   }
 #endif
 
-  for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
+  // for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
+  for (std::shared_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
     for (unsigned long run = 0; run < (config->nruns + warmup_runs); ++run) {
 
       unsigned long run_id = 0;
