@@ -19,6 +19,10 @@ include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
 include(pkgs/CUDASupport)
+# include pkgs for OneAPI support
+include(pkgs/OneAPISupport)
+include_directories(/net/projects/tools/x86_64/rhel-8/intel-oneapi/2024.2/dpcpp-ct/2024.2/include)
+include_directories(/net/projects/tools/x86_64/rhel-8/intel-oneapi/2024.2/2024.2/include)
 
 # Create gz_read executable
 add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
