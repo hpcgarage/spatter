@@ -784,7 +784,7 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 
     // Perform additional initialization on the device if needed
     q.submit([&](sycl::handler& h) {
-      h.parallel_for(sycl::range<1>(1), [=](sycl::id<1> idx) {
+      h.parallel_for(sycl::range<1>(cl.dense.size()), [=](sycl::id<1> idx) {
         // Use a SYCL random number generator
         oneapi::dpl::minstd_rand engine(idx[0]);
         oneapi::dpl::uniform_real_distribution<double> distr(0.0, 1.0);

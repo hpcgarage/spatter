@@ -21,6 +21,7 @@ if (USE_ONEAPI)
         add_definitions(-DUSE_ONEAPI)
 
         # First try finding IntelSYCL (New recommended package)
+        set(IntelSYCL_DIR "/net/projects/tools/x86_64/rhel-8/intel-oneapi/2024.2/compiler/latest/lib/cmake/sycl")
         find_package(IntelSYCL REQUIRED)
 
         if (IntelSYCL_FOUND)
@@ -31,6 +32,8 @@ if (USE_ONEAPI)
 
             # Manually link the Intel SYCL library
             set(SYCL_LIB_PATH "/net/projects/tools/x86_64/rhel-8/intel-oneapi/2024.2/compiler/2024.2/lib")
+
+            # Correct OneAPI include path
             set(SYCL_INCLUDE_PATH "/net/projects/tools/x86_64/rhel-8/intel-oneapi/2024.2/compiler/2024.2/include")
 
             include_directories(${SYCL_INCLUDE_PATH})
@@ -38,6 +41,12 @@ if (USE_ONEAPI)
 
             set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} "${SYCL_LIB_PATH}/libsycl.so")
         endif()
+
+        # Force CMake to use DPC++ compiler
+        set(CMAKE_CXX_COMPILER icpx)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl")
+
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${SYCL_INCLUDE_PATH}")
 
     else()
         message(FATAL_ERROR "OneAPI DPC++ compiler not found. Detected CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")

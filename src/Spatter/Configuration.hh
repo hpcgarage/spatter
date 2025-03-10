@@ -80,27 +80,27 @@ public:
   // virtual ~ConfigurationBase();
   ~ConfigurationBase();
 
-  // virtual int run(bool timed, unsigned long run_id);
+  virtual int run(bool timed, unsigned long run_id);
 
-  // virtual void gather(bool timed, unsigned long run_id) = 0;
-  // virtual void scatter(bool timed, unsigned long run_id) = 0;
-  // virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
-  // virtual void multi_gather(bool timed, unsigned long run_id) = 0;
-  // virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
+  virtual void gather(bool timed, unsigned long run_id) = 0;
+  virtual void scatter(bool timed, unsigned long run_id) = 0;
+  virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
+  virtual void multi_gather(bool timed, unsigned long run_id) = 0;
+  virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
 
-  // virtual void report();
+  virtual void report();
 
-  // virtual void setup();
+  virtual void setup();
 
-  // Replace virtual function calls with static dispatch
-  int run(bool timed, unsigned long run_id);
-  void gather(bool timed, unsigned long run_id);
-  void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
-  void multi_gather(bool timed, unsigned long run_id);
-  void multi_scatter(bool timed, unsigned long run_id);
-  void setup();
-  void report();
+  // // Replace virtual function calls with static dispatch
+  // int run(bool timed, unsigned long run_id);
+  // void gather(bool timed, unsigned long run_id);
+  // void scatter(bool timed, unsigned long run_id);
+  // void scatter_gather(bool timed, unsigned long run_id);
+  // void multi_gather(bool timed, unsigned long run_id);
+  // void multi_scatter(bool timed, unsigned long run_id);
+  // void setup();
+  // void report();
 
 private:
   void print_no_mpi(
