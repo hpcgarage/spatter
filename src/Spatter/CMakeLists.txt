@@ -80,6 +80,12 @@ target_compile_options(Spatter_shared
     ${WARNING_FLAGS}
     )
 
+install(TARGETS Spatter Spatter_shared
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+    install(FILES Configuration.hh JSONParser.hh PatternParser.hh Timer.hh Input.hh
+            DESTINATION include/Spatter)
 # Library/Header installation section
 
 #set(ConfigPackageLocation lib/cmake/Spatter)

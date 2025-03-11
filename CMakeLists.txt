@@ -24,6 +24,9 @@ include(pkgs/CUDASupport)
 add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
 target_link_libraries(gz_read z)
 
+install(TARGETS gz_read
+        RUNTIME DESTINATION bin)
+
 add_subdirectory(src)
 
 enable_testing()

@@ -10,3 +10,6 @@ set_target_properties(spatter PROPERTIES
     COMPILE_OPTIONS "${WARNING_FLAGS}"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     )
+
+install(TARGETS spatter
+        RUNTIME DESTINATION bin)
