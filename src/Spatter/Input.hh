@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cstring>
 
 #ifdef USE_OPENMP
 #include <omp.h>
