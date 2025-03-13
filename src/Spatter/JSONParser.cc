@@ -2,6 +2,8 @@
   \file JSONParser.cc
 */
 
+#include <nlohmann/json.hpp>
+
 #include "JSONParser.hh"
 
 using json = nlohmann::json;
@@ -45,10 +47,14 @@ JSONParser::JSONParser(std::string filename, aligned_vector<double> &sparse,
   }
 
   std::ifstream f(filename);
-  data_ = json::parse(f);
-  size_ = data_.size();
+  std::function<void(void *)> json_deleter;
+  json_deleter = [](void *json_ptr) { delete static_cast<json *>(json_ptr); };
+  data_ = std::unique_ptr<void,
+    std::function<void(void *)>>(new json(json::parse(f)), json_deleter);
+  auto data_json_ptr = static_cast<json *>(data_.get());
+  size_ = data_json_ptr->size();
 
-  for (const auto &[key, v] : data_.items()) {
+  for (const auto &[key, v] : data_json_ptr->items()) {
     if (!v.contains("name"))
       v["name"] = default_name_;
     else if (!v["name"].is_string())
@@ -168,36 +174,38 @@ size_t JSONParser::size() { return size_; }
 
 std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
     const size_t index) {
+  auto data_json_ptr = static_cast<json *>(data_.get());
+
   assert(index < (size_));
 
-  assert(data_[index].contains("name"));
+  assert((*data_json_ptr)[index].contains("name"));
 
-  assert(data_[index].contains("kernel"));
-  assert(data_[index]["kernel"].type() == json::value_t::string);
+  assert((*data_json_ptr)[index].contains("kernel"));
+  assert((*data_json_ptr)[index]["kernel"].type() == json::value_t::string);
 
-  assert(data_[index].contains("pattern-size"));
-  assert(data_[index].contains("delta"));
-  assert(data_[index].contains("delta-gather"));
-  assert(data_[index].contains("delta-scatter"));
-  assert(data_[index].contains("boundary"));
-  assert(data_[index].contains("seed"));
-  assert(data_[index].contains("wrap"));
-  assert(data_[index].contains("count"));
+  assert((*data_json_ptr)[index].contains("pattern-size"));
+  assert((*data_json_ptr)[index].contains("delta"));
+  assert((*data_json_ptr)[index].contains("delta-gather"));
+  assert((*data_json_ptr)[index].contains("delta-scatter"));
+  assert((*data_json_ptr)[index].contains("boundary"));
+  assert((*data_json_ptr)[index].contains("seed"));
+  assert((*data_json_ptr)[index].contains("wrap"));
+  assert((*data_json_ptr)[index].contains("count"));
 
-  assert(data_[index].contains("local-work-size"));
-  assert(data_[index].contains("nruns"));
+  assert((*data_json_ptr)[index].contains("local-work-size"));
+  assert((*data_json_ptr)[index].contains("nruns"));
 
   aligned_vector<size_t> pattern;
   aligned_vector<size_t> pattern_gather;
   aligned_vector<size_t> pattern_scatter;
 
-  size_t pattern_size = data_[index]["pattern-size"];
-  size_t delta = data_[index]["delta"];
-  size_t delta_gather = data_[index]["delta-gather"];
-  size_t delta_scatter = data_[index]["delta-scatter"];
-  size_t boundary = data_[index]["boundary"];
+  size_t pattern_size = (*data_json_ptr)[index]["pattern-size"];
+  size_t delta = (*data_json_ptr)[index]["delta"];
+  size_t delta_gather = (*data_json_ptr)[index]["delta-gather"];
+  size_t delta_scatter = (*data_json_ptr)[index]["delta-scatter"];
+  size_t boundary = (*data_json_ptr)[index]["boundary"];
 
-  if (data_[index].contains("pattern")) {
+  if ((*data_json_ptr)[index].contains("pattern")) {
     if (get_pattern_("pattern", pattern, delta, index) != 0)
       exit(1);
 
@@ -212,7 +220,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
       compress_pattern(pattern);
   }
 
-  if (data_[index].contains("pattern-gather")) {
+  if ((*data_json_ptr)[index].contains("pattern-gather")) {
     if (get_pattern_("pattern-gather", pattern_gather, delta_gather,
         index) != 0)
       exit(1);
@@ -228,7 +236,7 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
       compress_pattern(pattern_gather);
   }
 
-  if (data_[index].contains("pattern-scatter")) {
+  if ((*data_json_ptr)[index].contains("pattern-scatter")) {
     if (get_pattern_("pattern-scatter", pattern_scatter, delta_scatter,
         index) != 0)
       exit(1);
@@ -247,36 +255,39 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
   std::unique_ptr<Spatter::ConfigurationBase> c;
   if (backend_.compare("serial") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
-        dev_sparse_gather, sparse_gather_size, sparse_scatter,
-        dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size, delta, delta_gather, delta_scatter,
-        data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        data_[index]["nruns"], aggregate_, verbosity_);
+        (*data_json_ptr)[index]["name"], (*data_json_ptr)[index]["kernel"],
+        pattern, pattern_gather, pattern_scatter, sparse, dev_sparse,
+        sparse_size, sparse_gather, dev_sparse_gather, sparse_gather_size,
+        sparse_scatter, dev_sparse_scatter, sparse_scatter_size, dense,
+        dense_perthread, dev_dense, dense_size, delta, delta_gather,
+        delta_scatter, (*data_json_ptr)[index]["seed"],
+        (*data_json_ptr)[index]["wrap"], (*data_json_ptr)[index]["count"],
+        (*data_json_ptr)[index]["nruns"], aggregate_, verbosity_);
 #ifdef USE_OPENMP
   else if (backend_.compare("openmp") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::OpenMP>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
-        dev_sparse_gather, sparse_gather_size, sparse_scatter,
-        dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size, delta, delta_gather, delta_scatter,
-        data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        omp_threads_, data_[index]["nruns"], aggregate_, atomic_,
+        (*data_json_ptr)[index]["name"], (*data_json_ptr)[index]["kernel"],
+        pattern, pattern_gather, pattern_scatter, sparse, dev_sparse,
+        sparse_size, sparse_gather, dev_sparse_gather, sparse_gather_size,
+        sparse_scatter, dev_sparse_scatter, sparse_scatter_size, dense,
+        dense_perthread, dev_dense, dense_size, delta, delta_gather,
+        delta_scatter, (*data_json_ptr)[index]["seed"],
+        (*data_json_ptr)[index]["wrap"], (*data_json_ptr)[index]["count"],
+        omp_threads_, (*data_json_ptr)[index]["nruns"], aggregate_, atomic_,
         atomic_fence_, dense_buffers_, verbosity_);
 #endif
 #ifdef USE_CUDA
   else if (backend_.compare("cuda") == 0)
     c = std::make_unique<Spatter::Configuration<Spatter::CUDA>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
-        dev_sparse_gather, sparse_gather_size, sparse_scatter,
-        dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
-        dev_dense, dense_size,delta, delta_gather, delta_scatter,
-        data_[index]["seed"], data_[index]["wrap"], data_[index]["count"],
-        shared_mem_, data_[index]["local-work-size"], data_[index]["nruns"],
-        aggregate_, atomic_, verbosity_);
+        (*data_json_ptr)[index]["name"], (*data_json_ptr)[index]["kernel"],
+        pattern, pattern_gather, pattern_scatter, sparse, dev_sparse,
+        sparse_size, sparse_gather, dev_sparse_gather, sparse_gather_size,
+        sparse_scatter, dev_sparse_scatter, sparse_scatter_size, dense,
+        dense_perthread, dev_dense, dense_size,delta, delta_gather,
+        delta_scatter, (*data_json_ptr)[index]["seed"],
+        (*data_json_ptr)[index]["wrap"], (*data_json_ptr)[index]["count"],
+        shared_mem_, (*data_json_ptr)[index]["local-work-size"],
+        (*data_json_ptr)[index]["nruns"], aggregate_, atomic_, verbosity_);
 #endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;
@@ -288,9 +299,10 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 
 int JSONParser::get_pattern_(const std::string &pattern_key,
     aligned_vector<size_t> &pattern, size_t &delta, const size_t index) {
-  if (data_[index][pattern_key].type() == json::value_t::string) {
+  auto data_json_ptr = static_cast<json *>(data_.get());
+  if ((*data_json_ptr)[index][pattern_key].type() == json::value_t::string) {
     std::string pattern_string =
-        data_[index][pattern_key].template get<std::string>();
+        (*data_json_ptr)[index][pattern_key].template get<std::string>();
     pattern_string.erase(
         std::remove(pattern_string.begin(), pattern_string.end(), '\"'),
         pattern_string.end());
@@ -300,7 +312,7 @@ int JSONParser::get_pattern_(const std::string &pattern_key,
 
     return pattern_parser(pattern_stream, pattern, delta);
   } else {
-    pattern = data_[index][pattern_key].template get<aligned_vector<size_t>>();
+    pattern = (*data_json_ptr)[index][pattern_key].template get<aligned_vector<size_t>>();
     return 0;
   }
 }

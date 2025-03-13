@@ -11,16 +11,12 @@
 #include <iostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
-
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
 
 #include "Configuration.hh"
 #include "PatternParser.hh"
-
-using json = nlohmann::json;
 
 namespace Spatter {
 
@@ -54,7 +50,7 @@ private:
   bool file_exists_(const std::string &fpth);
 
 private:
-  json data_;
+  std::unique_ptr<void, std::function<void(void *)>> data_; // nlohman::json ptr
   size_t size_;
 
   aligned_vector<double> &sparse;
