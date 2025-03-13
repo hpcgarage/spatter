@@ -84,8 +84,8 @@ install(TARGETS Spatter Spatter_shared
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-    install(FILES Configuration.hh JSONParser.hh PatternParser.hh Timer.hh Input.hh
-            DESTINATION include/Spatter)
+install(FILES ${SPATTER_INCLUDE_FILES}
+        DESTINATION include/Spatter)
 # Library/Header installation section
 
 #set(ConfigPackageLocation lib/cmake/Spatter)
