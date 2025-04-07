@@ -80,6 +80,19 @@ target_compile_options(Spatter_shared
     ${WARNING_FLAGS}
     )
 
+install(TARGETS Spatter Spatter_shared
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+install(FILES ${SPATTER_INCLUDE_FILES}
+        DESTINATION include/Spatter)
+
+if (USE_CUDA)
+    install (TARGETS cuda_backend
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+endif()
+
 # Library/Header installation section
 
 #set(ConfigPackageLocation lib/cmake/Spatter)

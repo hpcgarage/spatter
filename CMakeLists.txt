@@ -20,9 +20,18 @@ include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
 include(pkgs/CUDASupport)
 
+if (APPLE)
+        set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+else ()
+        set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+endif ()
+
 # Create gz_read executable
 add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
 target_link_libraries(gz_read z)
+
+install(TARGETS gz_read
+        RUNTIME DESTINATION bin)
 
 add_subdirectory(src)
 
