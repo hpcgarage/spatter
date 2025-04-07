@@ -105,8 +105,9 @@ void ConfigurationBase::report() {
   MPI_Gather(&mpi_minimum_time, 1, MPI_DOUBLE, vector_minimum_time.data(), 1,
       MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+  //double mpi_maximum_bandwidth = static_cast<double>(bytes_per_run) / mpi_minimum_time / 1000000.0;
   double mpi_maximum_bandwidth =
-      static_cast<double>(bytes_per_run) / mpi_minimum_time / 1000000.0;
+      static_cast<double>(bytes_moved) / mpi_minimum_time / 1000000.0;
   std::vector<double> vector_maximum_bandwidth(numpes, 0.0);
   MPI_Gather(&mpi_maximum_bandwidth, 1, MPI_DOUBLE,
       vector_maximum_bandwidth.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
