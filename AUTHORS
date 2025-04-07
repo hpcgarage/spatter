@@ -4,17 +4,19 @@ Patrick Lavin
 	General code development, key gather/scatter kernels, maintainer
 	
 Jeffrey Young
-	OpenCL backend and general updates
+	General code development, notebooks and CI/CD, maintainer
 
 Jered Dominguez-Trujillo
-	Support for combined gather/scatter kernel
+	Development of refactor for Spatter 2.0, MPI features, improved CUDA backend
+
+Connor Radelja
+	General bugfixes and analysis for Spatter 2.0 release; development of Spatter SST element
 
 Agustin Vaca Valverde
-	Unit testing and scripts
+	Unit testing and scripts, notebooks
 
 Vincent Huang
 	Scripting and OneAPI backend support
 
 James Wood
 	OneAPI backend support
-

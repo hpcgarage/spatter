@@ -2,8 +2,15 @@
 
 Spatter is a microbenchmark for timing Gather/Scatter kernels on CPUs and GPUs. View the [source](https://github.com/hpcgarage/spatter), and please submit an issue on Github if you run into any issues. 
 
-![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/hpcgarage/spatter/actions/workflows/build-serial-omp.yml/badge.svg)
 
+## Related Publications
+
+We encourage you to read through our recent publications about Spatter, including our MEMSYS 2024 paper:
+
+- K. Sheridan, et al., "A Workflow for the Synthesis of Irregular Memory Access Microbenchmarks", presented at [MEMSYS 2024](https://www.memsys.io/) 
+    - [[paper]](https://github.com/hpcgarage/spatter/wiki/pubs/memsys24/sheridan_et_al_scatter_gather_traces_memsys24.pdf) [[slides]](https://github.com/hpcgarage/spatter/wiki/pubs/memsys24/lavin_sheridan_et_al_sg_traces_slides_memsys24.pdf) [[ACM Link]](https://dl.acm.org/doi/10.1145/3695794.3695816) 
+- [Spatter publications wiki](https://github.com/hpcgarage/spatter/wiki/Spatter-Publications) 
 
 ## Purpose 
 For some time now, memory has been the bottleneck in modern computers. As CPUs grow more memory hungry due to increased clock speeds, an increased number of cores, and larger vector units, memory bandwidth and latency continue to stagnate.  While increasingly complex cache hierarchies have helped ease this problem, they are best suited for regular memory accesses with large amounts of locality. However, there are many programs which do not display regular memory patterns and do have much data reuse, and thus do not benefit from such hierarchies. Irregular programs, which include many sparse matrix and graph algorithms, drive us to search for new approaches to better utilize whatever memory bandwidth is available.
@@ -196,18 +203,38 @@ For your convienience, we also provide a python script to help you create config
 ]
 ```
 
-## Publications and Citing Spatter
+## Citing Spatter
+If you use Spatter 2.0 for your research, we would greatly appreciate if you cite the latest Spatter-related paper from MEMSYS 2024:
 
-Please see our paper on [arXiv](https://arxiv.org/abs/1811.03743) for experimental results and more discussion of the tool. If you use Spatter in your work, please cite it from the accepted copy from [MEMSYS 2020](https://dl.acm.org/doi/abs/10.1145/3422575.3422794).
+<details>
+  <summary>BibTex Citation (click to expand)</summary>
+  
+```
+@inproceedings{sheridan:2024:workflow_memsys,
+author = {Sheridan, Kevin and Dominguez-Trujillo, Jered and Shipman, Galen and Lavin, Patrick and Scott, Christopher and Vaca Valverde, Agustin and Vuduc, Richard and Young, Jeffrey},
+title = {A Workflow for the Synthesis of Irregular Memory Access Microbenchmarks},
+year = {2024},
+isbn = {9798400710919},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3695794.3695816},
+doi = {10.1145/3695794.3695816},
+booktitle = {Proceedings of the International Symposium on Memory Systems},
+pages = {219–234},
+numpages = {16},
+keywords = {Memory systems, Benchmarking, Sparse Algorithms, Workload Analysis},
+series = {MEMSYS '24}
+}
+```
+</details>
 
-Lavin, P., Young, J., Vuduc, R., Riedy, J., Vose, A. and Ernst, D., Evaluating Gather and Scatter Performance on CPUs and GPUs. In The International Symposium on Memory Systems (pp. 209-222). September 2020.
+<details>
+  <summary>Text Citation (click to expand)</summary>
 
-### Other publications
-* [SC19 Student Research Competition Poster](https://sc19.supercomputing.org/proceedings/src_poster/src_poster_pages/spostg136.html) ([PDF](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_poster_sc19.pdf))
-* [SC19 poster abstract (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_abstract_sc19.pdf)
-
-### Slides
-* [SC19 Georgia Tech Booth Talk (PDF)](https://github.com/hpcgarage/spatter/wiki/pubs/sc19/plavin_spatter_booth_talk_sc19.pdf)
+```
+Kevin Sheridan, Jered Dominguez-Trujillo, Galen Shipman, Patrick Lavin, Christopher Scott, Agustin Vaca Valverde, Richard Vuduc, and Jeffrey Young. 2024. A Workflow for the Synthesis of Irregular Memory Access Microbenchmarks. In Proceedings of the International Symposium on Memory Systems (MEMSYS '24). Association for Computing Machinery, New York, NY, USA, 219–234. https://doi.org/10.1145/3695794.3695816
+```
+</details>
 
 ## Supported Platforms 
 
