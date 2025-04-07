@@ -9,12 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: awalsh128/cache-apt-pkgs-action@latest #Add OpenMPI to test against 
-        with:
-          packages: openmpi-bin openmpi-common libopenmpi-dev
-          version: 1.0 
+
+      - name: Install-MPI
+        run: |
+          sudo apt update
+          sudo apt install -y openmpi-bin openmpi-common libopenmpi-dev
+           
       - name: Build-MPI
-        run: 
+        run: |
           cmake -DMPI_CXX_COMPILER=mpicxx -DUSE_MPI=1 -B build_mpi -S . && make -C build_mpi
+      
       - name: Test-MPI
         run: make test -C build_mpi
