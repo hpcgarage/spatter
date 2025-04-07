@@ -5,7 +5,7 @@
 #SBATCH -t 00:30:00                              # Duration of the job (Ex: 30 mins)
 #SBATCH -p rg-nextgen-hpc                        # Partition Name
 #SBATCH -o /tools/ci-reports/spatter-cuda-test-%j.out   # Combined output and error messages file
-#SBATCH --gres gpu:A100:1	  	         # Request a A100 GPU on any available node
+#SBATCH --gres gpu:a100:1	  	         # Request a A100 GPU on any available node
 #SBATCH -W                                       # Do not exit until the submitted job terminates.
 
 ##Add commands here to build and execute
