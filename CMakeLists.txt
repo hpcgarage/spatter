@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 include(DisableIntree)
 
-project(Spatter VERSION 2.0.0 LANGUAGES CXX)
+project(Spatter VERSION 2.1.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
