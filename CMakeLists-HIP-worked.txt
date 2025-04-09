@@ -1,0 +1,42 @@
+cmake_minimum_required(VERSION 3.25)
+
+# Option 1: Force hipcc as the C++ compiler if not already set.
+# (Alternatively, you can call cmake with: -DCMAKE_CXX_COMPILER=hipcc)
+if(NOT DEFINED CMAKE_CXX_COMPILER)
+  set(CMAKE_CXX_COMPILER "hipcc" CACHE STRING "HIP C++ Compiler" FORCE)
+endif()
+
+# Add your custom module path.
+#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" ${CMAKE_MODULE_PATH})
+include(DisableIntree)
+project(Spatter VERSION 2.0.0 LANGUAGES CXX)
+
+include(GNUInstallDirs)
+include(BuildType)
+include(CompilerType)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Include support modules for other libraries.
+include(pkgs/JSONSupport)
+include(pkgs/MPISupport)
+include(pkgs/OpenMPSupport)
+
+# Instead of including CUDASupport, find HIP and include your HIP support module.
+find_package(HIP REQUIRED)
+include(pkgs/HIPSupport)  # Make sure this module sets HIP-related compile/link flags.
+
+# Optionally, print some information about HIP.
+message(STATUS "HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
+message(STATUS "HIP runtime: ${HIP_RUNTIME}")
+
+# Create the gz_read executable.
+add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
+target_link_libraries(gz_read PRIVATE z)
+
+# Process the rest of your project.
+add_subdirectory(src)
+enable_testing()
+add_subdirectory(tests)
+

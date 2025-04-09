@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/nethome/tking88/spatter/src/Spatter/HipBackend.cpp
+HipBackend.hh
+/nethome/tking88/spatter/src/Spatter/HipBackend.hh
+iostream
+-
+
+/nethome/tking88/spatter/src/Spatter/HipBackend.hh
+hip/hip_runtime.h
+-
+

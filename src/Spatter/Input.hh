@@ -19,9 +19,9 @@
 #include <omp.h>
 #endif
 
-#include "Configuration.hh"
+#include "Configuration.hip.hh"
 #include "JSONParser.hh"
-#include "PatternParser.hh"
+#include "PatternParser.hip.hh"
 #include "SpatterTypes.hh"
 
 namespace Spatter {

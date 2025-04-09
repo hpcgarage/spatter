@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSpatter.a CMakeFiles/Spatter.dir/Configuration.hip.cc.o CMakeFiles/Spatter.dir/JSONParser.hip.cc.o CMakeFiles/Spatter.dir/PatternParser.hip.cc.o CMakeFiles/Spatter.dir/Timer.hip.cc.o
+/usr/bin/ranlib libSpatter.a

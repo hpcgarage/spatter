@@ -1,0 +1,1 @@
+/opt/rocm-6.3.1/lib/llvm/bin/clang++ -fPIC -O3 -DNDEBUG --offload-arch=gfx940 --offload-arch=gfx90a --hip-link --rtlib=compiler-rt -unwindlib=libgcc -shared -Wl,-soname,libhip_backend.so -o libhip_backend.so CMakeFiles/hip_backend.dir/HipBackend.cpp.o  /opt/rocm-6.3.1/lib/libamdhip64.so.6.3.60301 

@@ -1,0 +1,28 @@
+# Spatter/src/CMakeLists.txt
+
+add_subdirectory(Spatter)
+
+# Define the spatter executable
+add_executable(spatter main.cc)
+
+# Add HIP-specific configurations
+if(USE_HIP)
+  # Set source file properties for HIP
+  set_source_files_properties(main.cc PROPERTIES LANGUAGE HIP)
+
+  # Add HIP include directories
+  target_include_directories(spatter PRIVATE ${HIP_INCLUDE_DIRS})
+
+  # Define USE_HIP for the spatter target
+  target_compile_definitions(spatter PRIVATE USE_HIP)
+endif()
+
+# Link libraries
+target_link_libraries(spatter ${COMMON_LINK_LIBRARIES} Spatter)
+
+# Set target properties
+set_target_properties(spatter PROPERTIES
+    COMPILE_DEFINITIONS "${COMMON_COMPILE_DEFINITIONS}"
+    COMPILE_OPTIONS "${WARNING_FLAGS}"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)

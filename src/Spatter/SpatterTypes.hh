@@ -11,6 +11,7 @@ namespace Spatter {
 struct Serial {};
 struct OpenMP {};
 struct CUDA {};
+struct HIP{};
 } // namespace Spatter
 
 #endif

@@ -1,0 +1,3 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage"
+"hip_scatter(unsigned long const*, double*, double const*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long) [clone .kd]",360,10666937716,29630382,78.81050765694161
+"hip_gather(unsigned long const*, double const*, double*, unsigned long, unsigned long, unsigned long, unsigned long) [clone .kd]",160,2867980448,17924877,21.189492343058397

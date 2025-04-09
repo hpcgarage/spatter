@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-
+#include <cinttypes>
 // compile with -lz
 
 #define NBUFS (1 << 18) // gzfile read buffer
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
   while (gz_buf_read(zfp, zbuff, &pzbuff, &izret)) {
 
     if (quiet == 0)
-      printf("%llu\n", (*pzbuff));
+      printf("%" PRIu64 "\n", (*pzbuff)); // only change to this file
 
     pzbuff++;
   }
