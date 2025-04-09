@@ -1,1 +1,0 @@
-/opt/rocm-6.3.1/bin/hipcc -O3 -DNDEBUG "CMakeFiles/gz_read.dir/standard-suite/binary-traces/gz_read.cc.o" -o gz_read  -lz 
