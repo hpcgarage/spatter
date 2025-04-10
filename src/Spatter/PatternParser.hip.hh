@@ -1,5 +1,5 @@
 /*!
-  \file PatternParser.hh
+  \file PatternParser.hip.hh
 */
 
 #ifndef SPATTER_PATTERNPARSER_HH

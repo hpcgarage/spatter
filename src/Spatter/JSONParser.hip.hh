@@ -1,5 +1,5 @@
 /*!
-  \file JSONParser.hh
+  \file JSONParser.hip.hh
 */
 
 #ifndef SPATTER_JSONPARSER_HH

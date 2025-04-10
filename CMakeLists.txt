@@ -1,6 +1,7 @@
 # CMakeLists.txt
 cmake_minimum_required(VERSION 3.25)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+include(DisableIntree)
 
 option(USE_CUDA "Enable CUDA support" OFF)
 option(USE_HIP "Enable HIP support" ON)

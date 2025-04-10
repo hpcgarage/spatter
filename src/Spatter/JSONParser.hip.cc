@@ -1,5 +1,5 @@
 /*!
-  \file JSONParser.cc
+  \file JSONParser.hip.cc
 */
 
 #include "JSONParser.hip.hh"
