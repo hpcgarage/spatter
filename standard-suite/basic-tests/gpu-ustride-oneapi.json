@@ -1,0 +1,98 @@
+[
+    {
+        "pattern": "UNIFORM:256:1:NR",
+        "kernel": "Scatter",
+        "global-work-size": 3906304,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:2:NR",
+        "kernel": "Scatter",
+        "global-work-size": 1953280,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:4:NR",
+        "kernel": "Scatter",
+        "global-work-size": 976640,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:8:NR",
+        "kernel": "Scatter",
+        "global-work-size": 488448,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:16:NR",
+        "kernel": "Scatter",
+        "global-work-size": 244160,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:32:NR",
+        "kernel": "Scatter",
+        "global-work-size": 122112,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:64:NR",
+        "kernel": "Scatter",
+        "global-work-size": 61440,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:128:NR",
+        "kernel": "Scatter",
+        "global-work-size": 30720,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:1:NR",
+        "kernel": "Gather",
+        "global-work-size": 3906304,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:2:NR",
+        "kernel": "Gather",
+        "global-work-size": 1953280,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:4:NR",
+        "kernel": "Gather",
+        "global-work-size": 976640,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:8:NR",
+        "kernel": "Gather",
+        "global-work-size": 488448,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:16:NR",
+        "kernel": "Gather",
+        "global-work-size": 244160,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:32:NR",
+        "kernel": "Gather",
+        "global-work-size": 122112,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:64:NR",
+        "kernel": "Gather",
+        "global-work-size": 61440,
+        "local-work-size": 1024
+    },
+    {
+        "pattern": "UNIFORM:256:128:NR",
+        "kernel": "Gather",
+        "global-work-size": 30720,
+        "local-work-size": 1024
+    }
+]

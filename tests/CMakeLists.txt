@@ -23,6 +23,7 @@ set(SPATTER_TESTS
       binary-trace
       standard_suite_cpu
       standard_laplacian_suite
+      standard_suite_oneapi
   )
 
 if (USE_OPENMP)

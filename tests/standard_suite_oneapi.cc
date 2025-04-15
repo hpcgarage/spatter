@@ -6,7 +6,7 @@ int gpu_stream_test() {
 
   int ret = asprintf(&command,
       "../spatter -b oneapi  -f "
-      "../../standard-suite/basic-tests/gpu-stream.json");
+      "../../standard-suite/basic-tests/gpu-stream-oneapi.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
     return EXIT_FAILURE;
@@ -21,7 +21,7 @@ int gpu_ustride_test() {
 
   int ret = asprintf(&command,
       "../spatter -b oneapi  -f "
-      "../../standard-suite/basic-tests/gpu-ustride.json");
+      "../../standard-suite/basic-tests/gpu-ustride-oneapi.json");
   if (ret == -1 || system(command) != EXIT_SUCCESS) {
     std::cerr << "Test failure on " << command << std::endl;
     return EXIT_FAILURE;

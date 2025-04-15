@@ -1,114 +1,105 @@
 [
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 7575757,
-        "pattern": [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
-        "delta": 64
+      "pattern": [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
+      "delta": 2,
+      "count": 83333333,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 7575757,
-        "pattern": [4, 8, 12, 0, 20, 24, 28, 16, 36, 40, 44, 32, 52, 56, 60, 48],
-        "delta": 64
+      "pattern": [4, 8, 12, 0, 20, 24, 28, 16, 36, 40, 44, 32, 52, 56, 60, 48],
+      "delta": 2,
+      "count": 83333333,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 30,
-        "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
-        "delta": 518408
+      "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
+      "delta": 518408,
+      "count": 482,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 7575757,
-        "pattern": [2, 484, 482, 0, 4, 486, 484, 2, 6, 488, 486, 4, 8, 490, 488, 6],
-        "delta": 32
+      "pattern": [2, 484, 482, 0, 4, 486, 484, 2, 6, 488, 486, 4, 8, 490, 488, 6],
+      "delta": 2,
+      "count": 83333333,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 7575757,
-        "pattern": [0, 2, 484, 482, 2, 4, 486, 484, 4, 6, 488, 486, 6, 8, 490, 488],
-        "delta": 32
+      "pattern": [0, 2, 484, 482, 2, 4, 486, 484, 4, 6, 488, 486, 6, 8, 490, 488],
+      "delta": 2,
+      "count": 83333333,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 32412,
-        "pattern": [482, 0, 2, 484, 484, 2, 4, 486, 486, 4, 6, 488, 488, 6, 8, 490],
-        "delta": 482
+      "pattern": [482, 0, 2, 484, 484, 2, 4, 486, 486, 4, 6, 488, 488, 6, 8, 490],
+      "delta": 482,
+      "count": 517598,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Scatter",
-        "local-work-size": 256,
-        "count": 14705882,
-        "pattern": [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
-        "delta": 16
+      "pattern": [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
+      "delta": 1,
+      "count": 125000000,
+      "kernel": "Scatter"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 642,
-        "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
-        "delta": 388848
+      "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+      "delta": 388848,
+      "count": 642,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 50000000,
-        "pattern": [4, 8, 12, 0, 20, 24, 28, 16, 36, 40, 44, 32, 52, 56, 60, 48],
-        "delta": 4
+      "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+      "delta": 388848,
+      "count": 642,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 132,
-        "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
-        "delta": 1882384
+      "pattern": [4, 8, 12, 0, 20, 24, 28, 16, 36, 40, 44, 32, 52, 56, 60, 48],
+      "delta": 4,
+      "count": 50000000,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 482,
-        "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
-        "delta": 518408
+      "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+      "delta": 1882384,
+      "count": 132,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 241,
-        "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
-        "delta": 1036816
+      "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
+      "delta": 518408,
+      "count": 482,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 519750,
-        "pattern": [482, 0, 2, 484, 484, 2, 4, 486, 486, 4, 6, 488, 488, 6, 8, 490],
-        "delta": 480
+      "pattern": [6, 0, 2, 4, 14, 8, 10, 12, 22, 16, 18, 20, 30, 24, 26, 28],
+      "delta": 1036816,
+      "count": 241,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 1928,
-        "pattern": [2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0],
-        "delta": 129608
+      "pattern": [482, 0, 2, 484, 484, 2, 4, 486, 486, 4, 6, 488, 488, 6, 8, 490],
+      "delta": 480,
+      "count": 519750,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 50000000,
-        "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
-        "delta": 4
+      "pattern": [2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0],
+      "delta": 129608,
+      "count": 1928,
+      "kernel": "Gather"
     },
     {
-        "kernel": "Gather",
-        "local-work-size": 256,
-        "count": 642,
-        "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
-        "delta": 388852
+      "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+      "delta": 4,
+      "count": 50000000,
+      "kernel": "Gather"
+    },
+    {
+      "pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+      "delta": 388852,
+      "count": 642,
+      "kernel": "Gather"
     }
-]
+  ]
+  
