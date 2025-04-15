@@ -1106,26 +1106,19 @@ void Configuration<Spatter::OneAPI>::setup() {
   dev_dense = (double *)sycl::malloc_device(sizeof(double) * dense.size(), dpct::get_default_queue());
 
   // cudaMemcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size());
   dpct::get_default_queue().memcpy(dev_pattern, pattern.data(), sizeof(size_t) * pattern.size()).wait();
   // cudaMemcpy(dev_pattern_gather, pattern_gather.data(), sizeof(size_t) * pattern_gather.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_pattern_gather, pattern_gather.data(), sizeof(size_t) * pattern_gather.size());
   dpct::get_default_queue().memcpy(dev_pattern_gather, pattern_gather.data(), sizeof(size_t) * pattern_gather.size()).wait(); 
   // cudaMemcpy(dev_pattern_scatter, pattern_scatter.data(), sizeof(size_t) * pattern_scatter.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_pattern_scatter, pattern_scatter.data(), sizeof(size_t) * pattern_scatter.size());
   dpct::get_default_queue().memcpy(dev_pattern_scatter, pattern_scatter.data(), sizeof(size_t) * pattern_scatter.size()).wait();
 
   // cudaMemcpy(dev_sparse, sparse.data(), sizeof(double) * sparse.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_sparse, sparse.data(), sizeof(double) * sparse.size());
   dpct::get_default_queue().memcpy(dev_sparse, sparse.data(), sizeof(size_t) * sparse.size()).wait();
   // cudaMemcpy(dev_sparse_gather, sparse_gather.data(), sizeof(double) * sparse_gather.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_sparse_gather, sparse_gather.data(), sizeof(double) * sparse_gather.size());
   dpct::get_default_queue().memcpy(dev_sparse_gather, sparse_gather.data(), sizeof(size_t) * sparse_gather.size()).wait();
   // cudaMemcpy(dev_sparse_scatter, sparse_scatter.data(), sizeof(double) * sparse_scatter.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_sparse_scatter, sparse_scatter.data(), sizeof(double) * sparse_scatter.size());
   dpct::get_default_queue().memcpy(dev_sparse_scatter, sparse_scatter.data(), sizeof(size_t) * sparse_scatter.size()).wait();
   // cudaMemcpy(dev_dense, dense.data(), sizeof(double) * dense.size(), cudaMemcpyHostToDevice);
-  // std::memcpy(dev_dense, dense.data(), sizeof(double) * dense.size());
   dpct::get_default_queue().memcpy(dev_dense, dense.data(), sizeof(size_t) * dense.size()).wait();
 
   // cudaDeviceSynchronize();
