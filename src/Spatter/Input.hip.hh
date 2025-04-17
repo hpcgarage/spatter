@@ -20,7 +20,7 @@
 #endif
 
 #include "Configuration.hip.hh"
-#include "JSONParser.hh"
+#include "JSONParser.hip.hh"
 #include "PatternParser.hh"
 #include "SpatterTypes.hh"
 

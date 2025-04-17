@@ -40,7 +40,7 @@ inline void hipAssert(
 }
 #endif
 
-#include "AlignedAllocator.hh"
+#include "AlignedAllocator.hip.hh"
 #include "SpatterTypes.hh"
 #include "Timer.hh"
 

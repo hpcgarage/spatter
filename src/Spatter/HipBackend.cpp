@@ -220,8 +220,9 @@ float hip_scatter_wrapper(const size_t *d_pattern, double *d_sparse,
             hipLaunchKernelGGL(hip_scatter_offset, dim3(blocks_this), dim3(threadsPerBlock), 0, 0,
                               d_pattern, d_sparse, d_dense, pattern_length,
                               delta, wrap, counts_this, offset);
-            hipDeviceSynchronize();
+            // hipDeviceSynchronize();
         }
+	hipDeviceSynchronize();
     }
 
     hipEventRecord(stop);
