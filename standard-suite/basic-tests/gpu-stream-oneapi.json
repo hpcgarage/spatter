@@ -1,7 +1,7 @@
 [
-    {"pattern":"UNIFORM:128:1:NR", "count":4194304, "kernel":"Gather", "local-work-size":128},
-    {"pattern":"UNIFORM:128:1:NR", "count":4194304, "kernel":"Scatter", "local-work-size":128},
-    {"pattern-gather": "UNIFORM:128:1:NR", "pattern-scatter": "UNIFORM:128:1:NR", "kernel": "GS", "local-work-size":128},
-    {"pattern": "UNIFORM:128:1:NR", "pattern-scatter": "UNIFORM:128:1:NR", "kernel": "MultiScatter", "local-work-size":128},
-    {"pattern": "UNIFORM:128:1:NR", "pattern-gather": "UNIFORM:128:1:NR", "kernel": "MultiGather", "local-work-size":128}
+    {"pattern":"UNIFORM:128:1:NR", "count":4194304, "kernel":"Gather", "local-work-size":1024},
+    {"pattern":"UNIFORM:128:1:NR", "count":4194304, "kernel":"Scatter", "local-work-size":1024},
+    {"pattern-gather": "UNIFORM:128:1:NR", "pattern-scatter": "UNIFORM:128:1:NR", "kernel": "GS", "local-work-size":1024},
+    {"pattern": "UNIFORM:128:1:NR", "pattern-scatter": "UNIFORM:128:1:NR", "kernel": "MultiScatter", "local-work-size":1024},
+    {"pattern": "UNIFORM:128:1:NR", "pattern-gather": "UNIFORM:128:1:NR", "kernel": "MultiGather", "local-work-size":1024}
 ]
