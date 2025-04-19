@@ -249,3 +249,7 @@ Kevin Sheridan, Jered Dominguez-Trujillo, Galen Shipman, Patrick Lavin, Christop
 * If using CUDA, CUDA 11.0+ 
 * If using OpenMP, OpenMP 3.0+
   * Note: Issues have been reported in Mac systems with OpenMP. If you encounter issues finding OpenMP when building on Mac OSX, please try to build and run Spatter in a Linux container. 
+* If using OneAPI, 
+  * SYCL 2024.2+
+  * Note: Intel OneAPI Base Toolkit must be installed with the DPC++/C++ Compiler component. 
+          Recommended compiler: icpx (IntelLLVM-based DPC++ compiler)
