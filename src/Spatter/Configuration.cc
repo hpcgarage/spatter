@@ -23,7 +23,8 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
     const size_t delta_scatter, const long int seed, const size_t wrap,
     const size_t count, const size_t shared_mem, const size_t local_work_size,
     const int nthreads, const unsigned long nruns, const bool aggregate,
-    const bool atomic, const unsigned long verbosity)
+    const bool atomic, const bool atomic_fence, const bool dense_buffers,
+    const unsigned long verbosity)
     : id(id), name(name), kernel(k), pattern(pattern),
       pattern_gather(pattern_gather), pattern_scatter(pattern_scatter),
       sparse(sparse), dev_sparse(dev_sparse), sparse_size(sparse_size),
@@ -36,6 +37,7 @@ ConfigurationBase::ConfigurationBase(const size_t id, const std::string name,
       delta_scatter(delta_scatter), seed(seed), wrap(wrap), count(count),
       shmem(shared_mem), local_work_size(local_work_size),
       omp_threads(nthreads), nruns(nruns), aggregate(aggregate), atomic(atomic),
+      atomic_fence(atomic_fence), dense_buffers(dense_buffers),
       verbosity(verbosity), time_seconds(nruns, 0) {
   std::transform(kernel.begin(), kernel.end(), kernel.begin(),
       [](unsigned char c) { return std::tolower(c); });
@@ -48,8 +50,8 @@ int ConfigurationBase::run(bool timed, unsigned long run_id) {
     gather(timed, run_id);
   else if (kernel.compare("scatter") == 0)
     scatter(timed, run_id);
-  else if (kernel.compare("sg") == 0)
-    scatter_gather(timed, run_id);
+  else if (kernel.compare("gs") == 0)
+    gather_scatter(timed, run_id);
   else if (kernel.compare("multigather") == 0)
     multi_gather(timed, run_id);
   else if (kernel.compare("multiscatter") == 0)
@@ -68,7 +70,7 @@ void ConfigurationBase::report() {
   if (kernel.compare("gather") == 0 || kernel.compare("scatter") == 0)
     bytes_moved = pattern.size() * count * sizeof(size_t);
 
-  if (kernel.compare("sg") == 0)
+  if (kernel.compare("gs") == 0)
     bytes_moved = (pattern_scatter.size() + pattern_gather.size()) * count * sizeof(size_t);
 
   if (kernel.compare("multiscatter") == 0)
@@ -103,8 +105,9 @@ void ConfigurationBase::report() {
   MPI_Gather(&mpi_minimum_time, 1, MPI_DOUBLE, vector_minimum_time.data(), 1,
       MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+  //double mpi_maximum_bandwidth = static_cast<double>(bytes_per_run) / mpi_minimum_time / 1000000.0;
   double mpi_maximum_bandwidth =
-      static_cast<double>(bytes_per_run) / mpi_minimum_time / 1000000.0;
+      static_cast<double>(bytes_moved) / mpi_minimum_time / 1000000.0;
   std::vector<double> vector_maximum_bandwidth(numpes, 0.0);
   MPI_Gather(&mpi_maximum_bandwidth, 1, MPI_DOUBLE,
       vector_maximum_bandwidth.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -141,7 +144,7 @@ void ConfigurationBase::setup() {
                 << std::endl;
       exit(1);
     }
-  } else if (kernel.compare("sg") == 0) {
+  } else if (kernel.compare("gs") == 0) {
     if (pattern_gather.size() == 0) {
       std::cerr << "Pattern-Gather needs to have length of at least 1"
                 << std::endl;
@@ -184,7 +187,7 @@ void ConfigurationBase::setup() {
   // sparse size = max_pattern_val + delta * (count - 1) + 1
   // assert(pattern.size() > max_pattern_scatter_val + 1)
 
-  if (kernel.compare("sg") == 0) {
+  if (kernel.compare("gs") == 0) {
     size_t max_pattern_scatter_val = *(std::max_element(
         std::cbegin(pattern_scatter), std::cend(pattern_scatter)));
     size_t max_pattern_gather_val = *(std::max_element(
@@ -395,7 +398,7 @@ Configuration<Spatter::Serial>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather,
           delta_scatter, seed, wrap, count, 0, 1024, 1, nruns, aggregate, false,
-          verbosity) {
+          false, false, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -441,7 +444,7 @@ void Configuration<Spatter::Serial>::scatter(bool timed, unsigned long run_id) {
   }
 }
 
-void Configuration<Spatter::Serial>::scatter_gather(
+void Configuration<Spatter::Serial>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   size_t pattern_length = pattern_scatter.size();
@@ -527,13 +530,15 @@ Configuration<Spatter::OpenMP>::Configuration(const size_t id,
     const size_t delta_gather, const size_t delta_scatter, const long int seed,
     const size_t wrap, const size_t count, const int nthreads,
     const unsigned long nruns, const bool aggregate, const bool atomic,
+    const bool atomic_fence, const bool dense_buffers,
     const unsigned long verbosity)
     : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
           pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
           dev_sparse_gather, sparse_gather_size, sparse_scatter,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed, wrap,
-          count, 0, 1024, nthreads, nruns, aggregate, atomic, verbosity) {
+          count, 0, 1024, nthreads, nruns, aggregate, atomic, atomic_fence,
+          dense_buffers, verbosity) {
   ConfigurationBase::setup();
 }
 
@@ -555,11 +560,13 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -567,6 +574,9 @@ void Configuration<Spatter::OpenMP>::gather(bool timed, unsigned long run_id) {
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -589,11 +599,13 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = (dense_buffers ? dense_perthread[t].data() : dense.data());
+    double *target = sparse.data();
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -602,6 +614,9 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -609,7 +624,7 @@ void Configuration<Spatter::OpenMP>::scatter(bool timed, unsigned long run_id) {
   }
 }
 
-void Configuration<Spatter::OpenMP>::scatter_gather(
+void Configuration<Spatter::OpenMP>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   size_t pattern_length = pattern_scatter.size();
@@ -632,6 +647,9 @@ void Configuration<Spatter::OpenMP>::scatter_gather(
     }
   }
 
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
+
   if (timed) {
     timer.stop();
     time_seconds[run_id] = timer.seconds();
@@ -653,11 +671,13 @@ void Configuration<Spatter::OpenMP>::multi_gather(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *source = sparse.data();
+    double *target = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *sl = sparse.data() + delta * i;
-      double *tl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *sl = source + delta * i;
+      double *tl = target + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -665,6 +685,9 @@ void Configuration<Spatter::OpenMP>::multi_gather(
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -688,11 +711,13 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
 #pragma omp parallel
   {
     int t = omp_get_thread_num();
+    double *target = sparse.data();
+    double *source = (dense_buffers ? dense_perthread[t].data() : dense.data());
 
 #pragma omp for
     for (size_t i = 0; i < count; ++i) {
-      double *tl = sparse.data() + delta * i;
-      double *sl = dense_perthread[t].data() + pattern_length * (i % wrap);
+      double *tl = target + delta * i;
+      double *sl = source + pattern_length * (i % wrap);
 
 #pragma omp simd
       for (size_t j = 0; j < pattern_length; ++j) {
@@ -700,6 +725,9 @@ void Configuration<Spatter::OpenMP>::multi_scatter(
       }
     }
   }
+
+  if (atomic_fence)
+    std::atomic_thread_fence(std::memory_order_release);
 
   if (timed) {
     timer.stop();
@@ -732,7 +760,7 @@ Configuration<Spatter::CUDA>::Configuration(const size_t id,
           dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
           dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
           wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
-          verbosity) {
+          false, false, verbosity) {
   
   setup();
 }
@@ -805,7 +833,7 @@ void Configuration<Spatter::CUDA>::scatter(bool timed, unsigned long run_id) {
     time_seconds[run_id] = ((double)time_ms / 1000.0);
 }
 
-void Configuration<Spatter::CUDA>::scatter_gather(
+void Configuration<Spatter::CUDA>::gather_scatter(
     bool timed, unsigned long run_id) {
   assert(pattern_scatter.size() == pattern_gather.size());
   int pattern_length = static_cast<int>(pattern_scatter.size());
@@ -817,11 +845,11 @@ void Configuration<Spatter::CUDA>::scatter_gather(
   float time_ms = 0.0;
 
   if (atomic)
-    time_ms = cuda_scatter_gather_atomic_wrapper(dev_pattern_scatter,
+    time_ms = cuda_gather_scatter_atomic_wrapper(dev_pattern_scatter,
         dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
         pattern_length, delta_scatter, delta_gather, wrap, count);
   else
-    time_ms = cuda_scatter_gather_wrapper(dev_pattern_scatter,
+    time_ms = cuda_gather_scatter_wrapper(dev_pattern_scatter,
         dev_sparse_scatter, dev_pattern_gather, dev_sparse_gather,
         pattern_length, delta_scatter, delta_gather, wrap, count);
 

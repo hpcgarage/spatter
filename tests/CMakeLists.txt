@@ -21,7 +21,9 @@ set(SPATTER_TESTS
       concurrent
       multilevel
       binary-trace
-      standard_suite_cpu
+      standard_suite_stream_cpu
+      standard_suite_uniform_cpu
+      standard_suite_traces_cpu
       standard_laplacian_suite
   )
 
@@ -30,7 +32,11 @@ if (USE_OPENMP)
 endif()
 
 if (USE_CUDA)
-  set(SPATTER_TESTS ${SPATTER_TESTS} standard_suite_gpu parse_run_config_suite_gpu)
+  set(SPATTER_TESTS ${SPATTER_TESTS}
+    standard_suite_stream_gpu
+    standard_suite_uniform_gpu
+    standard_suite_traces_gpu
+    parse_run_config_suite_gpu)
 endif()
 
 foreach (APP ${SPATTER_TESTS})

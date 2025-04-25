@@ -10,7 +10,7 @@
 
 void print_build_info(Spatter::ClArgs &cl) {
   std::cout << std::endl;
-  std::cout << "Running Spatter version 1.1" << std::endl;
+  std::cout << "Running Spatter version " << xstr(SPAT_VERSION) << std::endl;
   std::cout << "Compiler: " << xstr(SPAT_CXX_NAME) << " ver. "
             << xstr(SPAT_CXX_VER) << std::endl;
   std::cout << "Backend: ";

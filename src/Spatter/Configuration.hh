@@ -69,6 +69,7 @@ public:
       const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
+      const bool atomic_fence, const bool dense_buffers,
       const unsigned long verbosity);
 
   virtual ~ConfigurationBase();
@@ -77,7 +78,7 @@ public:
 
   virtual void gather(bool timed, unsigned long run_id) = 0;
   virtual void scatter(bool timed, unsigned long run_id) = 0;
-  virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
+  virtual void gather_scatter(bool timed, unsigned long run_id) = 0;
   virtual void multi_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
 
@@ -137,6 +138,8 @@ public:
 
   const bool aggregate;
   const bool atomic;
+  const bool atomic_fence;
+  const bool dense_buffers;
   const unsigned long verbosity;
 
   Spatter::Timer timer;
@@ -167,7 +170,7 @@ public:
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
@@ -189,13 +192,14 @@ public:
       const size_t delta_gather, const size_t delta_scatter,
       const long int seed, const size_t wrap, const size_t count,
       const int nthreads, const unsigned long nruns, const bool aggregate,
-      const bool atomic, const unsigned long verbosity);
+      const bool atomic, const bool atomic_fence, const bool dense_buffers,
+      const unsigned long verbosity);
 
   int run(bool timed, unsigned long run_id);
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
@@ -226,7 +230,7 @@ public:
   int run(bool timed, unsigned long run_id);
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void scatter_gather(bool timed, unsigned long run_id);
+  void gather_scatter(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
   void setup();

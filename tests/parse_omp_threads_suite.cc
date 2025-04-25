@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
   optind = 1;
   asprintf(&argv_[3], "-t0");
-  if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)
+  if (omp_thread_test(0, argc_, argv_) == EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
   optind = 1;
   asprintf(&argv_[3], "--omp-threads=0");
-  if (omp_thread_test(0, argc_, argv_) != EXIT_SUCCESS)
+  if (omp_thread_test(0, argc_, argv_) == EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   optind = 1;
