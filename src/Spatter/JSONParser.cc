@@ -217,14 +217,14 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
 #endif
 #ifdef USE_ONEAPI
   else if (backend_.compare("oneapi") == 0)
-    c = std::make_unique<Spatter::Configuration<Spatter::OneAPI>>(index,
-        data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
-        pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
-        sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
-        delta, delta_gather, delta_scatter, data_[index]["seed"],
-        data_[index]["wrap"], data_[index]["count"], shared_mem_,
-        data_[index]["local-work-size"], data_[index]["nruns"], aggregate_,
-        atomic_, verbosity_);
+  c = std::make_unique<Spatter::Configuration<Spatter::OneAPI>>(index,
+    data_[index]["name"], data_[index]["kernel"], pattern, pattern_gather,
+    pattern_scatter, sparse, sparse_size, sparse_gather, sparse_gather_size,
+    sparse_scatter, sparse_scatter_size, dense, dense_size, dense_perthread,
+    delta, delta_gather, delta_scatter, data_[index]["seed"],
+    data_[index]["wrap"], data_[index]["count"], shared_mem_,
+    data_[index]["local-work-size"], data_[index]["nruns"], aggregate_,
+    atomic_, verbosity_);
 #endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;

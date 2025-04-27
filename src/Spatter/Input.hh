@@ -694,7 +694,6 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         nthreads, verbosity);
 
     for (size_t i = 0; i < json_file.size(); ++i) {
-      // std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
       std::shared_ptr<Spatter::ConfigurationBase> c = json_file[i];
       cl.configs.push_back(std::move(c));
     }

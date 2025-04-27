@@ -22,6 +22,7 @@ set(SPATTER_TESTS
       multilevel
       binary-trace
       standard_suite_cpu
+      standard_suite_gpu
       standard_laplacian_suite
       standard_suite_oneapi
   )

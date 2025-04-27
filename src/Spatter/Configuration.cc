@@ -926,16 +926,10 @@ Configuration<Spatter::OneAPI>::Configuration(const size_t id,
 }
 
 Configuration<Spatter::OneAPI>::~Configuration() {
-  // cudaFree(dev_pattern);
-  // cudaFree(dev_pattern_gather);
-  // cudaFree(dev_pattern_scatter);
   sycl::free(dev_pattern, dpct::get_default_queue());
   sycl::free(dev_pattern_gather, dpct::get_default_queue());
   sycl::free(dev_pattern_scatter, dpct::get_default_queue());
 
-  // cudaFree(dev_sparse);
-  // cudaFree(dev_sparse_gather);
-  // cudaFree(dev_sparse_scatter);
   sycl::free(dev_sparse, dpct::get_default_queue());
   sycl::free(dev_sparse_gather, dpct::get_default_queue());
   sycl::free(dev_sparse_scatter, dpct::get_default_queue());
