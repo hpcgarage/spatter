@@ -6,25 +6,25 @@ get_filename_component(full_path_binary_test_folder "${CMAKE_CURRENT_SOURCE_DIR}
 add_definitions(-DBINARY_TRACE_DIR="${full_path_binary_test_folder}")
 
 set(SPATTER_TESTS
-      parse_uniform_stride_1
-      parse_uniform_stride_suite
-      parse_ms1_suite
-      parse_custom_suite
-      parse_json_suite
-      parse_run_config_suite_cpu
-      parse_random_suite
-      parse_concurrent
-      parse_multilevel
-      parse_size
-      standard_uniform_suite
-      standard_ms1_suite
-      concurrent
-      multilevel
-      binary-trace
-      standard_suite_cpu
-      standard_suite_gpu
-      standard_laplacian_suite
-      standard_suite_oneapi
+    parse_uniform_stride_1
+    parse_uniform_stride_suite
+    parse_ms1_suite
+    parse_custom_suite
+    parse_json_suite
+    parse_run_config_suite_cpu
+    parse_random_suite
+    parse_concurrent
+    parse_multilevel
+    parse_size
+    standard_uniform_suite
+    standard_ms1_suite
+    concurrent
+    multilevel
+    binary-trace
+    standard_suite_cpu
+    standard_suite_gpu
+    standard_laplacian_suite
+    standard_suite_oneapi
   )
 
 if (USE_OPENMP)
