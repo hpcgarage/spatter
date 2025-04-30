@@ -181,7 +181,7 @@ def ustride_plot(df_custom, kernel):
     
     # Concatenate the new data to the old data
     with open('pattern_results_ext.pkl', 'rb') as file:
-        df = pickle.load(file)
+        df = pd.read_pickle(file)
     
     if df_custom is not None:
         df = pd.concat([df, df_custom], ignore_index=True)
