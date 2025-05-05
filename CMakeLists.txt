@@ -6,7 +6,7 @@ include(DisableIntree)
 project(Spatter VERSION 2.2.0 LANGUAGES CXX)
 
 option(USE_CUDA "Enable CUDA support" OFF)
-option(USE_HIP "Enable HIP support" ON)
+option(USE_HIP "Enable HIP support" OFF)
 
 if(USE_CUDA AND USE_HIP)
     message(FATAL_ERROR "Cannot enable both CUDA and HIP simultaneously. Choose one.")
