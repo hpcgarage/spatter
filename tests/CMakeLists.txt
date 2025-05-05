@@ -10,7 +10,6 @@ set(SPATTER_TESTS
     parse_ms1_suite
     parse_custom_suite
     parse_json_suite
-    parse_run_config_suite_cpu
     parse_random_suite
     parse_concurrent
     parse_multilevel
@@ -20,7 +19,10 @@ set(SPATTER_TESTS
     concurrent
     multilevel
     binary-trace
-    standard_suite_cpu
+    parse_run_config_suite_cpu
+    standard_suite_stream_cpu
+    standard_suite_traces_cpu
+    stnard_suite_uniform_cpu
     standard_laplacian_suite
 )
 
