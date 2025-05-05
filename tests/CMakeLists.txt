@@ -22,7 +22,7 @@ set(SPATTER_TESTS
     parse_run_config_suite_cpu
     standard_suite_stream_cpu
     standard_suite_traces_cpu
-    stnard_suite_uniform_cpu
+    standard_suite_uniform_cpu
     standard_laplacian_suite
 )
 
