@@ -1,0 +1,16 @@
+name: Build and Test oneapi Backend
+
+on:
+  pull_request:
+    branches: [main, spatter-devel]
+  schedule:
+    - cron: '30 8 * * *'
+
+jobs:  
+  build-oneapi:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run batch file
+      run: cd tests/misc && chmod +x run-crnch-oneapi.sh && sbatch run-crnch-oneapi.sh
+      
