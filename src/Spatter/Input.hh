@@ -26,10 +26,6 @@
 #include <oneapi/dpl/random>
 #endif
 
-#include <sycl/sycl.hpp>
-#include <dpct/dpct.hpp>
-#include <oneapi/dpl/random>
-
 #include "Configuration.hh"
 #include "JSONParser.hh"
 #include "PatternParser.hh"

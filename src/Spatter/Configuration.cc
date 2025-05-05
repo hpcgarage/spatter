@@ -4,11 +4,13 @@
 
 #include <numeric>
 #include <atomic>
+#include "Configuration.hh"
+
+#ifdef USE_ONEAPI
 #include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
-
-#include "Configuration.hh"
 #include "OneAPIBackend.hh"
+#endif
 
 using namespace sycl;
 using namespace dpct;
