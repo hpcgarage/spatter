@@ -2,12 +2,21 @@
 #include "mpi.h"
 #endif
 
+#if defined(USE_CUDA)
 #include "Spatter/Configuration.hh"
 #include "Spatter/Input.hh"
+#include <cuda_runtime.h>
+#elif defined(USE_HIP)
+#include "Spatter/Configuration.hip.hh"
+#include "Spatter/Input.hip.hh"
+#include <hip/hip_runtime.h>
+#else
+#include "Spatter/Configuration.hh"
+#include "Spatter/Input.hh"
+#endif
 
 #define xstr(s) str(s)
 #define str(s) #s
-
 void print_build_info(Spatter::ClArgs &cl) {
   std::cout << std::endl;
   std::cout << "Running Spatter version " << xstr(SPAT_VERSION) << std::endl;
@@ -20,12 +29,35 @@ void print_build_info(Spatter::ClArgs &cl) {
     std::cout << "OpenMP" << std::endl;
   else if (cl.backend.compare("cuda") == 0)
     std::cout << "CUDA" << std::endl;
+  else if (cl.backend.compare("hip") == 0) {  
+    std::cout << "HIP" << std::endl;
+  }
+  else {
+    std::cerr << "Error: Unknown backend: " << cl.backend << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
   std::cout << "Aggregate Results? ";
   if (cl.aggregate == true)
     std::cout << "YES" << std::endl;
   else
     std::cout << "NO" << std::endl;
+
+#ifdef USE_HIP
+  if (cl.backend.compare("hip") == 0) {
+    int num_devices = 0;
+    checkHipErrors(hipGetDeviceCount(&num_devices));
+    hipDeviceProp_t prop;
+    checkHipErrors(hipGetDeviceProperties(&prop, 0));
+    std::cout << "Number of HIP Devices: " << num_devices << std::endl;
+    std::cout << "Device Name: " << prop.name << std::endl;
+    std::cout << "Memory Clock Rate (KHz): " << prop.memoryClockRate << std::endl;
+    std::cout << "Memory Bus Width (bits): " << prop.memoryBusWidth << std::endl;
+    std::cout << "Peak Memory Bandwidth (GB/s): "
+              << 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6
+              << std::endl;
+  }
+#endif
 
 #ifdef USE_CUDA
   int gpu_id = 0;

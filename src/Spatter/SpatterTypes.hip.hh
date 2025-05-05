@@ -1,5 +1,5 @@
 /*!
-  \file SpatterTypes.hh
+  \file SpatterTypes.hip.hh
 */
 
 #ifndef SPATTER_TYPES_HPP
@@ -11,7 +11,7 @@ namespace Spatter {
 struct Serial {};
 struct OpenMP {};
 struct CUDA {};
-struct HIP{};
+struct HIP {};
 } // namespace Spatter
 
 #endif
