@@ -34,6 +34,9 @@ endif()
 
 set(GPU_TESTS
     standard_suite_gpu
+    standard_suite_stream_gpu
+    standard_suite_uniform_gpu
+    standard_suite_traces_gpu
 )
 
 set(SUPPORTED_GPU_BACKENDS

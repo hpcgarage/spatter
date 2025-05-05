@@ -100,6 +100,7 @@ int gpu_pennant_test(const std::string& backend) {
 }
 
 int main(int argc, char **argv) {
+
   std::string backend = "cuda"; // Default backend if not specified
   
   if (argc > 1) {

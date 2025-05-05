@@ -70,5 +70,30 @@ endif()
 target_link_libraries(Spatter PUBLIC ${COMMON_LINK_LIBRARIES})
 target_link_libraries(Spatter_shared PUBLIC ${COMMON_LINK_LIBRARIES})
 
-target_compile_options(Spatter PRIVATE ${WARNING_FLAGS})
-target_compile_options(Spatter_shared PRIVATE ${WARNING_FLAGS})
+target_link_libraries(Spatter_shared
+    PUBLIC
+    ${COMMON_LINK_LIBRARIES}
+    )
+
+target_compile_options(Spatter
+    PRIVATE ${WARNING_FLAGS}
+    )
+
+target_compile_options(Spatter_shared
+    PRIVATE
+    ${WARNING_FLAGS}
+    )
+
+install(TARGETS Spatter Spatter_shared
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+install(FILES ${SPATTER_INCLUDE_FILES}
+        DESTINATION include/Spatter)
+
+if (USE_CUDA)
+    install (TARGETS cuda_backend
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+endif()
+
