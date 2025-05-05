@@ -57,7 +57,6 @@ if (APPLE)
 else ()
         set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 endif ()
->>>>>>> spatter-devel
 
 # Create gz_read executable
 add_executable(gz_read standard-suite/binary-traces/gz_read.cc)
