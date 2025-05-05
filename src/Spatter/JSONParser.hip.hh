@@ -1,5 +1,5 @@
 /*!
-  \file JSONParser.hh
+  \file JSONParser.hip.hh
 */
 
 #ifndef SPATTER_JSONPARSER_HH
@@ -11,12 +11,16 @@
 #include <iostream>
 #include <string>
 
+#include <nlohmann/json.hpp>
+
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
 
-#include "Configuration.hh"
-#include "PatternParser.hh"
+#include "Configuration.hip.hh"
+#include "PatternParser.hip.hh"
+
+using json = nlohmann::json;
 
 namespace Spatter {
 
@@ -30,15 +34,15 @@ public:
       aligned_vector<double> &dense,
       aligned_vector<aligned_vector<double>> &dense_perthread,
       double *&dev_dense, size_t &dense_size, const std::string backend,
-      const bool aggregate, const bool atomic, const bool atomic_fence,
-      const bool compress, const bool dense_buffers, const size_t shared_mem,
-      const int nthreads, const unsigned long verbosity,
-      const std::string name = "", const std::string kernel = "gather",
-      const size_t pattern_size = 0, const size_t delta = 8,
-      const size_t delta_gather = 8, const size_t delta_scatter = 8,
-      const size_t boundary = 0, const long int seed = -1,
-      const size_t wrap = 1, const size_t count = 1024,
-      const size_t local_work_size = 1024, const unsigned long nruns = 10);
+      const bool aggregate, const bool atomic, const bool compress,
+      const size_t shared_mem, const int nthreads,
+      const unsigned long verbosity, const std::string name = "",
+      const std::string kernel = "gather", const size_t pattern_size = 0,
+      const size_t delta = 8, const size_t delta_gather = 8,
+      const size_t delta_scatter = 8, const size_t boundary = 0,
+      const long int seed = -1, const size_t wrap = 1,
+      const size_t count = 1024, const size_t local_work_size = 1024,
+      const unsigned long nruns = 10);
 
   size_t size();
 
@@ -50,7 +54,7 @@ private:
   bool file_exists_(const std::string &fpth);
 
 private:
-  std::unique_ptr<void, std::function<void(void *)>> data_; // nlohman::json ptr
+  json data_;
   size_t size_;
 
   aligned_vector<double> &sparse;
@@ -73,9 +77,7 @@ private:
   std::string backend_;
   const bool aggregate_;
   const bool atomic_;
-  const bool atomic_fence_;
   const bool compress_;
-  const bool dense_buffers_;
   const size_t shared_mem_;
   const int omp_threads_;
   const unsigned long verbosity_;

@@ -62,8 +62,8 @@ int json_test(size_t run_count, std::string kernel,
       return EXIT_FAILURE;
     }
 
-    if (!kernel.compare("sg") && cl.configs[i]->kernel.compare("sg")) {
-      std::cerr << "Test failure on JSON Parse: user requested kernel SG but "
+    if (!kernel.compare("gs") && cl.configs[i]->kernel.compare("gs")) {
+      std::cerr << "Test failure on JSON Parse: user requested kernel GS but "
                    "instead got other kernel "
                 << cl.configs[i]->kernel << "." << std::endl;
       return EXIT_FAILURE;

@@ -48,7 +48,7 @@ __global__ void cuda_scatter_atomic(const size_t *pattern, double *sparse,
         __double_as_longlong(dense[j + pattern_length * (i % wrap)]));
 }
 
-__global__ void cuda_scatter_gather(const size_t *pattern_scatter,
+__global__ void cuda_gather_scatter(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -64,7 +64,7 @@ __global__ void cuda_scatter_gather(const size_t *pattern_scatter,
         sparse_gather[pattern_gather[j] + delta_gather * i];
 }
 
-__global__ void cuda_scatter_gather_atomic(const size_t *pattern_scatter,
+__global__ void cuda_gather_scatter_atomic(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -224,7 +224,7 @@ float cuda_scatter_atomic_wrapper(const size_t *pattern, double *sparse,
   return time_ms;
 }
 
-float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
+float cuda_gather_scatter_wrapper(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -241,7 +241,7 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
   checkCudaErrors(cudaDeviceSynchronize());
   checkCudaErrors(cudaEventRecord(start));
 
-  cuda_scatter_gather<<<blocks_per_grid, threads_per_block>>>(pattern_scatter,
+  cuda_gather_scatter<<<blocks_per_grid, threads_per_block>>>(pattern_scatter,
       sparse_scatter, pattern_gather, sparse_gather, pattern_length,
       delta_scatter, delta_gather, wrap, count);
   checkCudaErrors(cudaGetLastError());
@@ -258,7 +258,7 @@ float cuda_scatter_gather_wrapper(const size_t *pattern_scatter,
   return time_ms;
 }
 
-float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
+float cuda_gather_scatter_atomic_wrapper(const size_t *pattern_scatter,
     double *sparse_scatter, const size_t *pattern_gather,
     const double *sparse_gather, const size_t pattern_length,
     const size_t delta_scatter, const size_t delta_gather, const size_t wrap,
@@ -275,7 +275,7 @@ float cuda_scatter_gather_atomic_wrapper(const size_t *pattern_scatter,
   checkCudaErrors(cudaDeviceSynchronize());
   checkCudaErrors(cudaEventRecord(start));
 
-  cuda_scatter_gather_atomic<<<blocks_per_grid, threads_per_block>>>(
+  cuda_gather_scatter_atomic<<<blocks_per_grid, threads_per_block>>>(
       pattern_scatter, sparse_scatter, pattern_gather, sparse_gather,
       pattern_length, delta_scatter, delta_gather, wrap, count);
   checkCudaErrors(cudaGetLastError());

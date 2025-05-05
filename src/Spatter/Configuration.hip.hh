@@ -1,5 +1,5 @@
 /*!
-  \file Configuration.hh
+  \file Configuration.hip.hh
 */
 
 #ifndef SPATTER_CONFIGURATION_HH
@@ -23,32 +23,24 @@
 #include <omp.h>
 #endif
 
-#ifdef USE_CUDA
-#include "CudaBackend.hh"
-#include <cuda.h>
-#include <cuda_runtime_api.h>
+#ifdef USE_HIP
+#include "HipBackend.hh"  
+#include <hip/hip_runtime.h>
+#include <hip/hip_runtime_api.h>
 
-#ifdef USE_ONEAPI
-#include <sycl/sycl.hpp>
-#include <dpct/dpct.hpp>
-#include "OneAPIBackend.hh"
-#endif
+#define checkHipErrors(ans) { hipAssert((ans), __FILE__, __LINE__); }
 
-// stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
-#define checkCudaErrors(ans) \
-  { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(
-    cudaError_t code, const char *file, int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    std::cerr << "checkCudaErrors: " << cudaGetErrorString(code) << " " << file
-              << " " << line << std::endl;
-    if (abort)
-      exit(code);
+inline void hipAssert(
+    hipError_t code, const char *file, int line, bool abort = true) {
+  if (code != hipSuccess) {
+    std::cerr << "HIP Error: " << hipGetErrorString(code) 
+              << "\nFile: " << file << "\nLine: " << line << std::endl;
+    if (abort) exit(code);
   }
 }
 #endif
 
-#include "AlignedAllocator.hh"
+#include "AlignedAllocator.hip.hh"
 #include "SpatterTypes.hh"
 #include "Timer.hh"
 
@@ -75,17 +67,15 @@ public:
       const long int seed, const size_t wrap, const size_t count,
       const size_t shared_mem, const size_t local_work_size, const int nthreads,
       const unsigned long nruns, const bool aggregate, const bool atomic,
-      const bool atomic_fence, const bool dense_buffers,
       const unsigned long verbosity);
 
-  // virtual ~ConfigurationBase();
-  ~ConfigurationBase();
+  virtual ~ConfigurationBase();
 
   virtual int run(bool timed, unsigned long run_id);
 
   virtual void gather(bool timed, unsigned long run_id) = 0;
   virtual void scatter(bool timed, unsigned long run_id) = 0;
-  virtual void gather_scatter(bool timed, unsigned long run_id) = 0;
+  virtual void scatter_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_gather(bool timed, unsigned long run_id) = 0;
   virtual void multi_scatter(bool timed, unsigned long run_id) = 0;
 
@@ -145,8 +135,6 @@ public:
 
   const bool aggregate;
   const bool atomic;
-  const bool atomic_fence;
-  const bool dense_buffers;
   const unsigned long verbosity;
 
   Spatter::Timer timer;
@@ -177,7 +165,7 @@ public:
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void gather_scatter(bool timed, unsigned long run_id);
+  void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
@@ -199,21 +187,20 @@ public:
       const size_t delta_gather, const size_t delta_scatter,
       const long int seed, const size_t wrap, const size_t count,
       const int nthreads, const unsigned long nruns, const bool aggregate,
-      const bool atomic, const bool atomic_fence, const bool dense_buffers,
-      const unsigned long verbosity);
+      const bool atomic, const unsigned long verbosity);
 
   int run(bool timed, unsigned long run_id);
 
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void gather_scatter(bool timed, unsigned long run_id);
+  void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
 };
 #endif
 
-#ifdef USE_CUDA
-template <> class Configuration<Spatter::CUDA> : public ConfigurationBase {
+#ifdef USE_HIP
+template <> class Configuration<Spatter::HIP> : public ConfigurationBase {
 public:
   Configuration(const size_t id, const std::string name,
       const std::string kernel, const aligned_vector<size_t> &pattern,
@@ -237,41 +224,6 @@ public:
   int run(bool timed, unsigned long run_id);
   void gather(bool timed, unsigned long run_id);
   void scatter(bool timed, unsigned long run_id);
-  void gather_scatter(bool timed, unsigned long run_id);
-  void multi_gather(bool timed, unsigned long run_id);
-  void multi_scatter(bool timed, unsigned long run_id);
-  void setup();
-
-public:
-  size_t *dev_pattern;
-  size_t *dev_pattern_gather;
-  size_t *dev_pattern_scatter;
-};
-#endif
-
-#ifdef USE_ONEAPI
-template <> class Configuration<Spatter::OneAPI> : public ConfigurationBase {
-public:
-  Configuration(const size_t id, const std::string name,
-    const std::string kernel, const aligned_vector<size_t> &pattern,
-    const aligned_vector<size_t> &pattern_gather,
-    const aligned_vector<size_t> &pattern_scatter,
-    aligned_vector<double> &sparse, size_t &sparse_size,
-    aligned_vector<double> &sparse_gather, size_t &sparse_gather_size,
-    aligned_vector<double> &sparse_scatter, size_t &sparse_scatter_size,
-    aligned_vector<double> &dense, size_t &dense_size,
-    aligned_vector<aligned_vector<double>> &dense_perthread,
-    const size_t delta, const size_t delta_gather, const size_t delta_scatter,
-    const long int seed, const size_t wrap, const size_t count,
-    const size_t shared_mem, const size_t local_work_size,
-    const unsigned long nruns, const bool aggregate, const bool atomic,
-    const unsigned long verbosity);
-
-  ~Configuration();
-
-  int run(bool timed, unsigned long run_id);
-  void gather(bool timed, unsigned long run_id);
-  void scatter(bool timed, unsigned long run_id);
   void scatter_gather(bool timed, unsigned long run_id);
   void multi_gather(bool timed, unsigned long run_id);
   void multi_scatter(bool timed, unsigned long run_id);
@@ -281,12 +233,6 @@ public:
   size_t *dev_pattern;
   size_t *dev_pattern_gather;
   size_t *dev_pattern_scatter;
-
-  double *dev_sparse;
-  double *dev_sparse_gather;
-  double *dev_sparse_scatter;
-
-  double *dev_dense;
 };
 #endif
 

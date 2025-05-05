@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   asprintf(&argv_[0], "./spatter");
   asprintf(&argv_[1], "-uUNIFORM:8:1");
   asprintf(&argv_[2], "-gUNIFORM:8:1");
-  asprintf(&argv_[3], "-kSG");
+  asprintf(&argv_[3], "-kGS");
 
   Spatter::ClArgs cl;
 
