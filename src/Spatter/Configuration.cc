@@ -10,10 +10,9 @@
 #include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
 #include "OneAPIBackend.hh"
-#endif
-
 using namespace sycl;
 using namespace dpct;
+#endif
 
 namespace Spatter {
 

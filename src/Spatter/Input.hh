@@ -24,15 +24,14 @@
 #include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
 #include <oneapi/dpl/random>
+using namespace sycl;
+using namespace dpct;
 #endif
 
 #include "Configuration.hh"
 #include "JSONParser.hh"
 #include "PatternParser.hh"
 #include "SpatterTypes.hh"
-
-using namespace sycl;
-using namespace dpct;
 
 namespace Spatter {
 static unsigned int seed_perthread;
