@@ -34,6 +34,10 @@ if (USE_CUDA)
   set(SPATTER_TESTS ${SPATTER_TESTS}  parse_run_config_suite_gpu)
 endif()
 
+if (USE_ONEAPI)
+  set(SPATTER_TESTS ${SPATTER_TESTS}  standard_suite_oneapi)
+endif()
+
 set(GPU_TESTS
     standard_suite_gpu
     standard_suite_stream_gpu

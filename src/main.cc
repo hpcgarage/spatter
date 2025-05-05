@@ -29,6 +29,8 @@ void print_build_info(Spatter::ClArgs &cl) {
     std::cout << "OpenMP" << std::endl;
   else if (cl.backend.compare("cuda") == 0)
     std::cout << "CUDA" << std::endl;
+  else if (cl.backend.compare("oneapi") == 0)
+    std::cout << "OneAPI" << std::endl;
   else if (cl.backend.compare("hip") == 0) {  
     std::cout << "HIP" << std::endl;
   }
@@ -80,6 +82,32 @@ void print_build_info(Spatter::ClArgs &cl) {
   }
 #endif
 
+#ifdef USE_ONEAPI
+  sycl::device device;
+  try {
+    device = sycl::device(sycl::gpu_selector());
+    std::cout << "Using SYCL GPU device: " << device.get_info<sycl::info::device::name>() << "\n";
+  } catch (const sycl::exception &e) {
+    std::cout << "No GPU found or failed to select GPU. Running on CPU device." << std::endl;
+    device = sycl::device(sycl::cpu_selector());
+    std::cout << "Using SYCL CPU device: " << device.get_info<sycl::info::device::name>() << "\n";
+  }
+
+  std::cout << "  Vendor: " << device.get_info<sycl::info::device::vendor>() << "\n";
+  std::cout << "  Max compute units: " << device.get_info<sycl::info::device::max_compute_units>() << "\n";
+  std::cout << "  Global memory size: " << device.get_info<sycl::info::device::global_mem_size>() / (1024 * 1024) << " MB\n";
+  std::cout << "  Max work-group size: " << device.get_info<sycl::info::device::max_work_group_size>() << "\n";
+  auto dims = device.get_info<sycl::info::device::max_work_item_sizes<3>>();
+  std::cout << "  Max work-item dimensions: " << dims[0] << " x " << dims[1] << " x " << dims[2] << "\n\n";
+
+  // For kernel dispatch
+  sycl::queue q(device);
+#endif
+
+#ifdef USE_ONEAPI
+  std::cout << "oneapi configuration (to be added)" << std::endl;
+#endif
+
   std::cout << std::endl;
 }
 
@@ -116,7 +144,8 @@ int main(int argc, char **argv) {
   }
 #endif
 
-  for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
+  // for (std::unique_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
+  for (std::shared_ptr<Spatter::ConfigurationBase> const &config : cl.configs) {
     for (unsigned long run = 0; run < (config->nruns + warmup_runs); ++run) {
 
       unsigned long run_id = 0;

@@ -2,9 +2,15 @@
 add_subdirectory(Spatter)
 add_executable(spatter main.cc)
 
+if (USE_ONEAPI)
+    target_compile_options(spatter PUBLIC "-fsycl")
+    target_link_options(spatter PUBLIC "-fsycl")
+endif()
+
 if(USE_HIP)
     target_compile_definitions(spatter PRIVATE USE_HIP)
 endif()
+
 if(USE_CUDA)
     target_compile_definitions(spatter PRIVATE USE_CUDA)
 endif()

@@ -7,9 +7,25 @@ project(Spatter VERSION 2.2.0 LANGUAGES CXX)
 
 option(USE_CUDA "Enable CUDA support" OFF)
 option(USE_HIP "Enable HIP support" OFF)
+option(USE_ONEAPI "Enable HIP support" OFF)
 
-if(USE_CUDA AND USE_HIP)
-    message(FATAL_ERROR "Cannot enable both CUDA and HIP simultaneously. Choose one.")
+set(SELECTED_COUNT 0)
+
+if(USE_CUDA)
+    math(EXPR SELECTED_COUNT "${SELECTED_COUNT} + 1")
+endif()
+
+if(USE_ONEAPI)
+    math(EXPR SELECTED_COUNT "${SELECTED_COUNT} + 1")
+endif()
+
+if(USE_HIP)
+    math(EXPR SELECTED_COUNT "${SELECTED_COUNT} + 1")
+endif()
+
+# If more than one option is selected, throw an error
+if(SELECTED_COUNT GREATER 1)
+    message(FATAL_ERROR "Conflicting options detected: Only one of USE_CUDA, USE_ONEAPI, or USE_HIP can be enabled at a time.")
 endif()
 
 if(USE_HIP)
@@ -32,6 +48,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
+include(pkgs/CUDASupport)
+include(pkgs/OneAPISupport)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -debug all")
 
 if (APPLE)
         set(CMAKE_INSTALL_RPATH "@executable_path/../lib")

@@ -20,6 +20,14 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_ONEAPI
+#include <sycl/sycl.hpp>
+#include <dpct/dpct.hpp>
+#include <oneapi/dpl/random>
+using namespace sycl;
+using namespace dpct;
+#endif
+
 #include "Configuration.hh"
 #include "JSONParser.hh"
 #include "PatternParser.hh"
@@ -63,7 +71,9 @@ const option longargs[] = {{"aggregate", no_argument, nullptr, 'a'},
     {nullptr, no_argument, nullptr, 0}};
 
 struct ClArgs {
-  std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
+  std::vector<std::shared_ptr<Spatter::ConfigurationBase>> configs;
+
+  // std::vector<std::unique_ptr<Spatter::ConfigurationBase>> configs;
 
   aligned_vector<double> sparse;
   double *dev_sparse;
@@ -365,8 +375,8 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           [](unsigned char c) { return std::tolower(c); });
 
       if ((backend.compare("serial") != 0) &&
-          (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0)) {
-        std::cerr << "Valid Backends are: serial, openmp, cuda" << std::endl;
+          (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0) && (backend.compare("oneapi") != 0)) {
+        std::cerr << "Valid Backends are: serial, openmp, cuda, oenapi" << std::endl;
         return -1;
       }
       if (backend.compare("openmp") == 0) {
@@ -378,6 +388,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       if (backend.compare("cuda") == 0) {
 #ifndef USE_CUDA
         std::cerr << "FAIL - CUDA Backend is not Enabled" << std::endl;
+        return -1;
+#endif
+      }
+      if (backend.compare("oneapi") == 0) {
+#ifndef USE_ONEAPI
+        std::cerr << "FAIL - OneAPI Backend is not Enabled" << std::endl;
         return -1;
 #endif
       }
@@ -529,12 +545,15 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   // Set default backend if one was not specified
   if (backend.compare("") == 0) {
     backend = "serial";
-    // Assume only one of USE_CUDA and USE_OPENMP can be true at once
+    // Assume only one of USE_CUDA and USE_OPENMP and USE_ONEAPI can be true at once
 #ifdef USE_OPENMP
     backend = "openmp";
 #endif
 #ifdef USE_CUDA
       backend = "cuda";
+#endif
+#ifdef USE_ONEAPI
+      backend = "oneapi";
 #endif
   }
 
@@ -653,7 +672,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 
   if (!json) {
-    std::unique_ptr<Spatter::ConfigurationBase> c;
+    // std::unique_ptr<Spatter::ConfigurationBase>  c;
+    std::shared_ptr<Spatter::ConfigurationBase>  c;
+
     if (backend.compare("serial") == 0)
       c = std::make_unique<Spatter::Configuration<Spatter::Serial>>(0,
           config_name, kernel, pattern, pattern_gather, pattern_scatter,
@@ -684,6 +705,17 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           delta_scatter, seed, wrap, count, shared_mem, local_work_size, nruns,
           aggregate, atomic, verbosity);
 #endif
+#ifdef USE_ONEAPI
+    else if (backend.compare("oneapi") == 0)
+      c = std::make_unique<Spatter::Configuration<Spatter::OneAPI>>(0,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.sparse_size, cl.sparse_gather, cl.sparse_gather_size,
+          cl.sparse_scatter, cl.sparse_scatter_size, cl.dense, cl.dense_size,
+          cl.dense_perthread, delta, delta_gather, delta_scatter, seed, wrap,
+          count, shared_mem, local_work_size, nruns, aggregate, atomic,
+          verbosity);
+#endif
+// #endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
       return -1;
@@ -699,9 +731,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           cl.dense_size, backend, aggregate, atomic, atomic_fence, compress,
           dense_buffers, shared_mem, nthreads, verbosity);
 
-      for (size_t i = 0; i < json_file.size(); ++i) {
-        std::unique_ptr<Spatter::ConfigurationBase> c = json_file[i];
-        cl.configs.push_back(std::move(c));
+    for (size_t i = 0; i < json_file.size(); ++i) {
+      std::shared_ptr<Spatter::ConfigurationBase> c = json_file[i];
+      cl.configs.push_back(std::move(c));
       }
     } catch (const std::invalid_argument &ia) {
       std::cerr << "Parsing Error: " << ia.what() << std::endl;
@@ -791,6 +823,39 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
   }
 #endif
 
+#ifdef USE_ONEAPI
+  if (backend.compare("oneapi") == 0) {
+    // Create a SYCL queue for managing device operations
+    // Queue is created using the default device selector which selects the best available OneAPI-compatible device
+    sycl::queue q;;
+
+    // Allocate device memory for sparse, sparse_gather, sparse_scatter, and dense arrays
+    cl.dev_sparse = sycl::malloc_shared<double>(cl.sparse.size(), q);
+    cl.dev_sparse_gather = sycl::malloc_shared<double>(cl.sparse_gather.size(), q);
+    cl.dev_sparse_scatter = sycl::malloc_shared<double>(cl.sparse_scatter.size(), q);
+    cl.dev_dense = sycl::malloc_shared<double>(cl.dense.size(), q);
+
+    // Copy data from host to device
+    q.memcpy(cl.dev_sparse, cl.sparse.data(), sizeof(double) * cl.sparse.size()).wait();
+    q.memcpy(cl.dev_sparse_gather, cl.sparse_gather.data(), sizeof(double) * cl.sparse_gather.size()).wait();
+    q.memcpy(cl.dev_sparse_scatter, cl.sparse_scatter.data(), sizeof(double) * cl.sparse_scatter.size()).wait();
+    q.memcpy(cl.dev_dense, cl.dense.data(), sizeof(double) * cl.dense.size()).wait();
+
+    // Perform additional initialization on the device if needed
+    q.submit([&](sycl::handler& h) {
+      h.parallel_for(sycl::range<1>(cl.dense.size()), [=](sycl::id<1> idx) {
+        // Use a SYCL random number generator
+        oneapi::dpl::minstd_rand engine(idx[0]);
+        oneapi::dpl::uniform_real_distribution<double> distr(0.0, 1.0);
+    
+        // cl.dev_dense[idx] = distr(engine);
+      });
+    }).wait();
+
+    // Synchronize the queue to ensure all operations are complete
+    q.wait_and_throw();
+  }
+#endif
   for (auto const &config : cl.configs) {
     if (config->aggregate != aggregate) {
       std::cerr << "Aggregate flag of Config does not match the aggregate flag "
