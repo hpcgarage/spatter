@@ -72,7 +72,7 @@ void print_build_info(Spatter::ClArgs &cl) {
 
     std::cout << "Number of Devices: " << num_devices << std::endl;
     std::cout << "Device Name: " << prop.name << std::endl;
-    std::cout << "Memory Clock Rage (KHz): " << prop.memoryClockRate
+    std::cout << "Memory Clock Rate (KHz): " << prop.memoryClockRate
               << std::endl;
     std::cout << "Memory Bus Width (bits): " << prop.memoryBusWidth
               << std::endl;
