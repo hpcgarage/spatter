@@ -7,7 +7,7 @@ project(Spatter VERSION 2.2.0 LANGUAGES CXX)
 
 option(USE_CUDA "Enable CUDA support" OFF)
 option(USE_HIP "Enable HIP support" OFF)
-option(USE_ONEAPI "Enable ONEAPI support" OFF)
+option(USE_ONEAPI "Enable OneAPI support" OFF)
 
 set(SELECTED_COUNT 0)
 
