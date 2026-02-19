@@ -45,6 +45,9 @@ JSON support via `nlohmann/json v3.11.2` is automatically fetched via CMake's `F
 
 ## Backend Build Examples
 
+> **Note:** We recommend using the syntax `build_<backend>` to build Spatter backends, which makes it easier to distinguish different variants of the executable.
+
+
 ### Serial (CPU only)
 
 Any supported C++ compiler works, and no backend flags are required.
@@ -57,15 +60,15 @@ cmake --build build -j
 ### OpenMP
 
 ```bash
-cmake -B build -DUSE_OPENMP=ON
-cmake --build build -j
+cmake -B build_omp -DUSE_OPENMP=ON
+cmake --build build_omp -j
 ```
 
 The OpenMP backend can be combined with the MPI backend:
 
 ```bash
-cmake -B build -DUSE_OPENMP=ON -DUSE_MPI=ON
-cmake --build build -j
+cmake -B build_omp_mpi -DUSE_OPENMP=ON -DUSE_MPI=ON
+cmake --build build_omp_mpi -j
 ```
 
 ### CUDA (NVIDIA GPUs)
@@ -73,30 +76,30 @@ cmake --build build -j
 The CUDA backend requires the CUDA Toolkit and a CUDA-capable compiler (`nvcc`) to be on `PATH`. CMake will auto-detect the installed CUDA toolkit.
 
 ```bash
-cmake -B build -DUSE_CUDA=ON
-cmake --build build -j
+cmake -B build_cuda -DUSE_CUDA=ON
+cmake --build build_cuda -j
 ```
  If multiple CUDA versions are installed, you can point CMake at the preferred one as follows:
 
 ```bash
-cmake -B build -DUSE_CUDA=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
-cmake --build build -j
+cmake -B build_cuda12 -DUSE_CUDA=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+cmake --build build_cuda12 -j
 ```
 
-### HIP (AMD GPUs / ROCm)
+### HIP (AMD GPUs)
 
 The HIP backend requires the ROCm Toolkit and a HIP-capable C++ compiler (`hipcc`) to be on `PATH`.  The default ROCm path is `/opt/rocm`, but this can be overriden with `-DHIP_PATH=<path>`.
 
 ```bash
-cmake -B build -DUSE_HIP=ON -DCMAKE_CXX_COMPILER=hipcc
-cmake --build build -j
+cmake -B build_hip -DUSE_HIP=ON -DCMAKE_CXX_COMPILER=hipcc
+cmake --build build_hip -j
 ```
 
 With a non-default ROCm installation:
 
 ```bash
-cmake -B build -DUSE_HIP=ON -DCMAKE_CXX_COMPILER=hipcc -DHIP_PATH=/opt/<rocm-custom>
-cmake --build build -j
+cmake -B build_hip -DUSE_HIP=ON -DCMAKE_CXX_COMPILER=hipcc -DHIP_PATH=/opt/<rocm-custom>
+cmake --build build_hip -j
 ```
 
 ### OneAPI (Intel GPUs / SYCL)
@@ -104,8 +107,8 @@ cmake --build build -j
 The OneAPI backend requires the OneAPI Toolkit and a SYCL-capable C++ compiler (`icpx`) to be on `PATH`. You can typically set `icpx` to be on your path using environment variables or the `setvars.sh` script included with OneAPI installations.
 
 ```bash
-cmake -B build -DUSE_ONEAPI=ON -DCMAKE_CXX_COMPILER=icpx
-cmake --build build -j
+cmake -B build_oneapi -DUSE_ONEAPI=ON -DCMAKE_CXX_COMPILER=icpx
+cmake --build build_oneapi -j
 ```
 
 ---
