@@ -7,7 +7,7 @@ project(Spatter VERSION 2.2.0 LANGUAGES CXX)
 
 option(USE_CUDA "Enable CUDA support" OFF)
 option(USE_HIP "Enable HIP support" OFF)
-option(USE_ONEAPI "Enable HIP support" OFF)
+option(USE_ONEAPI "Enable OneAPI support" OFF)
 
 set(SELECTED_COUNT 0)
 
@@ -48,8 +48,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
-include(pkgs/CUDASupport)
-include(pkgs/OneAPISupport)
+if(USE_ONEAPI)
+    include(pkgs/OneAPISupport)
+endif()
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -debug all")
 
 if (APPLE)
