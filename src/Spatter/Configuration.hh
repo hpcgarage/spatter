@@ -151,6 +151,7 @@ public:
 
   Spatter::Timer timer;
   std::vector<double> time_seconds;
+  double m_maximum_bandwidth = -1.0;
 };
 
 std::ostream &operator<<(std::ostream &out, const ConfigurationBase &config);

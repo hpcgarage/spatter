@@ -125,6 +125,7 @@ void ConfigurationBase::report() {
 #else
   double min_time = *std::min_element(time_seconds.begin(), time_seconds.end());
   double bandwidth = static_cast<double>(bytes_moved) / min_time / 1000000.0;
+  m_maximum_bandwidth = bandwidth;
 
   print_no_mpi(bytes_moved, min_time, bandwidth);
 #endif
@@ -309,6 +310,8 @@ void ConfigurationBase::print_mpi(
           0));
   double average_maximum_bandwidth_per_rank = total_maximum_bandwidth /
       static_cast<double>(vector_maximum_bandwidth.size());
+  
+  m_maximum_bandwidth = average_maximum_bandwidth_per_rank;
 
   std::cout << std::setw(15) << std::left << id << std::setw(30) << std::left
             << average_bytes_per_rank << std::setw(30) << std::left

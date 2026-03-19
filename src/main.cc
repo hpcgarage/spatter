@@ -125,6 +125,9 @@ int main(int argc, char **argv) {
 
   const unsigned long warmup_runs = 10;
   bool timed = 0;
+  // Vars for aggregate
+    double total_inverse_bandwidth = 0.0;
+    size_t n_configs = 0;
 
   Spatter::ClArgs cl;
   if (Spatter::parse_input(argc, argv, cl) != 0)
@@ -164,9 +167,21 @@ int main(int argc, char **argv) {
     if (rank == 0) {
 #endif
     config->report();
+    
+    if(cl.aggregate && config->m_maximum_bandwidth > 0.0){
+      total_inverse_bandwidth += (1.0 / config->m_maximum_bandwidth);
+      n_configs++;
+    }
+
 #ifdef USE_MPI
     }
 #endif
+
+  }
+  if(cl.aggregate && n_configs > 0){
+    double hmean_bandwidth = static_cast<double>(n_configs) / total_inverse_bandwidth;
+
+    std::cout << "Aggregate Summary - Mean Bandwidth: " << hmean_bandwidth << " MB/s" << std::endl;
   }
 
 #ifdef USE_MPI
