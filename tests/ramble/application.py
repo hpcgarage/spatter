@@ -27,14 +27,14 @@ class Spatter(ExecutableApplication):
     )
 
     input_file(
-        "cpu_stream_patterns",
+        "gpu_stream_patterns",
         url='https://raw.githubusercontent.com/hpcgarage/spatter/refs/heads/main/standard-suite/basic-tests/gpu-stream.json',
         description="GPU Patterns for stream",
         expand=False
     )
 
     input_file(
-        "cpu_uniform_patterns",
+        "gpu_uniform_patterns",
         url='https://raw.githubusercontent.com/hpcgarage/spatter/refs/heads/spatter-devel/standard-suite/basic-tests/gpu-ustride.json',
         description="GPU Patterns for Uniform Test",
         expand=False
