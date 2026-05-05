@@ -64,12 +64,12 @@ class Spatter(ExecutableApplication):
     workload_variable('z', default='1024', description='Local Work Size', workloads=['spatter'])
     workload_variable('args', default='', description='Additional arguments', workloads=['spatter'])
 
-    # Figures -- Need improvement
+    # Context for summary output
     figure_of_merit_context('config_row',
                             regex=r'^\s*(?P<config_idx>\d+)\s+(?P<bytes>\d+)',
                             output_format='Config {config_idx}')
 
-    # 2. Categorical FOMs (No context needed)
+    # Categorical FOMs
     figure_of_merit('Backend',
                     log_file='{log_file}',
                     fom_regex=r'Backend:\s+(?P<backend>.+)',
@@ -82,38 +82,36 @@ class Spatter(ExecutableApplication):
                     group_name='compiler',
                     units='')
 
-    # 3. List of Bytes, explicitly linked to the context
+    
     figure_of_merit('Bytes',
                     log_file='{log_file}',
-                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+[0-9.]+\s+[0-9.]+',
+                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+[0-9.eE+\-]+\s+[0-9.eE+\-]+',
                     group_name='bytes',
                     units='bytes',
                     contexts=['config_row'])
 
-    #4 Time
     figure_of_merit('Time',
                     log_file='{log_file}',
-                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+(?P<time>[0-9.]+)\s+[0-9.]+',
+                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+(?P<time>[0-9.eE+\-]+)\s+[0-9.eE+\-]+',
                     group_name='time',
                     units='s',
                     contexts=['config_row'])
 
-    # 5. Bandwidth FOM
     figure_of_merit('Bandwidth',
                     log_file='{log_file}',
-                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+[0-9.]+\s+(?P<bw>[0-9.]+)',
+                    fom_regex=r'^\s*(?P<config>\d+)\s+(?P<bytes>\d+)\s+[0-9.eE+\-]+\s+(?P<bw>[0-9.eE+\-]+)',
                     group_name='bw',
                     units='MB/s',
                     contexts=['config_row'])
     
-    # 6. Aggregate Summary FOM
+    # Aggregate Summary FOM
     figure_of_merit('Mean Bandwidth',
                     log_file='{log_file}',
-                    fom_regex=r'Aggregate Summary - Mean Bandwidth:\s+(?P<summary_bw>[0-9.]+)',
+                    fom_regex=r'Aggregate Summary - Mean Bandwidth:\s+(?P<summary_bw>[0-9.eE+\-]+)',
                     group_name='summary_bw',
                     units='MB/s')
 
-
+    # Success Criteria
     success_criteria('mean_bytes',
                         mode='fom_comparison',
                         fom_name='Mean Bandwidth',
