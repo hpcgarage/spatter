@@ -42,7 +42,8 @@ def setup_spatter_matrix():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Dynamic Workspace Naming
     workspace_name = f"{SHORT_HOSTNAME}_t{allocated_threads}_{timestamp}"
-    workspace_path = os.path.join(ROOT_DIR, workspace_name)
+    # Create the ramble workspace from whereever this script is run!
+    workspace_path = os.path.join(os.getcwd(), workspace_name)
 
     
 
@@ -88,8 +89,8 @@ def setup_spatter_matrix():
     run_cmd("on", workspace_path)
     run_cmd("workspace analyze --format json", workspace_path)
 
-    # Copy results (omitted for brevity, same as previous script)
-
+    # Create results directory if it doesn't exist
+    os.makedirs(RESULTS_OUT_DIR, exist_ok=True)
 
     source_results_txt = os.path.join(workspace_path, "results.latest.txt")
     source_results_json = os.path.join(workspace_path, "results.latest.json")

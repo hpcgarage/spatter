@@ -61,7 +61,9 @@ python3 -m venv pyenv_spatter
 vscode ➜ /workspaces/spatter (benchpark) $ . pyenv_spatter/bin/activate
 ```
 
-#### Spack Download of Spatter
+#### Spack Download of Spatter (Optional)
+
+> [!NOTE] Ramble will download Spatter once you run `ramble workspace concretize`. However, if you want to install spack elsewhere, you can now use spack to install the latest Spack-supported binary!
 
 ```
 spack install spatter
@@ -70,14 +72,14 @@ spack install spatter
 [+] yukanvb spatter@main /home/vscode/spack/opt/spack/linux-aarch64/spatter-main-yukanvbkorcmawgzraw3bgtwnscmb22q (6s)
 ````
 
-### Ramble Installation
+## Ramble Installation
 
 ```
 git clone -c feature.manyFiles=true --depth=2 https://github.com/GoogleCloudPlatform/ramble.git ~/ramble
-pip install -r requirements.txt
+pip install -r ~/ramble/requirements.txt
 # Source the path for the ramble executable
-. ramble/share/ramble/setup-env.sh
-$ ramble -V
+. ~/ramble/share/ramble/setup-env.sh
+ramble -V
 0.6.0 (625530ee2111373a7a4d121551051b1cd4181583)
 ```
 
@@ -85,27 +87,45 @@ $ ramble -V
 
 The python file `example_ramble_test.py` automatically creates a workspace and runs both experiments. You can run it with the following commands:
 ```
-
+cd $SPATTER_GIT/
+# Create a temporary or work directory to hold your ramble repo and test results
+mkdir tmp && cd tmp/
+# Run the example Python script, which creates a ramble workspace and runs experiments
+python3 ../tests/ramble/example_ramble_test.py
 ```
 
 
 ## Creating the Ramble Application:
-Run the following commands to setup a new experiment for spatter. 
+
+Run the following commands to setup a new Ramble repo and copy over the application.py. Application.py contains pointers to the Spack package for Spatter, input files, and figures of merit to measure. 
+
 ```
 cd $SPATTER_GIT/
-mkdir tmp
-cd tmp/
-ramble repo create spatter
-$ ramble repo add spatter
-mkdir -p spatter/applications/spatter
-$ cp $SPATTER_GIT/tests/ramble/application.py spatter/applications/spatter/.
+# Create a temporary or work directory to hold your ramble repo
+mkdir tmp && cd tmp/
+ramble repo create r_spatter
+==> Created applications and modifiers repo with namespace 'r_spatter'.
+==> To register it with ramble, run this command:
+  ramble repo add /path/to/tmp/r_spatter
+```
+
+```
+ramble repo add r_spatter
+==> Added applications repo with namespace 'r_spatter'.
+...
+==> Added base_platforms repo with namespace 'r_spatter'.
+```
+
+```
+mkdir -p r_spatter/applications/spatter
+cp $SPATTER_GIT/tests/ramble/application.py r_spatter/applications/spatter/.
 ```
 
 ## Create workspace and experiments:
 Run the following commands:
 ```
 $ ramble workspace create -d tests -a
-==> Created and activated workspace in /workspaces/spatter/tests
+==> Created and activated workspace in /workspaces/spatter/tmp/tests
 $ ramble workspace manage experiments spatter --overwrite -e UniformStride -v f=$PWD/tests/inputs/cpu-ustride.json 
 $ ramble workspace manage experiments spatter --overwrite -e Stream -v f=$PWD/tests/inputs/cpu-stream.json
 ```
@@ -119,6 +139,49 @@ $ ramble config add "software:environments:spatter:packages:[spatter]"
 ```
 //Run experiment
 $ ramble workspace setup
+==> Streaming details to log:
+==>   /workspaces/spatter/tmp/tests/logs/setup.2026-06-02_01.02.38.out
+==>   Setting up 2 out of 2 experiments:
+==> Experiment #1 (1/2):
+==>     name: spatter.spatter.UniformStride
+==>     root experiment_index: 1
+==>     log file: /workspaces/spatter/tmp/tests/logs/setup.2026-06-02_01.02.38/spatter.spatter.UniformStride.out
+Experiment complete: 100%|=================================================================================================| Elapsed (s): 2.88
+==>   Returning to log file: /workspaces/spatter/tmp/tests/logs/setup.2026-06-02_01.02.38.out
+==> Experiment #2 (2/2):
+==>     name: spatter.spatter.Stream
+==>     root experiment_index: 2
+==>     log file: /workspaces/spatter/tmp/tests/logs/setup.2026-06-02_01.02.38/spatter.spatter.Stream.out
+Experiment complete: 100%|=================================================================================================| Elapsed (s): 0.27
+==>   Returning to log file: /workspaces/spatter/tmp/tests/logs/setup.2026-06-02_01.02.38.out
+
+
+```
 $ ramble workspace concretize
+```
+
+Run the ramble experiments:
+```
 $ ramble on
+```
+
+Analyze the results and report the Figures of Merit
+
+```
+ ramble workspace analyze -f json
+==> Streaming details to log:
+==>   /workspaces/spatter/tmp/tests/logs/analyze.2026-06-02_01.09.09.out
+==>   Analyzing 2 out of 2 experiments:
+==> Experiment #1 (1/2):
+==>     name: spatter.spatter.UniformStride
+==>     root experiment_index: 1
+==>     log file: /workspaces/spatter/tmp/tests/logs/analyze.2026-06-02_01.09.09/spatter.spatter.UniformStride.out
+Processing phase analyze_experiments (1/6):  17%|============                                                              | Elapsed (s): 0.00==> Reading experiment results from cache file
+...
+==> Symlinks updated:
+==>   /workspaces/spatter/tmp/tests/results/results.latest.json
+```
+
+```
+ramble results report --fom
 ```
