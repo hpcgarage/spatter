@@ -39,6 +39,13 @@ if (USE_CUDA)
     parse_run_config_suite_gpu)
 endif()
 
+if (USE_TENSTORRENT)
+  set(SPATTER_TESTS ${SPATTER_TESTS}
+    standard_suite_stream_tenstorrent
+    standard_suite_uniform_tenstorrent
+    parse_run_config_suite_tenstorrent)
+endif()
+
 foreach (APP ${SPATTER_TESTS})
   add_executable(${APP} ${APP}.cc)
   target_link_libraries(${APP} Spatter)

@@ -921,4 +921,150 @@ void Configuration<Spatter::CUDA>::setup() {
 }
 #endif
 
+#ifdef USE_TENSTORRENT
+Configuration<Spatter::Tenstorrent>::Configuration(const size_t id,
+    const std::string name, const std::string kernel,
+    const aligned_vector<size_t> &pattern,
+    const aligned_vector<size_t> &pattern_gather,
+    const aligned_vector<size_t> &pattern_scatter,
+    aligned_vector<double> &sparse, double *&dev_sparse, size_t &sparse_size,
+    aligned_vector<double> &sparse_gather, double *&dev_sparse_gather,
+    size_t &sparse_gather_size, aligned_vector<double> &sparse_scatter,
+    double *&dev_sparse_scatter, size_t &sparse_scatter_size,
+    aligned_vector<double> &dense,
+    aligned_vector<aligned_vector<double>> &dense_perthread, double *&dev_dense,
+    size_t &dense_size, const size_t delta, const size_t delta_gather,
+    const size_t delta_scatter, const long int seed, const size_t wrap,
+    const size_t count, const size_t shared_mem, const size_t local_work_size,
+    const unsigned long nruns, const bool aggregate, const bool atomic,
+    const unsigned long verbosity)
+    : ConfigurationBase(id, name, kernel, pattern, pattern_gather,
+          pattern_scatter, sparse, dev_sparse, sparse_size, sparse_gather,
+          dev_sparse_gather, sparse_gather_size, sparse_scatter,
+          dev_sparse_scatter, sparse_scatter_size, dense, dense_perthread,
+          dev_dense, dense_size, delta, delta_gather, delta_scatter, seed,
+          wrap, count, shared_mem, local_work_size, 1, nruns, aggregate, atomic,
+          false, false, verbosity),
+      dev_pattern(nullptr), dev_pattern_gather(nullptr),
+      dev_pattern_scatter(nullptr) {
+
+  setup();
+}
+
+Configuration<Spatter::Tenstorrent>::~Configuration() {
+  tt_device_free(dev_pattern);
+  tt_device_free(dev_pattern_gather);
+  tt_device_free(dev_pattern_scatter);
+
+  if (dev_sparse) {
+    tt_device_free(dev_sparse);
+    dev_sparse = nullptr;
+  }
+  if (dev_sparse_gather) {
+    tt_device_free(dev_sparse_gather);
+    dev_sparse_gather = nullptr;
+  }
+  if (dev_sparse_scatter) {
+    tt_device_free(dev_sparse_scatter);
+    dev_sparse_scatter = nullptr;
+  }
+  if (dev_dense) {
+    tt_device_free(dev_dense);
+    dev_dense = nullptr;
+  }
+}
+
+int Configuration<Spatter::Tenstorrent>::run(bool timed, unsigned long run_id) {
+  return ConfigurationBase::run(timed, run_id);
+}
+
+void Configuration<Spatter::Tenstorrent>::gather(
+    bool timed, unsigned long run_id) {
+  size_t pattern_length = pattern.size();
+
+#ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+  // The wrapper is synchronous: it ends with Finish() on the mesh command
+  // queue, so no separate device synchronize is needed here.
+  float time_ms = tt_gather_wrapper(
+      dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+
+  if (timed)
+    time_seconds[run_id] = ((double)time_ms / 1000.0);
+}
+
+void Configuration<Spatter::Tenstorrent>::scatter(
+    bool timed, unsigned long run_id) {
+  size_t pattern_length = pattern.size();
+
+#ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+  float time_ms = 0.0;
+
+  if (atomic)
+    time_ms = tt_scatter_atomic_wrapper(
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+  else
+    time_ms = tt_scatter_wrapper(
+        dev_pattern, dev_sparse, dev_dense, pattern_length, delta, wrap, count);
+
+  if (time_ms < 0.0f) {
+    std::cerr << "Tenstorrent backend: scatter variant not implemented"
+              << std::endl;
+    return;
+  }
+
+  if (timed)
+    time_seconds[run_id] = ((double)time_ms / 1000.0);
+}
+
+// gather_scatter / multi_gather / multi_scatter are declared so the class is
+// concrete, but the corresponding wrappers return a negative sentinel in this
+// draft. Neither is exercised by the stream or ustride suites.
+void Configuration<Spatter::Tenstorrent>::gather_scatter(
+    bool timed, unsigned long run_id) {
+  (void)timed;
+  (void)run_id;
+  std::cerr << "Tenstorrent backend: gather_scatter not implemented"
+            << std::endl;
+}
+
+void Configuration<Spatter::Tenstorrent>::multi_gather(
+    bool timed, unsigned long run_id) {
+  (void)timed;
+  (void)run_id;
+  std::cerr << "Tenstorrent backend: multi_gather not implemented" << std::endl;
+}
+
+void Configuration<Spatter::Tenstorrent>::multi_scatter(
+    bool timed, unsigned long run_id) {
+  (void)timed;
+  (void)run_id;
+  std::cerr << "Tenstorrent backend: multi_scatter not implemented"
+            << std::endl;
+}
+
+void Configuration<Spatter::Tenstorrent>::setup() {
+  ConfigurationBase::setup();
+
+  // One page holds the whole pattern; the kernel reads page 0 once at start.
+  // Empty pattern vectors stay null -- a zero-byte allocation is an error.
+  auto upload = [](size_t *&handle, const aligned_vector<size_t> &p) {
+    if (p.empty())
+      return;
+    const size_t bytes = p.size() * sizeof(uint32_t);
+    handle = static_cast<size_t *>(tt_device_alloc(bytes, bytes));
+    tt_pattern_upload(handle, p.data(), p.size());
+  };
+
+  upload(dev_pattern, pattern);
+  upload(dev_pattern_gather, pattern_gather);
+  upload(dev_pattern_scatter, pattern_scatter);
+}
+#endif
+
 } // namespace Spatter

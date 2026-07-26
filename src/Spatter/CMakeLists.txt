@@ -6,8 +6,19 @@ if (USE_CUDA)
     set(CUDA_INCLUDE_FILES CudaBackend.hh)
 endif()
 
+if (USE_TENSTORRENT)
+    add_library(tenstorrent_backend SHARED TenstorrentBackend.cc)
+    target_link_libraries(tenstorrent_backend PUBLIC ${TT_METAL_LIB})
+    target_compile_features(tenstorrent_backend PUBLIC cxx_std_20)
+    # tt-metal's headers pull in fmt and spdlog; use them header-only so the
+    # backend does not need those libraries at link time.
+    target_compile_definitions(tenstorrent_backend PRIVATE FMT_HEADER_ONLY)
+    set(TENSTORRENT_INCLUDE_FILES TenstorrentBackend.hh)
+endif()
+
 set(SPATTER_INCLUDE_FILES
     ${CUDA_INCLUDE_FILES}
+    ${TENSTORRENT_INCLUDE_FILES}
     Configuration.hh
     Input.hh
     JSONParser.hh
@@ -61,6 +72,10 @@ if (USE_CUDA)
     set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} cuda_backend)
 endif()
 
+if (USE_TENSTORRENT)
+    set(COMMON_LINK_LIBRARIES ${COMMON_LINK_LIBRARIES} tenstorrent_backend)
+endif()
+
 target_link_libraries(Spatter
     PUBLIC
     ${COMMON_LINK_LIBRARIES}
@@ -89,6 +104,12 @@ install(FILES ${SPATTER_INCLUDE_FILES}
 
 if (USE_CUDA)
     install (TARGETS cuda_backend
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+endif()
+
+if (USE_TENSTORRENT)
+    install (TARGETS tenstorrent_backend
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 endif()

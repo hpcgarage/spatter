@@ -20,6 +20,8 @@ void print_build_info(Spatter::ClArgs &cl) {
     std::cout << "OpenMP" << std::endl;
   else if (cl.backend.compare("cuda") == 0)
     std::cout << "CUDA" << std::endl;
+  else if (cl.backend.compare("tenstorrent") == 0)
+    std::cout << "Tenstorrent" << std::endl;
 
   std::cout << "Aggregate Results? ";
   if (cl.aggregate == true)

@@ -19,6 +19,7 @@ include(pkgs/JSONSupport)
 include(pkgs/MPISupport)
 include(pkgs/OpenMPSupport)
 include(pkgs/CUDASupport)
+include(pkgs/TenstorrentSupport)
 
 if (APPLE)
         set(CMAKE_INSTALL_RPATH "@executable_path/../lib")

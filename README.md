@@ -44,7 +44,7 @@ CMake is required to build Spatter. Currently we require CMake 3.25 or newer.
 
 To build with CMake from the main source directory, use the following command structure:
 ```
-cmake -DCMAKE_BUILD_TYPE=<BUILD_TYPE> -DUSE_<OPENMP/CUDA/MPI>=1 -B build_<BACKEND> -S .
+cmake -DCMAKE_BUILD_TYPE=<BUILD_TYPE> -DUSE_<OPENMP/CUDA/MPI/TENSTORRENT>=1 -B build_<BACKEND> -S .
 cd build_<BACKEND>
 make
 ```
@@ -62,6 +62,12 @@ cmake -DUSE_OPENMP=1 -DUSE_MPI=1 -B build_openmp_mpi -S .
 For CUDA builds, we normally load CUDA 11/12 using NVHPC:
 ```
 cmake -DUSE_CUDA=1 -B build_cuda -S .
+```
+
+For Tenstorrent builds (see `Build.md` for the header requirements):
+
+```
+cmake -DUSE_TENSTORRENT=ON -B build_tenstorrent -S .
 ```
 For a complete list of build options, see [Build.md](Build.md)
 

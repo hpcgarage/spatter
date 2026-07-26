@@ -365,8 +365,10 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           [](unsigned char c) { return std::tolower(c); });
 
       if ((backend.compare("serial") != 0) &&
-          (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0)) {
-        std::cerr << "Valid Backends are: serial, openmp, cuda" << std::endl;
+          (backend.compare("openmp") != 0) && (backend.compare("cuda") != 0) &&
+          (backend.compare("tenstorrent") != 0)) {
+        std::cerr << "Valid Backends are: serial, openmp, cuda, tenstorrent"
+                  << std::endl;
         return -1;
       }
       if (backend.compare("openmp") == 0) {
@@ -378,6 +380,12 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
       if (backend.compare("cuda") == 0) {
 #ifndef USE_CUDA
         std::cerr << "FAIL - CUDA Backend is not Enabled" << std::endl;
+        return -1;
+#endif
+      }
+      if (backend.compare("tenstorrent") == 0) {
+#ifndef USE_TENSTORRENT
+        std::cerr << "FAIL - Tenstorrent Backend is not Enabled" << std::endl;
         return -1;
 #endif
       }
@@ -533,6 +541,9 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
 #ifdef USE_OPENMP
     backend = "openmp";
 #endif
+#ifdef USE_TENSTORRENT
+    backend = "tenstorrent";
+#endif
 #ifdef USE_CUDA
       backend = "cuda";
 #endif
@@ -684,6 +695,17 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
           delta_scatter, seed, wrap, count, shared_mem, local_work_size, nruns,
           aggregate, atomic, verbosity);
 #endif
+#ifdef USE_TENSTORRENT
+    else if (backend.compare("tenstorrent") == 0)
+      c = std::make_unique<Spatter::Configuration<Spatter::Tenstorrent>>(0,
+          config_name, kernel, pattern, pattern_gather, pattern_scatter,
+          cl.sparse, cl.dev_sparse, cl.sparse_size, cl.sparse_gather,
+          cl.dev_sparse_gather, cl.sparse_gather_size, cl.sparse_scatter,
+          cl.dev_sparse_scatter, cl.sparse_scatter_size, cl.dense,
+          cl.dense_perthread, cl.dev_dense, cl.dense_size, delta, delta_gather,
+          delta_scatter, seed, wrap, count, shared_mem, local_work_size, nruns,
+          aggregate, atomic, verbosity);
+#endif
     else {
       std::cerr << "Invalid Backend " << backend << std::endl;
       return -1;
@@ -788,6 +810,23 @@ int parse_input(const int argc, char **argv, ClArgs &cl) {
         sizeof(double) * cl.dense.size(), cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaDeviceSynchronize());
+  }
+#endif
+#ifdef USE_TENSTORRENT
+  if (backend.compare("tenstorrent") == 0) {
+    auto alloc_and_copy = [](double *&dev, const aligned_vector<double> &host) {
+      if (host.empty())
+        return;
+      const size_t bytes = sizeof(double) * host.size();
+      // page size == element size, so element index == DRAM page id
+      dev = static_cast<double *>(tt_device_alloc(bytes, sizeof(double)));
+      tt_memcpy_h2d(dev, host.data(), bytes);
+    };
+
+    alloc_and_copy(cl.dev_sparse, cl.sparse);
+    alloc_and_copy(cl.dev_sparse_gather, cl.sparse_gather);
+    alloc_and_copy(cl.dev_sparse_scatter, cl.sparse_scatter);
+    alloc_and_copy(cl.dev_dense, cl.dense);
   }
 #endif
 
