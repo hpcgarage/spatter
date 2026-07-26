@@ -35,6 +35,8 @@ You can also use Spack to install the default (OpenMP) and CUDA versions of Spat
 | `USE_MPI` | `BOOL` | `OFF` | Enable MPI support |
 | `CMAKE_BUILD_TYPE` | `STRING` | `Release` | Build type: `Release`, `Debug`, `RelWithDebInfo` |
 | `CMAKE_CXX_COMPILER` | `STRING` | system default | C++ compiler to use |
+| `SPATTER_ENABLE_NATIVE_ARCH` | `BOOL` | `ON` | Tune GNU/Clang builds for the host CPU (adds `-march=native`, or `-mcpu=native` where unsupported) so the gather/scatter kernels use the host ISA (e.g. AVX2/AVX-512). Disable for portable/reproducible or cross builds. |
+| `SPATTER_ARCH_FLAGS` | `STRING` | `""` | Explicit architecture flags for GNU/Clang, e.g. `-march=sapphirerapids`. Takes precedence over `SPATTER_ENABLE_NATIVE_ARCH`. |
 
 > **Note:** `USE_CUDA`, `USE_HIP`, and `USE_ONEAPI` are mutually exclusive. Only one GPU backend may be enabled at a time.
 
