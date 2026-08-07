@@ -9,3 +9,4 @@ src/python/env
 *.pyc
 spatter-cuda-test.out
 json.tar.xz
+generated/

@@ -1,0 +1,98 @@
+[
+  {
+    "pattern": "UNIFORM:256:1:NR",
+    "kernel": "Scatter",
+    "count": 122070,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:2:NR",
+    "kernel": "Scatter",
+    "count": 61035,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:4:NR",
+    "kernel": "Scatter",
+    "count": 30517,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:8:NR",
+    "kernel": "Scatter",
+    "count": 15258,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:16:NR",
+    "kernel": "Scatter",
+    "count": 7629,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:32:NR",
+    "kernel": "Scatter",
+    "count": 3814,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:64:NR",
+    "kernel": "Scatter",
+    "count": 1907,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:128:NR",
+    "kernel": "Scatter",
+    "count": 953,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:1:NR",
+    "kernel": "Gather",
+    "count": 122070,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:2:NR",
+    "kernel": "Gather",
+    "count": 61035,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:4:NR",
+    "kernel": "Gather",
+    "count": 30517,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:8:NR",
+    "kernel": "Gather",
+    "count": 15258,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:16:NR",
+    "kernel": "Gather",
+    "count": 7629,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:32:NR",
+    "kernel": "Gather",
+    "count": 3814,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:64:NR",
+    "kernel": "Gather",
+    "count": 1907,
+    "local-work-size": 1024
+  },
+  {
+    "pattern": "UNIFORM:256:128:NR",
+    "kernel": "Gather",
+    "count": 953,
+    "local-work-size": 1024
+  }
+]

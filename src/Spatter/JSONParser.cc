@@ -289,6 +289,19 @@ std::unique_ptr<Spatter::ConfigurationBase> JSONParser::operator[](
         shared_mem_, (*data_json_ptr)[index]["local-work-size"],
         (*data_json_ptr)[index]["nruns"], aggregate_, atomic_, verbosity_);
 #endif
+#ifdef USE_TENSTORRENT
+  else if (backend_.compare("tenstorrent") == 0)
+    c = std::make_unique<Spatter::Configuration<Spatter::Tenstorrent>>(index,
+        (*data_json_ptr)[index]["name"], (*data_json_ptr)[index]["kernel"],
+        pattern, pattern_gather, pattern_scatter, sparse, dev_sparse,
+        sparse_size, sparse_gather, dev_sparse_gather, sparse_gather_size,
+        sparse_scatter, dev_sparse_scatter, sparse_scatter_size, dense,
+        dense_perthread, dev_dense, dense_size, delta, delta_gather,
+        delta_scatter, (*data_json_ptr)[index]["seed"],
+        (*data_json_ptr)[index]["wrap"], (*data_json_ptr)[index]["count"],
+        shared_mem_, (*data_json_ptr)[index]["local-work-size"],
+        (*data_json_ptr)[index]["nruns"], aggregate_, atomic_, verbosity_);
+#endif
   else {
     std::cerr << "Invalid Backend " << backend_ << std::endl;
     exit(1);
